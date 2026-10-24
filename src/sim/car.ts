@@ -5,8 +5,10 @@ export type Car = {
   angle: number
   vx: number
   vy: number
-  /** Index into the car sprite sheet (see render/assets.ts). */
+  /** Index into the car sprite sheet (see vehicles.ts). */
   readonly model: number
+  /** 100 new, 0 wrecked. */
+  health: number
 }
 
 export type Controls = {

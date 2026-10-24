@@ -90,3 +90,44 @@ describe("pedestrians", () => {
     expect(w.down).toBeGreaterThan(0)
   })
 })
+
+describe("police", () => {
+  it("chase a wanted player, and arrest one who stands still next to them", () => {
+    const game = newGame(world, 5)
+    game.wanted.heat = 1.5
+    let chased = false
+    for (let t = 0; t < 40 / DT && game.lives === 5; t++) {
+      step(world, game, idle)
+      chased ||= game.cops.length > 0
+    }
+    expect(chased).toBe(true)
+    expect(game.messages.some((m) => m.kind === "busted")).toBe(true)
+    expect(game.lives).toBe(4)
+    expect(game.wanted.heat).toBe(0)
+    expect(Math.hypot(game.player.x - game.home.x, game.player.y - game.home.y)).toBeLessThan(1)
+  })
+})
+
+describe("car damage", () => {
+  it("wrecks a car that hits walls too often and puts you back on foot", () => {
+    const game = newGame(world, 3)
+    step(world, game, { ...idle, use: true })
+    const car = must(game.player.car)
+    car.health = 5
+    run(game, { ...idle, up: true, right: true }, 20)
+    expect(game.player.car).toBeNull()
+    expect(game.messages.some((m) => m.kind === "wrecked")).toBe(true)
+    expect(game.wrecks).toHaveLength(1)
+  })
+})
+
+describe("the payphone job", () => {
+  it("sends you from Sudetenstraße 19 to the Mühlenbäck across town and on to the Rehmaus Apotheke", () => {
+    const game = newGame(world, 1)
+    const mission = must(game.mission)
+    expect(Math.hypot(mission.phone.x - game.home.x, mission.phone.y - game.home.y)).toBeLessThan(10)
+    expect(mission.pickup.name).toContain("Mühlenbäck")
+    expect(Math.hypot(mission.pickup.x - mission.phone.x, mission.pickup.y - mission.phone.y)).toBeGreaterThan(300)
+    expect(mission.dropoff.name).toBe("Rehmaus Apotheke")
+  })
+})

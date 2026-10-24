@@ -1,6 +1,7 @@
 import type { World } from "#/world/world.ts"
 import { controls, lightFor, type Signals } from "./signals.ts"
 import { DRIVABLE } from "#/world/world.ts"
+import { POLICE_MODEL } from "./vehicles.ts"
 
 /** An NPC car glued to the road graph. It drives from vertex `from` toward `from + dir`. */
 export type Npc = {
@@ -30,7 +31,6 @@ const CRUISE: Readonly<Record<string, number>> = {
 
 /** Car sprite indices for ordinary traffic; 5 is the police car, which shows up rarely. */
 const CIVILIAN_MODELS = [0, 1, 2, 3, 4, 6, 7]
-const POLICE_MODEL = 5
 const modelFor = (id: number) => (id % 23 === 0 ? POLICE_MODEL : (CIVILIAN_MODELS[id % CIVILIAN_MODELS.length] ?? 0))
 
 const vertex = (pts: ReadonlyArray<number>, i: number) => [pts[i * 2] ?? 0, pts[i * 2 + 1] ?? 0] as const
