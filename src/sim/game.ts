@@ -2,7 +2,7 @@ import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
-import { CAR_LENGTH, GRASS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
+import { CAR_LENGTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
 import { lightFor, makeSignals } from "./signals.ts"
 import { spawnWalker, stepWalker } from "./pedestrians.ts"
@@ -11,6 +11,8 @@ import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
 import { drift, nearMiss, newScore, tickScore } from "./score.ts"
 import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
 import { planJobs } from "./town-jobs.ts"
+import { SAVE_COST, SPRAY_COST, planShops, spotNear, stepShop } from "./shops.ts"
+import { toSave } from "./save.ts"
 import { gangJobDone, newRespect, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
 import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
@@ -56,19 +58,6 @@ const CAR_SHOT_RANGE = 16
 
 /** Sudetenstraße 19, Geretsried: where every game starts. */
 export const START = { lat: 47.8582, lon: 11.4836 }
-
-/** A free spot near (x, y) by a street or path, for waking up after being WASTED. */
-const spotNear = (world: World, x: number, y: number): { x: number; y: number } | null => {
-  for (let r = 0; r <= 30; r += 3) {
-    for (let k = 0; k < 12; k++) {
-      const a = (k / 12) * Math.PI * 2
-      const px = x + Math.cos(a) * r
-      const py = y + Math.sin(a) * r
-      if (!world.isSolid(px, py) && !world.isWater(px, py) && world.roadAt(px, py, 3) !== null) return { x: px, y: py }
-    }
-  }
-  return null
-}
 
 /** GTA 2 wakes you at the hospital; Geretsried has doctors' practices, so the one nearest home. */
 const findHospital = (world: World, home: Spawn): Spawn => {
@@ -141,6 +130,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     respect: newRespect(),
     turf: turfs(world.map.districts),
     ringCooldown: 0,
+    shops: planShops(world, hidden),
     bust: 0,
     fighting: 0,
     wasted: 0,
@@ -285,6 +275,7 @@ export const step = (world: World, game: Game, input: Input): void => {
   stepPickups(game.pickups, DT)
   if (game.wasted <= 0 && isDead(player.vitals)) wasted(game)
   jobsStep(world, game)
+  shopsStep(game)
   tickScore(game.score, DT)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
 }
@@ -575,6 +566,33 @@ const jobsStep = (world: World, game: Game) => {
     game.messages.push({ kind: "cash", amount: event.reward })
     const g = event.job.gang
     if (g !== undefined) gangJobDone(game.respect, g.for, g.against)
+  }
+}
+
+/** Save points and spray shops: pay, then save the game or respray the car and lose the police. */
+const shopsStep = (game: Game) => {
+  if (game.wasted > 0) return
+  const { player } = game
+  for (const shop of game.shops) {
+    const event = stepShop(shop, playerPos(game), player.car !== null, game.score.money)
+    if (event === null) continue
+    if (event.kind === "broke") {
+      game.messages.push({ kind: "mission", text: shop.kind === "save" ? `Speichern kostet $${SAVE_COST}.` : `Neu lackieren kostet $${SPRAY_COST}.` })
+      continue
+    }
+    if (event.kind === "save") {
+      game.score.money -= SAVE_COST
+      game.messages.push({ kind: "saved", data: toSave(game) }, { kind: "cash", amount: -SAVE_COST })
+      continue
+    }
+    const car = player.car
+    if (car === null) continue
+    game.score.money -= SPRAY_COST
+    car.paint = ((car.paint ?? 0) % (PAINTS - 1)) + 1
+    // A new colour: nobody is looking for this car any more.
+    Object.assign(game.wanted, noHeat())
+    game.bust = 0
+    game.messages.push({ kind: "mission", text: `Frisch lackiert bei ${shop.name}! Die Polizei sucht ein anderes Auto.` }, { kind: "cash", amount: -SPRAY_COST })
   }
 }
 

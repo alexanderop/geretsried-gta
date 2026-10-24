@@ -11,7 +11,12 @@ export type Car = {
   readonly model: number
   /** CAR_HP new, 0 wrecked (see damage.ts). */
   readonly vitals: Vitals
+  /** A spray shop's new colour: index into the renderer's paint tints, 1 … PAINTS - 1 (absent: as painted). */
+  paint?: number
 }
+
+/** Colours a spray shop has, counting the car's own. */
+export const PAINTS = 5
 
 export type Controls = {
   /** -1 brake / reverse … 1 full throttle */

@@ -143,8 +143,8 @@ export function Hud({ hud, help }: { readonly hud: HudState; readonly help: bool
           </div>
         )}
         {hud.paid !== null && (
-          <div key={hud.paid.key} className="hud-fade text-2xl text-green-300">
-            +${hud.paid.amount}
+          <div key={hud.paid.key} className={`hud-fade text-2xl ${hud.paid.amount >= 0 ? "text-green-300" : "text-red-300"}`}>
+            {hud.paid.amount >= 0 ? `+$${hud.paid.amount}` : `-$${-hud.paid.amount}`}
           </div>
         )}
       </div>

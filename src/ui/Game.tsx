@@ -8,6 +8,7 @@ import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
 import { wantedLevel } from "#/sim/wanted.ts"
 import { WEAPONS } from "#/sim/weapons.ts"
+import { SAVE_KEY, applySave, decodeSave, encodeSave, type SaveData } from "#/sim/save.ts"
 import { GameAudio } from "./audio.ts"
 import { Hud, emptyHud, type HudState } from "./Hud.tsx"
 import { followCamera, startCamera, viewMatrix, type View } from "#/render/camera.ts"
@@ -55,7 +56,25 @@ const BUILD_BUDGET_MS = 4
 /** Seconds the big banners and mission texts stay up. */
 const BIG_S = 3
 const MISSION_S = 7
-const BIG_TEXT = { busted: "BUSTED", wasted: "WASTED", gameOver: "GAME OVER" } as const
+const BIG_TEXT = { busted: "BUSTED", wasted: "WASTED", gameOver: "GAME OVER", saved: "SAVED" } as const
+
+/** localStorage can be missing, full or blocked (private windows): a save that cannot be read is no save. */
+const readSave = (): SaveData | null => {
+  try {
+    return decodeSave(localStorage.getItem(SAVE_KEY))
+  } catch {
+    return null
+  }
+}
+
+const writeSave = (data: SaveData): boolean => {
+  try {
+    localStorage.setItem(SAVE_KEY, encodeSave(data))
+    return true
+  } catch {
+    return false
+  }
+}
 
 export function Game({ world, assets }: { readonly world: World; readonly assets: Assets }) {
   const glRef = useRef<HTMLCanvasElement>(null)
@@ -74,6 +93,12 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       return
     }
     const game = newGame(world, Date.now() % 100_000, crownCover(assets.crowns))
+    // Carry on from the last church you saved at (GTA 2 wakes you there).
+    const saved = readSave()
+    if (saved !== null) {
+      const church = game.shops.find((sh) => sh.kind === "save") ?? null
+      applySave(game, saved, church === null ? null : { x: church.x + 3, y: church.y })
+    }
     const renderer = new Renderer(gl, world, assets)
     window.__gta = { game, world, renderer }
     const minimap = bakeMinimap(world.map, assets.overview, Math.round(180 * devicePixelRatio))
@@ -143,6 +168,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           shown = { ...shown, mission: m.text }
           missionUntil = game.time + MISSION_S
         } else {
+          if (m.kind === "saved" && !writeSave(m.data)) shown = { ...shown, mission: "Speichern ging nicht: der Browser lässt nichts ablegen." }
           shown = { ...shown, big: BIG_TEXT[m.kind] }
           bigUntil = game.time + BIG_S
         }

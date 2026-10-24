@@ -135,6 +135,13 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   Rathaus to the Werkstatt Wilhelm), and blow one up (the Post-Transporter at Filiale 571). A phone's
   jobs come one after the other; busted or wasted, the job is off and the phone rings again once you come
   back. A glowing marker lies at the next stop, a red one under the car the job is about.
+- **Save points** (`src/sim/shops.ts`, `src/sim/save.ts`): GTA 2's "Jesus Saves" at the Maria Hilf church
+  (and the Petruskirche in Gartenberg): walk onto the glowing cross for $500 and the game is saved to
+  localStorage (money, lives, guns, jobs done, gang respect; wrapped in try/catch, so a blocked storage
+  only says so). The next game carries on from there, standing at the church.
+- **Spray shops**: real car repair shops (Huber's Karosserie-Lack-Center, Werkstatt Wilhelm, Auto Stapf)
+  have a glowing spray-can pad; drive onto it for $300 and the car gets a new colour (the sprite's hue
+  turned in the shader) and the wanted level drops to zero, so the police lose you.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

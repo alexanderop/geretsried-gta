@@ -21,6 +21,8 @@ export const Mode = {
   silhouette: 4,
   /** Just the colour. */
   color: 5,
+  /** A sprite with its hue turned by the colour's red (0..255 a full turn): resprayed cars. */
+  hue: 6,
 } as const
 export type Mode = (typeof Mode)[keyof typeof Mode]
 /** Added to a mode: the surface fades to see-through over the player (tree crowns, petrol station canopies). */

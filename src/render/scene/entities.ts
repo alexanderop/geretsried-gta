@@ -4,7 +4,7 @@
  * buildings in front of them hide them, plus their shadows on the ground.
  */
 import { SHADOW_DIR } from "#/map/photo.ts"
-import { CAR_LENGTH } from "#/sim/car.ts"
+import { CAR_LENGTH, PAINTS } from "#/sim/car.ts"
 import { POLICE_MODEL } from "#/sim/vehicles.ts"
 import { SMOKE_HP, type Game } from "#/sim/game.ts"
 import type { Car } from "#/sim/car.ts"
@@ -16,6 +16,7 @@ import type { Effect, Fighter, Projectile } from "#/sim/state.ts"
 import type { Vitals } from "#/sim/damage.ts"
 import { isAvailable, type Pickup } from "#/sim/pickups.ts"
 import { ISLAND_M, PUMP_HP, type Pump } from "#/sim/stations.ts"
+import type { Shop } from "#/sim/shops.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
 import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
@@ -33,17 +34,21 @@ const VIEW_M = 140
 
 type Placed = { readonly x: number; readonly y: number; readonly angle: number }
 
-const sprite = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, z: number, length: number, shadow: number, color: Rgba = WHITE) => {
+const sprite = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, z: number, length: number, shadow: number, color: Rgba = WHITE, mode: Mode = Mode.sprite) => {
   const box = boxes[layer] ?? [1, 1]
   const width = (length * box[1]) / box[0]
-  spriteQuad(m, { ...at, z, length, width }, layer, box, color, Mode.sprite)
+  spriteQuad(m, { ...at, z, length, width }, layer, box, color, mode)
   m.target = "shadow"
   spriteQuad(m, { x: at.x + SHADOW_DIR[0] * shadow, y: at.y + SHADOW_DIR[1] * shadow, z: SHADOW_Z, angle: at.angle, length, width }, layer, box, SHADOW, Mode.silhouette)
   m.target = "opaque"
 }
 
-const car = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed & { readonly model: number }) =>
-  sprite(m, boxes, Sprite.car + at.model, at, CAR_Z, CAR_LENGTH * 1.08, 0.7)
+/** A car; one from the spray shop has its paint's hue turned a step round the wheel. */
+const car = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed & { readonly model: number; readonly paint?: number }) => {
+  const paint = at.paint ?? 0
+  if (paint === 0) sprite(m, boxes, Sprite.car + at.model, at, CAR_Z, CAR_LENGTH * 1.08, 0.7)
+  else sprite(m, boxes, Sprite.car + at.model, at, CAR_Z, CAR_LENGTH * 1.08, 0.7, [Math.round((paint / PAINTS) * 255), 0, 0, 255], Mode.hue)
+}
 
 /** Someone on the ground: knocked down (they get up) or dead (they fade after a while). No blood, as in GTA 2's cartoon. */
 const lying = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, alpha: number, tint: Rgba = WHITE) =>
@@ -191,6 +196,15 @@ const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
   spriteQuad(m, { x: target.x, y: target.y, z: 0.15, angle: 0, length: onCar ? pulse * 0.9 : pulse, width: onCar ? pulse * 0.9 : pulse }, Sprite.glow, box(boxes, Sprite.glow), onCar ? CAR_MARK : MARKER, Mode.sprite)
 }
 
+/** A save point's glowing cross or a spray shop's spray can, on a pad that pulses on the ground. */
+const shopPad = (m: MeshBuilder, boxes: SpriteBoxes, sh: Shop, time: number) => {
+  const layer = prop(sh.kind === "save" ? "prop-church" : "prop-spray")
+  const size = (sh.kind === "save" ? 2.4 : 4.2) * (1 + Math.sin(time * 3) * 0.04)
+  const glow: Rgba = sh.kind === "save" ? [255, 210, 60, 150] : [60, 170, 255, 150]
+  spriteQuad(m, { x: sh.x, y: sh.y, z: 0.14, angle: 0, length: size * 2.2, width: size * 2.2 }, Sprite.glow, box(boxes, Sprite.glow), glow, Mode.sprite)
+  spriteQuad(m, { x: sh.x, y: sh.y, z: 0.16, angle: 0, length: size, width: size }, layer, box(boxes, layer), WHITE, Mode.sprite)
+}
+
 /** A pump island (two pumps on a kerbed island), at pump height; one about to blow is on fire. */
 const pump = (m: MeshBuilder, boxes: SpriteBoxes, p: Pump, time: number) => {
   if (p.dead) return
@@ -265,6 +279,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   mission(m, boxes, game)
   for (const p of game.pickups) pickup(m, boxes, p, time)
   for (const p of game.pumps) pump(m, boxes, p, time)
+  for (const sh of game.shops) if (Math.abs(sh.x - player.x) < VIEW_M && Math.abs(sh.y - player.y) < VIEW_M) shopPad(m, boxes, sh, time)
   for (const c of game.wrecks) sprite(m, boxes, Sprite.fx + Fx.wreck, c, CAR_Z, CAR_LENGTH * 1.08, 0.7)
   for (const c of game.parked) {
     car(m, boxes, c)

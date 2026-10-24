@@ -76,6 +76,19 @@ void main() {
     vec4 t = texture(u_spr, vec3(v_uv, v_layer));
     if (t.a < 0.08) discard;
     c = vec4(t.rgb / t.a, t.a) * v_color;
+  } else if (mode == 6u) {
+    // A resprayed car: the sprite with its hue turned by v_color.r (a full turn at 1), in YIQ.
+    vec4 t = texture(u_spr, vec3(v_uv, v_layer));
+    if (t.a < 0.08) discard;
+    vec3 rgb = t.rgb / t.a;
+    float yy = dot(rgb, vec3(0.299, 0.587, 0.114));
+    float ii = dot(rgb, vec3(0.596, -0.274, -0.322));
+    float qq = dot(rgb, vec3(0.211, -0.523, 0.312));
+    float a = v_color.r * 6.2831853;
+    float i2 = ii * cos(a) - qq * sin(a);
+    float q2 = ii * sin(a) + qq * cos(a);
+    vec3 turned = vec3(yy + 0.956 * i2 + 0.621 * q2, yy - 0.272 * i2 - 0.647 * q2, yy - 1.106 * i2 + 1.703 * q2);
+    c = vec4(clamp(turned, 0.0, 1.0), t.a * v_color.a);
   } else if (mode == 4u) {
     if (texture(u_spr, vec3(v_uv, v_layer)).a < 0.5) discard;
     c = v_color;

@@ -15,6 +15,8 @@ import type { Vitals } from "./damage.ts"
 import type { Arsenal } from "./weapons.ts"
 import type { Pickup } from "./pickups.ts"
 import type { Pump } from "./stations.ts"
+import type { Shop } from "./shops.ts"
+import type { SaveData } from "./save.ts"
 
 export type Input = {
   readonly up: boolean
@@ -40,6 +42,8 @@ export type Player = { x: number; y: number; angle: number; car: Car | null; rea
 /** Something the HUD announces once: a big banner, the car you got into, money paid. */
 export type Message =
   | { readonly kind: "busted" | "wasted" | "gameOver" }
+  /** Saved at a church: the UI stores it. */
+  | { readonly kind: "saved"; readonly data: SaveData }
   | { readonly kind: "car"; readonly text: string }
   | { readonly kind: "mission"; readonly text: string }
   | { readonly kind: "cash"; readonly amount: number }
@@ -138,6 +142,8 @@ export type Game = {
   readonly turf: ReadonlyArray<Turf>
   /** Seconds until the next ring of a phone near you. */
   ringCooldown: number
+  /** Save points at churches and spray shops at car repair shops. */
+  readonly shops: ReadonlyArray<Shop>
   /** Seconds an officer has had hold of you (see `arrested` in game.ts). */
   bust: number
   /** Seconds you still count as fighting back after your last shot or punch: nobody arrests you then. */

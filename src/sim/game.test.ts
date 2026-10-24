@@ -342,3 +342,38 @@ describe("the payphone jobs", () => {
     expect(game.jobs.done).toContain("mercedes")
   })
 })
+
+describe("save points and spray shops", () => {
+  it("stand at a real church and a real paint shop", () => {
+    const game = newGame(world, 1)
+    expect(game.shops.find((s) => s.kind === "save")?.name).toBe("Maria Hilf")
+    expect(game.shops.some((s) => s.kind === "spray" && s.name.includes("Lack"))).toBe(true)
+  })
+
+  it("save the game at the church for $500 and tell the HUD", () => {
+    const game = newGame(world, 1)
+    game.score.money = 2000
+    const church = must(game.shops.find((s) => s.kind === "save"))
+    Object.assign(game.player, { x: church.x, y: church.y })
+    step(world, game, idle)
+    expect(game.score.money).toBe(1500)
+    const saved = game.messages.find((m) => m.kind === "saved")
+    expect(saved?.kind === "saved" && saved.data.money).toBe(1500)
+  })
+
+  it("respray the car, clear the wanted level and lose the police", () => {
+    const game = newGame(world, 1)
+    game.score.money = 1000
+    game.wanted.heat = 2.5
+    step(world, game, { ...idle, use: true })
+    const car = must(game.player.car)
+    const shop = must(game.shops.find((s) => s.kind === "spray"))
+    Object.assign(car, { x: shop.x, y: shop.y, vx: 0, vy: 0 })
+    step(world, game, idle)
+    expect(game.wanted.heat).toBe(0)
+    expect(car.paint).toBe(1)
+    expect(game.score.money).toBe(700)
+    run(game, idle, 3)
+    expect(game.cops.every((c) => Math.hypot(c.car.vx, c.car.vy) < 3)).toBe(true)
+  })
+})
