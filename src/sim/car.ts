@@ -5,7 +5,8 @@ export type Car = {
   angle: number
   vx: number
   vy: number
-  readonly color: string
+  /** Index into the car sprite sheet (see render/assets.ts). */
+  readonly model: number
 }
 
 export type Controls = {

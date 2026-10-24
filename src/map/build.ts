@@ -33,6 +33,7 @@ const areaKind = (tags: Readonly<Record<string, string>>): AreaKind | null => {
   if (tags.natural === "wood" || tags.landuse === "forest") return "forest"
   if (tags.leisure === "park") return "park"
   if (tags.leisure === "pitch") return "pitch"
+  if (tags.amenity === "parking") return "parking"
   switch (tags.landuse) {
     case "grass":
     case "meadow":
@@ -106,7 +107,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, bbox: Bbox): GameMap => {
   return {
     width: round(projection.width),
     height: round(projection.height),
-    origin: { lat: bbox.north, lon: bbox.west },
+    bbox,
     roads,
     buildings,
     areas,

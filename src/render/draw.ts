@@ -1,5 +1,6 @@
 import type { GameMap } from "#/map/types.ts"
-import { CAR_LENGTH, CAR_WIDTH, forwardSpeed } from "#/sim/car.ts"
+import { CAR_LENGTH, forwardSpeed } from "#/sim/car.ts"
+import { silhouette, type Assets } from "./assets.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
 import { BAKE_PX_PER_M, CHUNK_M, ChunkCache, fillPoly, strokeLine } from "./chunks.ts"
 import { AREA_COLORS, GROUND } from "./palette.ts"
@@ -20,7 +21,7 @@ export const followCamera = (camera: Camera, game: Game): void => {
   camera.zoom += (targetZoom(game) - camera.zoom) * 0.04
 }
 
-export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, camera: Camera, game: Game): void => {
+export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, sprites: Sprites, camera: Camera, game: Game): void => {
   const { width, height } = ctx.canvas
   const z = camera.zoom
   const left = camera.x - width / 2 / z
@@ -44,52 +45,55 @@ export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, cam
   }
 
   ctx.setTransform(z, 0, 0, z, -left * z, -top * z)
-  for (const car of game.parked) drawCar(ctx, car.x, car.y, car.angle, car.color)
-  for (const npc of game.npcs) drawCar(ctx, npc.x, npc.y, npc.angle, npc.color)
+  for (const car of game.parked) drawCar(ctx, sprites, car.x, car.y, car.angle, car.model)
+  for (const npc of game.npcs) drawCar(ctx, sprites, npc.x, npc.y, npc.angle, npc.model)
   const { player } = game
-  if (player.car !== null) drawCar(ctx, player.car.x, player.car.y, player.car.angle, player.car.color)
-  else drawPedestrian(ctx, player.x, player.y, player.angle)
+  if (player.car !== null) drawCar(ctx, sprites, player.car.x, player.car.y, player.car.angle, player.car.model)
+  else drawPedestrian(ctx, sprites, player.x, player.y, player.angle)
 }
 
-const drawCar = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, color: string) => {
+/** Sprites plus a black silhouette of each for drop shadows. */
+export type Sprites = {
+  readonly cars: ReadonlyArray<{ readonly img: HTMLImageElement; readonly shadow: HTMLCanvasElement }>
+  readonly peds: ReadonlyArray<{ readonly img: HTMLImageElement; readonly shadow: HTMLCanvasElement }>
+}
+
+export const makeSprites = (assets: Assets): Sprites => ({
+  cars: assets.cars.map((img) => ({ img, shadow: silhouette(img) })),
+  peds: assets.peds.map((img) => ({ img, shadow: silhouette(img) })),
+})
+
+/** Draw a sprite centred at (x, y), rotated, `length` meters along its nose; width follows the image. */
+const drawSprite = (
+  ctx: CanvasRenderingContext2D,
+  sprite: Sprites["cars"][number] | undefined,
+  x: number,
+  y: number,
+  angle: number,
+  length: number,
+  shadow: number,
+) => {
+  if (sprite === undefined) return
+  const width = (length * sprite.img.height) / sprite.img.width
+  ctx.save()
+  ctx.translate(x + shadow, y + shadow)
+  ctx.rotate(angle)
+  ctx.globalAlpha = 0.4
+  ctx.drawImage(sprite.shadow, -length / 2, -width / 2, length, width)
+  ctx.restore()
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(angle)
-  ctx.fillStyle = "rgba(0,0,0,0.35)"
-  ctx.fillRect(-CAR_LENGTH / 2 + 0.4, -CAR_WIDTH / 2 + 0.4, CAR_LENGTH, CAR_WIDTH)
-  ctx.fillStyle = color
-  ctx.fillRect(-CAR_LENGTH / 2, -CAR_WIDTH / 2, CAR_LENGTH, CAR_WIDTH)
-  ctx.fillStyle = "rgba(20,30,45,0.85)"
-  ctx.fillRect(0.4, -CAR_WIDTH / 2 + 0.25, 0.9, CAR_WIDTH - 0.5)
-  ctx.fillRect(-1.6, -CAR_WIDTH / 2 + 0.3, 0.6, CAR_WIDTH - 0.6)
-  ctx.fillStyle = "#fff6c0"
-  ctx.fillRect(CAR_LENGTH / 2 - 0.25, -CAR_WIDTH / 2 + 0.15, 0.25, 0.4)
-  ctx.fillRect(CAR_LENGTH / 2 - 0.25, CAR_WIDTH / 2 - 0.55, 0.25, 0.4)
+  ctx.drawImage(sprite.img, -length / 2, -width / 2, length, width)
   ctx.restore()
 }
 
-const drawPedestrian = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number) => {
-  ctx.save()
-  ctx.translate(x, y)
-  ctx.rotate(angle)
-  // Drawn larger than life so you can find yourself, like GTA 2.
-  ctx.scale(1.8, 1.8)
-  ctx.fillStyle = "rgba(0,0,0,0.35)"
-  ctx.beginPath()
-  ctx.arc(0.12, 0.12, 0.45, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.fillStyle = "#1f3a93"
-  ctx.fillRect(-0.25, -0.45, 0.5, 0.9)
-  ctx.fillStyle = "#f0c8a0"
-  ctx.beginPath()
-  ctx.arc(0, 0, 0.28, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.fillStyle = "#3b2414"
-  ctx.beginPath()
-  ctx.arc(-0.06, 0, 0.2, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-}
+const drawCar = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: number, angle: number, model: number) =>
+  drawSprite(ctx, sprites.cars[model], x, y, angle, CAR_LENGTH * 1.08, 0.45)
+
+// Drawn larger than life so you can find yourself, like GTA 2.
+const drawPedestrian = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: number, angle: number) =>
+  drawSprite(ctx, sprites.peds[0], x, y, angle, 1.6, 0.3)
 
 /** A one-time overview of the whole town for the minimap. */
 export const bakeMinimap = (map: GameMap, size: number): HTMLCanvasElement => {

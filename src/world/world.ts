@@ -1,4 +1,4 @@
-import type { GameMap, Road, RoadKind } from "#/map/types.ts"
+import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
 
@@ -21,6 +21,8 @@ export type World = {
   /** Nearest road within `maxDist` meters, with how far you are from its center line. */
   readonly roadAt: (x: number, y: number, maxDist?: number) => { road: Road; index: number; dist: number } | null
   readonly junctions: ReadonlyMap<number, Junction>
+  /** The smallest land-use area under the point (areas are stored largest first). */
+  readonly areaAt: (x: number, y: number) => AreaKind | null
 }
 
 export const makeWorld = (map: GameMap): World => {
@@ -39,6 +41,17 @@ export const makeWorld = (map: GameMap): World => {
   water.forEach((a, i) => waterGrid.insert(i, boxOf(a.pts)))
   const riverGrid = new Grid(map.width, map.height, CELL)
   map.waterways.forEach((w, i) => riverGrid.insert(i, boxOf(w.pts, w.width)))
+
+  const areaGrid = new Grid(map.width, map.height, CELL)
+  map.areas.forEach((a, i) => areaGrid.insert(i, boxOf(a.pts)))
+  const areaAt = (x: number, y: number) => {
+    let best = -1
+    for (const i of areaGrid.at(x, y)) {
+      const a = map.areas[i]
+      if (i > best && a !== undefined && pointInPolygon(x, y, a.pts)) best = i
+    }
+    return map.areas[best]?.kind ?? null
+  }
 
   const isSolid = (x: number, y: number) => {
     for (const i of buildingGrid.at(x, y)) {
@@ -88,7 +101,7 @@ export const makeWorld = (map: GameMap): World => {
     })
   })
 
-  return { map, isSolid, isWater, roadAt, junctions }
+  return { map, isSolid, isWater, roadAt, junctions, areaAt }
 }
 
 const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): number => {

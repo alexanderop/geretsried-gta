@@ -19,6 +19,15 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 
+## Sprites
+
+Painted by Codex (`codex-images` skill), then keyed, sliced and made seamless by
+`python3 scripts/process-sprites.py <codex-dir> [<newer-dir> ...]` into `public/sprites/`.
+Roofs, asphalt and trees were prompted with a real aerial photo of Sudetenstraße as reference
+(DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0); no photo data ships with the game.
+
+The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
+
 ## Layout
 
 | Path | What |

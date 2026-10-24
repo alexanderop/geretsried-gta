@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import type { World } from "#/world/world.ts"
 import { ChunkCache } from "#/render/chunks.ts"
-import { bakeMinimap, drawFrame, drawMinimap, followCamera, type Camera } from "#/render/draw.ts"
+import { bakeMinimap, drawFrame, drawMinimap, followCamera, makeSprites, type Camera } from "#/render/draw.ts"
+import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
 
 type Hud = { street: string; kmh: number; inCar: boolean; nearCar: boolean }
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-export function Game({ world }: { readonly world: World }) {
+export function Game({ world, assets }: { readonly world: World; readonly assets: Assets }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [hud, setHud] = useState<Hud>({ street: "", kmh: 0, inCar: false, nearCar: false })
 
@@ -24,7 +25,8 @@ export function Game({ world }: { readonly world: World }) {
     if (canvas == null || ctx == null) return
     const game = newGame(world, Date.now() % 100_000)
     window.__gta = { game, world }
-    const chunks = new ChunkCache(world.map)
+    const chunks = new ChunkCache(world, assets)
+    const sprites = makeSprites(assets)
     const minimap = bakeMinimap(world.map, 220)
     const camera: Camera = { ...playerPos(game), zoom: 7 }
     const keyboard = listenKeyboard(window)
@@ -48,7 +50,7 @@ export function Game({ world }: { readonly world: World }) {
         acc -= DT
       }
       followCamera(camera, game)
-      drawFrame(ctx, chunks, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
+      drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
       drawMinimap(ctx, minimap, world.map, game)
       if ((hudTimer += 1) % 6 === 0) {
         const p = playerPos(game)
@@ -68,7 +70,7 @@ export function Game({ world }: { readonly world: World }) {
       keyboard.dispose()
       window.removeEventListener("resize", resize)
     }
-  }, [world])
+  }, [world, assets])
 
   return (
     <div className="relative h-dvh w-dvw overflow-hidden bg-black font-mono text-white select-none">

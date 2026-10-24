@@ -1,4 +1,6 @@
 import type { World } from "#/world/world.ts"
+import { makeProjection } from "#/map/project.ts"
+import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
@@ -44,31 +46,45 @@ export const makeRandom = (seed: number) => () => {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 }
 
-/** Spawn on Egerlandstraße next to a parked car; fall back to the map center. */
+/** Sudetenstraße 19, Geretsried: where every game starts. */
+export const START = { lat: 47.8582, lon: 11.4836 }
+
+/** Spawn on the street segment closest to START, next to a parked car. */
 export const newGame = (world: World, seed = 1): Game => {
   const random = makeRandom(seed)
-  const road =
-    world.map.roads.find((r) => r.name === "Egerlandstraße" && DRIVABLE.has(r.kind) && r.pts.length >= 6) ??
-    world.map.roads.find((r) => DRIVABLE.has(r.kind) && r.pts.length >= 6)
-  const mid = road === undefined ? 0 : Math.floor(road.pts.length / 4)
-  const ax = road?.pts[mid * 2] ?? world.map.width / 2
-  const ay = road?.pts[mid * 2 + 1] ?? world.map.height / 2
-  const bx = road?.pts[mid * 2 + 2] ?? ax + 1
-  const by = road?.pts[mid * 2 + 3] ?? ay
-  const angle = Math.atan2(by - ay, bx - ax)
+  const [tx, ty] = makeProjection(world.map.bbox).toMeters(START)
+  let best = { d: Infinity, ax: tx, ay: ty, bx: tx + 1, by: ty, width: 6 }
+  for (const r of world.map.roads) {
+    if (!DRIVABLE.has(r.kind)) continue
+    for (let i = 0; i + 3 < r.pts.length; i += 2) {
+      const ax = r.pts[i] ?? 0
+      const ay = r.pts[i + 1] ?? 0
+      const bx = r.pts[i + 2] ?? 0
+      const by = r.pts[i + 3] ?? 0
+      const d = distToSegmentSq(tx, ty, ax, ay, bx, by)
+      if (d < best.d) best = { d, ax, ay, bx, by, width: r.width }
+    }
+  }
+  // Park in the middle of that segment, facing along it.
+  const ax = (best.ax + best.bx) / 2
+  const ay = (best.ay + best.by) / 2
+  const { bx, by } = best
+  const road = { width: best.width }
+  const angle = Math.atan2(by - best.ay, bx - best.ax)
   const nx = -Math.sin(angle)
   const ny = Math.cos(angle)
-  const lane = (road?.width ?? 6) / 4
-  const car: Car = { x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, color: "#e67e22" }
+  // Half on the sidewalk, like people park in Geretsried, so traffic can pass.
+  const lane = road.width / 2 + 1
+  const car: Car = { x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, model: 0 }
   const game: Game = {
-    player: { x: car.x + nx * 3.5, y: car.y + ny * 3.5, angle: angle - Math.PI / 2, car: null },
+    player: { x: car.x + nx * 2.5, y: car.y + ny * 2.5, angle: angle - Math.PI / 2, car: null },
     parked: [car],
     npcs: [],
     nextId: 0,
     time: 0,
     random,
   }
-  fillTraffic(world, game, 0)
+  fillTraffic(world, game, 40)
   return game
 }
 
@@ -85,10 +101,12 @@ const carHitsWall = (world: World, car: Car) =>
 const fillTraffic = (world: World, game: Game, minR: number) => {
   const { x, y } = playerPos(game)
   game.npcs = game.npcs.filter((n) => Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
-  while (game.npcs.length < NPC_COUNT) {
+  for (let attempt = 0; game.npcs.length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
     const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
     if (npc === null) return
-    game.npcs.push(npc)
+    // Never spawn on top of another car.
+    const taken = [...game.parked, ...game.npcs].some((c) => Math.hypot(c.x - npc.x, c.y - npc.y) < 10)
+    if (!taken) game.npcs.push(npc)
   }
 }
 
@@ -141,8 +159,11 @@ export const step = (world: World, game: Game, input: Input): void => {
       player.car.vx *= -0.3
       player.car.vy *= -0.3
     } else Object.assign(player.car, next)
+    const before = { x: player.car.x, y: player.car.y }
     for (const npc of game.npcs) if (pushApart(player.car, npc.x, npc.y, CAR_LENGTH * 0.75)) npc.speed = 0
     for (const car of game.parked) pushApart(player.car, car.x, car.y, CAR_LENGTH * 0.75)
+    // A shove from another car must not push you into a wall.
+    if (carHitsWall(world, player.car)) Object.assign(player.car, before)
     player.x = player.car.x
     player.y = player.car.y
   } else {
@@ -187,7 +208,7 @@ const toggleCar = (game: Game) => {
   const npc = game.npcs.find((n) => dist(n.x, n.y) < ENTER_RANGE)
   if (npc === undefined) return
   game.npcs = game.npcs.filter((n) => n !== npc)
-  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, color: npc.color }
+  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model }
 }
 
 /** Speed in km/h for the HUD. */

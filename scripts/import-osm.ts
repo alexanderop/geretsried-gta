@@ -24,6 +24,7 @@ const QUERY = `[out:json][timeout:120];
   way["natural"~"water|wood"](${BBOX.south},${BBOX.west},${BBOX.north},${BBOX.east});
   way["landuse"](${BBOX.south},${BBOX.west},${BBOX.north},${BBOX.east});
   way["leisure"~"park|pitch"](${BBOX.south},${BBOX.west},${BBOX.north},${BBOX.east});
+  way["amenity"="parking"](${BBOX.south},${BBOX.west},${BBOX.north},${BBOX.east});
 );
 out geom;`
 

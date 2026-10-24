@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { GRASS, ROAD, forwardSpeed, stepCar, type Car, type Controls } from "./car.ts"
 
-const parked: Car = { x: 0, y: 0, angle: 0, vx: 0, vy: 0, color: "red" }
+const parked: Car = { x: 0, y: 0, angle: 0, vx: 0, vy: 0, model: 0 }
 const drive = (car: Car, controls: Controls, seconds: number, surface = ROAD) => {
   let c = car
   for (let t = 0; t < seconds * 60; t++) c = stepCar(c, controls, surface, 1 / 60)

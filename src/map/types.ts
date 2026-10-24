@@ -22,6 +22,7 @@ export const AreaKind = Schema.Literals([
   "industrial",
   "park",
   "pitch",
+  "parking",
 ])
 export type AreaKind = typeof AreaKind.Type
 
@@ -50,7 +51,8 @@ export type Waterway = typeof Waterway.Type
 export const GameMap = Schema.Struct({
   width: Schema.Number,
   height: Schema.Number,
-  origin: Schema.Struct({ lat: Schema.Number, lon: Schema.Number }),
+  /** Degrees; north-west is (0, 0) in meters. */
+  bbox: Schema.Struct({ south: Schema.Number, west: Schema.Number, north: Schema.Number, east: Schema.Number }),
   roads: Schema.Array(Road),
   buildings: Schema.Array(Building),
   areas: Schema.Array(Area),

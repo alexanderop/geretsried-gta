@@ -11,6 +11,7 @@ export const AREA_COLORS: Readonly<Record<AreaKind, string>> = {
   industrial: "#8b8579",
   park: "#5c9446",
   pitch: "#4f9a4a",
+  parking: "#8d8c88",
 }
 
 export const ROAD_COLORS: Readonly<Record<RoadKind, string>> = {
@@ -26,8 +27,3 @@ export const ROAD_COLORS: Readonly<Record<RoadKind, string>> = {
 
 export const SIDEWALK = "#a9a397"
 export const WATERWAY = "#3a7bbf"
-
-const ROOFS = ["#9c4a3a", "#7d3c32", "#a8645a", "#6b6f78", "#5a5e66", "#8a7b6a", "#b3a48c", "#7a5a4a"]
-
-/** Stable roof color per building id. */
-export const roofColor = (id: number) => ROOFS[Math.abs(id * 2654435761) % ROOFS.length] ?? "#888"

@@ -25,11 +25,11 @@ describe("Geretsried map", () => {
 })
 
 describe("a new game", () => {
-  it("starts on foot on Egerlandstraße, outside any building, next to a free car", () => {
+  it("starts on foot on Sudetenstraße, outside any building, next to a free car", () => {
     const game = newGame(world, 7)
     const { player } = game
     expect(world.isSolid(player.x, player.y)).toBe(false)
-    expect(world.roadAt(player.x, player.y, 15)?.road.name).toBe("Egerlandstraße")
+    expect(world.roadAt(player.x, player.y, 15)?.road.name).toBe("Sudetenstraße")
     expect(carOutline(must(game.parked[0])).some(([x, y]) => world.isSolid(x, y))).toBe(false)
   })
 

@@ -13,7 +13,7 @@ export type Npc = {
   x: number
   y: number
   angle: number
-  readonly color: string
+  readonly model: number
 }
 
 const CRUISE: Readonly<Record<string, number>> = {
@@ -24,7 +24,10 @@ const CRUISE: Readonly<Record<string, number>> = {
   living_street: 4,
 }
 
-export const NPC_COLORS = ["#c0392b", "#2e86c1", "#f1c40f", "#ecf0f1", "#27ae60", "#8e44ad", "#d35400", "#1c2833"]
+/** Car sprite indices for ordinary traffic; 5 is the police car, which shows up rarely. */
+const CIVILIAN_MODELS = [0, 1, 2, 3, 4, 6, 7]
+const POLICE_MODEL = 5
+const modelFor = (id: number) => (id % 23 === 0 ? POLICE_MODEL : (CIVILIAN_MODELS[id % CIVILIAN_MODELS.length] ?? 0))
 
 const vertex = (pts: ReadonlyArray<number>, i: number) => [pts[i * 2] ?? 0, pts[i * 2 + 1] ?? 0] as const
 
@@ -94,7 +97,7 @@ export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR:
       x: 0,
       y: 0,
       angle: 0,
-      color: NPC_COLORS[id % NPC_COLORS.length] ?? "#fff",
+      model: modelFor(id),
     }
     const pts = hit.road.pts
     const [ax, ay] = vertex(pts, npc.from)
