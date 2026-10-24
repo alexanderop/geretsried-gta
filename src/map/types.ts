@@ -99,8 +99,6 @@ export const GameMap = Schema.Struct({
   waterways: Schema.Array(Waterway),
   pois: Schema.Array(Poi),
   signals: Schema.Array(Signal),
-  /** Parked cars seen in the aerial photo, flat [x, y, heading, ...] (meters, radians). */
-  parked: Schema.Array(Schema.Number),
 })
 export type GameMap = typeof GameMap.Type
 

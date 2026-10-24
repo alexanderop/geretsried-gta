@@ -3,7 +3,6 @@ import { polygonArea } from "#/map/build.ts"
 import type { World } from "#/world/world.ts"
 import { boxOf, centroid, distToSegmentSq, longestEdgeAngle, pointInPolygon, type Box } from "#/world/geometry.ts"
 import { nearestWall } from "#/map/roof.ts"
-import { CAR_LENGTH } from "#/sim/car.ts"
 import { Grid } from "#/world/grid.ts"
 import { TEXTURES, TREE_TONES, silhouette, type Assets, type RoofTexture, type TextureName } from "./assets.ts"
 import { GROUND, ROAD_COLORS } from "./palette.ts"
@@ -36,8 +35,8 @@ const AREA_LOOK: Readonly<Record<AreaKind, readonly [TextureName, string | null]
 }
 
 /**
- * Bakes the static map into 128 m canvases on demand and keeps the most recent
- * ones (LRU). Drawing a frame is then a handful of drawImage calls.
+ * The drawn map, the fallback wherever no aerial photo tile loads: bakes it
+ * into 128 m canvases on demand and keeps the most recent ones (LRU).
  */
 export class ChunkCache {
   private readonly cache = new Map<string, HTMLCanvasElement>()
@@ -49,9 +48,6 @@ export class ChunkCache {
   private readonly map: World["map"]
   /** Photo tree crowns by the chunk(s) they touch. */
   private readonly crowns = new Map<string, Array<number>>()
-  /** Parked cars (index into map.parked / 3) by the chunk(s) they touch. */
-  private readonly parked = new Map<string, Array<number>>()
-  private readonly carShadows: ReadonlyArray<HTMLCanvasElement>
   /** Scratch layer for masked and see-through passes, reused by every bake. */
   private readonly layer = document.createElement("canvas")
   /** Photo roof planes of the chunk being baked, see `paintPlanes`. */
@@ -65,8 +61,7 @@ export class ChunkCache {
   ) {
     const map = world.map
     this.map = map
-    this.treeShadows = assets.trees.map(silhouette)
-    this.carShadows = assets.cars.map(silhouette)
+    this.treeShadows = assets.trees.map((img) => silhouette(img))
     const index = <T extends { readonly pts: ReadonlyArray<number> }>(items: ReadonlyArray<T>, pad: (t: T) => number) => {
       const grid = new Grid(map.width, map.height, CHUNK_M)
       items.forEach((item, i) => grid.insert(i, boxOf(item.pts, pad(item))))
@@ -86,7 +81,6 @@ export class ChunkCache {
     for (let i = 0; i < rs.length; i++) {
       bucket(this.crowns, i, (xs[i] ?? 0) / 10, (ys[i] ?? 0) / 10, (rs[i] ?? 0) / 10 + CROWN_SHADOW_M)
     }
-    for (let i = 0; i * 3 < map.parked.length; i++) bucket(this.parked, i, map.parked[i * 3] ?? 0, map.parked[i * 3 + 1] ?? 0, CAR_LENGTH)
   }
 
   /** The baked chunk, or null if `budget` says not to bake more this frame. */
@@ -219,7 +213,6 @@ export class ChunkCache {
     }
     ctx.setLineDash([])
 
-    this.drawParked(ctx, cx, cy)
     const buildingIds = ids(this.buildings)
     this.drawShadows(ctx, box, buildingIds)
     this.paintPlanes(box, buildingIds)
@@ -444,27 +437,6 @@ export class ChunkCache {
     return p
   }
 
-  /** Parked cars from the photo, each a random model, nose either way. */
-  private drawParked(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
-    const { parked } = this.map
-    for (const pass of ["shadow", "car"] as const) {
-      for (const i of this.parked.get(`${cx},${cy}`) ?? []) {
-        const model = PARKED_MODELS[Math.floor(hash2(i, 1, 9) * PARKED_MODELS.length)] ?? 0
-        const img = pass === "shadow" ? this.carShadows[model] : this.assets.cars[model]
-        if (img === undefined) continue
-        const length = CAR_LENGTH * 1.08
-        const width = (length * img.height) / img.width
-        const off = pass === "shadow" ? 0.5 : 0
-        ctx.save()
-        ctx.translate((parked[i * 3] ?? 0) + SHADOW_DIR[0] * off, (parked[i * 3 + 1] ?? 0) + SHADOW_DIR[1] * off)
-        ctx.rotate((parked[i * 3 + 2] ?? 0) + (hash2(i, 2, 9) < 0.5 ? Math.PI : 0))
-        ctx.globalAlpha = pass === "shadow" ? SHADOW_ALPHA : 1
-        ctx.drawImage(img, -length / 2, -width / 2, length, width)
-        ctx.restore()
-      }
-    }
-  }
-
   /** Forest trees on a fixed 7 m jittered grid in map space, so neighbouring chunks agree on border trees. */
   private drawForest(ctx: CanvasRenderingContext2D, box: Box) {
     const { world } = this
@@ -536,12 +508,6 @@ const FOREST_TREES = [0, 1, 1, 1, 6]
 /** Town trees are mostly broad-leaved; small crowns are bushes and hedges. */
 const CROWNS = [0, 0, 0, 1, 2, 3, 6, 6]
 const SMALL_CROWNS = [0, 4, 5, 5]
-/**
- * Car sprites 0 blue, 1 grey, 2 silver-white, 3 red, 4 black, 5 teal, 6 orange,
- * 7 yellow, weighted like the cars parked in German towns: mostly grey, black and white, never orange or yellow.
- */
-const PARKED_MODELS = [1, 1, 1, 2, 2, 2, 4, 4, 4, 0, 0, 3, 5]
-
 /** How far a crown's shadow can reach past its radius, in meters. */
 const CROWN_SHADOW_M = 8
 

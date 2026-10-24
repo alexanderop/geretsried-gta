@@ -9,7 +9,6 @@ import { polygonArea } from "./build.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
 import { eaves, nearestWall, wallCount } from "./roof.ts"
 import { components, inRect, orientedRect, rectCorners, rim } from "./shapes.ts"
-import { aisleBays, carCorners, lotBays, type Bay } from "./parking.ts"
 
 import { PHOTO_PX_PER_M, type Raster } from "./raster.ts"
 
@@ -473,58 +472,7 @@ export const readPhoto = (
   for (const area of map.areas) if (area.kind === "pitch") for (const i of polygonPixels(raster, area.pts)) noSheds[i] = 1
   const extra = findMissingBuildings(raster, masks.footprint, roadMask(map, width, height), noSheds)
   const paved = pavedMask(cleanPaved(ground, width, height, parking), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
-  const parked = findParkedCars(map, raster, ground).flatMap((b) => [round1(b.x), round1(b.y), Math.round(b.heading * 100) / 100])
-  return { map: { ...map, buildings: [...buildings, ...extra], parked }, crowns: findCrowns(ground, width, height), paved }
-}
-
-const round1 = (n: number) => Math.round(n * 10) / 10
-
-/**
- * Share of bays with a car. At 1 m per pixel a car is a handful of pixels,
- * too few to tell from a shadow or an oil stain, so occupancy is a fixed
- * share, picked per bay by a hash of its position.
- */
-const OCCUPANCY = 0.7
-
-const occupied = (b: Bay) => {
-  let h = Math.imul(Math.round(b.x * 10), 374761393) ^ Math.imul(Math.round(b.y * 10), 668265263)
-  h = Math.imul(h ^ (h >>> 13), 1274126177)
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296 < OCCUPANCY
-}
-
-/**
- * Cars in parking lots: bays along every parking aisle and rows in lots
- * without mapped aisles. Bays the photo shows as a building or lawn, or that
- * reach onto a street or an earlier bay, are dropped.
- */
-export const findParkedCars = (map: GameMap, raster: Raster, ground: Uint8Array): Array<Bay> => {
-  const { width, height } = raster
-  const blocked = roadMask(map, width, height)
-  const aisles = map.roads.filter((r) => r.aisle === true)
-  const lots = map.areas.filter((a) => a.kind === "parking")
-  const candidates = [
-    ...aisles.flatMap((r) => aisleBays(r.pts)),
-    ...lots.filter((lot) => !aisles.some((r) => r.pts.length >= 2 && pointInPolygon(r.pts[0] ?? 0, r.pts[1] ?? 0, lot.pts))).flatMap((lot) => lotBays(lot.pts)),
-  ]
-  const px = (x: number, y: number) => {
-    const ix = Math.floor(x * PHOTO_PX_PER_M)
-    const iy = Math.floor(y * PHOTO_PX_PER_M)
-    return ix >= 0 && iy >= 0 && ix < width && iy < height ? iy * width + ix : -1
-  }
-  const cars: Array<Bay> = []
-  for (const bay of candidates) {
-    const centre = px(bay.x, bay.y)
-    if (centre < 0 || blocked[centre] === 1) continue
-    const corners = carCorners(bay, 1.8, 4.4).map(([x, y]) => px(x, y))
-    if (corners.some((i) => i < 0 || blocked[i] === 1 || ground[i] === Ground.building)) continue
-    if (corners.filter((i) => ground[i] === Ground.lawn).length > 1) continue
-    if (!occupied(bay)) continue
-    cars.push(bay)
-    const hx = Math.cos(bay.heading) * 1.8
-    const hy = Math.sin(bay.heading) * 1.8
-    paintStroke(blocked, width, height, [bay.x - hx, bay.y - hy, bay.x + hx, bay.y + hy], 0.9)
-  }
-  return cars
+  return { map: { ...map, buildings: [...buildings, ...extra] }, crowns: findCrowns(ground, width, height), paved }
 }
 
 /** Set every pixel within `radius` meters of the polyline. */

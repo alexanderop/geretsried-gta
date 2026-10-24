@@ -191,8 +191,8 @@ export const loadAssets = Effect.all(
   ),
 )
 
-/** Black copy of a sprite's shape, for drop shadows. */
-export const silhouette = (img: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement => {
+/** One-colour copy of a sprite's shape: black for drop shadows, light for outlines. */
+export const silhouette = (img: HTMLImageElement | HTMLCanvasElement, color = "#000"): HTMLCanvasElement => {
   const c = document.createElement("canvas")
   c.width = img.width
   c.height = img.height
@@ -200,7 +200,7 @@ export const silhouette = (img: HTMLImageElement | HTMLCanvasElement): HTMLCanva
   if (ctx === null) return c
   ctx.drawImage(img, 0, 0)
   ctx.globalCompositeOperation = "source-in"
-  ctx.fillStyle = "#000"
+  ctx.fillStyle = color
   ctx.fillRect(0, 0, c.width, c.height)
   return c
 }

@@ -19,9 +19,24 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 
-### What comes from the aerial photo
+### The ground is the aerial photo
 
-OSM has shapes but almost no looks, so `pnpm map` also reads the Bavarian DOP40 orthophoto
+`pnpm photo` (`scripts/photo-tiles.ts`) cuts the Bavarian DOP40 orthophoto into 528 tiles of 256 m at its
+native 0.4 m per pixel (`public/photo/<tx>_<ty>.webp`, grid math in `src/map/photo-tiles.ts`, about 30 MB).
+It asks the WMS for each tile in EPSG:4326, which is linear in lat/lon just like the map projection
+(`src/map/project.ts`), so the photo lines up with the OSM geometry to the pixel. Each tile carries a
+one-pixel border from its neighbours, so smooth upscaling has no seams. Every tile gets the same light
+look (`scripts/photo-style.ts`: unsharp mask, haze cut, gentle S-curve, a little more saturation), so
+colours cannot jump between tiles. Downloads are cached in `data/dop40/tiles/`, one request at a time.
+
+The renderer (`src/render/photo.ts`) loads tiles lazily around the view, decodes them off the main thread
+and keeps 48 in an LRU. Cars, pedestrians, traffic lights, shop labels and the player are sprites on top.
+The photo already shows parked cars, trees, roofs and shadows, so none of those are drawn.
+
+### What else comes from the aerial photo
+
+The drawn map (`src/render/chunks.ts`) is only the fallback for a tile that fails to load. It, the
+collision data and the minimap still come from OSM plus `pnpm map`, which also reads the DOP40 orthophoto
 (`scripts/dop40.ts`: 42 WMS tiles at 1 m/px, cached in `data/dop40/`) inside the OSM geometry
 (`src/map/photo.ts`):
 
@@ -44,10 +59,8 @@ OSM has shapes but almost no looks, so `pnpm map` also reads the Bavarian DOP40 
   shapes (closing fills cars, opening drops specks; green islands in paving under 12 m² are paved
   over, larger ones squared into straight planting strips), as the alpha of `public/ground.png` (2 m/px). The
   renderer gives the mask a hard edge and fills it with smooth light paving.
-- **Parked cars** (`src/map/parking.ts`): 2.5 × 5 m bays along every OSM parking aisle and in rows
-  filling lots without mapped aisles, minus bays the photo shows as lawn or building or that reach a
-  street; 70 % hold a car (`parked` in the map JSON). At 1 m per pixel the photo cannot tell a car from
-  a shadow, so which bays are taken is a hash. Parked cars are solid.
+- Parked cars are not solid: the ones in the photo cannot be told apart at 1 m per pixel, and an
+  invisible obstacle is worse than driving through a picture of a car.
 
 Lawn, pavement, asphalt and tree sprites are re-toned at load to the median colours measured in the photo;
 paving and asphalt also lose most of their painted speckle.
@@ -87,6 +100,7 @@ The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 
 Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL). `public/geretsried.map.json` is a derived database and stays under the ODbL.
 
-Roof colours, tree crowns (`public/trees.bin`), parked-car positions and the paved-ground mask (`public/ground.png`) are derived from
-the DOP40 orthophoto, © [Bayerische Vermessungsverwaltung](https://geodaten.bayern.de/opengeodata/),
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). No photo pixels ship with the game.
+The ground tiles in `public/photo/` are the DOP40 orthophoto, © [Bayerische Vermessungsverwaltung](https://geodaten.bayern.de/opengeodata/)
+(www.geodaten.bayern.de), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), **modified**: cut into tiles,
+sharpened, contrast and saturation raised, re-encoded as WebP. Roof colours, tree crowns (`public/trees.bin`)
+and the paved-ground mask (`public/ground.png`) are derived from the same photo.

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { buildingMasks, classifyGround, cleanPaved, findCrowns, findMissingBuildings, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
 import { eaves } from "./roof.ts"
-import { aisleBays, lotBays } from "./parking.ts"
 import { decodePng, encodePng } from "./png.ts"
 import { decodeCrowns, encodeCrowns } from "./crowns.ts"
 
@@ -86,23 +85,6 @@ describe("eaves", () => {
 
   it("makes a square house hipped: every wall is an eave", () => {
     expect(eaves([0, 0, 10, 0, 10, 10, 0, 10, 0, 0], 10)).toEqual([true, true, true, true])
-  })
-})
-
-describe("parking bays", () => {
-  it("lines both sides of an aisle with 2.5 m bays, cars pointing at the aisle", () => {
-    const bays = aisleBays([0, 0, 10, 0])
-    expect(bays).toHaveLength(8)
-    expect(new Set(bays.map((b) => Math.abs(b.y)))).toEqual(new Set([5.5]))
-    expect(Math.abs(Math.sin(bays[0]?.heading ?? 0))).toBeCloseTo(1)
-  })
-
-  it("fills a lot with rows that stay inside it", () => {
-    const lot = [0, 0, 30, 0, 30, 16, 0, 16, 0, 0]
-    const bays = lotBays(lot)
-    // Two rows back to back along the long side, then a 6 m aisle: 2 × 12 bays.
-    expect(bays).toHaveLength(24)
-    expect(bays.every((b) => b.x > 0 && b.x < 30 && b.y > 0 && b.y < 16)).toBe(true)
   })
 })
 

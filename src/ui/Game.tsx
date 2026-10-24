@@ -3,6 +3,8 @@ import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "
 import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { ChunkCache } from "#/render/chunks.ts"
+import { PhotoTiles } from "#/render/photo.ts"
+import { photoTileGrid } from "#/map/photo-tiles.ts"
 import { bakeMinimap, drawFrame, drawMinimap, drawPlaces, followCamera, makeSprites, poiIcon, type Camera } from "#/render/draw.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
@@ -40,6 +42,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     const game = newGame(world, Date.now() % 100_000)
     window.__gta = { game, world }
     const chunks = new ChunkCache(world, assets)
+    const grid = photoTileGrid(world.map.width, world.map.height)
+    const photos = new PhotoTiles(grid.cols, grid.rows)
     const sprites = makeSprites(assets)
     const minimap = bakeMinimap(world.map, 220)
     const camera: Camera = { ...playerPos(game), zoom: 7 }
@@ -67,13 +71,13 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       }
       if (compare !== null) {
         // Fixed camera, every chunk baked at once, nothing but the map.
-        drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game, { bakeBudget: 999, entities: false })
-        document.body.dataset.ready = "1"
+        const view = { ...camera, zoom: camera.zoom * devicePixelRatio }
+        if (drawFrame(ctx, chunks, photos, sprites, view, game, { bakeBudget: 999, entities: false })) document.body.dataset.ready = "1"
         raf = requestAnimationFrame(frame)
         return
       }
       followCamera(camera, game)
-      drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
+      drawFrame(ctx, chunks, photos, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
       drawPlaces(ctx, world.map, camera, devicePixelRatio)
       drawMinimap(ctx, minimap, world.map, game)
       if ((hudTimer += 1) % 6 === 0) {
@@ -131,11 +135,15 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap
         </a>{" "}
-        contributors · Luftbild{" "}
+        contributors · Luftbild: DOP40{" "}
         <a className="underline" href="https://geodaten.bayern.de/opengeodata/" target="_blank" rel="noreferrer">
-          © Bayerische Vermessungsverwaltung
-        </a>{" "}
-        (DOP40, CC BY 4.0)
+          © Bayerische Vermessungsverwaltung (www.geodaten.bayern.de)
+        </a>
+        ,{" "}
+        <a className="underline" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
+          CC BY 4.0
+        </a>
+        , bearbeitet (geschärft, Kontrast und Farbe angepasst)
       </div>
     </div>
   )

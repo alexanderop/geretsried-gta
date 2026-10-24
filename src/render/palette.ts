@@ -1,6 +1,8 @@
 import type { AreaKind, RoadKind } from "#/map/types.ts"
 
 export const GROUND = "#5f8a3e"
+/** Between the median colours of town and forest in the stylised photo: the ground shown while a tile loads. */
+export const PHOTO_GROUND = "#6b7556"
 
 export const AREA_COLORS: Readonly<Record<AreaKind, string>> = {
   water: "#3a7bbf",
@@ -25,5 +27,3 @@ export const ROAD_COLORS: Readonly<Record<RoadKind, string>> = {
   footway: "#c8b993",
 }
 
-export const SIDEWALK = "#a9a397"
-export const WATERWAY = "#3a7bbf"

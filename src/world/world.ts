@@ -1,7 +1,6 @@
 import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
-import { CAR_LENGTH, CAR_WIDTH } from "#/sim/car.ts"
 
 const CELL = 32
 
@@ -32,8 +31,8 @@ export type World = {
 }
 
 export const makeWorld = (map: GameMap): World => {
-  // Buildings and parked cars are solid: anything that cannot be driven or walked through.
-  const solids = [...map.buildings.map((b) => b.pts), ...parkedOutlines(map.parked)]
+  // Buildings are solid: nothing drives or walks through them.
+  const solids = map.buildings.map((b) => b.pts)
   const buildingGrid = new Grid(map.width, map.height, CELL)
   const buildingBoxes = solids.map((pts, i) => {
     const box = boxOf(pts)
@@ -122,20 +121,4 @@ const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): nu
     if (d < best) best = d
   }
   return best
-}
-
-/** Footprints of the parked cars (flat [x, y, heading, ...]) as closed rectangles. */
-const parkedOutlines = (parked: ReadonlyArray<number>): Array<Array<number>> => {
-  const out: Array<Array<number>> = []
-  for (let i = 0; i + 2 < parked.length; i += 3) {
-    const x = parked[i] ?? 0
-    const y = parked[i + 1] ?? 0
-    const hx = Math.cos(parked[i + 2] ?? 0)
-    const hy = Math.sin(parked[i + 2] ?? 0)
-    const l = CAR_LENGTH / 2
-    const w = CAR_WIDTH / 2 - 0.1
-    const corner = (s: number, t: number) => [x + hx * l * s - hy * w * t, y + hy * l * s + hx * w * t]
-    out.push([...corner(1, 1), ...corner(1, -1), ...corner(-1, -1), ...corner(-1, 1), ...corner(1, 1)])
-  }
-  return out
 }
