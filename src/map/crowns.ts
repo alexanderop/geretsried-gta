@@ -33,3 +33,28 @@ export const decodeCrowns = (buffer: ArrayBuffer): Crowns => {
   }
   return { xs, ys, rs: new Uint8Array(buffer, 4 + n * 4, n) }
 }
+
+/** Is (x, y) meters under a tree crown? Bucketed once, so each question looks at a few crowns only. */
+const COVER_CELL = 16
+const cellKey = (cx: number, cy: number) => cy * 4096 + cx
+
+export const crownCover = (crowns: Crowns): ((x: number, y: number) => boolean) => {
+  const cells = new Map<number, Array<number>>()
+  for (let i = 0; i < crowns.xs.length; i++) {
+    const k = cellKey(Math.floor((crowns.xs[i] ?? 0) / 10 / COVER_CELL), Math.floor((crowns.ys[i] ?? 0) / 10 / COVER_CELL))
+    const list = cells.get(k)
+    if (list === undefined) cells.set(k, [i])
+    else list.push(i)
+  }
+  return (x, y) => {
+    const cx = Math.floor(x / COVER_CELL)
+    const cy = Math.floor(y / COVER_CELL)
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++)
+        for (const i of cells.get(cellKey(cx + dx, cy + dy)) ?? []) {
+          const r = (crowns.rs[i] ?? 0) / 10 + 0.8
+          if (Math.hypot((crowns.xs[i] ?? 0) / 10 - x, (crowns.ys[i] ?? 0) / 10 - y) < r) return true
+        }
+    return false
+  }
+}

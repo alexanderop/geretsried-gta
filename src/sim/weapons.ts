@@ -46,6 +46,13 @@ export type Arsenal = {
 
 export const newArsenal = (): Arsenal => ({ current: "fists", ammo: { pistol: 0, smg: 0, shotgun: 0, molotov: 0, rocket: 0, flamer: 0 }, cooldown: 0 })
 
+/** WASTED or BUSTED: GTA 2 takes every gun off you. */
+export const disarm = (a: Arsenal): void => {
+  a.current = "fists"
+  a.cooldown = 0
+  for (const w of WEAPON_ORDER) if (w !== "fists") a.ammo[w] = 0
+}
+
 export const owned = (a: Arsenal, w: WeaponId) => w === "fists" || a.ammo[w] > 0
 
 /** Q / E: the next weapon you have rounds for, round the list; fists are always there. */

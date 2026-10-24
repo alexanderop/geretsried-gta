@@ -37,22 +37,25 @@ const hash = (s: Spot) => {
 }
 
 /** A point you can stand on and that is not in the water: (x, y) itself, or the first free one on a small ring round it. */
-const standable = (world: World, x: number, y: number): Spot | null => {
+/** Where a pickup would be hidden from the camera: under a tree crown, in the woods. */
+export type Hidden = (x: number, y: number) => boolean
+
+const standable = (world: World, x: number, y: number, hidden: Hidden): Spot | null => {
   for (const r of [0, 2, 4]) {
     for (let k = 0; k < (r === 0 ? 1 : 8); k++) {
       const a = (k / 8) * Math.PI * 2
       const px = x + Math.cos(a) * r
       const py = y + Math.sin(a) * r
-      if (px > 0 && py > 0 && px < world.map.width && py < world.map.height && !world.isSolid(px, py) && !world.isWater(px, py)) return { x: px, y: py }
+      if (px > 0 && py > 0 && px < world.map.width && py < world.map.height && !world.isSolid(px, py) && !world.isWater(px, py) && world.areaAt(px, py) !== "forest" && !hidden(px, py)) return { x: px, y: py }
     }
   }
   return null
 }
 
 /** Behind a shop: from its door, away from the street it faces, past the building. */
-const behindShop = (world: World, x: number, y: number): Spot | null => {
+const behindShop = (world: World, x: number, y: number, hidden: Hidden): Spot | null => {
   const road = world.roadAt(x, y, 40)
-  if (road === null) return standable(world, x, y)
+  if (road === null) return standable(world, x, y, hidden)
   const pts = road.road.pts
   let best = { d: Infinity, x, y }
   for (let i = 0; i + 1 < pts.length; i += 2) {
@@ -63,7 +66,7 @@ const behindShop = (world: World, x: number, y: number): Spot | null => {
   const ax = (x - best.x) / len
   const ay = (y - best.y) / len
   for (const back of [26, 20, 14, 9]) {
-    const s = standable(world, x + ax * back, y + ay * back)
+    const s = standable(world, x + ax * back, y + ay * back, hidden)
     if (s !== null) return s
   }
   return null
@@ -81,11 +84,11 @@ const centroid = (pts: ReadonlyArray<number>): Spot => {
 }
 
 /** Candidate spots: behind shops and places, inside parks and pitches, on parking lots. */
-const candidates = (world: World): Array<Spot> => {
+const candidates = (world: World, hidden: Hidden): Array<Spot> => {
   const out: Array<Spot> = []
   for (const poi of world.map.pois) {
     if (poi.kind === "school" || poi.kind === "police") continue
-    const s = behindShop(world, poi.x, poi.y)
+    const s = behindShop(world, poi.x, poi.y, hidden)
     if (s !== null) out.push(s)
   }
   for (const area of world.map.areas) {
@@ -93,7 +96,7 @@ const candidates = (world: World): Array<Spot> => {
     const c = centroid(area.pts)
     // An L-shaped lot's centroid may lie outside it.
     if (!pointInPolygon(c.x, c.y, area.pts)) continue
-    const s = standable(world, c.x, c.y)
+    const s = standable(world, c.x, c.y, hidden)
     if (s !== null) out.push(s)
   }
   return out
@@ -102,9 +105,10 @@ const candidates = (world: World): Array<Spot> => {
 /**
  * About PICKUP_COUNT pickups spread over the town, the same every game. The
  * spot nearest `start` is a pistol, so a new player finds a gun round the corner.
+ * `hidden` keeps them out from under tree crowns, which the camera cannot see through.
  */
-export const placePickups = (world: World, start: Spot, count = PICKUP_COUNT): Array<Pickup> => {
-  const all = candidates(world)
+export const placePickups = (world: World, start: Spot, hidden: Hidden = () => false, count = PICKUP_COUNT): Array<Pickup> => {
+  const all = candidates(world, hidden)
   const first = all.reduce<Spot | null>((best, s) => (best === null || Math.hypot(s.x - start.x, s.y - start.y) < Math.hypot(best.x - start.x, best.y - start.y) ? s : best), null)
   const ordered = all.toSorted((a, b) => hash(a) - hash(b))
   const chosen: Array<Spot> = first === null ? [] : [first]

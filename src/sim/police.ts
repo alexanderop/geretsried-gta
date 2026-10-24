@@ -20,6 +20,8 @@ export type Cop = {
   replan: number
   /** Seconds left backing away from a wall. */
   reverse: number
+  /** Seconds until the officer in the passenger seat fires again (from three cop heads). */
+  gun: number
 }
 
 const graphs = new WeakMap<World, RoadGraph>()
@@ -51,7 +53,7 @@ export const spawnCop = (world: World, id: number, x: number, y: number, random:
     const path = route(g, cx, cy, x, y)
     const angle = path.length >= 4 ? Math.atan2((path[3] ?? 0) - cy, (path[2] ?? 0) - cx) : Math.atan2(y - cy, x - cx)
     const car: Car = { x: cx, y: cy, angle, vx: 0, vy: 0, model: POLICE_MODEL, vitals: vitals(CAR_HP) }
-    if (!hits(car)) return { id, car, stuck: 0, path, replan: 1, reverse: 0 }
+    if (!hits(car)) return { id, car, stuck: 0, path, replan: 1, reverse: 0, gun: 1 }
   }
   return null
 }

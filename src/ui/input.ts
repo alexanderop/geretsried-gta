@@ -1,6 +1,8 @@
 import type { Input } from "#/sim/game.ts"
 
-const KEYS: Readonly<Record<string, keyof Omit<Input, "use">>> = {
+type Held = keyof Omit<Input, "use" | "cycle">
+
+const KEYS: Readonly<Record<string, Held>> = {
   KeyW: "up",
   ArrowUp: "up",
   KeyS: "down",
@@ -19,10 +21,11 @@ const KEYS: Readonly<Record<string, keyof Omit<Input, "use">>> = {
 /** UI keys outside the game step: G horn (held), H help (toggle), and any key (audio may start). */
 export type UiKeys = { readonly onHelp: () => void; readonly onAnyKey: () => void }
 
-/** Tracks held keys; `take()` returns this step's input and clears the one-shot F press. */
+/** Tracks held keys; `take()` returns this step's input and clears the one-shot presses (F, weapon cycling). */
 export const listenKeyboard = (target: Window, ui: UiKeys) => {
-  const held = new Set<keyof Omit<Input, "use">>()
+  const held = new Set<Held>()
   let use = false
+  let swap: -1 | 0 | 1 = 0
   let horn = false
   const down = (e: KeyboardEvent) => {
     ui.onAnyKey()
@@ -34,6 +37,9 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
       e.preventDefault()
     }
     if (e.code === "KeyF" && !e.repeat) use = true
+    // Q / E or [ / ]: previous and next weapon, GTA 2's weapon keys.
+    if (!e.repeat && (e.code === "KeyQ" || e.code === "BracketLeft")) swap = -1
+    if (!e.repeat && (e.code === "KeyE" || e.code === "BracketRight")) swap = 1
   }
   const up = (e: KeyboardEvent) => {
     if (e.code === "KeyG") horn = false
@@ -59,8 +65,10 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
         sprint: held.has("sprint"),
         attack: held.has("attack"),
         use,
+        cycle: swap,
       }
       use = false
+      swap = 0
       return input
     },
     dispose: () => {

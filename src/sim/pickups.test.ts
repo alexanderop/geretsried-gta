@@ -3,6 +3,7 @@ import { Schema } from "effect"
 import { describe, expect, it } from "vitest"
 import { GameMap } from "#/map/types.ts"
 import { makeWorld } from "#/world/world.ts"
+import { crownCover, decodeCrowns } from "#/map/crowns.ts"
 import { PICKUP_COUNT, RESPAWN_S, collect, isAvailable, placePickups, stepPickups, type Pickup } from "./pickups.ts"
 
 describe("pickup respawn", () => {
@@ -28,13 +29,15 @@ describe("pickups in Geretsried", () => {
   const map = Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8")))
   const world = makeWorld(map)
   const start = { x: 2700, y: 2700 }
-  const pickups = placePickups(world, start)
+  const crowns = decodeCrowns(new Uint8Array(readFileSync("public/trees.bin")).buffer)
+  const hidden = crownCover(crowns)
+  const pickups = placePickups(world, start, hidden)
 
   it("are about forty, the same every game, on free ground and spread out", () => {
     expect(pickups.length).toBeGreaterThanOrEqual(PICKUP_COUNT - 5)
     expect(pickups.length).toBeLessThanOrEqual(PICKUP_COUNT)
-    expect(placePickups(world, start)).toEqual(pickups)
-    for (const p of pickups) expect(world.isSolid(p.x, p.y) || world.isWater(p.x, p.y)).toBe(false)
+    expect(placePickups(world, start, hidden)).toEqual(pickups)
+    for (const p of pickups) expect(world.isSolid(p.x, p.y) || world.isWater(p.x, p.y) || hidden(p.x, p.y)).toBe(false)
     const gaps = pickups.flatMap((a) => pickups.filter((b) => b !== a).map((b) => Math.hypot(a.x - b.x, a.y - b.y)))
     expect(Math.min(...gaps)).toBeGreaterThan(50)
   })

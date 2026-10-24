@@ -2,6 +2,7 @@ import type { World } from "#/world/world.ts"
 import { controls, lightFor, type Signals } from "./signals.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
+import { CAR_HP, vitals, type Vitals } from "./damage.ts"
 
 /** An NPC car glued to the road graph. It drives from vertex `from` toward `from + dir`. */
 export type Npc = {
@@ -16,6 +17,7 @@ export type Npc = {
   y: number
   angle: number
   readonly model: number
+  readonly vitals: Vitals
 }
 
 /** Meters between a stopped car's center and the light. */
@@ -102,6 +104,7 @@ export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR:
       y: 0,
       angle: 0,
       model: modelFor(id),
+      vitals: vitals(CAR_HP),
     }
     const pts = hit.road.pts
     const [ax, ay] = vertex(pts, npc.from)

@@ -129,9 +129,15 @@ export class MeshBuilder {
   }
 }
 
-/** Sprite texture array layers: cars, people, tree crowns, then the traffic light's parts. */
-export const Sprite = { car: 0, ped: 8, tree: 12, housing: 20, lamp: 21, glow: 22 } as const
-export const SPRITE_LAYERS = 23
+/** Sprite texture array layers: cars, people, tree crowns, the traffic light's parts, combat effects, pickups. */
+export const Sprite = { car: 0, ped: 8, tree: 12, housing: 20, lamp: 21, glow: 22, fx: 23, pickup: 31 } as const
+export const SPRITE_LAYERS = 39
+
+/** The effect sprites from `Sprite.fx` on, in `FX_FILES` order. */
+export const Fx = { muzzle: 0, tracer: 1, blastEarly: 2, blastBig: 3, smoke: 4, fire: 5, wreck: 6, scorch: 7 } as const
+export const FX_FILES: ReadonlyArray<string> = ["fx-muzzle", "fx-tracer", "fx-blast-early", "fx-blast-big", "fx-smoke", "fx-fire", "fx-wreck", "fx-scorch"]
+/** The pickup sprites from `Sprite.pickup` on, in this order. */
+export const PICKUP_SPRITES = ["pistol", "smg", "shotgun", "molotov", "rocket", "flamer", "health", "armour"] as const
 
 /** How much of its square layer each sprite fills (u, v), and so its aspect. */
 export type SpriteBoxes = ReadonlyArray<readonly [number, number]>

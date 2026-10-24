@@ -3,13 +3,16 @@ import { Schema } from "effect"
 import { describe, expect, it } from "vitest"
 import { GameMap } from "#/map/types.ts"
 import { makeWorld } from "#/world/world.ts"
-import { carOutline } from "./car.ts"
-import { DT, newGame, step, type Input } from "./game.ts"
+import { carOutline, type Car } from "./car.ts"
+import { DT, newGame, step, type Game, type Input } from "./game.ts"
+import { CAR_HP, vitals } from "./damage.ts"
+import { rayWall } from "./hitscan.ts"
+import { give, type Gun } from "./weapons.ts"
 import { stepWalker } from "./pedestrians.ts"
 
 const map = Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8")))
 const world = makeWorld(map)
-const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false, attack: false }
+const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false, attack: false, cycle: 0 }
 const must = <T,>(value: T | null | undefined): T => {
   if (value == null) throw new Error("expected a value")
   return value
@@ -109,15 +112,121 @@ describe("police", () => {
 })
 
 describe("car damage", () => {
-  it("wrecks a car that hits walls too often and puts you back on foot", () => {
+  it("sets a battered car alight; it blows up, and whoever stays in is WASTED and wakes at the doctor's", () => {
     const game = newGame(world, 3)
     step(world, game, { ...idle, use: true })
+    give(game.player.arsenal, "pistol")
     const car = must(game.player.car)
     car.vitals.hp = 5
-    run(game, { ...idle, up: true, right: true }, 20)
+    run(game, idle, 2)
     expect(game.player.car).toBeNull()
-    expect(game.messages.some((m) => m.kind === "wrecked")).toBe(true)
     expect(game.wrecks).toHaveLength(1)
+    expect(game.decals.length).toBeGreaterThan(0)
+    expect(game.messages.some((m) => m.kind === "wasted")).toBe(true)
+    run(game, idle, 4)
+    expect(game.lives).toBe(4)
+    expect(game.player.vitals.hp).toBe(100)
+    expect(game.player.arsenal.current).toBe("fists")
+    expect(Math.hypot(game.player.x - game.hospital.x, game.player.y - game.hospital.y)).toBeLessThan(1)
+    expect(Math.hypot(game.hospital.x - game.home.x, game.hospital.y - game.home.y)).toBeGreaterThan(10)
+  })
+})
+
+/** Put the player `d` meters from (x, y), facing it, on a line no wall crosses. */
+const faceFrom = (game: Game, x: number, y: number, d: number) => {
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * Math.PI * 2
+    const px = x + Math.cos(a) * d
+    const py = y + Math.sin(a) * d
+    const angle = Math.atan2(y - py, x - px)
+    if (world.isSolid(px, py) || rayWall(world.isSolid, px, py, Math.cos(angle), Math.sin(angle), d) < d) continue
+    Object.assign(game.player, { x: px, y: py, angle })
+    return true
+  }
+  return false
+}
+
+const armed = (seed: number, weapon: Gun) => {
+  const game = newGame(world, seed)
+  give(game.player.arsenal, weapon)
+  game.player.arsenal.current = weapon
+  game.player.arsenal.ammo[weapon] = 999
+  return game
+}
+
+/** Fire for `seconds` without moving: Ctrl held, nothing else. */
+const shoot = (game: Game, seconds: number) => run(game, { ...idle, attack: true }, seconds)
+
+describe("guns", () => {
+  it("kill a pedestrian with a few pistol shots and send the people round running", () => {
+    const game = armed(21, "pistol")
+    const w = must(game.walkers.find((o) => faceFrom(game, o.x, o.y, 6)))
+    shoot(game, 1.5)
+    expect(w.dead || !game.walkers.includes(w)).toBe(true)
+    expect(game.walkers.some((o) => o !== w && o.panic > 0)).toBe(true)
+    expect(game.sounds.some((s) => s.id === "pistol")).toBe(true)
+  })
+
+  it("burn a car down with the submachine gun until it explodes into a wreck", () => {
+    const game = armed(4, "smg")
+    const car = must(game.parked[0])
+    expect(faceFrom(game, car.x, car.y, 7)).toBe(true)
+    shoot(game, 2)
+    expect(car.vitals.hp).toBeLessThan(25)
+    run(game, idle, 6)
+    expect(game.wrecks).toHaveLength(1)
+    expect(game.parked.includes(car)).toBe(false)
+  })
+
+  it("set off a chain: a rocket into one car of a row blows up all of them", () => {
+    const game = armed(4, "rocket")
+    const first = must(game.parked[0])
+    const row = [1, 2].map((i): Car => ({ ...first, x: first.x + Math.cos(first.angle) * 4.8 * i, y: first.y + Math.sin(first.angle) * 4.8 * i, vitals: vitals(CAR_HP) }))
+    game.parked.push(...row)
+    game.npcs = []
+    expect(faceFrom(game, first.x, first.y, 12)).toBe(true)
+    run(game, { ...idle, attack: true }, 0.05)
+    run(game, idle, 10)
+    expect(game.wrecks.length).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe("pickups", () => {
+  it("give you the weapon, and come back a minute later", () => {
+    const game = newGame(world, 2)
+    const p = must(game.pickups.find((o) => o.kind === "shotgun"))
+    Object.assign(game.player, { x: p.x, y: p.y })
+    step(world, game, idle)
+    expect(game.player.arsenal.ammo.shotgun).toBeGreaterThan(0)
+    expect(game.player.arsenal.current).toBe("shotgun")
+    expect(p.respawn).toBeGreaterThan(0)
+    expect(game.messages.some((m) => m.kind === "pickup")).toBe(true)
+  })
+
+  it("cycle with Q and E over what you carry", () => {
+    const game = newGame(world, 2)
+    give(game.player.arsenal, "pistol")
+    give(game.player.arsenal, "molotov")
+    step(world, game, { ...idle, cycle: 1 })
+    expect(game.player.arsenal.current).toBe("molotov")
+    step(world, game, { ...idle, cycle: 1 })
+    expect(game.player.arsenal.current).toBe("fists")
+  })
+})
+
+describe("police escalation", () => {
+  it("at three cop heads gets officers out of their cars, shooting", () => {
+    const game = newGame(world, 5)
+    game.wanted.heat = 3.5
+    let onFoot = false
+    let shot = false
+    for (let t = 0; t < 40 / DT && !(onFoot && shot); t++) {
+      step(world, game, idle)
+      onFoot ||= game.fighters.some((f) => f.kind === "cop")
+      shot ||= game.sounds.splice(0).some((s) => s.id === "copShot")
+    }
+    expect(onFoot).toBe(true)
+    expect(shot).toBe(true)
   })
 })
 

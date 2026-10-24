@@ -5,68 +5,22 @@ import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
-import { lightFor, makeSignals, type Signals } from "./signals.ts"
-import { spawnWalker, stepWalker, type Walker } from "./pedestrians.ts"
+import { lightFor, makeSignals } from "./signals.ts"
+import { spawnWalker, stepWalker } from "./pedestrians.ts"
 import { carName, POLICE_MODEL } from "./vehicles.ts"
-import { commit, coolDown, noHeat, wantedLevel, type Wanted } from "./wanted.ts"
-import { drift, nearMiss, newScore, tickScore, type Score } from "./score.ts"
+import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
+import { drift, nearMiss, newScore, tickScore } from "./score.ts"
 import { cancelMission, newMission, stepMission, type Mission } from "./mission.ts"
-import { isStuck, spawnCop, stepCop, type Cop } from "./police.ts"
-import { CAR_HP, PERSON_HP, hurt, isDead, vitals, type DamageSource, type Vitals } from "./damage.ts"
+import { isStuck, spawnCop, stepCop } from "./police.ts"
+import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
+import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./weapons.ts"
+import { collect, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
+import { fire, leaveCar, stepCombat } from "./combat.ts"
+import { makeRandom } from "./random.ts"
+import type { Game, Input, Spawn } from "./state.ts"
 
-export type Input = {
-  readonly up: boolean
-  readonly down: boolean
-  readonly left: boolean
-  readonly right: boolean
-  readonly handbrake: boolean
-  readonly sprint: boolean
-  /** true for exactly one step after F was pressed */
-  readonly use: boolean
-  /** The attack button (Ctrl): held to use the current weapon. Fists, the only weapon yet, do nothing. */
-  readonly attack: boolean
-}
-
-export type Player = { x: number; y: number; angle: number; car: Car | null; readonly vitals: Vitals }
-
-/** Something the HUD announces once: a big banner, the car you got into, money paid. */
-export type Message =
-  | { readonly kind: "busted" | "wrecked" | "gameOver" }
-  | { readonly kind: "car"; readonly text: string }
-  | { readonly kind: "mission"; readonly text: string }
-  | { readonly kind: "cash"; readonly amount: number }
-
-export type Game = {
-  player: Player
-  /** Cars standing around that the player can take. */
-  parked: Array<Car>
-  /** Burnt-out cars: in the way of nobody, enterable by nobody. */
-  wrecks: Array<Car>
-  npcs: Array<Npc>
-  cops: Array<Cop>
-  walkers: Array<Walker>
-  nextId: number
-  time: number
-  lives: number
-  readonly score: Score
-  readonly wanted: Wanted
-  /** The payphone job, or null on a map without its places. */
-  readonly mission: Mission | null
-  /** Seconds a police car has stood next to you while you stand still. */
-  bust: number
-  /** Announcements since the HUD last took them. */
-  readonly messages: Array<Message>
-  /** Where every life starts. */
-  readonly home: { readonly x: number; readonly y: number; readonly angle: number }
-  readonly signals: Signals
-  readonly random: () => number
-  /** The traffic light junction the car is in, so running a red counts once. */
-  junction: object | null
-  /** Seconds until ramming another car counts as a new crash. */
-  crashCooldown: number
-  /** Seconds until a wall can damage the car again. */
-  wallCooldown: number
-}
+export type { Game, Input, Message, Player } from "./state.ts"
+export { makeRandom }
 
 export const DT = 1 / 60
 const WALK = 4
@@ -86,13 +40,40 @@ const BUST_RANGE = 5.5
 const BUST_S = 3
 /** A car smokes below this many hp. */
 export const SMOKE_HP = 35
-
-import { makeRandom } from "./random.ts"
-
-export { makeRandom }
+/** Seconds you lie WASTED before waking up at the doctor's. */
+const WASTED_S = 3
+/** Police officers on foot per cop head, at most. */
+const FOOT_COPS_PER_LEVEL = 2
+/** A police car this close to you, nearly stopped, lets its officer out (from two heads). */
+const EXIT_RANGE = 22
+/** A police car this close shoots from the window (from three heads). */
+const CAR_SHOT_RANGE = 16
 
 /** Sudetenstraße 19, Geretsried: where every game starts. */
 export const START = { lat: 47.8582, lon: 11.4836 }
+
+/** A free spot near (x, y) by a street or path, for waking up after being WASTED. */
+const spotNear = (world: World, x: number, y: number): { x: number; y: number } | null => {
+  for (let r = 0; r <= 30; r += 3) {
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2
+      const px = x + Math.cos(a) * r
+      const py = y + Math.sin(a) * r
+      if (!world.isSolid(px, py) && !world.isWater(px, py) && world.roadAt(px, py, 3) !== null) return { x: px, y: py }
+    }
+  }
+  return null
+}
+
+/** GTA 2 wakes you at the hospital; Geretsried has doctors' practices, so the one nearest home. */
+const findHospital = (world: World, home: Spawn): Spawn => {
+  const doctors = world.map.pois.filter((p) => p.kind === "doctor").toSorted((a, b) => Math.hypot(a.x - home.x, a.y - home.y) - Math.hypot(b.x - home.x, b.y - home.y))
+  for (const d of doctors) {
+    const spot = spotNear(world, d.x, d.y)
+    if (spot !== null) return { ...spot, angle: Math.PI / 2 }
+  }
+  return home
+}
 
 /** The courier job: Brezn from the Mühlenbäck branch across town (not the one next door) to the Rehmaus Apotheke. */
 const planMission = (world: World, phone: { x: number; y: number }): Mission | null => {
@@ -104,8 +85,8 @@ const planMission = (world: World, phone: { x: number; y: number }): Mission | n
   return pickup === undefined || dropoff === undefined ? null : newMission(phone, pickup, dropoff)
 }
 
-/** Spawn on the street segment closest to START, next to a parked car. */
-export const newGame = (world: World, seed = 1): Game => {
+/** Spawn on the street segment closest to START, next to a parked car. `hidden` says where pickups would be out of sight (under trees). */
+export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const random = makeRandom(seed)
   const [tx, ty] = makeProjection(world.map.bbox).toMeters(START)
   let best = { d: Infinity, ax: tx, ay: ty, bx: tx + 1, by: ty, width: 6 }
@@ -141,12 +122,18 @@ export const newGame = (world: World, seed = 1): Game => {
   const phoneAt = { x: ax + nx * curb * side - Math.cos(angle) * 7, y: ay + ny * curb * side - Math.sin(angle) * 7 }
   const phone = world.isSolid(phoneAt.x, phoneAt.y) ? { x: home.x, y: home.y } : phoneAt
   const game: Game = {
-    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP) },
+    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal() },
     parked: [car],
     wrecks: [],
     npcs: [],
     cops: [],
     walkers: [],
+    fighters: [],
+    projectiles: [],
+    fires: [],
+    effects: [],
+    decals: [],
+    pickups: placePickups(world, home, hidden),
     nextId: 0,
     time: 0,
     lives: LIVES,
@@ -154,13 +141,18 @@ export const newGame = (world: World, seed = 1): Game => {
     wanted: noHeat(),
     mission: planMission(world, phone),
     bust: 0,
+    wasted: 0,
     messages: [],
+    sounds: [],
     home,
+    hospital: findHospital(world, home),
     signals: makeSignals(world),
     random,
     junction: null,
     crashCooldown: 0,
     wallCooldown: 0,
+    gunfireCooldown: 0,
+    screamCooldown: 0,
   }
   fillTraffic(world, game, 40)
   return game
@@ -181,6 +173,7 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   game.npcs = game.npcs.filter((n) => Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
   game.walkers = game.walkers.filter((w) => Math.hypot(w.x - x, w.y - y) < WALKER_FAR + 50)
   game.wrecks = game.wrecks.filter((w) => Math.hypot(w.x - x, w.y - y) < NPC_FAR)
+  game.parked = game.parked.filter((c) => Math.hypot(c.x - x, c.y - y) < NPC_FAR)
   for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
     const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
     if (walker !== null) game.walkers.push(walker)
@@ -212,6 +205,7 @@ const blockedAhead = (game: Game, npc: Npc) => {
   if (game.parked.some((c) => check(c.x, c.y))) return true
   if (game.cops.some((c) => check(c.car.x, c.car.y))) return true
   if (game.walkers.some((w) => check(w.x, w.y))) return true
+  if (game.fighters.some((f) => check(f.x, f.y))) return true
   return game.npcs.some((o) => o !== npc && check(o.x, o.y))
 }
 
@@ -233,7 +227,7 @@ const pushApart = (car: Car, x: number, y: number, radius: number) => {
 const DAMAGE = { wall: 1.1, car: 1.4, cop: 1 } as const
 const HIT_SPEED = 4
 
-const damage = (car: Car, speed: number, per: number, source: DamageSource) => {
+const crash = (car: Car, speed: number, per: number, source: DamageSource) => {
   if (speed > HIT_SPEED) hurt(car.vitals, speed * per, source)
 }
 
@@ -247,24 +241,114 @@ export const step = (world: World, game: Game, input: Input): void => {
   game.crashCooldown = Math.max(0, game.crashCooldown - DT)
   game.wallCooldown = Math.max(0, game.wallCooldown - DT)
   const { player } = game
+  tickArsenal(player.arsenal, DT)
 
-  if (input.use) toggleCar(game)
-
-  if (player.car !== null) driveCar(world, game, player.car, input)
-  else walk(world, game, input)
+  if (game.wasted > 0) {
+    game.wasted -= DT
+    if (game.wasted <= 0) wakeUp(game)
+  } else {
+    if (input.use) toggleCar(game)
+    if (input.cycle !== 0) cycle(player.arsenal, input.cycle)
+    if (player.car !== null) driveCar(world, game, player.car, input)
+    else {
+      walk(world, game, input)
+      // Space is the handbrake in a car and a second trigger on foot.
+      if (input.attack || input.handbrake) attack(world, game)
+      pickUp(game)
+    }
+  }
 
   const threat = player.car
   for (const w of game.walkers) {
     const wasDown = w.down > 0
+    const wasDead = w.dead
     stepWalker(world, w, threat, DT, game.random)
-    // Knocked over (no gore: they get up again), and the police care.
-    if (!wasDown && w.down > 0 && threat !== null) commit(game.wanted, "pedestrian")
+    // Knocked over by the car (no gore: they get up again, or just lie there), and the police care.
+    if (!wasDown && w.down > 0 && threat !== null && w.vitals.lastHit === "car") commit(game.wanted, "pedestrian")
+    // Burnt to death: the player lit the fire.
+    else if (!wasDead && w.dead && w.vitals.lastHit === "fire") commit(game.wanted, "kill")
   }
+  game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
   for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
   police(world, game)
+  stepCombat(world, game, wantedLevel(game.wanted), DT, () => {
+    // Still inside when it blows: the explosion finds you where the car was.
+    game.player.car = null
+  })
+  stepPickups(game.pickups, DT)
+  if (game.wasted <= 0 && isDead(player.vitals)) wasted(game)
   missionStep(game)
   tickScore(game.score, DT)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
+}
+
+/** Ctrl (or Space on foot): the weapon in hand, if it has reloaded. */
+const attack = (world: World, game: Game) => {
+  const { player } = game
+  const weapon = pull(player.arsenal)
+  if (weapon !== null) fire(world, game, "player", weapon, player.x, player.y, player.angle)
+}
+
+const wants = (game: Game) => (kind: PickupKind) => {
+  const { arsenal, vitals: v } = game.player
+  if (kind === "health") return v.hp < PERSON_HP
+  if (kind === "armour") return v.armour < MAX_ARMOUR
+  return arsenal.ammo[kind] < WEAPONS[kind].max
+}
+
+/** Walk over a pickup to take it. */
+const pickUp = (game: Game) => {
+  const { player } = game
+  const got = collect(game.pickups, player.x, player.y, wants(game))
+  if (got === null) return
+  if (got.kind === "health") {
+    player.vitals.hp = PERSON_HP
+    player.vitals.fire = 0
+  } else if (got.kind === "armour") player.vitals.armour = MAX_ARMOUR
+  else give(player.arsenal, got.kind)
+  const name = got.kind === "health" ? "Erste Hilfe" : got.kind === "armour" ? "Schutzweste" : WEAPONS[got.kind].name
+  game.messages.push({ kind: "pickup", text: name })
+  game.sounds.push({ id: "pickup", x: player.x, y: player.y })
+}
+
+/** WASTED: a life, every gun, the armour and a quarter of your money gone; you wake at the doctor's a few seconds later. */
+const wasted = (game: Game) => {
+  const { player } = game
+  if (player.car !== null) getOut(game)
+  game.messages.push({ kind: "wasted" })
+  game.score.money -= Math.floor(game.score.money / 4)
+  disarm(player.arsenal)
+  player.vitals.armour = 0
+  player.vitals.fire = 0
+  game.wasted = WASTED_S
+  callOff(game)
+}
+
+const wakeUp = (game: Game) => {
+  const { player, hospital } = game
+  game.wasted = 0
+  player.vitals.hp = PERSON_HP
+  player.x = hospital.x
+  player.y = hospital.y
+  player.angle = hospital.angle
+  loseLife(game)
+}
+
+const loseLife = (game: Game) => {
+  game.lives--
+  if (game.lives > 0) return
+  game.lives = LIVES
+  game.score.money = 0
+  game.messages.push({ kind: "gameOver" })
+}
+
+/** The police forget you: no heat, no cars, no officers on foot (the dead stay down a while). */
+const callOff = (game: Game) => {
+  Object.assign(game.wanted, noHeat())
+  game.cops = []
+  game.fighters = game.fighters.filter((f) => f.kind !== "cop" || f.dead)
+  game.bust = 0
+  if (game.mission !== null) cancelMission(game.mission)
 }
 
 const walk = (world: World, game: Game, input: Input) => {
@@ -273,7 +357,8 @@ const walk = (world: World, game: Game, input: Input) => {
   const dy = (input.down ? 1 : 0) - (input.up ? 1 : 0)
   if (dx === 0 && dy === 0) return
   const len = Math.hypot(dx, dy)
-  const speed = (input.sprint ? SPRINT : WALK) * DT
+  // On fire: you run.
+  const speed = (input.sprint || player.vitals.fire > 0 ? SPRINT : WALK) * DT
   const nx = player.x + (dx / len) * speed
   const ny = player.y + (dy / len) * speed
   // Move each axis on its own so you slide along walls.
@@ -293,7 +378,7 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   if (carHitsWall(world, next)) {
     // Scraping along a wall hurts once per knock, not every step.
     if (game.wallCooldown === 0) {
-      damage(car, Math.hypot(car.vx, car.vy), DAMAGE.wall, "wall")
+      crash(car, Math.hypot(car.vx, car.vy), DAMAGE.wall, "wall")
       game.wallCooldown = 0.3
     }
     car.vx *= -0.3
@@ -306,19 +391,19 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
     const hit = pushApart(car, npc.x, npc.y, CAR_LENGTH * 0.75)
     if (hit > 0) {
       npc.speed = 0
-      damage(car, hit, DAMAGE.car, "car")
+      crash(car, hit, DAMAGE.car, "car")
       if (hit > HIT_SPEED && game.crashCooldown === 0) {
         commit(game.wanted, "crash")
         game.crashCooldown = 1
       }
     } else pay(game, nearMiss(game.score, npc.id, dist, speed, game.time))
   }
-  for (const parked of game.parked) damage(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car, "car")
+  for (const parked of game.parked) crash(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car, "car")
   for (const wreck of game.wrecks) pushApart(car, wreck.x, wreck.y, CAR_LENGTH * 0.75)
   for (const cop of game.cops) {
     // A police car ramming you hurts as much as you ramming it.
     const closing = Math.hypot(car.vx - cop.car.vx, car.vy - cop.car.vy)
-    if (pushApart(car, cop.car.x, cop.car.y, CAR_LENGTH * 0.8) > 0) damage(car, closing, DAMAGE.cop, "police")
+    if (pushApart(car, cop.car.x, cop.car.y, CAR_LENGTH * 0.8) > 0) crash(car, closing, DAMAGE.cop, "police")
   }
   // A shove from another car must not push you into a wall.
   if (carHitsWall(world, car)) Object.assign(car, before)
@@ -328,7 +413,6 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   redLight(game, car)
   player.x = car.x
   player.y = car.y
-  if (isDead(car.vitals)) wreck(game)
 }
 
 const pay = (game: Game, amount: number) => {
@@ -341,18 +425,6 @@ const redLight = (game: Game, car: Car) => {
   const junction = light?.junction ?? null
   if (junction !== null && junction !== game.junction && Math.hypot(car.vx, car.vy) > 5 && lightFor(junction, car.angle, game.time) === "red") commit(game.wanted, "redLight")
   game.junction = junction
-}
-
-/** Out of a car that is done for: it stays as a wreck. */
-const wreck = (game: Game) => {
-  const { player } = game
-  const car = player.car
-  if (car === null) return
-  getOut(game)
-  game.parked = game.parked.filter((c) => c !== car)
-  game.wrecks.push({ ...car, vx: 0, vy: 0, vitals: vitals(0) })
-  game.messages.push({ kind: "wrecked" })
-  if (game.mission !== null) cancelMission(game.mission)
 }
 
 const getOut = (game: Game) => {
@@ -369,53 +441,72 @@ const getOut = (game: Game) => {
   player.car = null
 }
 
-/** Wanted level: as many police cars as cop heads, chasing; caught standing still next to one means BUSTED. */
+/**
+ * Wanted level: as many police cars as cop heads, chasing. From two heads
+ * their officers get out near you and come on foot with pistols; from three
+ * they shoot from the cars too. Caught standing still next to one: BUSTED.
+ */
 const police = (world: World, game: Game) => {
   const level = wantedLevel(game.wanted)
+  const { onFoot, shootFromCar } = tactics(level)
   const p = playerPos(game)
   const hits = (car: Car) => carHitsWall(world, car)
-  if (level === 0) game.cops = game.cops.filter((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y) < COP_SIGHT)
-  game.cops = game.cops.filter((c) => !isStuck(c) && Math.hypot(c.car.x - p.x, c.car.y - p.y) < 300)
-  if (game.cops.length < level && Math.round(game.time * 60) % 30 === 0) {
+  const dist = (x: number, y: number) => Math.hypot(x - p.x, y - p.y)
+  if (level === 0) game.cops = game.cops.filter((c) => dist(c.car.x, c.car.y) < COP_SIGHT)
+  game.cops = game.cops.filter((c) => !isStuck(c) && dist(c.car.x, c.car.y) < 300)
+  const onFootCops = () => game.fighters.filter((f) => f.kind === "cop" && !f.dead).length
+  if (game.wasted <= 0 && game.cops.length < level && onFootCops() < level * FOOT_COPS_PER_LEVEL && Math.round(game.time * 60) % 30 === 0) {
     const cop = spawnCop(world, game.nextId++, p.x, p.y, game.random, hits)
     if (cop !== null) game.cops.push(cop)
   }
   const target = game.player.car ?? { x: p.x, y: p.y, vx: 0, vy: 0 }
   for (const cop of game.cops) {
-    if (level === 0) {
+    if (level === 0 || game.wasted > 0) {
       // Called off: roll to a stop.
       cop.car.vx *= 0.97
       cop.car.vy *= 0.97
       continue
     }
     stepCop(world, cop, target, DT, hits)
+    const d = dist(cop.car.x, cop.car.y)
+    if (onFoot && d < EXIT_RANGE && Math.hypot(cop.car.vx, cop.car.vy) < 6 && onFootCops() < level * FOOT_COPS_PER_LEVEL) {
+      // Out of the car, which stays where it stopped.
+      game.cops = game.cops.filter((c) => c !== cop)
+      cop.car.vx = 0
+      cop.car.vy = 0
+      game.parked.push(cop.car)
+      leaveCar(game, cop.car)
+      continue
+    }
+    cop.gun -= DT
+    if (shootFromCar && d < CAR_SHOT_RANGE && cop.gun <= 0) {
+      const aim = Math.atan2(p.y - cop.car.y, p.x - cop.car.x)
+      fire(world, game, "police", "pistol", cop.car.x, cop.car.y, aim + (game.random() - 0.5) * 0.5)
+      cop.gun = 1.3 + game.random() * 0.8
+    }
   }
-  coolDown(game.wanted, game.cops.some((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y) < COP_SIGHT), DT)
+  const seen = game.cops.some((c) => dist(c.car.x, c.car.y) < COP_SIGHT) || game.fighters.some((f) => f.kind === "cop" && !f.dead && dist(f.x, f.y) < COP_SIGHT)
+  coolDown(game.wanted, seen, DT)
   const still = game.player.car === null || Math.hypot(game.player.car.vx, game.player.car.vy) < 1.5
-  const caught = level > 0 && still && game.cops.some((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y) < BUST_RANGE)
+  const byCar = game.cops.some((c) => dist(c.car.x, c.car.y) < BUST_RANGE)
+  const byHand = game.player.car === null && game.fighters.some((f) => f.kind === "cop" && !f.dead && f.down <= 0 && dist(f.x, f.y) < 1.8)
+  const caught = level > 0 && game.wasted <= 0 && still && (byCar || byHand)
   game.bust = caught ? game.bust + DT : 0
   if (game.bust >= BUST_S) busted(game)
 }
 
-/** Arrested: half your money and a life gone, back to Sudetenstraße 19 on foot. */
+/** Arrested: half your money, every gun and a life gone, back to Sudetenstraße 19 on foot. */
 const busted = (game: Game) => {
   const { player, home } = game
   if (player.car !== null) getOut(game)
   game.score.money = Math.floor(game.score.money / 2)
-  game.lives--
+  disarm(player.arsenal)
   game.messages.push({ kind: "busted" })
-  if (game.lives <= 0) {
-    game.lives = LIVES
-    game.score.money = 0
-    game.messages.push({ kind: "gameOver" })
-  }
-  Object.assign(game.wanted, noHeat())
-  game.cops = []
-  game.bust = 0
+  loseLife(game)
+  callOff(game)
   player.x = home.x
   player.y = home.y
   player.angle = home.angle
-  if (game.mission !== null) cancelMission(game.mission)
 }
 
 const missionStep = (game: Game) => {
@@ -451,7 +542,7 @@ const toggleCar = (game: Game) => {
   // Pulling a driver out in front of the police is car theft.
   if (policeNear(game, npc.x, npc.y, 40)) commit(game.wanted, "theft")
   game.npcs = game.npcs.filter((n) => n !== npc)
-  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model, vitals: vitals(CAR_HP) }
+  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model, vitals: npc.vitals }
   game.messages.push({ kind: "car", text: carName(npc.model) })
 }
 

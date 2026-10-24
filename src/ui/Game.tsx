@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react"
 import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
+import { crownCover } from "#/map/crowns.ts"
 import { bakeMinimap, drawMinimap, drawPlaces, drawPlayerMarker, drawTargetArrow, poiIcon } from "#/render/overlay.ts"
 import { missionTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
 import { wantedLevel } from "#/sim/wanted.ts"
+import { WEAPONS } from "#/sim/weapons.ts"
 import { GameAudio } from "./audio.ts"
 import { Hud, emptyHud, type HudState } from "./Hud.tsx"
 import { followCamera, startCamera, viewMatrix, type View } from "#/render/camera.ts"
@@ -34,13 +36,19 @@ const compareSpot = (world: World): { x: number; y: number; half: number } | nul
   return { x, y, half: half ?? 80 }
 }
 
+/** The HUD's weapon slot: the weapon in hand and its rounds. */
+const weaponSlot = (game: GameState): HudState["weapon"] => {
+  const { current, ammo } = game.player.arsenal
+  return { id: current, name: WEAPONS[current].name, ammo: current === "fists" ? null : ammo[current] }
+}
+
 /** Milliseconds a frame may spend building chunks while you play. */
 const BUILD_BUDGET_MS = 4
 
 /** Seconds the big banners and mission texts stay up. */
 const BIG_S = 3
 const MISSION_S = 7
-const BIG_TEXT = { busted: "BUSTED", wrecked: "WRECKED", gameOver: "GAME OVER" } as const
+const BIG_TEXT = { busted: "BUSTED", wasted: "WASTED", gameOver: "GAME OVER" } as const
 
 export function Game({ world, assets }: { readonly world: World; readonly assets: Assets }) {
   const glRef = useRef<HTMLCanvasElement>(null)
@@ -58,7 +66,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       setFailure("WebGL2 fehlt in diesem Browser.")
       return
     }
-    const game = newGame(world, Date.now() % 100_000)
+    const game = newGame(world, Date.now() % 100_000, crownCover(assets.crowns))
     const renderer = new Renderer(gl, world, assets)
     window.__gta = { game, world, renderer }
     const minimap = bakeMinimap(world.map, assets.overview, Math.round(180 * devicePixelRatio))
@@ -116,10 +124,12 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       const p = playerPos(game)
       const copDist = Math.min(Infinity, ...game.cops.map((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y)))
       const level = wantedLevel(game.wanted)
+      audio.effects(game.sounds.splice(0), p)
       audio.update({ speed: game.player.car === null ? 0 : speedKmh(game) / 3.6, inCar: game.player.car !== null, horn: keyboard.horn(), siren: level > 0 ? Math.max(0, 1 - copDist / 140) : 0 })
 
       for (const m of game.messages.splice(0)) {
         if (m.kind === "car") shown = { ...shown, vehicle: { name: m.text, key: ++keys } }
+        else if (m.kind === "pickup") shown = { ...shown, pickup: { name: m.text, key: ++keys } }
         else if (m.kind === "cash") shown = { ...shown, paid: { amount: m.amount, key: ++keys } }
         else if (m.kind === "mission") {
           shown = { ...shown, mission: m.text }
@@ -140,6 +150,9 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           ...shown,
           money: game.score.money,
           lives: game.lives,
+          health: game.player.vitals.hp,
+          armour: game.player.vitals.armour,
+          weapon: weaponSlot(game),
           multiplier: multiplier(game.score),
           wanted: level,
           chased: copDist < 45,

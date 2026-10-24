@@ -7,8 +7,8 @@ pnpm install
 pnpm dev          # http://localhost:5190
 ```
 
-**Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake · F get in / out (works on moving traffic too) ·
-G horn · Ctrl attack (fists only, for now) · H help.
+**Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake (on foot: fire) · F get in / out (works on moving traffic too) ·
+Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · H help.
 
 ## How the map is made
 
@@ -88,10 +88,10 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 
 ## Playing it (GTA 2 style)
 
-- **HUD** (`src/ui/Hud.tsx`, DOM over the canvas): money top right, lives as hearts, the score
-  multiplier, the weapon slot (fists) under them, wanted level as up to four cop heads at the top, the
-  street name as you turn into it, the car's name as you get in (`src/sim/vehicles.ts`: VW Golf, BMW
-  5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter), BUSTED / WRECKED banners, the
+- **HUD** (`src/ui/Hud.tsx`, DOM over the canvas): money top right, lives, health as five hearts, armour as
+  a blue shield, the score multiplier, the weapon slot (icon and rounds) under them, wanted level as up to four cop heads at the top centre, the
+  job clock and the street name as you turn into it under them (clear of the car in the middle), the car's name as you get in (`src/sim/vehicles.ts`: VW Golf, BMW
+  5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter), BUSTED / WASTED banners, the
   mission text and clock. H toggles the controls help.
 - **Money** (`src/sim/score.ts`): a near miss (passing a car at over 50 km/h with centres 3.4–4.6 m
   apart) pays $50, a drift (sliding over a third sideways at speed) $20 every half second. Awards within
@@ -101,18 +101,37 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   Heat cools only after 8 s out of police sight.
 - **Police** (`src/sim/police.ts`): they turn up just out of view, drive the shortest street route to
   you (A* over the street graph, `src/world/route.ts`), go straight at you once close, back out of dead
-  ends and bump you. Standing still next to one for 3 s is **BUSTED**: half your money and a life gone,
-  back at Sudetenstraße 19. Losing the last life starts over.
-- **Damage** (`src/sim/damage.ts`): one model for the player, pedestrians and cars (hp, armour, what hit
-  last). Walls, cars and police cars hurt your car; under 35 hp it smokes, at 0 it is **WRECKED** and
-  you are on foot. People knocked down get up again.
+  ends and bump you. From two cop heads the officers get out near you and come on foot with pistols;
+  from three they also shoot from the cars at close range (`tactics` in `src/sim/wanted.ts`). Killing
+  an officer is a whole cop head; killing anyone, or shooting where the police can see, adds heat too.
+  Standing still next to a police car (or with an officer on foot at your side) for 3 s is **BUSTED**:
+  half your money, your guns and a life gone, back at Sudetenstraße 19. Losing the last life starts over.
+- **Damage** (`src/sim/damage.ts`): one model for the player, pedestrians, police and cars (hp, armour,
+  what hit last, fire). Walls, cars and police cars hurt your car; under 35 hp it smokes, under 25 it
+  burns, burns down in about four seconds and explodes into a wreck, with you in it if you stayed.
+  At 0 hp you are **WASTED**: a life, your guns, your armour and a quarter of your money gone; you wake
+  three seconds later at the doctor's nearest home (GTA 2's hospital; Geretsried has practices).
+- **Weapons** (`src/sim/weapons.ts`, data; `src/sim/combat.ts`, what they do): fists, pistol,
+  submachine gun, shotgun (seven pellets fanned over 24°, 14 m), molotov (thrown up to 18 m, breaks
+  into a pool of fire for 6 s), rocket launcher (a rocket that explodes on the first wall, car or person)
+  and flamethrower (a 7.5 m cone that sets people alight and cooks cars). Bullets are rays that walls
+  stop (`src/sim/hitscan.ts`); cars take a third of a bullet's damage. Explosions do 160 at the centre
+  falling off to nothing at 6.5 m, knock people down and throw them back, and shove cars; a car's own
+  explosion is bigger (220, 7.5 m), so the next car in a row catches fire and goes up too, GTA 2's
+  chain reactions. Shots and bangs send people near running and screaming; every seventh person is
+  tough and comes at you with his fists when you hit him. No gore: people fall over, the dead lie
+  there for 20 s and fade.
+- **Pickups** (`src/sim/pickups.ts`): 40 spots from the map alone (behind shops, away from the street
+  they face; in parks and on pitches; on parking lots), 90 m apart, never under a tree crown, the same
+  every game, the nearest one to the start a pistol. Walk over one to take it; it is back after 60 s.
 - **The payphone job** (`src/sim/mission.ts`): the yellow phone on the sidewalk at Sudetenstraße 19:
   "Hol Brezn bei Bäckerei Mühlenbäck und bring sie zur Rehmaus Apotheke in 150 s". The pickup is the
   Mühlenbäck branch across town (the one next door would be too easy); the 150 s clock runs from the
   pickup, 2.4 km by road. A yellow arrow points at the target (at the screen edge while it is off
   screen) and a glowing marker lies on the ground there. Reward $1500.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
-  and a German two-tone siren that swells as police cars close in. It starts with the first key press.
+  a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
+  breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.
 
 ## What is in the town
 
@@ -130,6 +149,10 @@ Trees were prompted with a real aerial photo of Sudetenstraße as reference
 (DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0). The GTA 2 style facades, road, sidewalk, lawn and
 clay tiles were painted seamless; the script only resizes them to 512 px and turns the roof tiles (and the
 flat-roof gravel) into grey detail that the renderer multiplies with the photo's roof colour.
+
+The combat sheets (weapon icons for the HUD, pickups on glowing pads, muzzle flash, tracer, the explosion's
+flash and fireball, smoke, fire, a burnt-out wreck and a scorch mark) are not on a grid: the script cuts
+each sprite out by its blob of opaque pixels (`save_blobs`).
 
 The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 

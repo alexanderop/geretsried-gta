@@ -1,9 +1,13 @@
 import { MAX_WANTED } from "#/sim/wanted.ts"
+import type { WeaponId } from "#/sim/weapons.ts"
 
 /** Everything the GTA 2 style HUD shows, refreshed a few times a second. */
 export type HudState = {
   readonly money: number
   readonly lives: number
+  /** Hp, shown as GTA 2's hearts, and armour as a blue shield beside them. */
+  readonly health: number
+  readonly armour: number
   readonly multiplier: number
   readonly wanted: number
   /** Police in sight: the cop heads flash. */
@@ -15,13 +19,15 @@ export type HudState = {
   /** The street you just entered, with a key that changes on every entry so the fade restarts. */
   readonly street: { readonly name: string; readonly key: number }
   readonly vehicle: { readonly name: string; readonly key: number } | null
-  /** BUSTED, WRECKED, … */
+  /** BUSTED, WASTED, … */
   readonly big: string
   readonly mission: string
   /** Seconds left on the job, or null when no clock runs. */
   readonly timer: number | null
   /** The weapon slot under the money, GTA 2 style: an icon and the rounds left (null: no ammo, like fists). */
-  readonly weapon: { readonly icon: string; readonly name: string; readonly ammo: number | null }
+  readonly weapon: { readonly id: WeaponId; readonly name: string; readonly ammo: number | null }
+  /** What you just picked up, for the name flash. */
+  readonly pickup: { readonly name: string; readonly key: number } | null
   /** Money just paid, for the "+$50" flash. */
   readonly paid: { readonly amount: number; readonly key: number } | null
 }
@@ -29,6 +35,8 @@ export type HudState = {
 export const emptyHud: HudState = {
   money: 0,
   lives: 5,
+  health: 100,
+  armour: 0,
   multiplier: 1,
   wanted: 0,
   chased: false,
@@ -41,7 +49,8 @@ export const emptyHud: HudState = {
   big: "",
   mission: "",
   timer: null,
-  weapon: { icon: "👊", name: "Fäuste", ammo: null },
+  weapon: { id: "fists", name: "Fäuste", ammo: null },
+  pickup: null,
   paid: null,
 }
 
@@ -54,7 +63,48 @@ const CopHead = ({ on }: { readonly on: boolean }) => (
   </svg>
 )
 
-const HELP = "WASD / Pfeile — laufen, fahren · Shift — sprinten · Leertaste — Handbremse · F — ein-/aussteigen · Strg — Angriff · G — Hupe · H — Hilfe"
+const HELP =
+  "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen · G — Hupe · H — Hilfe"
+
+const ICON: Readonly<Record<WeaponId, string>> = {
+  fists: "fist",
+  pistol: "pistol",
+  smg: "smg",
+  shotgun: "shotgun",
+  molotov: "molotov",
+  rocket: "rocket",
+  flamer: "flamer",
+}
+
+/** Five hearts of 20 hp each: full, half or empty. */
+const Hearts = ({ hp }: { readonly hp: number }) => (
+  <span data-testid="health" className="flex gap-0.5" aria-label={`${Math.round(hp)} Gesundheit`}>
+    {Array.from({ length: 5 }, (_, i) => {
+      const fill = Math.max(0, Math.min(1, (hp - i * 20) / 20))
+      return (
+        <svg key={i} viewBox="0 0 20 18" className="h-6 w-6" aria-hidden="true">
+          <defs>
+            <clipPath id={`heart-${i}`}>
+              <rect x="0" y="0" width={20 * (fill > 0.75 ? 1 : fill > 0.25 ? 0.5 : 0)} height="18" />
+            </clipPath>
+          </defs>
+          <path d="M10 17 L2 9 A4.5 4.5 0 0 1 10 3 A4.5 4.5 0 0 1 18 9 Z" fill="#3a0a0a" stroke="#000" strokeWidth="1.5" />
+          <path d="M10 17 L2 9 A4.5 4.5 0 0 1 10 3 A4.5 4.5 0 0 1 18 9 Z" fill="#ff2d2d" clipPath={`url(#heart-${i})`} />
+        </svg>
+      )
+    })}
+  </span>
+)
+
+const Shield = ({ armour }: { readonly armour: number }) => (
+  <span data-testid="armour" className="flex items-center gap-1 text-xl text-[#7fd1ff]" aria-label={`${Math.round(armour)} Panzerung`}>
+    <svg viewBox="0 0 20 22" className="h-6 w-6" aria-hidden="true">
+      <path d="M10 1 L18 4 L18 11 Q18 18 10 21 Q2 18 2 11 L2 4 Z" fill="#1d6fe0" stroke="#000" strokeWidth="1.5" />
+      <path d="M10 4 L15 6 L15 11 Q15 15.5 10 18 Z" fill="#7fd1ff" />
+    </svg>
+    {Math.round(armour)}
+  </span>
+)
 
 export function Hud({ hud, help }: { readonly hud: HudState; readonly help: boolean }) {
   const clock = hud.timer === null ? "" : `${Math.floor(hud.timer / 60)}:${String(Math.max(0, Math.floor(hud.timer % 60))).padStart(2, "0")}`
@@ -70,14 +120,25 @@ export function Hud({ hud, help }: { readonly hud: HudState; readonly help: bool
               x{hud.multiplier}
             </span>
           )}
-          <span data-testid="lives" className="text-2xl tracking-tighter text-red-500" aria-label={`${hud.lives} Leben`}>
-            {"♥".repeat(hud.lives)}
+          <span data-testid="lives" className="text-xl text-yellow-300" aria-label={`${hud.lives} Leben`}>
+            {hud.lives}×
           </span>
+          <Hearts hp={hud.health} />
         </div>
-        <div data-testid="weapon" className="flex items-center gap-2 rounded bg-black/45 px-2 py-1" aria-label={hud.weapon.name}>
-          <span className="text-3xl [-webkit-text-stroke:0]">{hud.weapon.icon}</span>
-          {hud.weapon.ammo !== null && <span className="text-2xl text-white">{hud.weapon.ammo}</span>}
+        {hud.armour > 0 && <Shield armour={hud.armour} />}
+        <div data-testid="weapon" className="flex h-14 items-center gap-2 rounded bg-black/45 px-2 py-1" aria-label={hud.weapon.name}>
+          <img src={`/sprites/icon-${ICON[hud.weapon.id]}.webp`} alt="" className="h-12 w-16 object-contain" />
+          {hud.weapon.ammo !== null && (
+            <span data-testid="ammo" className="min-w-[2ch] text-3xl text-white">
+              {hud.weapon.ammo}
+            </span>
+          )}
         </div>
+        {hud.pickup !== null && (
+          <div key={hud.pickup.key} data-testid="pickup" className="hud-fade text-xl text-yellow-200">
+            {hud.pickup.name}
+          </div>
+        )}
         {hud.paid !== null && (
           <div key={hud.paid.key} className="hud-fade text-2xl text-green-300">
             +${hud.paid.amount}
