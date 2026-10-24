@@ -7,7 +7,8 @@ pnpm install
 pnpm dev          # http://localhost:5190
 ```
 
-**Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake · F get in / out (works on moving traffic too).
+**Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake · F get in / out (works on moving traffic too) ·
+G horn · Ctrl attack (fists only, for now) · H help.
 
 ## How the map is made
 
@@ -23,9 +24,12 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 
 The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no dependencies), like GTA 2:
 
-- **Camera** (`src/render/camera.ts`): straight down with a 64° perspective, 96 m up on foot, climbing to
-  160 m as the car speeds up, looking 0.8 s ahead. Roofs come towards you, so walls show towards the
-  screen edges. `?compare=` uses an orthographic view of the same square instead.
+- **Camera** (`src/render/camera.ts`): GTA 2 close, straight down through a narrow 26° lens: about 40 m
+  across a 16:10 screen on foot (54 m up), 50 m in a standing car, 90 m at top speed. It trails the
+  player and eases its look-ahead (0.55 s of travel) into the driving direction. Houses lean out about
+  2.5 m at the screen edge, so walls show without wide-angle stretch. At this zoom a ground meter is
+  about 70 device pixels, so ground tiles cover at most 6 m of their 512 px. `?compare=` uses an
+  orthographic view of the same square instead.
 - **Chunks** (`src/render/scene/scene.ts`): every 128 m chunk is built once into a static vertex buffer
   (about 1 ms, 60 KB) as it comes near the view: lawn and paving (the photo's paved mask, given a one
   pixel hard edge in the shader), land use and water, streets as polygons from the OSM centre lines
@@ -37,7 +41,11 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
   Bavarian house otherwise. Texture coordinates are in meters, so windows keep their size; walls facing
   the sun are lit.
 - **Roofs**: the footprint at eave height in the two plane colours the photo measured, split along the
-  ridge, with clay tile (pitched) or gravel (flat) detail and a crisp edge line.
+  ridge, with clay tile (pitched) or gravel (flat) detail. The DOP40 medians are hazy (median lightness
+  0.56, saturation 0.2 over 14k planes), so `roof-tone.ts` grades them: clay becomes saturated
+  terracotta or brown, grey tile anthracite, flat roofs light grey gravel, keeping each plane's hue and
+  the lit/shaded difference. Pitched roofs get a dark eave line; flat roofs a parapet with a light
+  coping and a few vents and air-conditioning boxes.
 - **Passes**: opaque (alpha-to-coverage for tree crowns), shadows (each pixel darkened once through the
   stencil), then cars, people and traffic lights as sprites at their height, so buildings hide them.
   Shop labels, the player ring, the minimap and the HUD are 2D on top.
@@ -77,6 +85,34 @@ The map, the collision data and the minimap come from OSM plus `pnpm map`, which
   invisible obstacle is worse than driving through a picture of a car.
 
 Tree crowns over the asphalt of a street are left out, so roads stay readable.
+
+## Playing it (GTA 2 style)
+
+- **HUD** (`src/ui/Hud.tsx`, DOM over the canvas): money top right, lives as hearts, the score
+  multiplier, the weapon slot (fists) under them, wanted level as up to four cop heads at the top, the
+  street name as you turn into it, the car's name as you get in (`src/sim/vehicles.ts`: VW Golf, BMW
+  5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter), BUSTED / WRECKED banners, the
+  mission text and clock. H toggles the controls help.
+- **Money** (`src/sim/score.ts`): a near miss (passing a car at over 50 km/h with centres 3.4–4.6 m
+  apart) pays $50, a drift (sliding over a third sideways at speed) $20 every half second. Awards within
+  5 s of each other build a multiplier up to ×4.
+- **Wanted level** (`src/sim/wanted.ts`): ramming cars, knocking people down, entering a junction on red
+  and taking a car in front of the police add heat; each whole point is a cop head and one police car.
+  Heat cools only after 8 s out of police sight.
+- **Police** (`src/sim/police.ts`): they turn up just out of view, drive the shortest street route to
+  you (A* over the street graph, `src/world/route.ts`), go straight at you once close, back out of dead
+  ends and bump you. Standing still next to one for 3 s is **BUSTED**: half your money and a life gone,
+  back at Sudetenstraße 19. Losing the last life starts over.
+- **Damage** (`src/sim/damage.ts`): one model for the player, pedestrians and cars (hp, armour, what hit
+  last). Walls, cars and police cars hurt your car; under 35 hp it smokes, at 0 it is **WRECKED** and
+  you are on foot. People knocked down get up again.
+- **The payphone job** (`src/sim/mission.ts`): the yellow phone on the sidewalk at Sudetenstraße 19:
+  "Hol Brezn bei Bäckerei Mühlenbäck und bring sie zur Rehmaus Apotheke in 90 s". The pickup is the
+  Mühlenbäck branch across town (the one next door would be too easy); the 90 s clock runs from the
+  pickup, 2.4 km by road. A yellow arrow points at the target (at the screen edge while it is off
+  screen) and a glowing marker lies on the ground there. Reward $1500.
+- **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
+  and a German two-tone siren that swells as police cars close in. It starts with the first key press.
 
 ## What is in the town
 

@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+/* GTA 2 style HUD lettering: heavy, slanted, outlined in black. */
+.hud-font {
+  font-family: "Arial Black", "Arial Bold", Impact, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 #000;
+}
+
+/* Street and car names: hold, then fade out. */
+@keyframes hud-fade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.hud-fade {
+  animation: hud-fade 3s ease-in forwards;
+}
+
+@keyframes hud-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+.hud-blink {
+  animation: hud-blink 0.5s steps(1) infinite;
+}

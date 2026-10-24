@@ -1,6 +1,7 @@
 import type { Road } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
 import { WALKABLE } from "#/world/world.ts"
+import { PERSON_HP, hurt, vitals, type Vitals } from "./damage.ts"
 
 /** Someone walking the footpath and sidewalk network. */
 export type Walker = {
@@ -23,6 +24,7 @@ export type Walker = {
   panic: number
   /** Seconds left lying on the ground after being hit. */
   down: number
+  readonly vitals: Vitals
   readonly sprite: number
 }
 
@@ -73,6 +75,7 @@ export const spawnWalker = (world: World, id: number, cx: number, cy: number, mi
       stride: random() * 10,
       panic: 0,
       down: 0,
+      vitals: vitals(PERSON_HP),
       sprite: PED_SPRITES[id % PED_SPRITES.length] ?? 1,
     }
     const [ax, ay] = vertex(hit.road.pts, w.from)
@@ -107,6 +110,8 @@ export type Threat = { readonly x: number; readonly y: number; readonly vx: numb
 export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: number, random: () => number): void => {
   if (w.down > 0) {
     w.down -= dt
+    // No gore: whoever was knocked down gets up again, shaken but whole.
+    if (w.down <= 0) w.vitals.hp = PERSON_HP
     return
   }
   const road = world.map.roads[w.road]
@@ -119,6 +124,7 @@ export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: n
     const dy = w.y - threat.y
     const dist = Math.hypot(dx, dy)
     if (speed > 3 && dist < 1.6) {
+      hurt(w.vitals, speed * 3, "car")
       w.down = 4
       w.panic = 0
       return

@@ -8,7 +8,7 @@ import { CYCLE, controls, lightFor, makeSignals } from "./signals.ts"
 
 const map = Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8")))
 const world = makeWorld(map)
-const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false }
+const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false, attack: false }
 
 describe("traffic lights", () => {
   const signals = makeSignals(world)

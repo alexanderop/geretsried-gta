@@ -8,6 +8,7 @@ import type { World } from "#/world/world.ts"
 import { makeRoadGraph, nearestNode, route, type RoadGraph } from "#/world/route.ts"
 import { ROAD, forwardSpeed, stepCar, type Car } from "./car.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
+import { CAR_HP, vitals } from "./damage.ts"
 
 export type Cop = {
   readonly id: number
@@ -49,7 +50,7 @@ export const spawnCop = (world: World, id: number, x: number, y: number, random:
     if (Math.hypot(cx - x, cy - y) < SPAWN_NEAR * 0.7) continue
     const path = route(g, cx, cy, x, y)
     const angle = path.length >= 4 ? Math.atan2((path[3] ?? 0) - cy, (path[2] ?? 0) - cx) : Math.atan2(y - cy, x - cx)
-    const car: Car = { x: cx, y: cy, angle, vx: 0, vy: 0, model: POLICE_MODEL, health: 100 }
+    const car: Car = { x: cx, y: cy, angle, vx: 0, vy: 0, model: POLICE_MODEL, vitals: vitals(CAR_HP) }
     if (!hits(car)) return { id, car, stuck: 0, path, replan: 1, reverse: 0 }
   }
   return null

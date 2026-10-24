@@ -128,10 +128,11 @@ export const bakeMinimap = (map: GameMap, overview: HTMLImageElement, size: numb
 }
 
 export const drawMinimap = (ctx: CanvasRenderingContext2D, minimap: HTMLCanvasElement, map: GameMap, game: Game) => {
-  const { width } = ctx.canvas
+  const { width, height } = ctx.canvas
   const pad = 16
+  // Bottom right, clear of the money and the attribution line.
   const x0 = width - minimap.width - pad
-  const y0 = pad
+  const y0 = height - minimap.height - pad * 3
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.globalAlpha = 0.9
   ctx.drawImage(minimap, x0, y0)
@@ -152,4 +153,49 @@ export const drawMinimap = (ctx: CanvasRenderingContext2D, minimap: HTMLCanvasEl
   ctx.closePath()
   ctx.fill()
   ctx.restore()
+}
+
+/** Pixels from the screen edge the off-screen arrow keeps. */
+const ARROW_INSET = 56
+
+/**
+ * GTA 2's mission arrow: a yellow pointer bobbing over the target when it is
+ * on screen, or pinned to the screen edge and turned towards it when not.
+ */
+export const drawTargetArrow = (ctx: CanvasRenderingContext2D, view: Float32Array, target: { readonly x: number; readonly y: number }, time: number, dpr: number) => {
+  const { width, height } = ctx.canvas
+  const at = project(view, target.x, target.y, 0, width, height)
+  if (at === null) return
+  const [tx, ty] = at
+  const inset = ARROW_INSET * dpr
+  const onScreen = tx > inset && tx < width - inset && ty > inset && ty < height - inset
+  const cx = width / 2
+  const cy = height / 2
+  let x = tx
+  let y = ty
+  let angle = Math.PI / 2
+  if (onScreen) y = ty - (34 + Math.sin(time * 6) * 8) * dpr
+  else {
+    angle = Math.atan2(ty - cy, tx - cx)
+    // Where the line from the centre to the target leaves the inset screen.
+    const k = Math.min((width / 2 - inset) / Math.abs(Math.cos(angle) || 1e-6), (height / 2 - inset) / Math.abs(Math.sin(angle) || 1e-6))
+    x = cx + Math.cos(angle) * k
+    y = cy + Math.sin(angle) * k
+  }
+  const s = 30 * dpr
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.translate(x, y)
+  ctx.rotate(angle)
+  ctx.beginPath()
+  ctx.moveTo(s, 0)
+  ctx.lineTo(-s * 0.6, -s * 0.75)
+  ctx.lineTo(-s * 0.25, 0)
+  ctx.lineTo(-s * 0.6, s * 0.75)
+  ctx.closePath()
+  ctx.lineWidth = 3 * dpr
+  ctx.strokeStyle = "#000"
+  ctx.stroke()
+  ctx.fillStyle = "#ffd60a"
+  ctx.fill()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
 }

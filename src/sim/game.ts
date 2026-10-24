@@ -12,6 +12,7 @@ import { commit, coolDown, noHeat, wantedLevel, type Wanted } from "./wanted.ts"
 import { drift, nearMiss, newScore, tickScore, type Score } from "./score.ts"
 import { cancelMission, newMission, stepMission, type Mission } from "./mission.ts"
 import { isStuck, spawnCop, stepCop, type Cop } from "./police.ts"
+import { CAR_HP, PERSON_HP, hurt, isDead, vitals, type DamageSource, type Vitals } from "./damage.ts"
 
 export type Input = {
   readonly up: boolean
@@ -22,9 +23,11 @@ export type Input = {
   readonly sprint: boolean
   /** true for exactly one step after F was pressed */
   readonly use: boolean
+  /** The attack button (Ctrl): held to use the current weapon. Fists, the only weapon yet, do nothing. */
+  readonly attack: boolean
 }
 
-export type Player = { x: number; y: number; angle: number; car: Car | null }
+export type Player = { x: number; y: number; angle: number; car: Car | null; readonly vitals: Vitals }
 
 /** Something the HUD announces once: a big banner, the car you got into, money paid. */
 export type Message =
@@ -61,6 +64,8 @@ export type Game = {
   junction: object | null
   /** Seconds until ramming another car counts as a new crash. */
   crashCooldown: number
+  /** Seconds until a wall can damage the car again. */
+  wallCooldown: number
 }
 
 export const DT = 1 / 60
@@ -79,8 +84,8 @@ const COP_SIGHT = 45
 /** A police car this close while you stand still for BUST_S arrests you. */
 const BUST_RANGE = 5.5
 const BUST_S = 3
-/** A car smokes below this health. */
-export const SMOKE_HEALTH = 35
+/** A car smokes below this many hp. */
+export const SMOKE_HP = 35
 
 /** Small seeded PRNG (mulberry32) so tests are repeatable. */
 export const makeRandom = (seed: number) => () => {
@@ -131,16 +136,17 @@ export const newGame = (world: World, seed = 1): Game => {
   // Half on the sidewalk, like people park in Geretsried, so traffic can pass;
   // the other curb or the lane itself if a wall is in the way.
   const spots = [road.width / 2 + 1, -(road.width / 2 + 1), road.width / 4].map(
-    (lane): Car => ({ x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, model: 0, health: 100 }),
+    (lane): Car => ({ x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, model: 0, vitals: vitals(CAR_HP) }),
   )
-  const car = spots.find((c) => !carHitsWall(world, c)) ?? spots[2] ?? { x: ax, y: ay, angle, vx: 0, vy: 0, model: 0, health: 100 }
+  const car = spots.find((c) => !carHitsWall(world, c)) ?? spots[2] ?? { x: ax, y: ay, angle, vx: 0, vy: 0, model: 0, vitals: vitals(CAR_HP) }
   const side = Math.sign((car.x - ax) * nx + (car.y - ay) * ny) || 1
   const home = { x: car.x - nx * 2.5 * side, y: car.y - ny * 2.5 * side, angle: angle - Math.PI / 2 }
-  // The payphone stands on the same sidewalk, a few steps along the street.
-  const phoneAt = { x: home.x - Math.cos(angle) * 7, y: home.y - Math.sin(angle) * 7 }
+  // The payphone stands on the sidewalk by the parked car, a few steps along the street.
+  const curb = road.width / 2 + 1.8
+  const phoneAt = { x: ax + nx * curb * side - Math.cos(angle) * 7, y: ay + ny * curb * side - Math.sin(angle) * 7 }
   const phone = world.isSolid(phoneAt.x, phoneAt.y) ? { x: home.x, y: home.y } : phoneAt
   const game: Game = {
-    player: { x: home.x, y: home.y, angle: home.angle, car: null },
+    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP) },
     parked: [car],
     wrecks: [],
     npcs: [],
@@ -159,6 +165,7 @@ export const newGame = (world: World, seed = 1): Game => {
     random,
     junction: null,
     crashCooldown: 0,
+    wallCooldown: 0,
   }
   fillTraffic(world, game, 40)
   return game
@@ -231,8 +238,8 @@ const pushApart = (car: Car, x: number, y: number, radius: number) => {
 const DAMAGE = { wall: 1.1, car: 1.4, cop: 1 } as const
 const HIT_SPEED = 4
 
-const damage = (car: Car, speed: number, per: number) => {
-  if (speed > HIT_SPEED) car.health = Math.max(0, car.health - speed * per)
+const damage = (car: Car, speed: number, per: number, source: DamageSource) => {
+  if (speed > HIT_SPEED) hurt(car.vitals, speed * per, source)
 }
 
 /** Is a police car (chasing, or one on patrol) within `range` meters of (x, y)? */
@@ -243,6 +250,7 @@ const policeNear = (game: Game, x: number, y: number, range: number) =>
 export const step = (world: World, game: Game, input: Input): void => {
   game.time += DT
   game.crashCooldown = Math.max(0, game.crashCooldown - DT)
+  game.wallCooldown = Math.max(0, game.wallCooldown - DT)
   const { player } = game
 
   if (input.use) toggleCar(game)
@@ -288,7 +296,11 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   }
   const next = stepCar(car, controls, surfaceAt(world, car.x, car.y), DT)
   if (carHitsWall(world, next)) {
-    damage(car, Math.hypot(car.vx, car.vy), DAMAGE.wall)
+    // Scraping along a wall hurts once per knock, not every step.
+    if (game.wallCooldown === 0) {
+      damage(car, Math.hypot(car.vx, car.vy), DAMAGE.wall, "wall")
+      game.wallCooldown = 0.3
+    }
     car.vx *= -0.3
     car.vy *= -0.3
   } else Object.assign(car, next)
@@ -299,19 +311,19 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
     const hit = pushApart(car, npc.x, npc.y, CAR_LENGTH * 0.75)
     if (hit > 0) {
       npc.speed = 0
-      damage(car, hit, DAMAGE.car)
+      damage(car, hit, DAMAGE.car, "car")
       if (hit > HIT_SPEED && game.crashCooldown === 0) {
         commit(game.wanted, "crash")
         game.crashCooldown = 1
       }
     } else pay(game, nearMiss(game.score, npc.id, dist, speed, game.time))
   }
-  for (const parked of game.parked) damage(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car)
+  for (const parked of game.parked) damage(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car, "car")
   for (const wreck of game.wrecks) pushApart(car, wreck.x, wreck.y, CAR_LENGTH * 0.75)
   for (const cop of game.cops) {
     // A police car ramming you hurts as much as you ramming it.
     const closing = Math.hypot(car.vx - cop.car.vx, car.vy - cop.car.vy)
-    if (pushApart(car, cop.car.x, cop.car.y, CAR_LENGTH * 0.8) > 0) damage(car, closing, DAMAGE.cop)
+    if (pushApart(car, cop.car.x, cop.car.y, CAR_LENGTH * 0.8) > 0) damage(car, closing, DAMAGE.cop, "police")
   }
   // A shove from another car must not push you into a wall.
   if (carHitsWall(world, car)) Object.assign(car, before)
@@ -321,7 +333,7 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   redLight(game, car)
   player.x = car.x
   player.y = car.y
-  if (car.health <= 0) wreck(game)
+  if (isDead(car.vitals)) wreck(game)
 }
 
 const pay = (game: Game, amount: number) => {
@@ -343,7 +355,7 @@ const wreck = (game: Game) => {
   if (car === null) return
   getOut(game)
   game.parked = game.parked.filter((c) => c !== car)
-  game.wrecks.push({ ...car, vx: 0, vy: 0, health: 0 })
+  game.wrecks.push({ ...car, vx: 0, vy: 0, vitals: vitals(0) })
   game.messages.push({ kind: "wrecked" })
   if (game.mission !== null) cancelMission(game.mission)
 }
@@ -444,7 +456,7 @@ const toggleCar = (game: Game) => {
   // Pulling a driver out in front of the police is car theft.
   if (policeNear(game, npc.x, npc.y, 40)) commit(game.wanted, "theft")
   game.npcs = game.npcs.filter((n) => n !== npc)
-  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model, health: 100 }
+  player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model, vitals: vitals(CAR_HP) }
   game.messages.push({ kind: "car", text: carName(npc.model) })
 }
 

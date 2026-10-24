@@ -1,3 +1,5 @@
+import type { Vitals } from "./damage.ts"
+
 /** A car the player can drive. Angle 0 points east; y points south. */
 export type Car = {
   x: number
@@ -7,8 +9,8 @@ export type Car = {
   vy: number
   /** Index into the car sprite sheet (see vehicles.ts). */
   readonly model: number
-  /** 100 new, 0 wrecked. */
-  health: number
+  /** CAR_HP new, 0 wrecked (see damage.ts). */
+  readonly vitals: Vitals
 }
 
 export type Controls = {

@@ -9,7 +9,7 @@ import { stepWalker } from "./pedestrians.ts"
 
 const map = Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8")))
 const world = makeWorld(map)
-const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false }
+const idle: Input = { up: false, down: false, left: false, right: false, handbrake: false, sprint: false, use: false, attack: false }
 const must = <T,>(value: T | null | undefined): T => {
   if (value == null) throw new Error("expected a value")
   return value
@@ -113,7 +113,7 @@ describe("car damage", () => {
     const game = newGame(world, 3)
     step(world, game, { ...idle, use: true })
     const car = must(game.player.car)
-    car.health = 5
+    car.vitals.hp = 5
     run(game, { ...idle, up: true, right: true }, 20)
     expect(game.player.car).toBeNull()
     expect(game.messages.some((m) => m.kind === "wrecked")).toBe(true)
