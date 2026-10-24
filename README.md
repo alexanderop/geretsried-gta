@@ -138,7 +138,14 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 ## What is in the town
 
 - **Shops and places**: every named `shop=*` and the important `amenity=*` from OSM (EDEKA, Penny, Aldi, Lidl, Kaufland, Netto, Rossmann, fuel, police, …) as map labels, minimap dots and a HUD hint.
-- **Traffic lights**: the 27 real `highway=traffic_signals` nodes, grouped into junctions with a 46 s cycle (`src/sim/signals.ts`). NPC cars stop at red; a test drives 60 s of traffic and fails on any red-light crossing.
+- **Traffic lights**: the 27 real `highway=traffic_signals` nodes, grouped into junctions with a 46 s cycle (`src/sim/signals.ts`).
+  Every lane a light controls gets a white stop line 2.5 m before it (6 m at a junction, where the
+  crossing comes first) and a German signal (`src/render/scene/street.ts`): a pole on the right-hand kerb
+  standing up in 3D, a mast arm over the lane and the head hanging from it, lit red, amber or green on its
+  face and as a glowing dot seen from above. A zebra lies just past each line, with push-button posts at
+  both kerbs, and at the zebra and marked crossings OSM maps. NPC cars stop with their bumper behind the
+  line; a test drives 60 s of traffic and fails on any car crossing a line at red. Main roads have street
+  lamps every 38 m.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

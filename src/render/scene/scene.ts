@@ -19,6 +19,8 @@ import { Grid } from "#/world/grid.ts"
 import { facadeFor, type Facade } from "./facade.ts"
 import { roofTone } from "./roof-tone.ts"
 import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
+import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
+import { signalHead, stopLine, streetLamp, streetLamps, zebra, type StreetLamp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 export const CHUNK_M = 128
@@ -84,8 +86,12 @@ type Chunk = {
   readonly rivers: Array<readonly [number, number]>
   readonly lines: Array<number>
   readonly crowns: Array<number>
+  readonly street: Array<number>
   bounds: Box
 }
+
+/** A piece of street furniture, drawn by street.ts. */
+type StreetItem = { readonly kind: "stop"; readonly stop: StopLine } | { readonly kind: "zebra"; readonly zebra: Zebra } | { readonly kind: "lamp"; readonly lamp: StreetLamp }
 
 /** Deterministic 0..1 hash. */
 export const hash2 = (x: number, y: number, salt: number) => {
@@ -147,6 +153,7 @@ export class Scene {
   readonly rows: number
   private readonly chunks: Array<Chunk>
   private readonly lines: Array<Line> = []
+  private readonly street: Array<StreetItem> = []
   private readonly facades: Array<Facade>
   /** Chunk keys by their bounds, for the view query. */
   private readonly grid: Grid
@@ -163,7 +170,7 @@ export class Scene {
     this.chunks = Array.from({ length: this.cols * this.rows }, (_, key) => {
       const x = (key % this.cols) * CHUNK_M
       const y = Math.floor(key / this.cols) * CHUNK_M
-      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
+      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
     })
     const own = (x: number, y: number, box: Box): Chunk | undefined => {
       const cx = Math.min(this.cols - 1, Math.max(0, Math.floor(x / CHUNK_M)))
@@ -220,6 +227,20 @@ export class Scene {
       const reach = r * 1.2 + crownHeight(r) * SHADOW_PER_M
       own(x, y, { minX: x - reach, minY: y - reach, maxX: x + reach, maxY: y + reach })?.crowns.push(i)
     }
+    const signals = makeSignals(world)
+    const items: Array<StreetItem> = [
+      ...signals.stops.map((stop): StreetItem => ({ kind: "stop", stop })),
+      ...signals.zebras.map((z): StreetItem => ({ kind: "zebra", zebra: z })),
+    ]
+    const furniture = [...signals.stops.map((st) => signalHead(st).pole), ...signals.zebras]
+    items.push(...streetLamps(world, furniture).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
+    for (const item of items) {
+      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.lamp
+      // Room for an arm over the road and a shadow 7 m long.
+      const reach = 14
+      own(at.x, at.y, { minX: at.x - reach, minY: at.y - reach, maxX: at.x + reach, maxY: at.y + reach })?.street.push(this.street.length)
+      this.street.push(item)
+    }
     this.grid = new Grid(map.width, map.height, CHUNK_M)
     this.chunks.forEach((c, key) => this.grid.insert(key, c.bounds))
   }
@@ -264,6 +285,12 @@ export class Scene {
     for (const i of chunk.buildings) {
       const b = map.buildings[i]
       if (b !== undefined) this.building(m, b, this.facades[i] ?? "house")
+    }
+    for (const i of chunk.street) {
+      const item = this.street[i]
+      if (item?.kind === "stop") stopLine(m, this.sprites, item.stop)
+      else if (item?.kind === "zebra") zebra(m, this.sprites, item.zebra, ZEBRA_M)
+      else if (item?.kind === "lamp") streetLamp(m, this.sprites, item.lamp)
     }
     this.forest(m, cx, cy)
     for (const i of chunk.crowns) {

@@ -9,7 +9,8 @@ import { POLICE_MODEL } from "#/sim/vehicles.ts"
 import { SMOKE_HP, type Game } from "#/sim/game.ts"
 import type { Car } from "#/sim/car.ts"
 import { missionTarget } from "#/sim/mission.ts"
-import { lightFor, type Light, type TrafficLight } from "#/sim/signals.ts"
+import { lightFor, type Light, type StopLine } from "#/sim/signals.ts"
+import { HEAD, LAMP_AT, MAST_Z, signalHead, uprightQuad } from "./street.ts"
 import { CORPSE_FADE_S, type Walker } from "#/sim/pedestrians.ts"
 import type { Effect, Fighter, Projectile } from "#/sim/state.ts"
 import type { Vitals } from "#/sim/damage.ts"
@@ -24,7 +25,8 @@ const SHADOW: Rgba = [14, 22, 40, 100]
 const SHADOW_Z = 0.1
 const CAR_Z = 1.5
 const PED_Z = 1.75
-const LIGHT_Z = 4
+/** Signals further than this from the player are off screen even at top speed. */
+const VIEW_M = 140
 
 type Placed = { readonly x: number; readonly y: number; readonly angle: number }
 
@@ -95,41 +97,28 @@ const PLAYER_POSE: Readonly<Record<WeaponId, number | null>> = {
   molotov: prop("pose-player-throw"),
 }
 
-const LAMP: Readonly<Record<Light, Rgba>> = { red: [255, 59, 48, 255], yellow: [255, 204, 0, 255], green: [52, 199, 89, 255] }
-const OFF: Rgba = [58, 58, 60, 255]
-const HOUSING: Rgba = [28, 28, 30, 255]
+const LAMP: Readonly<Record<Light, Rgba>> = { red: [255, 48, 36, 255], yellow: [255, 190, 0, 255], green: [40, 230, 110, 255] }
 const LAMPS: ReadonlyArray<Light> = ["red", "yellow", "green"]
 
-/** A signal head on the right-hand curb, facing traffic on the light's road, glowing in its current colour. */
-const light = (m: MeshBuilder, boxes: SpriteBoxes, l: TrafficLight, time: number) => {
-  const heads = l.junction.size === 1 ? [l.heading, l.heading + Math.PI / 2] : [l.heading]
-  for (const heading of heads) {
-    for (const side of l.direction === "both" ? [1, -1] : [l.direction === "forward" ? 1 : -1]) {
-      const facing = heading + (side === 1 ? 0 : Math.PI)
-      const state = lightFor(l.junction, facing, time)
-      const off = l.roadWidth / 2 + 0.8
-      const x = l.x - Math.sin(facing) * off
-      const y = l.y + Math.cos(facing) * off
-      const box = (layer: number): readonly [number, number] => boxes[layer] ?? [1, 1]
-      spriteQuad(m, { x, y, z: LIGHT_Z - 0.05, angle: facing, length: 4.4, width: 4.4 }, Sprite.glow, box(Sprite.glow), LAMP[state], Mode.sprite)
-      // The head is long across the road (its lamps in a row from the kerb) and narrow along it.
-      spriteQuad(m, { x, y, z: LIGHT_Z, angle: facing, length: 0.9, width: 2.4 }, Sprite.housing, box(Sprite.housing), HOUSING, Mode.sprite)
-      LAMPS.forEach((lamp, i) => {
-        const along = -0.75 + i * 0.75
-        spriteQuad(
-          m,
-          { x: x - Math.sin(facing) * along, y: y + Math.cos(facing) * along, z: LIGHT_Z + 0.05, angle: facing, length: 0.6, width: 0.6 },
-          Sprite.lamp,
-          box(Sprite.lamp),
-          lamp === state ? LAMP[lamp] : OFF,
-          Mode.sprite,
-        )
-      })
-      m.target = "shadow"
-      spriteQuad(m, { x: x + SHADOW_DIR[0] * LIGHT_Z, y: y + SHADOW_DIR[1] * LIGHT_Z, z: SHADOW_Z, angle: facing, length: 0.9, width: 2.4 }, Sprite.housing, box(Sprite.housing), SHADOW, Mode.silhouette)
-      m.target = "opaque"
-    }
-  }
+/**
+ * The lit lamp of a signal: on the head's face (seen as the walls are, leaning
+ * out towards the screen edges), and as a glowing dot on top of the head,
+ * which is what the camera sees from straight above.
+ */
+const signal = (m: MeshBuilder, boxes: SpriteBoxes, st: StopLine, time: number) => {
+  const state = lightFor(st.light.junction, st.heading, time)
+  const { head } = signalHead(st)
+  const color = LAMP[state]
+  const lit = LAMPS.indexOf(state)
+  const k = LAMP_AT[lit] ?? 0.5
+  const z = HEAD.top - (HEAD.top - HEAD.bottom) * k
+  // Just in front of the face, towards the traffic.
+  const fx = head.x - Math.cos(st.heading) * 0.03
+  const fy = head.y - Math.sin(st.heading) * 0.03
+  uprightQuad(m, fx, fy, z - 0.15, z + 0.15, st.heading + Math.PI, 0.3, Sprite.lamp, box(boxes, Sprite.lamp), color, Mode.sprite)
+  uprightQuad(m, fx - Math.cos(st.heading) * 0.02, fy - Math.sin(st.heading) * 0.02, z - 0.5, z + 0.5, st.heading + Math.PI, 1, Sprite.glow, box(boxes, Sprite.glow), [color[0], color[1], color[2], 200], Mode.sprite)
+  spriteQuad(m, { x: head.x, y: head.y, z: MAST_Z + 0.08, angle: 0, length: 0.32, width: 0.32 }, Sprite.lamp, box(boxes, Sprite.lamp), color, Mode.sprite)
+  spriteQuad(m, { x: head.x, y: head.y, z: MAST_Z + 0.06, angle: 0, length: 2.2, width: 2.2 }, Sprite.glow, box(boxes, Sprite.glow), [color[0], color[1], color[2], 170], Mode.sprite)
 }
 
 const box = (boxes: SpriteBoxes, layer: number): readonly [number, number] => boxes[layer] ?? [1, 1]
@@ -248,7 +237,7 @@ const projectile = (m: MeshBuilder, boxes: SpriteBoxes, p: Projectile) => {
 
 /** Every moving thing of `game`, drawn into `m`: sprites in its opaque list, shadows in its shadow list. */
 export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): void => {
-  const { time } = game
+  const { time, player } = game
   for (const d of game.decals) fx(m, boxes, Fx.scorch, { x: d.x, y: d.y, z: 0.12, angle: d.angle, length: d.size, width: d.size }, 0.85)
   mission(m, boxes, game)
   for (const p of game.pickups) pickup(m, boxes, p, time)
@@ -268,12 +257,11 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   }
   for (const w of game.walkers) walker(m, boxes, w, time)
   for (const f of game.fighters) fighter(m, boxes, f, time)
-  for (const l of game.signals.lights) light(m, boxes, l, time)
+  for (const st of game.signals.stops) if (Math.abs(st.x - player.x) < VIEW_M && Math.abs(st.y - player.y) < VIEW_M) signal(m, boxes, st, time)
   for (const f of game.fires) {
     const fade = Math.min(1, (f.life - f.t) / 1.5)
     flames(m, boxes, f.x, f.y, 0.4, f.r * 1.4 * fade, time, f.x)
   }
-  const { player } = game
   if (player.car !== null) {
     car(m, boxes, player.car)
     if (player.car.model === POLICE_MODEL) lightBar(m, boxes, player.car, time)

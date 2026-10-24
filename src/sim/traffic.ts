@@ -1,5 +1,5 @@
 import type { World } from "#/world/world.ts"
-import { controls, lightFor, type Signals } from "./signals.ts"
+import { lightFor, stopKey, type Signals } from "./signals.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
 import { CAR_HP, vitals, type Vitals } from "./damage.ts"
@@ -20,8 +20,8 @@ export type Npc = {
   readonly vitals: Vitals
 }
 
-/** Meters between a stopped car's center and the light. */
-const STOP_GAP = 4
+/** Meters between a stopped car's centre and its stop line: half a car and a little air, so the bumper stays behind the line. */
+const STOP_GAP = 2.6
 
 const CRUISE: Readonly<Record<string, number>> = {
   primary: 14,
@@ -124,15 +124,14 @@ export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, 
   const road = world.map.roads[npc.road]
   const cruise = CRUISE[road?.kind ?? "residential"] ?? 8
   const segment = segmentLength(world, npc)
-  // Red light at the end of this segment: stop a few meters before it.
-  const node = road?.nodes[npc.from + npc.dir]
-  const light = node === undefined ? undefined : signals.byNode.get(node)
-  const toLight = segment - npc.s
+  // Red light at the end of this segment: stop behind its white line.
+  const stop = signals.stopFor.get(stopKey(npc.road, npc.from + npc.dir, npc.dir))
+  const toLine = segment - npc.s - (stop?.back ?? 0)
   let stopAt = Infinity
-  if (light !== undefined && controls(light, npc.dir, npc.x, npc.y, npc.angle)) {
-    const state = lightFor(light.junction, npc.angle, time)
-    // On yellow, only cars that can still stop do.
-    if (state === "red" || (state === "yellow" && toLight > 10)) stopAt = Math.max(0, toLight - STOP_GAP)
+  if (stop !== undefined) {
+    const state = lightFor(stop.light.junction, stop.heading, time)
+    // On yellow, only cars that can still stop do; a car already over the line drives on.
+    if ((state === "red" || (state === "yellow" && toLine > 10)) && toLine > -0.5) stopAt = Math.max(0, toLine - STOP_GAP)
   }
   const target = blocked ? 0 : Math.min(cruise, stopAt < 40 ? stopAt * 0.6 : cruise)
   npc.speed += Math.sign(target - npc.speed) * Math.min(Math.abs(target - npc.speed), (blocked || stopAt < 40 ? 14 : 4) * dt)
