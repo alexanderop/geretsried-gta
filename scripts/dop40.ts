@@ -20,22 +20,28 @@ const tileUrl = (bbox: Bbox, tx: number, ty: number) => {
   const nw = projection.toLatLon(tx * TILE_M, ty * TILE_M)
   const se = projection.toLatLon((tx + 1) * TILE_M, (ty + 1) * TILE_M)
   const size = TILE_M * PHOTO_PX_PER_M
-  const box = [se.lat, nw.lon, nw.lat, se.lon].map((n) => n.toFixed(7)).join(",")
-  return `${WMS}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=by_dop40c&STYLES=&CRS=EPSG:4326&BBOX=${box}&WIDTH=${size}&HEIGHT=${size}&FORMAT=image/png`
+  return wmsUrl(se.lat, nw.lon, nw.lat, se.lon, size, size)
 }
 
-const tile = (bbox: Bbox, tx: number, ty: number) =>
+/** A WMS PNG, downloaded once and then read from `path`. */
+export const cachedPng = (path: string, url: string) =>
   Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem
-    const path = `${DIR}/${bbox.north},${bbox.west}-${tx}-${ty}.png`
     if (yield* fs.exists(path)) return decodePng(yield* fs.readFile(path))
-    const url = tileUrl(bbox, tx, ty)
     const res = yield* Effect.tryPromise(() => fetch(url))
     if (!res.ok || res.headers.get("content-type") !== "image/png") return yield* new Dop40Error({ url, status: res.status })
     const bytes = new Uint8Array(yield* Effect.tryPromise(() => res.arrayBuffer()))
     yield* fs.writeFile(path, bytes)
     return decodePng(bytes)
   })
+
+/** WMS GetMap for a lat/lon box. EPSG:4326 keeps the image linear in lat and lon, like the map's projection. */
+export const wmsUrl = (south: number, west: number, north: number, east: number, width: number, height: number) => {
+  const box = [south, west, north, east].map((n) => n.toFixed(8)).join(",")
+  return `${WMS}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=by_dop40c&STYLES=&CRS=EPSG:4326&BBOX=${box}&WIDTH=${width}&HEIGHT=${height}&FORMAT=image/png`
+}
+
+const tile = (bbox: Bbox, tx: number, ty: number) => cachedPng(`${DIR}/${bbox.north},${bbox.west}-${tx}-${ty}.png`, tileUrl(bbox, tx, ty))
 
 export const loadPhoto = (bbox: Bbox) =>
   Effect.gen(function* () {

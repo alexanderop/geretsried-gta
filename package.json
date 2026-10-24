@@ -15,7 +15,8 @@
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "compare": "node scripts/compare.ts"
+    "compare": "node scripts/compare.ts",
+    "photo": "node scripts/photo-tiles.ts"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.6",
