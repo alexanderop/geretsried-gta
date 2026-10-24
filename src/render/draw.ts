@@ -5,22 +5,33 @@ import { CAR_LENGTH, forwardSpeed } from "#/sim/car.ts"
 import { silhouette, type Assets } from "./assets.ts"
 import { SHADOW_DIR } from "#/map/photo.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
-import { BAKE_PX_PER_M, CHUNK_M, ChunkCache, fillPoly, strokeLine } from "./chunks.ts"
-import { AREA_COLORS, GROUND, PHOTO_GROUND } from "./palette.ts"
-import { PHOTO_TILE_M, photoSource } from "#/map/photo-tiles.ts"
+import { BAKE_PX_PER_M, CHUNK_M, strokeLine, type LazyChunks } from "./chunks.ts"
+import type { CoveredRoads } from "./covered.ts"
+import { PHOTO_GROUND } from "./palette.ts"
+import { OVERVIEW_M_PER_PX, PHOTO_TILE_M, photoSource } from "#/map/photo-tiles.ts"
 import type { PhotoTiles } from "./photo.ts"
 
 export type Camera = { x: number; y: number; zoom: number }
 
-/** Pixels per meter: close when standing, pulls back with speed (GTA 2 style). */
+/**
+ * Pixels per meter: close when standing, pulls back with speed (GTA 2 style).
+ * On foot the 0.4 m photo is magnified 3×, no more, or it turns to mush; at
+ * full speed the cars must stay big enough to find on the photo.
+ */
+const ON_FOOT_ZOOM = 7.5
+const CAR_ZOOM = 7
+const MIN_ZOOM = 4.5
 const targetZoom = (game: Game) => {
-  if (game.player.car === null) return 11
-  return 7 - Math.min(3.8, Math.abs(forwardSpeed(game.player.car)) * 0.12)
+  if (game.player.car === null) return ON_FOOT_ZOOM
+  return Math.max(MIN_ZOOM, CAR_ZOOM - Math.abs(forwardSpeed(game.player.car)) * 0.08)
 }
+
+/** Seconds of travel the camera looks ahead, so a closer zoom still shows what is coming. */
+const LEAD_S = 0.8
 
 export const followCamera = (camera: Camera, game: Game): void => {
   const p = playerPos(game)
-  const lead = game.player.car === null ? { x: 0, y: 0 } : { x: game.player.car.vx * 0.6, y: game.player.car.vy * 0.6 }
+  const lead = game.player.car === null ? { x: 0, y: 0 } : { x: game.player.car.vx * LEAD_S, y: game.player.car.vy * LEAD_S }
   camera.x += (p.x + lead.x - camera.x) * 0.12
   camera.y += (p.y + lead.y - camera.y) * 0.12
   camera.zoom += (targetZoom(game) - camera.zoom) * 0.04
@@ -36,15 +47,18 @@ const PREFETCH_M = 160
  * Draws one frame; returns false while part of the ground is still loading.
  * The ground is the aerial photo; chunks without one fall back to the drawn map.
  */
+/** Everything under the sprites: the photo, roads it hides, and the drawn map where it is missing. */
+export type GroundLayers = { readonly photos: PhotoTiles; readonly covered: CoveredRoads; readonly fallback: LazyChunks }
+
 export const drawFrame = (
   ctx: CanvasRenderingContext2D,
-  chunks: ChunkCache,
-  photos: PhotoTiles,
+  ground: GroundLayers,
   sprites: Sprites,
   camera: Camera,
   game: Game,
   options: FrameOptions = { bakeBudget: 3, entities: true },
 ): boolean => {
+  const { photos } = ground
   const { width, height } = ctx.canvas
   const z = camera.zoom
   const left = camera.x - width / 2 / z
@@ -76,7 +90,7 @@ export const drawFrame = (
         complete = false
         continue
       }
-      const chunk = chunks.get(cx, cy, budget)
+      const chunk = ground.fallback.get()?.get(cx, cy, budget) ?? null
       if (chunk === null) {
         complete = false
         continue
@@ -90,6 +104,7 @@ export const drawFrame = (
 
   ctx.setTransform(z, 0, 0, z, -left * z, -top * z)
   if (!options.entities) return complete
+  ground.covered.draw(ctx, { minX: left, minY: top, maxX: left + width / z, maxY: top + height / z })
   for (const car of game.parked) drawCar(ctx, sprites, car.x, car.y, car.angle, car.model)
   for (const npc of game.npcs) drawCar(ctx, sprites, npc.x, npc.y, npc.angle, npc.model)
   for (const w of game.walkers) drawWalker(ctx, sprites, w)
@@ -110,7 +125,7 @@ const toSprite = (img: HTMLImageElement): Sprite => ({ img, shadow: silhouette(i
 export const makeSprites = (assets: Assets): Sprites => ({ cars: assets.cars.map(toSprite), peds: assets.peds.map(toSprite) })
 
 /** Width of the player's outline in meters: the photo's dark tree canopy hides roads, and you must not lose yourself there. */
-const HALO_M = 0.18
+const HALO_M = 0.25
 const HALO_DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)] as const)
 
 /** Draw a sprite centred at (x, y), rotated, `length` meters along its nose; width follows the image. */
@@ -200,6 +215,30 @@ const drawLight = (ctx: CanvasRenderingContext2D, light: TrafficLight, time: num
   }
 }
 
+/**
+ * A ring of fixed screen size around the player, in screen space: on the busy
+ * photo, and under tree canopy, the car alone is easy to lose.
+ */
+export const drawPlayerMarker = (ctx: CanvasRenderingContext2D, camera: Camera, game: Game, dpr: number) => {
+  const { width, height } = ctx.canvas
+  const p = playerPos(game)
+  const sx = (p.x - camera.x) * camera.zoom * dpr + width / 2
+  const sy = (p.y - camera.y) * camera.zoom * dpr + height / 2
+  const r = (game.player.car === null ? 16 : 26) * dpr
+  const pulse = 0.65 + 0.25 * Math.sin(game.time * 5)
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.globalAlpha = pulse
+  ctx.lineWidth = 4 * dpr
+  ctx.strokeStyle = "rgba(0,0,0,0.6)"
+  ctx.beginPath()
+  ctx.arc(sx, sy, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.lineWidth = 2 * dpr
+  ctx.strokeStyle = "#ffd60a"
+  ctx.stroke()
+  ctx.globalAlpha = 1
+}
+
 const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
   supermarket: ["🛒", "#d62828"],
   drugstore: ["🧴", "#7b2cbf"],
@@ -260,40 +299,34 @@ export const drawPlaces = (ctx: CanvasRenderingContext2D, map: GameMap, camera: 
   }
 }
 
-/** A one-time overview of the whole town for the minimap. */
-export const bakeMinimap = (map: GameMap, size: number): HTMLCanvasElement => {
+/** A one-time overview of the whole town for the minimap: the aerial photo, streets and important places on top. */
+export const bakeMinimap = (map: GameMap, overview: HTMLImageElement, size: number): HTMLCanvasElement => {
   const s = size / Math.max(map.width, map.height)
   const canvas = document.createElement("canvas")
   canvas.width = Math.ceil(map.width * s)
   canvas.height = Math.ceil(map.height * s)
   const ctx = canvas.getContext("2d")
   if (ctx === null) return canvas
-  ctx.fillStyle = GROUND
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.imageSmoothingQuality = "high"
+  ctx.drawImage(overview, 0, 0, map.width / OVERVIEW_M_PER_PX, map.height / OVERVIEW_M_PER_PX, 0, 0, canvas.width, canvas.height)
   ctx.setTransform(s, 0, 0, s, 0, 0)
-  for (const a of map.areas) {
-    ctx.fillStyle = AREA_COLORS[a.kind]
-    fillPoly(ctx, a.pts)
-  }
-  ctx.strokeStyle = AREA_COLORS.water
-  for (const w of map.waterways) {
-    ctx.lineWidth = w.width
-    strokeLine(ctx, w.pts)
-  }
-  ctx.fillStyle = "#6b4a40"
-  for (const b of map.buildings) fillPoly(ctx, b.pts)
-  ctx.strokeStyle = "#e0dccc"
+  ctx.lineCap = "round"
+  ctx.lineJoin = "round"
+  ctx.strokeStyle = "rgba(245,240,225,0.75)"
   for (const r of map.roads) {
-    if (r.kind === "footway" || r.kind === "track") continue
-    ctx.lineWidth = Math.max(r.width * 1.5, 1.5 / s)
+    if (r.kind === "footway" || r.kind === "track" || r.kind === "service") continue
+    ctx.lineWidth = Math.max(r.width, 1.2 / s)
     strokeLine(ctx, r.pts)
   }
   for (const poi of map.pois) {
     if (!IMPORTANT.has(poi.kind)) continue
     ctx.fillStyle = POI_STYLE[poi.kind][1]
+    ctx.strokeStyle = "#fff"
+    ctx.lineWidth = 0.8 / s
     ctx.beginPath()
-    ctx.arc(poi.x, poi.y, 2.2 / s, 0, Math.PI * 2)
+    ctx.arc(poi.x, poi.y, 2.4 / s, 0, Math.PI * 2)
     ctx.fill()
+    ctx.stroke()
   }
   return canvas
 }

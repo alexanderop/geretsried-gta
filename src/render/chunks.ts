@@ -4,7 +4,8 @@ import type { World } from "#/world/world.ts"
 import { boxOf, centroid, distToSegmentSq, longestEdgeAngle, pointInPolygon, type Box } from "#/world/geometry.ts"
 import { nearestWall } from "#/map/roof.ts"
 import { Grid } from "#/world/grid.ts"
-import { TEXTURES, TREE_TONES, silhouette, type Assets, type RoofTexture, type TextureName } from "./assets.ts"
+import { Effect } from "effect"
+import { TEXTURES, TREE_TONES, loadFallbackAssets, silhouette, type FallbackAssets, type RoofTexture, type TextureName } from "./assets.ts"
 import { GROUND, ROAD_COLORS } from "./palette.ts"
 import { GROUND_M_PER_PX } from "#/map/types.ts"
 import { SHADOW_DIR, SHADOW_PER_M, buildingHeight } from "#/map/photo.ts"
@@ -35,6 +36,31 @@ const AREA_LOOK: Readonly<Record<AreaKind, readonly [TextureName, string | null]
 }
 
 /**
+ * The drawn map, built the first time a photo tile fails: until then the game
+ * never downloads its textures, tree crowns or paving mask.
+ */
+export class LazyChunks {
+  private chunks: ChunkCache | null = null
+  private started = false
+
+  constructor(private readonly world: World) {}
+
+  /** The chunk cache, or null while its assets load (the first call starts that). */
+  get(): ChunkCache | null {
+    if (!this.started) {
+      this.started = true
+      void Effect.runPromise(loadFallbackAssets).then(
+        (assets) => {
+          this.chunks = new ChunkCache(this.world, assets)
+        },
+        (error: unknown) => console.error("fallback map assets failed to load", error),
+      )
+    }
+    return this.chunks
+  }
+}
+
+/**
  * The drawn map, the fallback wherever no aerial photo tile loads: bakes it
  * into 128 m canvases on demand and keeps the most recent ones (LRU).
  */
@@ -57,7 +83,7 @@ export class ChunkCache {
 
   constructor(
     private readonly world: World,
-    private readonly assets: Assets,
+    private readonly assets: FallbackAssets,
   ) {
     const map = world.map
     this.map = map
@@ -558,7 +584,7 @@ const tracePath = (ctx: CanvasRenderingContext2D, pts: ReadonlyArray<number>) =>
   for (let i = 2; i + 1 < pts.length; i += 2) ctx.lineTo(pts[i] ?? 0, pts[i + 1] ?? 0)
 }
 
-export const fillPoly = (ctx: CanvasRenderingContext2D, pts: ReadonlyArray<number>) => {
+const fillPoly = (ctx: CanvasRenderingContext2D, pts: ReadonlyArray<number>) => {
   tracePath(ctx, pts)
   ctx.closePath()
   ctx.fill()

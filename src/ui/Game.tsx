@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react"
 import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
-import { ChunkCache } from "#/render/chunks.ts"
+import { LazyChunks } from "#/render/chunks.ts"
+import { CoveredRoads } from "#/render/covered.ts"
 import { PhotoTiles } from "#/render/photo.ts"
 import { photoTileGrid } from "#/map/photo-tiles.ts"
-import { bakeMinimap, drawFrame, drawMinimap, drawPlaces, followCamera, makeSprites, poiIcon, type Camera } from "#/render/draw.ts"
+import { bakeMinimap, drawFrame, drawMinimap, drawPlaces, drawPlayerMarker, followCamera, makeSprites, poiIcon, type Camera } from "#/render/draw.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
 
@@ -41,11 +42,14 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     if (canvas == null || ctx == null) return
     const game = newGame(world, Date.now() % 100_000)
     window.__gta = { game, world }
-    const chunks = new ChunkCache(world, assets)
     const grid = photoTileGrid(world.map.width, world.map.height)
-    const photos = new PhotoTiles(grid.cols, grid.rows)
+    const ground = {
+      photos: new PhotoTiles(grid.cols, grid.rows),
+      covered: new CoveredRoads(world.map.covered, world.map.width, world.map.height),
+      fallback: new LazyChunks(world),
+    }
     const sprites = makeSprites(assets)
-    const minimap = bakeMinimap(world.map, 220)
+    const minimap = bakeMinimap(world.map, assets.overview, 220)
     const camera: Camera = { ...playerPos(game), zoom: 7 }
     const compare = compareView(world)
     if (compare !== null) Object.assign(camera, compare)
@@ -72,12 +76,13 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       if (compare !== null) {
         // Fixed camera, every chunk baked at once, nothing but the map.
         const view = { ...camera, zoom: camera.zoom * devicePixelRatio }
-        if (drawFrame(ctx, chunks, photos, sprites, view, game, { bakeBudget: 999, entities: false })) document.body.dataset.ready = "1"
+        if (drawFrame(ctx, ground, sprites, view, game, { bakeBudget: 999, entities: false })) document.body.dataset.ready = "1"
         raf = requestAnimationFrame(frame)
         return
       }
       followCamera(camera, game)
-      drawFrame(ctx, chunks, photos, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
+      drawFrame(ctx, ground, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
+      drawPlayerMarker(ctx, camera, game, devicePixelRatio)
       drawPlaces(ctx, world.map, camera, devicePixelRatio)
       drawMinimap(ctx, minimap, world.map, game)
       if ((hudTimer += 1) % 6 === 0) {

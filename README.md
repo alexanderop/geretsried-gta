@@ -33,9 +33,18 @@ The renderer (`src/render/photo.ts`) loads tiles lazily around the view, decodes
 and keeps 48 in an LRU. Cars, pedestrians, traffic lights, shop labels and the player are sprites on top.
 The photo already shows parked cars, trees, roofs and shadows, so none of those are drawn.
 
+- **Roads under trees**: `pnpm map` walks every paved road and marks stretches of 15 m or more whose
+  centre and quarter lines are all tree canopy in the photo (building shadows excluded); the renderer
+  draws those in as a soft, translucent asphalt band (`covered` in the map JSON, `src/render/covered.ts`).
+- **Minimap**: `pnpm photo` also box-filters all tiles into `public/photo/overview.webp` (8 m/px, ~150 KB);
+  streets and important places are drawn on top.
+- **Camera**: 7.5 px/m on foot (the photo magnified 3× at most), 7 → 4.5 px/m in a car as it speeds up,
+  looking 0.8 s ahead. A yellow ring and a light outline keep the player findable on the photo.
+
 ### What else comes from the aerial photo
 
-The drawn map (`src/render/chunks.ts`) is only the fallback for a tile that fails to load. It, the
+The drawn map (`src/render/chunks.ts`) is only the fallback for a tile that fails to load; its textures,
+`trees.bin` and `ground.png` are downloaded only then (`LazyChunks`). It, the
 collision data and the minimap still come from OSM plus `pnpm map`, which also reads the DOP40 orthophoto
 (`scripts/dop40.ts`: 42 WMS tiles at 1 m/px, cached in `data/dop40/`) inside the OSM geometry
 (`src/map/photo.ts`):

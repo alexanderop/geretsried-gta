@@ -1,5 +1,6 @@
 import { Effect, Schema } from "effect"
 import { decodeCrowns, type Crowns } from "#/map/crowns.ts"
+import { PHOTO_OVERVIEW_URL } from "#/map/photo-tiles.ts"
 
 /** Seamless textures and how many meters one tile covers in the world. */
 export const TEXTURES = {
@@ -39,7 +40,18 @@ export const TREES = 8
 export const ROOF_TEXTURES = ["roofOrange", "roofFlat"] as const
 export type RoofTexture = (typeof ROOF_TEXTURES)[number]
 
+/** What every frame needs: loaded before the game starts. */
 export type Assets = {
+  /** Car sprites, nose pointing right (+x), cropped to the body. */
+  readonly cars: ReadonlyArray<HTMLImageElement>
+  /** Pedestrian sprites facing right; 0 is the player. */
+  readonly peds: ReadonlyArray<HTMLImageElement>
+  /** The whole town from the air, for the minimap (see `PHOTO_OVERVIEW_URL`). */
+  readonly overview: HTMLImageElement
+}
+
+/** The drawn map's textures and photo-derived data: only loaded when a photo tile fails. */
+export type FallbackAssets = {
   readonly textures: Readonly<Record<TextureName, HTMLCanvasElement>>
   /** Grey copies of roof textures centred on 50 % grey, for the "overlay" blend. */
   readonly roofDetail: Readonly<Record<RoofTexture, HTMLCanvasElement>>
@@ -47,10 +59,6 @@ export type Assets = {
   readonly ground: HTMLImageElement
   /** Tree crowns found in the aerial photo, outside forests. */
   readonly crowns: Crowns
-  /** Car sprites, nose pointing right (+x), cropped to the body. */
-  readonly cars: ReadonlyArray<HTMLImageElement>
-  /** Pedestrian sprites facing right; 0 is the player. */
-  readonly peds: ReadonlyArray<HTMLImageElement>
   /** Tree crowns and bushes seen from above: sprite s in tone t is `s * TREE_TONES.length + t`. */
   readonly trees: ReadonlyArray<HTMLCanvasElement>
 }
@@ -170,13 +178,20 @@ const loadTextures = Effect.all(
   { concurrency: "unbounded" },
 )
 
-export const loadAssets = Effect.all(
+export const loadAssets: Effect.Effect<Assets, AssetLoadError> = Effect.all(
+  {
+    cars: Effect.all(Array.from({ length: CAR_MODELS }, (_, i) => sprite(`car-${i}`)), { concurrency: "unbounded" }),
+    peds: Effect.all(Array.from({ length: PEDS }, (_, i) => sprite(`ped-${i}`)), { concurrency: "unbounded" }),
+    overview: loadImage(PHOTO_OVERVIEW_URL),
+  },
+  { concurrency: "unbounded" },
+)
+
+export const loadFallbackAssets = Effect.all(
   {
     textures: loadTextures,
     ground: loadImage("/ground.png"),
     crowns: loadCrowns("/trees.bin"),
-    cars: Effect.all(Array.from({ length: CAR_MODELS }, (_, i) => sprite(`car-${i}`)), { concurrency: "unbounded" }),
-    peds: Effect.all(Array.from({ length: PEDS }, (_, i) => sprite(`ped-${i}`)), { concurrency: "unbounded" }),
     trees: Effect.all(Array.from({ length: TREES }, (_, i) => sprite(`tree-${i}`)), { concurrency: "unbounded" }).pipe(
       Effect.map((trees) => trees.flatMap((img) => TREE_TONES.map((treeTone) => retint(img, [treeTone, 1])))),
     ),
@@ -184,7 +199,7 @@ export const loadAssets = Effect.all(
   { concurrency: "unbounded" },
 ).pipe(
   Effect.map(
-    (loaded): Assets => ({
+    (loaded): FallbackAssets => ({
       ...loaded,
       roofDetail: { roofOrange: detail(loaded.textures.roofOrange, 0.8), roofFlat: detail(loaded.textures.roofFlat, 2) },
     }),
