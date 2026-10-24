@@ -227,6 +227,38 @@ describe("guns", () => {
   })
 })
 
+describe("petrol pumps", () => {
+  it("blow up when shot, set off the island next to them and the car parked by it", () => {
+    const game = armed(4, "smg")
+    game.npcs = []
+    const station = must([...new Set(game.pumps.map((p) => `${Math.round(p.x / 60)},${Math.round(p.y / 60)}`))].map((k) => game.pumps.filter((p) => `${Math.round(p.x / 60)},${Math.round(p.y / 60)}` === k)).find((g) => g.length >= 2))
+    const [first, second] = station
+    const target = must(first)
+    const next = must(second)
+    const car = { ...must(game.parked[0]), x: target.x + 3, y: target.y + 0.5, vitals: vitals(CAR_HP) }
+    game.parked.push(car)
+    expect(faceFrom(game, target.x, target.y, 9)).toBe(true)
+    shoot(game, 3)
+    run(game, idle, 3)
+    expect(target.dead).toBe(true)
+    expect(next.dead || next.fuse !== null || Math.hypot(next.x - target.x, next.y - target.y) > 7.5).toBe(true)
+    expect(car.vitals.hp).toBeLessThan(CAR_HP)
+    expect(game.decals.length).toBeGreaterThan(0)
+  })
+
+  it("go up when a car rams one hard", () => {
+    const game = newGame(world, 4)
+    step(world, game, { ...idle, use: true })
+    const car = must(game.player.car)
+    const pump = must(game.pumps[0])
+    // Coming in across the island at 15 m/s.
+    const across = pump.angle + Math.PI / 2
+    Object.assign(car, { x: pump.x - Math.cos(across) * 2.5, y: pump.y - Math.sin(across) * 2.5, angle: across, vx: Math.cos(across) * 15, vy: Math.sin(across) * 15 })
+    run(game, idle, 1.5)
+    expect(pump.dead).toBe(true)
+  })
+})
+
 describe("pickups", () => {
   it("give you the weapon, and come back a minute later", () => {
     const game = newGame(world, 2)

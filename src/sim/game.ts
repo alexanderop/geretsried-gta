@@ -17,6 +17,7 @@ import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./w
 import { collect, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
 import { fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
+import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
 import type { Game, Input, Spawn } from "./state.ts"
 
 export type { Game, Input, Message, Player } from "./state.ts"
@@ -124,6 +125,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const curb = road.width / 2 + 1.8
   const phoneAt = { x: ax + nx * curb * side - Math.cos(angle) * 7, y: ay + ny * curb * side - Math.sin(angle) * 7 }
   const phone = world.isSolid(phoneAt.x, phoneAt.y) ? { x: home.x, y: home.y } : phoneAt
+  const stations = planStations(world)
   const game: Game = {
     player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal() },
     parked: [car],
@@ -137,6 +139,8 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     effects: [],
     decals: [],
     pickups: placePickups(world, home, hidden),
+    pumps: pumpsOf(stations),
+    pillars: stations.flatMap((st) => st.pillars),
     nextId: 0,
     time: 0,
     lives: LIVES,
@@ -230,6 +234,10 @@ const pushApart = (car: Car, x: number, y: number, radius: number) => {
 /** Damage per m/s of impact speed. */
 const DAMAGE = { wall: 1.1, car: 1.4, cop: 1 } as const
 const HIT_SPEED = 4
+/** How close a car's centre gets to a canopy pillar or a pump island's spine, and the speed (m/s) that sets a pump off when it rams one. */
+const PILLAR_REACH = 1.5
+const PUMP_REACH = 1.9
+const RAM_PUMP = 7
 
 const crash = (car: Car, speed: number, per: number, source: DamageSource) => {
   if (speed > HIT_SPEED) hurt(car.vitals, speed * per, source)
@@ -406,6 +414,15 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   }
   for (const parked of game.parked) crash(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car, "car")
   for (const wreck of game.wrecks) pushApart(car, wreck.x, wreck.y, CAR_LENGTH * 0.75)
+  // Petrol station pillars and pump islands: ramming an island hard sets it off.
+  for (const p of game.pillars) if (Math.abs(p.x - car.x) < 4 && Math.abs(p.y - car.y) < 4) crash(car, pushApart(car, p.x, p.y, PILLAR_REACH), DAMAGE.wall, "wall")
+  for (const pump of game.pumps) {
+    if (pump.dead || Math.abs(pump.x - car.x) > 6 || Math.abs(pump.y - car.y) > 6) continue
+    const at = nearestOnIsland(pump, car.x, car.y)
+    const hit = pushApart(car, at.x, at.y, PUMP_REACH)
+    crash(car, hit, DAMAGE.wall, "wall")
+    if (hit > RAM_PUMP) hurtPump(pump, hit * 9, 0.3)
+  }
   for (const cop of game.cops) {
     // A police car ramming you hurts as much as you ramming it.
     const closing = Math.hypot(car.vx - cop.car.vx, car.vy - cop.car.vy)

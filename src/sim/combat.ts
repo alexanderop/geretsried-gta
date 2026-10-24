@@ -16,6 +16,7 @@ import { WEAPONS, bulletAngles, type WeaponId } from "./weapons.ts"
 import { blast, inBox, inCone, rayBox, rayCircle, rayWall, type Box } from "./hitscan.ts"
 import { commit, tactics } from "./wanted.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
+import { ISLAND_M, ISLAND_W, hurtPump, type Pump } from "./stations.ts"
 
 /** Anything with a body a shot can hit. */
 type Target =
@@ -23,6 +24,7 @@ type Target =
   | { readonly kind: "fighter"; readonly f: Fighter }
   | { readonly kind: "player" }
   | { readonly kind: "car"; readonly car: Car | Npc }
+  | { readonly kind: "pump"; readonly pump: Pump }
 
 const PERSON_R = 0.5
 /** Share of a bullet's damage a car takes: GTA 2 cars soak up a magazine before they burn. */
@@ -108,7 +110,13 @@ const cars = (game: Game, from: Shooter): Array<Car | Npc> => {
   return out
 }
 
-const posOf = (game: Game, t: Target): Point => (t.kind === "walker" ? t.w : t.kind === "fighter" ? t.f : t.kind === "player" ? game.player : t.car)
+const posOf = (game: Game, t: Target): Point => (t.kind === "walker" ? t.w : t.kind === "fighter" ? t.f : t.kind === "player" ? game.player : t.kind === "pump" ? t.pump : t.car)
+
+const pumpBox = (p: Pump): Box => ({ x: p.x, y: p.y, angle: p.angle, hl: ISLAND_M / 2, hw: ISLAND_W / 2 })
+/** Seconds between a pump catching and going up, so a chain of them goes off one after the other. */
+const pumpFuse = (game: Game) => 0.25 + game.random() * 0.35
+/** A burning pump island's pool of petrol. */
+const PUMP_FIRE = { r: 4, s: 9 } as const
 
 /** The first thing along a ray (walls stop it), and how far along it is. */
 const cast = (world: World, game: Game, from: Shooter, ox: number, oy: number, angle: number, range: number): { readonly t: number; readonly target: Target | null } => {
@@ -131,6 +139,14 @@ const cast = (world: World, game: Game, from: Shooter, ox: number, oy: number, a
       target = { kind: "car", car }
     }
   }
+  for (const pump of game.pumps) {
+    if (pump.dead) continue
+    const t = rayBox(ox, oy, dx, dy, pumpBox(pump))
+    if (t !== null && t < best) {
+      best = t
+      target = { kind: "pump", pump }
+    }
+  }
   return { t: best, target }
 }
 
@@ -150,6 +166,10 @@ const killFighter = (game: Game, f: Fighter, from: Shooter) => {
 
 /** `amount` of `source` damage to whatever was hit; `down` seconds off their feet for people who survive it. */
 const damage = (game: Game, target: Target, amount: number, source: DamageSource, from: Shooter, down: number) => {
+  if (target.kind === "pump") {
+    hurtPump(target.pump, amount * CAR_BULLET, pumpFuse(game))
+    return
+  }
   if (target.kind === "car") {
     hurt(target.car.vitals, source === "bullet" ? amount * CAR_BULLET : amount, source)
     return
@@ -312,6 +332,10 @@ export const explode = (world: World, game: Game, x: number, y: number, from: Sh
     car.vy += ((car.y - y) / d) * k
   }
   for (const n of game.npcs) hurt(n.vitals, hit(n), "explosion")
+  for (const pump of game.pumps) {
+    const amount = hit(pump)
+    if (amount > 0) hurtPump(pump, amount, pumpFuse(game))
+  }
   for (const car of [...game.parked, ...game.cops.map((c) => c.car), ...(player.car === null ? [] : [player.car])]) {
     const amount = hit(car)
     if (amount <= 0) continue
@@ -370,6 +394,7 @@ const stepFires = (game: Game, dt: number) => {
     // A molotov at your own feet burns you too.
     if (f.from === "player" && game.player.car === null && inside(game.player)) ignite(game.player.vitals)
     for (const car of cars(game, f.from)) if (inside(car, 1)) hurt(car.vitals, PATCH_CAR_HP_S * dt, "fire")
+    for (const pump of game.pumps) if (!pump.dead && inside(pump, 1.5)) hurtPump(pump, PATCH_CAR_HP_S * dt, pumpFuse(game))
     if (Math.round(f.t * 60) % 4 === 0) {
       const a = game.random() * Math.PI * 2
       const r = game.random() * f.r
@@ -455,6 +480,20 @@ const burnDown = (world: World, game: Game, dt: number, onPlayerCar: () => void)
     game.wrecks.push({ ...car, vx: 0, vy: 0 })
     // Whoever lit it, a chain of burning cars is the player's doing as far as the police are concerned.
     explode(world, game, car.x, car.y, "player", CAR_BLAST_R, CAR_BLAST_MAX)
+  }
+}
+
+/** Pump islands past saving go up when their fuse runs out: a car-sized blast and a pool of burning petrol. */
+const stepPumps = (world: World, game: Game, dt: number) => {
+  for (const pump of game.pumps) {
+    if (pump.dead || pump.fuse === null) continue
+    pump.fuse -= dt
+    if (Math.round(pump.fuse * 60) % 5 === 0) effect(game, { kind: "flame", x: pump.x, y: pump.y, x2: pump.x + (game.random() - 0.5) * 2, y2: pump.y + (game.random() - 0.5) * 2, angle: 0, life: 0.5, size: 1.6 })
+    if (pump.fuse > 0) continue
+    pump.dead = true
+    pump.fuse = null
+    explode(world, game, pump.x, pump.y, "player", CAR_BLAST_R, CAR_BLAST_MAX)
+    game.fires.push({ x: pump.x, y: pump.y, r: PUMP_FIRE.r, t: 0, life: PUMP_FIRE.s, from: "player" })
   }
 }
 
@@ -552,6 +591,7 @@ export const stepCombat = (world: World, game: Game, level: number, dt: number, 
   abandonBurning(world, game)
   slideParked(world, game, dt)
   burnDown(world, game, dt, onPlayerCarExplodes)
+  stepPumps(world, game, dt)
   burnPeople(game, dt)
   stepFighters(world, game, level, dt)
   runOver(game)

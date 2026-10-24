@@ -15,6 +15,7 @@ import { CORPSE_FADE_S, type Walker } from "#/sim/pedestrians.ts"
 import type { Effect, Fighter, Projectile } from "#/sim/state.ts"
 import type { Vitals } from "#/sim/damage.ts"
 import { isAvailable, type Pickup } from "#/sim/pickups.ts"
+import { ISLAND_M, PUMP_HP, type Pump } from "#/sim/stations.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
 import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
@@ -24,6 +25,8 @@ const WHITE: Rgba = [255, 255, 255, 255]
 const SHADOW: Rgba = [14, 22, 40, 100]
 const SHADOW_Z = 0.1
 const CAR_Z = 1.5
+const PUMP_Z = 1.2
+const BLAST_Z = 5.6
 const PED_Z = 1.75
 /** Signals further than this from the player are off screen even at top speed. */
 const VIEW_M = 140
@@ -180,6 +183,17 @@ const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
   spriteQuad(m, { x: job.phone.x, y: job.phone.y, z: 2.4, angle: 0, length: (1.1 * k * b[0]) / b[1], width: 1.1 * k }, layer, b, WHITE, Mode.sprite)
 }
 
+/** A pump island (two pumps on a kerbed island), at pump height; one about to blow is on fire. */
+const pump = (m: MeshBuilder, boxes: SpriteBoxes, p: Pump, time: number) => {
+  if (p.dead) return
+  const layer = prop("fuel-island")
+  const b = box(boxes, layer)
+  // The sprite's long side is its height in the image: turn it to lie along the island.
+  sprite(m, boxes, layer, { x: p.x, y: p.y, angle: p.angle + Math.PI / 2 }, PUMP_Z, (ISLAND_M * b[0]) / b[1], 0.8)
+  if (p.fuse !== null) flames(m, boxes, p.x, p.y, PUMP_Z + 0.3, 2.6, time, p.x)
+  else if (p.hp < PUMP_HP * 0.5) smoke(m, boxes, { x: p.x, y: p.y, angle: p.angle, vitals: { hp: SMOKE_HP * (p.hp / PUMP_HP), armour: 0, fire: 0, lastHit: null } }, time)
+}
+
 /** Pickups turn slowly on their glowing pads, like GTA 2's. */
 const pickup = (m: MeshBuilder, boxes: SpriteBoxes, p: Pickup, time: number) => {
   if (!isAvailable(p)) return
@@ -208,9 +222,10 @@ const effect = (m: MeshBuilder, boxes: SpriteBoxes, e: Effect) => {
   } else if (e.kind === "blast") {
     const s = e.size
     if (k < 0.3) spriteQuad(m, { x: e.x, y: e.y, z: 0.2, angle: 0, length: s * 1.7, width: s * 1.7 }, Sprite.glow, box(boxes, Sprite.glow), [255, 120, 30, Math.round(160 * (1 - k / 0.3))], Mode.sprite)
-    if (k < 0.12) fx(m, boxes, Fx.blastEarly, { x: e.x, y: e.y, z: 2, angle: e.angle, length: s * (0.6 + k * 3), width: s * (0.6 + k * 3) }, 1)
-    else if (k < 0.45) fx(m, boxes, Fx.blastBig, { x: e.x, y: e.y, z: 2.2, angle: e.angle, length: s * (0.95 + k * 0.5), width: s * (0.95 + k * 0.5) }, 1)
-    else fx(m, boxes, Fx.smoke, { x: e.x, y: e.y, z: 2.6 + k, angle: e.angle, length: s * (1 + k * 0.6), width: s * (1 + k * 0.6) }, (1 - k) / 0.55)
+    // A fireball rises over a petrol station canopy (5 m), as GTA 2 draws its explosions on top.
+    if (k < 0.12) fx(m, boxes, Fx.blastEarly, { x: e.x, y: e.y, z: BLAST_Z, angle: e.angle, length: s * (0.6 + k * 3), width: s * (0.6 + k * 3) }, 1)
+    else if (k < 0.45) fx(m, boxes, Fx.blastBig, { x: e.x, y: e.y, z: BLAST_Z + 0.1, angle: e.angle, length: s * (0.95 + k * 0.5), width: s * (0.95 + k * 0.5) }, 1)
+    else fx(m, boxes, Fx.smoke, { x: e.x, y: e.y, z: BLAST_Z + 0.4 + k, angle: e.angle, length: s * (1 + k * 0.6), width: s * (1 + k * 0.6) }, (1 - k) / 0.55)
   } else if (e.kind === "flame") {
     const x = e.x + (e.x2 - e.x) * k
     const y = e.y + (e.y2 - e.y) * k
@@ -241,6 +256,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   for (const d of game.decals) fx(m, boxes, Fx.scorch, { x: d.x, y: d.y, z: 0.12, angle: d.angle, length: d.size, width: d.size }, 0.85)
   mission(m, boxes, game)
   for (const p of game.pickups) pickup(m, boxes, p, time)
+  for (const p of game.pumps) pump(m, boxes, p, time)
   for (const c of game.wrecks) sprite(m, boxes, Sprite.fx + Fx.wreck, c, CAR_Z, CAR_LENGTH * 1.08, 0.7)
   for (const c of game.parked) {
     car(m, boxes, c)

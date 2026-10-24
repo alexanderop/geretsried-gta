@@ -13,6 +13,7 @@ import type { Cop } from "./police.ts"
 import type { Vitals } from "./damage.ts"
 import type { Arsenal } from "./weapons.ts"
 import type { Pickup } from "./pickups.ts"
+import type { Pump } from "./stations.ts"
 
 export type Input = {
   readonly up: boolean
@@ -120,6 +121,10 @@ export type Game = {
   effects: Array<Effect>
   decals: Array<Decal>
   readonly pickups: ReadonlyArray<Pickup>
+  /** Petrol pump islands: they blow up. */
+  readonly pumps: ReadonlyArray<Pump>
+  /** The pillars under petrol station canopies: cars bump into them. */
+  readonly pillars: ReadonlyArray<Point>
   nextId: number
   time: number
   lives: number

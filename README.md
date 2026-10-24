@@ -146,6 +146,13 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   both kerbs, and at the zebra and marked crossings OSM maps. NPC cars stop with their bumper behind the
   line; a test drives 60 s of traffic and fails on any car crossing a line at red. Main roads have street
   lamps every 38 m.
+- **Petrol stations** (`src/sim/stations.ts`, `src/render/scene/canopy.ts`): at the four real `amenity=fuel`
+  places, a flat sheet-metal canopy at 5 m on pillars (OSM's `building=roof` where mapped, otherwise one
+  laid out between the station and its street, clear of buildings) with a coloured band round its edge and
+  no walls, so you drive underneath; it fades to see-through while you are under it. Pump islands under
+  it, the price sign at the street, an air and water post, and the kiosk gets a shop front. Pump islands
+  explode like GTA 2's: shoot or ram one (over 7 m/s) and it catches, burns for a moment and goes up with
+  a car-sized blast and a pool of burning petrol, setting off the next island and the cars beside it.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

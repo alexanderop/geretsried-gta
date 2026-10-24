@@ -20,6 +20,8 @@ import { facadeFor, type Facade } from "./facade.ts"
 import { roofTone } from "./roof-tone.ts"
 import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
 import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
+import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/stations.ts"
+import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
 import { signalHead, stopLine, streetLamp, streetLamps, zebra, type StreetLamp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
@@ -87,6 +89,7 @@ type Chunk = {
   readonly lines: Array<number>
   readonly crowns: Array<number>
   readonly street: Array<number>
+  readonly canopies: Array<number>
   bounds: Box
 }
 
@@ -154,6 +157,8 @@ export class Scene {
   private readonly chunks: Array<Chunk>
   private readonly lines: Array<Line> = []
   private readonly street: Array<StreetItem> = []
+  /** Petrol station canopies, and the other roofs on pillars OSM maps (carports, shelters). */
+  private readonly canopies: Array<Canopy> = []
   private readonly facades: Array<Facade>
   /** Chunk keys by their bounds, for the view query. */
   private readonly grid: Grid
@@ -170,7 +175,7 @@ export class Scene {
     this.chunks = Array.from({ length: this.cols * this.rows }, (_, key) => {
       const x = (key % this.cols) * CHUNK_M
       const y = Math.floor(key / this.cols) * CHUNK_M
-      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
+      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
     })
     const own = (x: number, y: number, box: Box): Chunk | undefined => {
       const cx = Math.min(this.cols - 1, Math.max(0, Math.floor(x / CHUNK_M)))
@@ -188,7 +193,23 @@ export class Scene {
       const near = poiGrid.query(boxOf(b.pts, 4)).flatMap((i) => map.pois[i] ?? [])
       return facadeFor(b, near)
     })
+    const stations = planStations(world)
+    for (const st of stations) if (st.kiosk >= 0) this.facades[st.kiosk] = "shop"
+    const stationRoofs = new Set(stations.filter((st) => st.mapped).map((st) => st.canopy.join(",")))
+    this.canopies.push(...stations.map((st): Canopy => ({ ring: st.canopy, angle: st.angle, pillars: st.pillars, band: STATION_BANDS[st.band % STATION_BANDS.length] ?? KERB, pylon: st.pylon, air: st.air })))
+    map.buildings.forEach((b) => {
+      if (b.canopy !== true) return
+      const ring = openRing(b.pts)
+      if (stationRoofs.has(ring.join(","))) return
+      const angle = longestEdgeAngle(b.pts)
+      this.canopies.push({ ring, angle, pillars: canopyPillars(ring, angle), band: KERB, pylon: null, air: null })
+    })
+    this.canopies.forEach((c, i) => {
+      const box = boxOf(c.ring, CANOPY_Z * SHADOW_PER_M + 4)
+      own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.canopies.push(i)
+    })
     map.buildings.forEach((b, i) => {
+      if (b.canopy === true) return
       const box = boxOf(b.pts, wallHeight(b.levels) * SHADOW_PER_M)
       own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.buildings.push(i)
     })
@@ -245,6 +266,15 @@ export class Scene {
     this.chunks.forEach((c, key) => this.grid.insert(key, c.bounds))
   }
 
+  /** The box round the canopy over (x, y), padded by its fascia, or null in the open. */
+  canopyAt(x: number, y: number): Box | null {
+    for (const c of this.canopies) {
+      if (!pointInPolygon(x, y, c.ring)) continue
+      return boxOf(c.ring, 1)
+    }
+    return null
+  }
+
   /** Keys of the chunks that may draw something inside `view`. */
   keysIn(view: Box): Array<number> {
     return this.grid.query(view).filter((key) => {
@@ -285,6 +315,10 @@ export class Scene {
     for (const i of chunk.buildings) {
       const b = map.buildings[i]
       if (b !== undefined) this.building(m, b, this.facades[i] ?? "house")
+    }
+    for (const i of chunk.canopies) {
+      const c = this.canopies[i]
+      if (c !== undefined) canopy(m, this.sprites, c)
     }
     for (const i of chunk.street) {
       const item = this.street[i]

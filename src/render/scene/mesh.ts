@@ -43,6 +43,7 @@ export const Material = {
   facadeIndustrial: 10,
   roofTiles: 11,
   roofGravel: 12,
+  canopy: 13,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -60,6 +61,7 @@ export const MATERIAL_FILES: ReadonlyArray<string> = [
   "facade-industrial",
   "roof-tiles",
   "roof-gravel",
+  "canopy",
 ]
 
 /** Two index lists share one vertex buffer: opaque surfaces, then the shadows laid over the ground. */
