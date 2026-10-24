@@ -24,7 +24,8 @@ export type MissionEvent =
   | { readonly kind: "failed" }
 
 export const REWARD = 1500
-export const TIME_S = 90
+/** From the pickup: 2.4 km by road, a fair run at city speeds with a few corners to spare. */
+export const TIME_S = 150
 const PHONE_REACH = 3
 const STOP_REACH = 9
 

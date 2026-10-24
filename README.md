@@ -107,8 +107,8 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   last). Walls, cars and police cars hurt your car; under 35 hp it smokes, at 0 it is **WRECKED** and
   you are on foot. People knocked down get up again.
 - **The payphone job** (`src/sim/mission.ts`): the yellow phone on the sidewalk at Sudetenstraße 19:
-  "Hol Brezn bei Bäckerei Mühlenbäck und bring sie zur Rehmaus Apotheke in 90 s". The pickup is the
-  Mühlenbäck branch across town (the one next door would be too easy); the 90 s clock runs from the
+  "Hol Brezn bei Bäckerei Mühlenbäck und bring sie zur Rehmaus Apotheke in 150 s". The pickup is the
+  Mühlenbäck branch across town (the one next door would be too easy); the 150 s clock runs from the
   pickup, 2.4 km by road. A yellow arrow points at the target (at the screen edge while it is off
   screen) and a glowing marker lies on the ground there. Reward $1500.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),

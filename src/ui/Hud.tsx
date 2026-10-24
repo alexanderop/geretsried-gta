@@ -85,22 +85,24 @@ export function Hud({ hud, help }: { readonly hud: HudState; readonly help: bool
         )}
       </div>
 
-      <div data-testid="wanted" className={`absolute top-3 left-1/2 flex -translate-x-1/2 gap-1 ${hud.chased && hud.wanted > 0 ? "hud-blink" : ""}`}>
-        {Array.from({ length: MAX_WANTED }, (_, i) => (
-          <CopHead key={i} on={i < hud.wanted} />
-        ))}
+      {/* Cop heads, the job clock and the street name stack at the top centre, clear of the car in the middle. */}
+      <div className="absolute top-3 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
+        <div data-testid="wanted" className={`flex gap-1 ${hud.chased && hud.wanted > 0 ? "hud-blink" : ""}`}>
+          {Array.from({ length: MAX_WANTED }, (_, i) => (
+            <CopHead key={i} on={i < hud.wanted} />
+          ))}
+        </div>
+        {clock !== "" && (
+          <div data-testid="timer" className="text-4xl text-yellow-300">
+            {clock}
+          </div>
+        )}
+        {hud.street.name !== "" && (
+          <div key={hud.street.key} data-testid="street" className="hud-fade rounded bg-black/55 px-4 py-1 text-2xl whitespace-nowrap text-yellow-300">
+            {hud.street.name}
+          </div>
+        )}
       </div>
-      {clock !== "" && (
-        <div data-testid="timer" className="absolute top-14 left-1/2 -translate-x-1/2 text-4xl text-yellow-300">
-          {clock}
-        </div>
-      )}
-
-      {hud.street.name !== "" && (
-        <div key={hud.street.key} data-testid="street" className="hud-fade absolute top-[11%] left-1/2 -translate-x-1/2 rounded bg-black/55 px-5 py-2 text-3xl whitespace-nowrap text-yellow-300">
-          {hud.street.name}
-        </div>
-      )}
       {hud.vehicle !== null && (
         <div key={hud.vehicle.key} data-testid="vehicle" className="hud-fade absolute bottom-[22%] left-1/2 -translate-x-1/2 text-3xl text-white">
           {hud.vehicle.name}
