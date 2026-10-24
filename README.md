@@ -19,6 +19,24 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 
+### What comes from the aerial photo
+
+OSM has shapes but almost no looks, so `pnpm map` also reads the Bavarian DOP40 orthophoto
+(`scripts/dop40.ts`: 42 WMS tiles at 1 m/px, cached in `data/dop40/`) inside the OSM geometry
+(`src/map/photo.ts`):
+
+- **Roofs**: the median colour on each side of the ridge (the longest wall), stored per building
+  as `roof.colors`, plus `roof.pitched` (warm tiles or a lit and a shaded half). The renderer paints
+  the two halves in those colours and only adds tile detail from the texture.
+- **Shadows**: their direction and length (`SHADOW_DIR`, `SHADOW_PER_M`) were measured in the photo,
+  so buildings, trees and cars cast them the way the photo shows (towards the north-east).
+- **Trees**: green-and-dark (or green-and-rough) pixels outside forests, fields and building shadows,
+  covered with round crowns, biggest first → `public/trees.bin` (~230k crowns, 5 bytes each).
+- **Paved ground**: grey pixels (yards, driveways, parking) as the alpha of `public/ground.png`
+  (2 m/px), which the renderer uses as a mask for the pavement texture.
+
+Lawn, pavement, asphalt and tree sprites are re-toned at load to the median colours measured in the photo.
+
 ## What is in the town
 
 - **Shops and places**: every named `shop=*` and the important `amenity=*` from OSM (EDEKA, Penny, Aldi, Lidl, Kaufland, Netto, Rossmann, fuel, police, …) as map labels, minimap dots and a HUD hint.
@@ -32,7 +50,7 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 Painted by Codex (`codex-images` skill), then keyed, sliced and made seamless by
 `python3 scripts/process-sprites.py <codex-dir> [<newer-dir> ...]` into `public/sprites/`.
 Roofs, asphalt and trees were prompted with a real aerial photo of Sudetenstraße as reference
-(DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0); no photo data ships with the game.
+(DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0).
 
 The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 
@@ -48,8 +66,12 @@ The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 
 ## Checks
 
-`pnpm check` — typecheck (TS 7), oxlint, Vitest (projection, builder, car handling, a 20 s drive that must never clip a building, traffic that stays on roads).
+`pnpm check` — typecheck (TS 7), oxlint, Vitest (projection, builder, photo reading on synthetic images, car handling, a 20 s drive that must never clip a building, traffic that stays on roads).
 
 ## License of the map data
 
 Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL). `public/geretsried.map.json` is a derived database and stays under the ODbL.
+
+Roof colours, tree crowns (`public/trees.bin`) and the paved-ground mask (`public/ground.png`) are derived from
+the DOP40 orthophoto, © [Bayerische Vermessungsverwaltung](https://geodaten.bayern.de/opengeodata/),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). No photo pixels ship with the game.

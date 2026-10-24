@@ -2,16 +2,24 @@
  * Builds public/geretsried.map.json from OpenStreetMap.
  *   pnpm map        reuse data/raw.json
  *   pnpm map:fetch  download a fresh copy from Overpass first
- * Data © OpenStreetMap contributors, ODbL.
+ * Data © OpenStreetMap contributors, ODbL. Roof colours, trees and paved ground
+ * (public/ground.png) are read from the DOP40 aerial photo, © Bayerische
+ * Vermessungsverwaltung, CC BY 4.0 (see scripts/dop40.ts).
  */
 import { Console, Effect, FileSystem, Schema } from "effect"
 import { NodeRuntime, NodeServices } from "@effect/platform-node"
 import { buildMap } from "../src/map/build.ts"
+import { encodeCrowns } from "../src/map/crowns.ts"
+import { encodePng } from "../src/map/png.ts"
+import { readPhoto } from "../src/map/photo.ts"
+import { loadPhoto } from "./dop40.ts"
 import type { Bbox } from "../src/map/project.ts"
 
 const RAW = "data/raw.json"
 const PLACES = "data/places.json"
 const OUT = "public/geretsried.map.json"
+const GROUND_OUT = "public/ground.png"
+const TREES_OUT = "public/trees.bin"
 const OVERPASS = "https://overpass-api.de/api/interpreter"
 
 /** Geretsried town, Gelting and the Isar on the west edge. */
@@ -94,13 +102,17 @@ const program = Effect.gen(function* () {
   })
   const raw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(OverpassResponse))(yield* fs.readFileString(RAW))
   const ways = raw.elements.filter((e) => e.type === "way")
-  const map = buildMap(ways, places, BBOX)
+  const photo = yield* loadPhoto(BBOX)
+  const { map, crowns, paved } = readPhoto(buildMap(ways, places, BBOX), photo)
   yield* fs.writeFileString(OUT, JSON.stringify(map))
+  yield* fs.writeFile(GROUND_OUT, encodePng(paved))
+  // Row by row, so neighbours sit together and the file gzips well.
+  yield* fs.writeFile(TREES_OUT, encodeCrowns(crowns.toSorted((a, b) => Math.floor(a[1] / 8) - Math.floor(b[1] / 8) || a[0] - b[0])))
   const size = (yield* fs.stat(OUT)).size
   yield* Console.log(
     `${OUT}: ${Math.round(map.width)}×${Math.round(map.height)} m, ${map.roads.length} roads, ` +
       `${map.buildings.length} buildings, ${map.areas.length} areas, ${map.waterways.length} waterways, ` +
-      `${map.pois.length} places, ${map.signals.length} traffic lights, ` +
+      `${map.pois.length} places, ${map.signals.length} traffic lights, ${crowns.length} trees, ` +
       `${(Number(size) / 1e6).toFixed(1)} MB`,
   )
 })

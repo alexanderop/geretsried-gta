@@ -19,6 +19,13 @@ describe("makeProjection", () => {
     // 0.02° of longitude at 47.85° N is about 1.5 km.
     expect(p.width).toBeCloseTo(1494, -1)
   })
+
+  it("turns meters back into the same lat/lon", () => {
+    const p = makeProjection(bbox)
+    const back = p.toLatLon(...p.toMeters({ lat: 47.8573, lon: 11.4879 }))
+    expect(back.lat).toBeCloseTo(47.8573, 9)
+    expect(back.lon).toBeCloseTo(11.4879, 9)
+  })
 })
 
 describe("buildMap", () => {

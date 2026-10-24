@@ -18,5 +18,9 @@ export const makeProjection = (bbox: Bbox) => {
     width: x(bbox.east),
     height: y(bbox.south),
     toMeters: (p: LatLon): readonly [number, number] => [x(p.lon), y(p.lat)],
+    toLatLon: (mx: number, my: number): LatLon => ({
+      lat: bbox.north - my / (RAD * EARTH_RADIUS_M),
+      lon: bbox.west + mx / (RAD * EARTH_RADIUS_M * cosLat),
+    }),
   }
 }

@@ -1,4 +1,5 @@
 import { Effect, Schema } from "effect"
+import { decodeCrowns, type Crowns } from "#/map/crowns.ts"
 
 /** Seamless textures and how many meters one tile covers in the world. */
 export const TEXTURES = {
@@ -16,18 +17,42 @@ export const TEXTURES = {
 } as const
 export type TextureName = keyof typeof TEXTURES
 
+const TEXTURE_FILES: Readonly<Record<TextureName, string>> = {
+  grass: "grass",
+  asphalt: "asphalt",
+  pavement: "pavement",
+  roofBrown: "roof-brown",
+  roofAnthracite: "roof-anthracite",
+  roofOrange: "roof-orange",
+  roofFlat: "roof-flat",
+  roofGrey: "roof-grey",
+  forest: "forest",
+  water: "water",
+  farmland: "farmland",
+}
+
 export const CAR_MODELS = 8
 export const PEDS = 4
 export const TREES = 8
 
+/** Textures whose tile detail is laid over the roof colour measured in the aerial photo. */
+export const ROOF_TEXTURES = ["roofOrange", "roofFlat"] as const
+export type RoofTexture = (typeof ROOF_TEXTURES)[number]
+
 export type Assets = {
-  readonly textures: Readonly<Record<TextureName, HTMLImageElement>>
+  readonly textures: Readonly<Record<TextureName, HTMLCanvasElement>>
+  /** Grey copies of roof textures centred on 50 % grey, for the "overlay" blend. */
+  readonly roofDetail: Readonly<Record<RoofTexture, HTMLCanvasElement>>
+  /** Alpha = how much of each GROUND_M_PER_PX square is paved (from the aerial photo). */
+  readonly ground: HTMLImageElement
+  /** Tree crowns found in the aerial photo, outside forests. */
+  readonly crowns: Crowns
   /** Car sprites, nose pointing right (+x), cropped to the body. */
   readonly cars: ReadonlyArray<HTMLImageElement>
   /** Pedestrian sprites facing right; 0 is the player. */
   readonly peds: ReadonlyArray<HTMLImageElement>
-  /** Tree crowns and bushes seen from above; see TREE_KINDS in chunks.ts. */
-  readonly trees: ReadonlyArray<HTMLImageElement>
+  /** Tree crowns and bushes seen from above, toned like the photo; see FOREST_TREES in chunks.ts. */
+  readonly trees: ReadonlyArray<HTMLCanvasElement>
 }
 
 export class AssetLoadError extends Schema.TaggedError<AssetLoadError>()("AssetLoadError", { url: Schema.String }) {}
@@ -42,33 +67,123 @@ const loadImage = (url: string) =>
 
 const sprite = (name: string) => loadImage(`/sprites/${name}.webp`)
 
-export const loadAssets = Effect.all(
+const loadCrowns = (url: string) =>
+  Effect.tryPromise({
+    try: () => fetch(url).then((res) => (res.ok ? res.arrayBuffer() : Promise.reject(new Error(String(res.status))))),
+    catch: () => new AssetLoadError({ url }),
+  }).pipe(Effect.map(decodeCrowns))
+
+type Rgb = readonly [number, number, number]
+
+/**
+ * The painted sprites are greener and more saturated than the town looks from
+ * the air. These are the median colours the importer measured in the DOP40
+ * photo (sunlit lawn, tree crowns, paved ground), slightly toned so roads stay
+ * darker than yards.
+ */
+const PHOTO_TONES: Partial<Record<TextureName, Rgb>> = {
+  grass: [128, 136, 92],
+  asphalt: [196, 190, 181],
+  pavement: [206, 197, 184],
+}
+const TREE_TONE: Rgb = [88, 100, 62]
+
+const canvasOf = (img: HTMLImageElement): readonly [HTMLCanvasElement, CanvasRenderingContext2D | null] => {
+  const c = document.createElement("canvas")
+  c.width = img.width
+  c.height = img.height
+  const ctx = c.getContext("2d")
+  ctx?.drawImage(img, 0, 0)
+  return [c, ctx]
+}
+
+/** Shift an image's mean colour to `tone` (opaque pixels only), keeping its detail. */
+export const retint = (img: HTMLImageElement, tone: Rgb | undefined): HTMLCanvasElement => {
+  const [c, ctx] = canvasOf(img)
+  if (ctx === null || tone === undefined) return c
+  const data = ctx.getImageData(0, 0, c.width, c.height)
+  const px = data.data
+  const sum = [0, 0, 0]
+  let n = 0
+  for (let i = 0; i < px.length; i += 4) {
+    if ((px[i + 3] ?? 0) < 128) continue
+    for (let k = 0; k < 3; k++) sum[k] = (sum[k] ?? 0) + (px[i + k] ?? 0)
+    n++
+  }
+  for (let i = 0; i < px.length; i += 4) {
+    for (let k = 0; k < 3; k++) px[i + k] = (px[i + k] ?? 0) + (tone[k] ?? 0) - (sum[k] ?? 0) / Math.max(1, n)
+  }
+  ctx.putImageData(data, 0, 0)
+  return c
+}
+
+/** Grey luminance detail around 50 % grey: "overlay" with it keeps the colour underneath. */
+const detail = (img: HTMLCanvasElement, strength: number): HTMLCanvasElement => {
+  const c = document.createElement("canvas")
+  c.width = img.width
+  c.height = img.height
+  const ctx = c.getContext("2d")
+  const src = img.getContext("2d")
+  if (ctx === null || src === null) return c
+  const data = src.getImageData(0, 0, c.width, c.height)
+  const px = data.data
+  const luma = (i: number) => 0.3 * (px[i] ?? 0) + 0.59 * (px[i + 1] ?? 0) + 0.11 * (px[i + 2] ?? 0)
+  let mean = 0
+  for (let i = 0; i < px.length; i += 4) mean += luma(i)
+  mean /= px.length / 4
+  for (let i = 0; i < px.length; i += 4) {
+    const v = 128 + (luma(i) - mean) * strength
+    px[i] = v
+    px[i + 1] = v
+    px[i + 2] = v
+    px[i + 3] = 255
+  }
+  ctx.putImageData(data, 0, 0)
+  return c
+}
+
+const tone = (name: TextureName) => Effect.map(sprite(TEXTURE_FILES[name]), (img) => retint(img, PHOTO_TONES[name]))
+
+const loadTextures = Effect.all(
   {
-    textures: Effect.all(
-      {
-        grass: sprite("grass"),
-        asphalt: sprite("asphalt"),
-        pavement: sprite("pavement"),
-        roofBrown: sprite("roof-brown"),
-        roofAnthracite: sprite("roof-anthracite"),
-        roofOrange: sprite("roof-orange"),
-        roofFlat: sprite("roof-flat"),
-        roofGrey: sprite("roof-grey"),
-        forest: sprite("forest"),
-        water: sprite("water"),
-        farmland: sprite("farmland"),
-      },
-      { concurrency: "unbounded" },
-    ),
-    cars: Effect.all(Array.from({ length: CAR_MODELS }, (_, i) => sprite(`car-${i}`)), { concurrency: "unbounded" }),
-    peds: Effect.all(Array.from({ length: PEDS }, (_, i) => sprite(`ped-${i}`)), { concurrency: "unbounded" }),
-    trees: Effect.all(Array.from({ length: TREES }, (_, i) => sprite(`tree-${i}`)), { concurrency: "unbounded" }),
+    grass: tone("grass"),
+    asphalt: tone("asphalt"),
+    pavement: tone("pavement"),
+    roofBrown: tone("roofBrown"),
+    roofAnthracite: tone("roofAnthracite"),
+    roofOrange: tone("roofOrange"),
+    roofFlat: tone("roofFlat"),
+    roofGrey: tone("roofGrey"),
+    forest: tone("forest"),
+    water: tone("water"),
+    farmland: tone("farmland"),
   },
   { concurrency: "unbounded" },
 )
 
+export const loadAssets = Effect.all(
+  {
+    textures: loadTextures,
+    ground: loadImage("/ground.png"),
+    crowns: loadCrowns("/trees.bin"),
+    cars: Effect.all(Array.from({ length: CAR_MODELS }, (_, i) => sprite(`car-${i}`)), { concurrency: "unbounded" }),
+    peds: Effect.all(Array.from({ length: PEDS }, (_, i) => sprite(`ped-${i}`)), { concurrency: "unbounded" }),
+    trees: Effect.all(Array.from({ length: TREES }, (_, i) => sprite(`tree-${i}`)), { concurrency: "unbounded" }).pipe(
+      Effect.map((trees) => trees.map((img) => retint(img, TREE_TONE))),
+    ),
+  },
+  { concurrency: "unbounded" },
+).pipe(
+  Effect.map(
+    (loaded): Assets => ({
+      ...loaded,
+      roofDetail: { roofOrange: detail(loaded.textures.roofOrange, 0.8), roofFlat: detail(loaded.textures.roofFlat, 2) },
+    }),
+  ),
+)
+
 /** Black copy of a sprite's shape, for drop shadows. */
-export const silhouette = (img: HTMLImageElement): HTMLCanvasElement => {
+export const silhouette = (img: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement => {
   const c = document.createElement("canvas")
   c.width = img.width
   c.height = img.height

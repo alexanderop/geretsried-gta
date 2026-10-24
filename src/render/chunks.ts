@@ -1,10 +1,12 @@
 import type { AreaKind, Building } from "#/map/types.ts"
 import { polygonArea } from "#/map/build.ts"
 import type { World } from "#/world/world.ts"
-import { boxOf, type Box } from "#/world/geometry.ts"
+import { boxOf, centroid, longestEdgeAngle, type Box } from "#/world/geometry.ts"
 import { Grid } from "#/world/grid.ts"
-import { TEXTURES, silhouette, type Assets, type TextureName } from "./assets.ts"
+import { TEXTURES, silhouette, type Assets, type RoofTexture, type TextureName } from "./assets.ts"
 import { GROUND, ROAD_COLORS } from "./palette.ts"
+import { GROUND_M_PER_PX } from "#/map/types.ts"
+import { SHADOW_DIR, SHADOW_PER_M, buildingHeight } from "#/map/photo.ts"
 
 /** Size of one baked map tile in meters, and its resolution. */
 export const CHUNK_M = 128
@@ -21,10 +23,10 @@ const AREA_LOOK: Readonly<Record<AreaKind, readonly [TextureName, string | null]
   forest: ["forest", null],
   grass: ["grass", null],
   farmland: ["farmland", null],
-  residential: ["grass", "rgba(120,110,90,0.12)"],
+  residential: ["grass", null],
   industrial: ["asphalt", "rgba(170,160,140,0.35)"],
-  park: ["grass", "rgba(60,140,50,0.15)"],
-  pitch: ["grass", "rgba(80,170,70,0.25)"],
+  park: ["grass", "rgba(90,130,60,0.1)"],
+  pitch: ["grass", "rgba(100,150,70,0.2)"],
   parking: ["asphalt", null],
 }
 
@@ -40,6 +42,10 @@ export class ChunkCache {
   private readonly waterways: Grid
   private readonly treeShadows: ReadonlyArray<HTMLCanvasElement>
   private readonly map: World["map"]
+  /** Photo tree crowns by the chunk(s) they touch. */
+  private readonly crowns = new Map<string, Array<number>>()
+  /** Scratch layer for masked and see-through passes, reused by every bake. */
+  private readonly layer = document.createElement("canvas")
 
   constructor(
     private readonly world: World,
@@ -55,8 +61,24 @@ export class ChunkCache {
     }
     this.areas = index(map.areas, () => 0)
     this.roads = index(map.roads, (r) => r.width + 2)
-    this.buildings = index(map.buildings, (b) => b.levels * 1.5)
+    this.buildings = index(map.buildings, (b) => buildingHeight(b.levels) * SHADOW_PER_M)
     this.waterways = index(map.waterways, (w) => w.width)
+    this.layer.width = CHUNK_PX
+    this.layer.height = CHUNK_PX
+    const { xs, ys, rs } = assets.crowns
+    for (let i = 0; i < rs.length; i++) {
+      const x = (xs[i] ?? 0) / 10
+      const y = (ys[i] ?? 0) / 10
+      const reach = (rs[i] ?? 0) / 10 + CROWN_SHADOW_M
+      for (let cy = Math.floor((y - reach) / CHUNK_M); cy <= Math.floor((y + reach) / CHUNK_M); cy++) {
+        for (let cx = Math.floor((x - reach) / CHUNK_M); cx <= Math.floor((x + reach) / CHUNK_M); cx++) {
+          const key = `${cx},${cy}`
+          const list = this.crowns.get(key)
+          if (list === undefined) this.crowns.set(key, [i])
+          else list.push(i)
+        }
+      }
+    }
   }
 
   /** The baked chunk, or null if `budget` says not to bake more this frame. */
@@ -121,6 +143,8 @@ export class ChunkCache {
         strokeLine(ctx, [...area.pts, area.pts[0] ?? 0, area.pts[1] ?? 0])
       }
     }
+
+    this.drawPaved(ctx, box, pattern)
 
     // Rivers: a darker bank under the water texture.
     const waterIds = ids(this.waterways)
@@ -188,86 +212,166 @@ export class ChunkCache {
     ctx.setLineDash([])
 
     const buildingIds = ids(this.buildings)
-    // Fake height: a soft shadow pushed south-east by the number of floors.
-    ctx.fillStyle = "rgba(10,15,5,0.38)"
-    for (const i of buildingIds) {
-      const b = map.buildings[i]
-      if (b === undefined) continue
-      const off = Math.min(10, 0.6 + b.levels * 0.9)
-      ctx.save()
-      ctx.translate(off, off)
-      fillPoly(ctx, b.pts)
-      ctx.restore()
-    }
+    this.drawShadows(ctx, box, buildingIds)
     for (const i of buildingIds) {
       const b = map.buildings[i]
       if (b !== undefined) this.drawRoof(ctx, b, pattern)
     }
-    this.drawTrees(ctx, box)
+    this.drawForest(ctx, box)
+    this.drawCrowns(ctx, cx, cy)
     return canvas
   }
 
+  /** A fresh scratch layer with the chunk's map transform. */
+  private scratch(box: Box): CanvasRenderingContext2D | null {
+    const ctx = this.layer.getContext("2d", { willReadFrequently: true })
+    if (ctx === null) return null
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.globalCompositeOperation = "source-over"
+    ctx.clearRect(0, 0, CHUNK_PX, CHUNK_PX)
+    ctx.setTransform(BAKE_PX_PER_M, 0, 0, BAKE_PX_PER_M, -box.minX * BAKE_PX_PER_M, -box.minY * BAKE_PX_PER_M)
+    return ctx
+  }
+
+  /** Copy the scratch layer onto the chunk. */
+  private flush(ctx: CanvasRenderingContext2D, box: Box, alpha: number) {
+    ctx.globalAlpha = alpha
+    ctx.drawImage(this.layer, box.minX, box.minY, CHUNK_M, CHUNK_M)
+    ctx.globalAlpha = 1
+  }
+
   /**
-   * Pitched roofs: tiles run along the longest wall, the ridge splits the roof
-   * into a lit and a shaded half (light from the top-left). Big or tall blocks get flat roofs.
+   * Yards, driveways and parking lots: pavement wherever the aerial photo shows
+   * paved ground, through the ground mask (scaled up smoothly, so edges stay soft).
+   */
+  private drawPaved(ctx: CanvasRenderingContext2D, box: Box, pattern: (name: TextureName) => CanvasPattern | string) {
+    const layer = this.scratch(box)
+    if (layer === null) return
+    const px = CHUNK_M / GROUND_M_PER_PX
+    layer.drawImage(this.assets.ground, box.minX / GROUND_M_PER_PX, box.minY / GROUND_M_PER_PX, px, px, box.minX, box.minY, CHUNK_M, CHUNK_M)
+    // The smooth upscale blurs edges over 2 m; steepen alpha back into a crisp but anti-aliased edge.
+    const mask = layer.getImageData(0, 0, CHUNK_PX, CHUNK_PX)
+    const alpha = mask.data
+    for (let i = 3; i < alpha.length; i += 4) alpha[i] = ((alpha[i] ?? 0) - 110) * 4
+    layer.putImageData(mask, 0, 0)
+    layer.globalCompositeOperation = "source-in"
+    layer.fillStyle = pattern("pavement")
+    layer.fillRect(box.minX, box.minY, CHUNK_M, CHUNK_M)
+    this.flush(ctx, box, 1)
+  }
+
+  /**
+   * Each building casts its footprint swept away from the sun, as long as the
+   * building is tall: the sides of the swept shape plus the moved footprint.
+   * Drawn opaque on a layer first so overlapping shadows do not stack.
+   */
+  private drawShadows(ctx: CanvasRenderingContext2D, box: Box, buildingIds: ReadonlyArray<number>) {
+    const layer = this.scratch(box)
+    if (layer === null) return
+    layer.fillStyle = SHADOW_COLOR
+    for (const i of buildingIds) {
+      const b = this.map.buildings[i]
+      if (b === undefined) continue
+      const len = buildingHeight(b.levels) * SHADOW_PER_M
+      const ox = SHADOW_DIR[0] * len
+      const oy = SHADOW_DIR[1] * len
+      const { pts } = b
+      for (let k = 0; k + 3 < pts.length; k += 2) {
+        const ax = pts[k] ?? 0
+        const ay = pts[k + 1] ?? 0
+        const bx = pts[k + 2] ?? 0
+        const by = pts[k + 3] ?? 0
+        layer.beginPath()
+        layer.moveTo(ax, ay)
+        layer.lineTo(bx, by)
+        layer.lineTo(bx + ox, by + oy)
+        layer.lineTo(ax + ox, ay + oy)
+        layer.closePath()
+        layer.fill()
+      }
+      layer.save()
+      layer.translate(ox, oy)
+      fillPoly(layer, pts)
+      layer.restore()
+    }
+    this.flush(ctx, box, SHADOW_ALPHA)
+  }
+
+  /**
+   * Roofs. With a colour from the aerial photo, each side of the ridge (the
+   * longest wall through the centre) gets its measured colour, which already
+   * carries the photo's lit and shaded halves; the texture only adds tile
+   * detail. Without one, a texture picked by hash and fake lighting.
    */
   private drawRoof(ctx: CanvasRenderingContext2D, b: Building, pattern: (name: TextureName, angle?: number) => CanvasPattern | string) {
     const angle = longestEdgeAngle(b.pts)
-    const area = polygonArea(b.pts)
-    const hash = Math.abs(Math.imul(b.id, 2654435761)) / 2 ** 32
-    const flat = area > 900 || b.levels >= 5
-    const material: TextureName = flat
-      ? b.levels >= 5
-        ? "roofGrey"
-        : "roofFlat"
-      : hash < 0.4
-        ? "roofBrown"
-        : hash < 0.7
-          ? "roofAnthracite"
-          : "roofOrange"
-    ctx.fillStyle = pattern(material, angle)
-    fillPoly(ctx, b.pts)
-    ctx.save()
-    ctx.clip()
-    // Small per-building brightness change so neighbours differ.
-    ctx.fillStyle = hash < 0.5 ? `rgba(0,0,0,${hash * 0.2})` : `rgba(255,250,240,${(hash - 0.5) * 0.12})`
-    ctx.fill()
-    if (!flat) {
-      const [cx, cy] = centroid(b.pts)
-      const dx = Math.cos(angle)
-      const dy = Math.sin(angle)
-      const nx = -dy
-      const ny = dx
-      const far = 400
-      // The half whose outward normal faces the light (-1, -1) is lit.
-      const litSide = nx * -1 + ny * -1 > 0 ? 1 : -1
-      const half = (side: number) => {
-        ctx.beginPath()
-        ctx.moveTo(cx - dx * far, cy - dy * far)
-        ctx.lineTo(cx + dx * far, cy + dy * far)
-        ctx.lineTo(cx + dx * far + nx * far * side, cy + dy * far + ny * far * side)
-        ctx.lineTo(cx - dx * far + nx * far * side, cy - dy * far + ny * far * side)
-        ctx.closePath()
-        ctx.fill()
-      }
-      ctx.fillStyle = "rgba(0,0,0,0.3)"
-      half(-litSide)
-      ctx.fillStyle = "rgba(255,245,225,0.1)"
-      half(litSide)
+    const [cx, cy] = centroid(b.pts)
+    const dx = Math.cos(angle)
+    const dy = Math.sin(angle)
+    const nx = -dy
+    const ny = dx
+    const far = 400
+    // The half of the roof on `side` (+1: along the normal (nx, ny)) of the ridge.
+    const half = (side: number) => {
+      ctx.beginPath()
+      ctx.moveTo(cx - dx * far, cy - dy * far)
+      ctx.lineTo(cx + dx * far, cy + dy * far)
+      ctx.lineTo(cx + dx * far + nx * far * side, cy + dy * far + ny * far * side)
+      ctx.lineTo(cx - dx * far + nx * far * side, cy - dy * far + ny * far * side)
+      ctx.closePath()
+      ctx.fill()
+    }
+    const ridge = (color: string, width: number) => {
       ctx.lineCap = "butt"
-      ctx.strokeStyle = "rgba(30,25,20,0.55)"
-      ctx.lineWidth = 0.35
+      ctx.strokeStyle = color
+      ctx.lineWidth = width
       ctx.beginPath()
       ctx.moveTo(cx - dx * far, cy - dy * far)
       ctx.lineTo(cx + dx * far, cy + dy * far)
       ctx.stroke()
-    } else {
-      // Parapet: a light inner rim.
-      ctx.strokeStyle = "rgba(255,255,255,0.35)"
+    }
+    const rim = (color: string) => {
+      ctx.strokeStyle = color
       ctx.lineWidth = 1
       tracePath(ctx, b.pts)
       ctx.closePath()
       ctx.stroke()
+    }
+
+    ctx.save()
+    tracePath(ctx, b.pts)
+    ctx.closePath()
+    ctx.clip()
+    const roof = b.roof
+    if (roof !== undefined) {
+      ctx.fillStyle = roof.colors[0]
+      half(-1)
+      ctx.fillStyle = roof.colors[1]
+      half(1)
+      const texture: RoofTexture = roof.pitched ? "roofOrange" : "roofFlat"
+      ctx.globalCompositeOperation = "overlay"
+      ctx.fillStyle = this.detailPattern(ctx, texture, angle)
+      ctx.fillRect(cx - far, cy - far, far * 2, far * 2)
+      ctx.globalCompositeOperation = "source-over"
+      if (roof.pitched) ridge("rgba(255,240,220,0.35)", 0.25)
+      else rim("rgba(255,255,255,0.3)")
+    } else {
+      const area = polygonArea(b.pts)
+      const hash = Math.abs(Math.imul(b.id, 2654435761)) / 2 ** 32
+      const flat = area > 900 || b.levels >= 5
+      const material: TextureName = flat ? (b.levels >= 5 ? "roofGrey" : "roofFlat") : hash < 0.4 ? "roofBrown" : hash < 0.7 ? "roofAnthracite" : "roofOrange"
+      ctx.fillStyle = pattern(material, angle)
+      ctx.fillRect(cx - far, cy - far, far * 2, far * 2)
+      if (flat) rim("rgba(255,255,255,0.35)")
+      else {
+        // The half whose outward normal faces away from the shadows is lit.
+        const litSide = nx * SHADOW_DIR[0] + ny * SHADOW_DIR[1] < 0 ? 1 : -1
+        ctx.fillStyle = "rgba(0,0,0,0.35)"
+        half(-litSide)
+        ctx.fillStyle = "rgba(255,245,225,0.1)"
+        half(litSide)
+        ridge("rgba(30,25,20,0.55)", 0.35)
+      }
     }
     ctx.restore()
     ctx.strokeStyle = "rgba(25,20,15,0.75)"
@@ -277,69 +381,88 @@ export class ChunkCache {
     ctx.stroke()
   }
 
-  /**
-   * Trees on a fixed 7 m jittered grid in map space, so neighbouring chunks
-   * agree on every tree that crosses their border.
-   */
-  private drawTrees(ctx: CanvasRenderingContext2D, box: Box) {
-    const { world, assets } = this
+  private detailPattern(ctx: CanvasRenderingContext2D, name: RoofTexture, angle: number): CanvasPattern | string {
+    const img = this.assets.roofDetail[name]
+    const p = ctx.createPattern(img, "repeat")
+    if (p === null) return "#808080"
+    p.setTransform(new DOMMatrix().rotate((angle * 180) / Math.PI).scale(TEXTURES[name] / img.width))
+    return p
+  }
+
+  /** Forest trees on a fixed 7 m jittered grid in map space, so neighbouring chunks agree on border trees. */
+  private drawForest(ctx: CanvasRenderingContext2D, box: Box) {
+    const { world } = this
     const STEP = 7
-    const trees: Array<{ x: number; y: number; size: number; sprite: number; turn: number }> = []
+    const trees: Array<Tree> = []
     for (let gy = Math.floor((box.minY - 10) / STEP); gy * STEP < box.maxY + 10; gy++) {
       for (let gx = Math.floor((box.minX - 10) / STEP); gx * STEP < box.maxX + 10; gx++) {
-        const h1 = hash2(gx, gy, 1)
+        if (hash2(gx, gy, 1) > 0.85) continue
         const x = (gx + hash2(gx, gy, 2)) * STEP
         const y = (gy + hash2(gx, gy, 3)) * STEP
-        const kind = world.areaAt(x, y)
-        const density = TREE_DENSITY[kind ?? "none"]
-        if (h1 > density) continue
-        const forest = kind === "forest"
-        const pool = forest ? FOREST_TREES : GARDEN_TREES
-        const sprite = pool[Math.floor(hash2(gx, gy, 4) * pool.length)] ?? 0
-        const bush = sprite === 4 || sprite === 5 || sprite === 7
-        const size = bush ? 2.5 + hash2(gx, gy, 5) * 1.5 : (forest ? 9 : 6) + hash2(gx, gy, 5) * 7
-        const r = size / 2
-        if (world.roadAt(x, y, r * 0.6 + 1) !== null) continue
-        if (world.isWater(x, y) || world.isSolid(x, y)) continue
-        if (world.isSolid(x + r * 0.7, y) || world.isSolid(x - r * 0.7, y) || world.isSolid(x, y + r * 0.7) || world.isSolid(x, y - r * 0.7)) continue
+        if (world.areaAt(x, y) !== "forest") continue
+        const size = 9 + hash2(gx, gy, 5) * 7
+        if (world.roadAt(x, y, size * 0.3 + 1) !== null || world.isWater(x, y) || world.isSolid(x, y)) continue
+        const sprite = FOREST_TREES[Math.floor(hash2(gx, gy, 4) * FOREST_TREES.length)] ?? 0
         trees.push({ x, y, size, sprite, turn: hash2(gx, gy, 6) * Math.PI * 2 })
       }
     }
-    const draw = (img: CanvasImageSource, t: (typeof trees)[number], offset: number) => {
+    this.drawTrees(ctx, trees)
+  }
+
+  /** The tree crowns the importer found in the aerial photo, at their real place and size. */
+  private drawCrowns(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+    const { xs, ys, rs } = this.assets.crowns
+    const trees: Array<Tree> = []
+    for (const i of this.crowns.get(`${cx},${cy}`) ?? []) {
+      const r = (rs[i] ?? 0) / 10
+      const h = hash2(i, 0, 7)
+      const pool = r < 2.6 ? SMALL_CROWNS : CROWNS
+      trees.push({
+        x: (xs[i] ?? 0) / 10,
+        y: (ys[i] ?? 0) / 10,
+        // Sprites have a soft rim; the photo measures the dense part of the crown.
+        size: r * 2 * 1.25,
+        sprite: pool[Math.floor(h * pool.length)] ?? 0,
+        turn: hash2(i, 0, 8) * Math.PI * 2,
+      })
+    }
+    this.drawTrees(ctx, trees)
+  }
+
+  private drawTrees(ctx: CanvasRenderingContext2D, trees: ReadonlyArray<Tree>) {
+    const draw = (img: CanvasImageSource, t: Tree, offset: number) => {
       ctx.save()
-      ctx.translate(t.x + offset, t.y + offset)
+      ctx.translate(t.x + SHADOW_DIR[0] * offset, t.y + SHADOW_DIR[1] * offset)
       ctx.rotate(t.turn)
       ctx.drawImage(img, -t.size / 2, -t.size / 2, t.size, t.size)
       ctx.restore()
     }
-    ctx.globalAlpha = 0.38
+    ctx.globalAlpha = SHADOW_ALPHA
     for (const t of trees) {
       const shadow = this.treeShadows[t.sprite]
-      if (shadow !== undefined) draw(shadow, t, t.size * 0.18)
+      if (shadow !== undefined) draw(shadow, t, t.size * 0.45)
     }
     ctx.globalAlpha = 1
     for (const t of trees) {
-      const img = assets.trees[t.sprite]
+      const img = this.assets.trees[t.sprite]
       if (img !== undefined) draw(img, t, 0)
     }
   }
 }
 
+type Tree = { readonly x: number; readonly y: number; readonly size: number; readonly sprite: number; readonly turn: number }
+
 /** Sprite indices in trees.png: 0 beech, 1 spruce, 2 birch, 3 apple, 4 bush, 5 thuja, 6 maple, 7 shrub. */
 const FOREST_TREES = [0, 1, 1, 1, 6]
-const GARDEN_TREES = [0, 1, 2, 3, 4, 4, 5, 5, 6, 7, 7]
-const TREE_DENSITY: Readonly<Record<AreaKind | "none", number>> = {
-  forest: 0.85,
-  park: 0.55,
-  residential: 0.5,
-  none: 0.45,
-  grass: 0.3,
-  industrial: 0.06,
-  farmland: 0.01,
-  pitch: 0,
-  parking: 0.03,
-  water: 0,
-}
+/** Town trees are mostly broad-leaved; small crowns are bushes and hedges. */
+const CROWNS = [0, 0, 0, 1, 2, 3, 6, 6]
+const SMALL_CROWNS = [3, 4, 5, 7]
+/** How far a crown's shadow can reach past its radius, in meters. */
+const CROWN_SHADOW_M = 8
+
+/** Building and tree shadows: a cool dark, about as deep as in the photo. */
+const SHADOW_COLOR = "rgb(14,22,40)"
+const SHADOW_ALPHA = 0.5
 
 /** Deterministic 0..1 hash of a grid cell. */
 const hash2 = (x: number, y: number, salt: number) => {
@@ -347,33 +470,6 @@ const hash2 = (x: number, y: number, salt: number) => {
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
-
-const centroid = (pts: ReadonlyArray<number>): readonly [number, number] => {
-  let x = 0
-  let y = 0
-  const n = pts.length / 2
-  for (let i = 0; i < pts.length; i += 2) {
-    x += pts[i] ?? 0
-    y += pts[i + 1] ?? 0
-  }
-  return [x / n, y / n]
-}
-
-const longestEdgeAngle = (pts: ReadonlyArray<number>) => {
-  let best = 0
-  let angle = 0
-  for (let i = 0; i + 3 < pts.length; i += 2) {
-    const dx = (pts[i + 2] ?? 0) - (pts[i] ?? 0)
-    const dy = (pts[i + 3] ?? 0) - (pts[i + 1] ?? 0)
-    const len = dx * dx + dy * dy
-    if (len > best) {
-      best = len
-      angle = Math.atan2(dy, dx)
-    }
-  }
-  return angle
-}
-
 
 const tracePath = (ctx: CanvasRenderingContext2D, pts: ReadonlyArray<number>) => {
   ctx.beginPath()

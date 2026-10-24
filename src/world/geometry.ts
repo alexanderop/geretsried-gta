@@ -41,3 +41,31 @@ export const distToSegmentSq = (px: number, py: number, ax: number, ay: number, 
   const cy = ay + t * dy - py
   return cx * cx + cy * cy
 }
+
+/** Average of a polygon's vertices. */
+export const centroid = (pts: ReadonlyArray<number>): readonly [number, number] => {
+  let x = 0
+  let y = 0
+  const n = pts.length / 2
+  for (let i = 0; i < pts.length; i += 2) {
+    x += pts[i] ?? 0
+    y += pts[i + 1] ?? 0
+  }
+  return [x / n, y / n]
+}
+
+/** Direction (radians) of a polygon's longest edge: where a pitched roof's ridge runs. */
+export const longestEdgeAngle = (pts: ReadonlyArray<number>) => {
+  let best = 0
+  let angle = 0
+  for (let i = 0; i + 3 < pts.length; i += 2) {
+    const dx = (pts[i + 2] ?? 0) - (pts[i] ?? 0)
+    const dy = (pts[i + 3] ?? 0) - (pts[i + 1] ?? 0)
+    const len = dx * dx + dy * dy
+    if (len > best) {
+      best = len
+      angle = Math.atan2(dy, dx)
+    }
+  }
+  return angle
+}

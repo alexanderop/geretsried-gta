@@ -39,7 +39,11 @@ export const Road = Schema.Struct({
 })
 export type Road = typeof Road.Type
 
-export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points })
+/** Roof colours read from the aerial photo: either side of the ridge (see `ridgeSide`), as #rrggbb. */
+export const Roof = Schema.Struct({ colors: Schema.Tuple([Schema.String, Schema.String]), pitched: Schema.Boolean })
+export type Roof = typeof Roof.Type
+
+export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points, roof: Schema.optionalKey(Roof) })
 export type Building = typeof Building.Type
 
 export const Area = Schema.Struct({ kind: AreaKind, pts: Points })
@@ -91,3 +95,6 @@ export const GameMap = Schema.Struct({
   signals: Schema.Array(Signal),
 })
 export type GameMap = typeof GameMap.Type
+
+/** Meters per pixel of public/ground.png, whose alpha says how much of the ground is paved. */
+export const GROUND_M_PER_PX = 2

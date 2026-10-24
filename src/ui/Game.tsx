@@ -131,7 +131,11 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap
         </a>{" "}
-        contributors
+        contributors · Luftbild{" "}
+        <a className="underline" href="https://geodaten.bayern.de/opengeodata/" target="_blank" rel="noreferrer">
+          © Bayerische Vermessungsverwaltung
+        </a>{" "}
+        (DOP40, CC BY 4.0)
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import { lightFor, type Light, type TrafficLight } from "#/sim/signals.ts"
 import type { Walker } from "#/sim/pedestrians.ts"
 import { CAR_LENGTH, forwardSpeed } from "#/sim/car.ts"
 import { silhouette, type Assets } from "./assets.ts"
+import { SHADOW_DIR } from "#/map/photo.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
 import { BAKE_PX_PER_M, CHUNK_M, ChunkCache, fillPoly, strokeLine } from "./chunks.ts"
 import { AREA_COLORS, GROUND } from "./palette.ts"
@@ -91,7 +92,7 @@ const drawSprite = (
   if (sprite === undefined) return
   const width = (length * sprite.img.height) / sprite.img.width
   ctx.save()
-  ctx.translate(x + shadow, y + shadow)
+  ctx.translate(x + shadow * SHADOW_DIR[0] * 1.4, y + shadow * SHADOW_DIR[1] * 1.4)
   ctx.rotate(angle)
   ctx.globalAlpha = 0.4
   ctx.drawImage(sprite.shadow, -length / 2, -width / 2, length, width)
