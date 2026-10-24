@@ -88,6 +88,10 @@ export const Signal = Schema.Struct({
 })
 export type Signal = typeof Signal.Type
 
+/** A stretch of road the aerial photo shows as tree canopy; the renderer draws it in. */
+export const Covered = Schema.Struct({ width: Schema.Number, pts: Points })
+export type Covered = typeof Covered.Type
+
 export const GameMap = Schema.Struct({
   width: Schema.Number,
   height: Schema.Number,
@@ -99,6 +103,7 @@ export const GameMap = Schema.Struct({
   waterways: Schema.Array(Waterway),
   pois: Schema.Array(Poi),
   signals: Schema.Array(Signal),
+  covered: Schema.Array(Covered),
 })
 export type GameMap = typeof GameMap.Type
 

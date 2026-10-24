@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildingMasks, classifyGround, cleanPaved, findCrowns, findMissingBuildings, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
+import { buildingMasks, classifyGround, cleanPaved, findCoveredRoads, findCrowns, findMissingBuildings, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
 import { eaves } from "./roof.ts"
 import { decodePng, encodePng } from "./png.ts"
 import { decodeCrowns, encodeCrowns } from "./crowns.ts"
@@ -187,5 +187,28 @@ describe("PNG and crown files", () => {
     expect(Array.from(crowns.xs)).toEqual([123, 0])
     expect(Array.from(crowns.ys)).toEqual([50001, 10])
     expect(Array.from(crowns.rs)).toEqual([33, 255])
+  })
+})
+
+const road = (kind: "residential" | "footway") => ({ kind, name: "", width: 6, oneway: false, pts: [0, 10, 60, 10], nodes: [] })
+
+describe("findCoveredRoads", () => {
+  it("finds the stretch of street under a tree crown, a little past its edges", () => {
+    const photo = raster(60, 20, (x) => (x >= 20 && x < 40 ? TREE : PAVED))
+    const covered = findCoveredRoads([road("residential")], photo, new Uint8Array(60 * 20))
+    expect(covered).toHaveLength(1)
+    const xs = (covered[0]?.pts ?? []).filter((_, i) => i % 2 === 0)
+    expect(Math.min(...xs)).toBe(18)
+    expect(Math.max(...xs)).toBe(41)
+    expect(covered[0]?.width).toBe(6)
+  })
+
+  it("leaves single crowns, open roads, footpaths and building shadows alone", () => {
+    const photo = raster(60, 20, (x) => (x >= 20 && x < 30 ? TREE : x >= 40 ? TREE : PAVED))
+    expect(findCoveredRoads([road("residential")], raster(60, 20, () => PAVED), new Uint8Array(60 * 20))).toEqual([])
+    expect(findCoveredRoads([road("footway")], photo, new Uint8Array(60 * 20))).toEqual([])
+    expect(findCoveredRoads([road("residential")], photo, new Uint8Array(60 * 20))).toHaveLength(1)
+    const shade = raster(60, 20, () => TREE)
+    expect(findCoveredRoads([road("residential")], shade, new Uint8Array(60 * 20).fill(1))).toEqual([])
   })
 })

@@ -3,7 +3,7 @@
  * ground, measured inside the OSM geometry. Pure functions over a raster, so
  * they run in tests on synthetic images.
  */
-import type { Building, GameMap } from "./types.ts"
+import type { Building, Covered, GameMap, Road, RoadKind } from "./types.ts"
 import { GROUND_M_PER_PX } from "./types.ts"
 import { polygonArea } from "./build.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
@@ -472,7 +472,79 @@ export const readPhoto = (
   for (const area of map.areas) if (area.kind === "pitch") for (const i of polygonPixels(raster, area.pts)) noSheds[i] = 1
   const extra = findMissingBuildings(raster, masks.footprint, roadMask(map, width, height), noSheds)
   const paved = pavedMask(cleanPaved(ground, width, height, parking), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
-  return { map: { ...map, buildings: [...buildings, ...extra] }, crowns: findCrowns(ground, width, height), paved }
+  return { map: { ...map, buildings: [...buildings, ...extra], covered: findCoveredRoads(map.roads, raster, masks.shadow) }, crowns: findCrowns(ground, width, height), paved }
+}
+
+/** Paved roads: where tree crowns hide one in the photo, the game draws it in. Tracks are left as the photo shows them (gravel or grass). */
+const DRIVABLE: ReadonlySet<RoadKind> = new Set(["primary", "secondary", "tertiary", "residential", "living_street", "service"])
+
+/** Stretches shorter than this stay as the photo shows them: one crown over a road does not hide where it goes. */
+const MIN_COVERED_M = 15
+/** Gaps in the canopy up to this long still count as covered, so a stretch does not flicker on and off. */
+const CANOPY_GAP_M = 3
+/** How far a stretch reaches past the last covered sample, so it fades in under the crown's edge. */
+const COVERED_REACH_M = 2
+
+/**
+ * A green pixel too dark for sunlit lawn: tree canopy. Pixels in a building's
+ * cast shadow do not count: shaded asphalt in this photo is greenish too.
+ */
+const canopyAt = (raster: Raster, shadow: Uint8Array, x: number, y: number) => {
+  const ix = Math.floor(x * PHOTO_PX_PER_M)
+  const iy = Math.floor(y * PHOTO_PX_PER_M)
+  if (ix < 0 || iy < 0 || ix >= raster.width || iy >= raster.height || shadow[iy * raster.width + ix] === 1) return false
+  const [r, g, b] = rgbAt(raster, iy * raster.width + ix)
+  return (2 * g - r - b > 10 || (g > r && g > b + 15)) && luma([r, g, b]) < TREE_LUMA + 10
+}
+
+/**
+ * Stretches of drivable road the photo shows as tree canopy: every meter
+ * along the centre line, the centre and both quarter lines must all be
+ * canopy. Short gaps are closed, short stretches dropped.
+ */
+export const findCoveredRoads = (roads: ReadonlyArray<Road>, raster: Raster, shadow: Uint8Array): Array<Covered> => {
+  const canopy = (x: number, y: number) => canopyAt(raster, shadow, x, y)
+  const out: Array<Covered> = []
+  for (const road of roads) {
+    if (!DRIVABLE.has(road.kind)) continue
+    const samples: Array<readonly [number, number, boolean]> = []
+    for (let i = 0; i + 3 < road.pts.length; i += 2) {
+      const ax = road.pts[i] ?? 0
+      const ay = road.pts[i + 1] ?? 0
+      const dx = (road.pts[i + 2] ?? 0) - ax
+      const dy = (road.pts[i + 3] ?? 0) - ay
+      const len = Math.hypot(dx, dy)
+      if (len === 0) continue
+      const nx = (-dy / len) * (road.width / 4)
+      const ny = (dx / len) * (road.width / 4)
+      for (let t = 0; t < len; t++) {
+        const x = ax + (dx * t) / len
+        const y = ay + (dy * t) / len
+        samples.push([x, y, canopy(x, y) && canopy(x + nx, y + ny) && canopy(x - nx, y - ny)])
+      }
+    }
+    const covered = samples.map((s) => s[2])
+    for (let i = 0; i < covered.length; i++) {
+      if (covered[i] !== true) continue
+      const next = covered.indexOf(true, i + 1)
+      if (next > i + 1 && next - i - 1 <= CANOPY_GAP_M) covered.fill(true, i + 1, next)
+    }
+    for (let i = 0; i < covered.length; ) {
+      if (covered[i] !== true) {
+        i++
+        continue
+      }
+      let end = i
+      while (covered[end + 1] === true) end++
+      if (end - i + 1 >= MIN_COVERED_M) {
+        const run = samples.slice(Math.max(0, i - COVERED_REACH_M), Math.min(samples.length, end + 1 + COVERED_REACH_M))
+        const pts = run.filter((_, k) => k % 2 === 0 || k === run.length - 1).flatMap(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10])
+        out.push({ width: road.width, pts })
+      }
+      i = end + 1
+    }
+  }
+  return out
 }
 
 /** Set every pixel within `radius` meters of the polyline. */

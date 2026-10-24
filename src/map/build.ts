@@ -173,6 +173,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
     waterways,
     pois,
     signals,
+    covered: [],
   }
 }
 
