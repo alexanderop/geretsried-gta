@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildingMasks, classifyGround, cleanPaved, findCrowns, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
+import { buildingMasks, classifyGround, cleanPaved, findCrowns, findMissingBuildings, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
 import { eaves } from "./roof.ts"
 import { aisleBays, lotBays } from "./parking.ts"
 import { decodePng, encodePng } from "./png.ts"
@@ -34,6 +34,18 @@ describe("sampleRoof", () => {
     expect(roof?.planes).toEqual([LIT_TILES, null, SHADED_TILES, null])
   })
 
+  it("keeps the shaded tone on a plane that the photo's lean mostly fills with the lit one", () => {
+    // The ridge shows at y = 16 instead of 14: two thirds of the south plane look lit.
+    const photo = raster(40, 30, (_, y) => (y < 16 ? LIT_TILES : SHADED_TILES))
+    expect(sampleRoof(photo, house)?.planes).toEqual([LIT_TILES, null, SHADED_TILES, null])
+  })
+
+  it("lets a plane under a tree borrow the roof's colour", () => {
+    const photo = raster(40, 30, (x, y) => (y >= 14 && x < 28 ? TREE : LIT_TILES))
+    const planes = sampleRoof(photo, house)?.planes
+    expect(planes?.[2]).toEqual(LIT_TILES)
+  })
+
   it("calls an even grey roof flat", () => {
     const roof = sampleRoof(raster(40, 30, () => [150, 150, 148]), house)
     expect(roof?.pitched).toBe(false)
@@ -42,6 +54,26 @@ describe("sampleRoof", () => {
 
   it("ignores a footprint that only shows trees", () => {
     expect(sampleRoof(raster(40, 30, () => TREE), house)).toBeNull()
+  })
+})
+
+/** [minX, minY, maxX, maxY) */
+const inBox = (x: number, y: number, [x0, y0, x1, y1]: readonly [number, number, number, number]) => x >= x0 && x < x1 && y >= y0 && y < y1
+const SHED = [5, 5, 11, 9] as const
+const RED_CAR = [20, 5, 22, 10] as const
+const MAPPED = [5, 20, 15, 28] as const
+
+describe("findMissingBuildings", () => {
+  it("adds a tiled shed OSM lacks, but not a red car or a mapped house", () => {
+    const photo = raster(40, 40, (x, y) => (inBox(x, y, SHED) || inBox(x, y, RED_CAR) || inBox(x, y, MAPPED) ? LIT_TILES : LAWN))
+    const { footprint } = buildingMasks(40, 40, [{ levels: 2, pts: [5, 20, 15, 20, 15, 28, 5, 28, 5, 20] }])
+    const none = new Uint8Array(40 * 40)
+    const found = findMissingBuildings(photo, footprint, none, none)
+    expect(found).toHaveLength(1)
+    expect(found[0]?.levels).toBe(1)
+    const xs = (found[0]?.pts ?? []).filter((_, i) => i % 2 === 0)
+    expect(Math.min(...xs)).toBeCloseTo(5, 0)
+    expect(Math.max(...xs)).toBeCloseTo(11, 0)
   })
 })
 
@@ -119,18 +151,44 @@ describe("classifyGround and findCrowns", () => {
 })
 
 describe("cleanPaved", () => {
-  it("fills cars in a lot, drops paved specks in a lawn and paves OSM parking", () => {
-    const w = 30
+  const w = 40
+  // Lawn on the left, a paved lot on the right (x >= 15).
+  const lot = () => {
     const ground = new Uint8Array(w * w).fill(Ground.lawn)
     for (let y = 0; y < w; y++) for (let x = 15; x < w; x++) ground[y * w + x] = Ground.paved
-    ground[10 * w + 20] = Ground.tree // a dark car in the lot
+    return ground
+  }
+  const none = new Uint8Array(w * w)
+
+  it("fills cars in a lot and drops paved specks in a lawn", () => {
+    const ground = lot()
+    ground[10 * w + 20] = Ground.tree // a dark car
     ground[5 * w + 5] = Ground.paved // a stray paved pixel in the lawn
-    const parking = new Uint8Array(w * w)
-    parking[25 * w + 2] = 1
-    const clean = cleanPaved(ground, w, w, parking)
+    const clean = cleanPaved(ground, w, w, none)
     expect(clean[10 * w + 20]).toBe(Ground.paved)
     expect(clean[5 * w + 5]).toBe(Ground.lawn)
-    expect(clean[25 * w + 2]).toBe(Ground.paved)
+  })
+
+  it("keeps a thin paved strip inside an OSM parking lot", () => {
+    const ground = lot()
+    const parking = new Uint8Array(w * w)
+    for (let y = 0; y < w; y++) {
+      ground[y * w + 5] = Ground.paved
+      parking[y * w + 5] = 1
+    }
+    expect(cleanPaved(ground, w, w, parking)[20 * w + 5]).toBe(Ground.paved)
+  })
+
+  it("squares a ragged planting island between parking rows into a straight strip", () => {
+    const ground = lot()
+    // A 16 × 3 m hedge along x = 20..35, y = 19..21, with a ragged edge.
+    for (let x = 20; x < 36; x++) for (let y = 19; y < 22; y++) ground[y * w + x] = Ground.lawn
+    ground[18 * w + 25] = Ground.lawn
+    ground[21 * w + 30] = Ground.paved
+    const clean = cleanPaved(ground, w, w, none)
+    expect(clean[18 * w + 25]).toBe(Ground.paved)
+    expect(clean[21 * w + 30]).toBe(Ground.lawn)
+    expect(clean[20 * w + 27]).toBe(Ground.lawn)
   })
 })
 

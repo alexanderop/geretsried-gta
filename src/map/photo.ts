@@ -3,11 +3,12 @@
  * ground, measured inside the OSM geometry. Pure functions over a raster, so
  * they run in tests on synthetic images.
  */
-import type { GameMap } from "./types.ts"
+import type { Building, GameMap } from "./types.ts"
 import { GROUND_M_PER_PX } from "./types.ts"
 import { polygonArea } from "./build.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
 import { eaves, nearestWall, wallCount } from "./roof.ts"
+import { components, inRect, orientedRect, rectCorners, rim } from "./shapes.ts"
 import { aisleBays, carCorners, lotBays, type Bay } from "./parking.ts"
 
 import { PHOTO_PX_PER_M, type Raster } from "./raster.ts"
@@ -105,25 +106,65 @@ export const sampleRoof = (raster: Raster, pts: ReadonlyArray<number>): RoofSamp
   }
   const isEave = eaves(pts, deepest * 2 + 1 / PHOTO_PX_PER_M)
   for (const inset of [1, 0.4, 0]) {
-    const pixels = inset === 0 ? all : polygonPixels(raster, pts, inset)
-    if (pixels.length < MIN_PLANE_PX * 2) continue
+    const inside = inset === 0 ? all : polygonPixels(raster, pts, inset)
+    // Leaves over the roof are not roof: read only the rest, if enough is left.
+    const pixels = inside.filter((i) => !isLeaf(rgbAt(raster, i)))
+    if (inside.length < MIN_PLANE_PX * 2) continue
+    if (pixels.length < Math.max(MIN_PLANE_PX * 2, inside.length * 0.4)) return null
     const whole = medianRgb(raster, pixels)
-    if (isGreen(whole)) return null
+    const tones = twoTones(raster, pixels)
     const groups = isEave.map((): Array<number> => [])
-    for (const i of pixels) {
+    for (const i of inside) {
       const [x, y] = centre(i)
       groups[nearestWall(x, y, pts, (w) => isEave[w] === true)]?.push(i)
     }
     const planes = groups.map((group, w) => {
       if (isEave[w] !== true) return null
-      if (group.length < MIN_PLANE_PX) return whole
-      const color = medianRgb(raster, group)
-      return isGreen(color) ? whole : color
+      const roof = group.filter((i) => !isLeaf(rgbAt(raster, i)))
+      // A plane mostly under a tree borrows the colour of the whole roof.
+      if (roof.length < MIN_PLANE_PX || roof.length < group.length * 0.6) return whole
+      if (tones === null) return medianRgb(raster, roof)
+      // The photo leans, so a plane's footprint also catches part of its
+      // neighbour: give it the tone it holds more of than the roof as a whole.
+      const dark = roof.filter((i) => luma(rgbAt(raster, i)) < tones.split).length / roof.length
+      if (dark > tones.darkShare + 0.15 && dark >= 0.3) return tones.dark
+      if (dark < tones.darkShare - 0.15 && dark <= 0.7) return tones.light
+      return medianRgb(raster, roof)
     })
     return isPitched(planes, whole, polygonArea(pts)) ? { planes, pitched: true } : { planes: [whole], pitched: false }
   }
   return null
 }
+
+/** Green enough to be a leaf rather than a roof tile (same test as lawn and trees). */
+const isLeaf = ([r, g, b]: Rgb) => 2 * g - r - b > 15
+
+/**
+ * The roof's two tones (lit and shaded planes) by 2-means on luma, with the
+ * luma between them and the share of dark pixels. Null when the roof is one tone.
+ */
+const twoTones = (raster: Raster, pixels: ReadonlyArray<number>) => {
+  const lumas = pixels.map((i) => luma(rgbAt(raster, i)))
+  let lo = Math.min(...lumas)
+  let hi = Math.max(...lumas)
+  for (let k = 0; k < 8; k++) {
+    const split = (lo + hi) / 2
+    const dark = lumas.filter((l) => l < split)
+    const light = lumas.filter((l) => l >= split)
+    if (dark.length === 0 || light.length === 0) return null
+    lo = dark.reduce((a, l) => a + l, 0) / dark.length
+    hi = light.reduce((a, l) => a + l, 0) / light.length
+  }
+  if (hi - lo < TWO_TONE_GAP) return null
+  const split = (lo + hi) / 2
+  const dark = pixels.filter((_, k) => (lumas[k] ?? 0) < split)
+  const light = pixels.filter((_, k) => (lumas[k] ?? 0) >= split)
+  if (dark.length < MIN_PLANE_PX || light.length < MIN_PLANE_PX) return null
+  return { split, darkShare: dark.length / pixels.length, dark: medianRgb(raster, dark), light: medianRgb(raster, light) }
+}
+
+/** Luma gap between a lit and a shaded roof plane; less is one tone with some texture. */
+const TWO_TONE_GAP = 40
 
 /**
  * A pitched roof shows lit and shaded planes; tiles are warm (orange, red,
@@ -142,7 +183,6 @@ export const isPitched = (planes: ReadonlyArray<Rgb | null>, whole: Rgb, area: n
 
 const BIG_ROOF_M2 = 900
 
-const isGreen = ([r, g, b]: Rgb) => g > r + 3 && g > b + 12
 
 /** Ground classes the importer tells apart. */
 export const Ground = { lawn: 0, tree: 1, paved: 2, building: 3, forest: 4 } as const
@@ -362,10 +402,44 @@ export const cleanPaved = (ground: Uint8Array, width: number, height: number, pa
   for (let i = 0; i < out.length; i++) {
     const g = out[i]
     if (g === Ground.building || g === Ground.forest) continue
-    if (opened[i] === 1 || parking[i] === 1) out[i] = Ground.paved
+    if (opened[i] === 1 || (parking[i] === 1 && g === Ground.paved)) out[i] = Ground.paved
     else if (g === Ground.paved) out[i] = Ground.lawn
   }
+  tidyIslands(out, width, height)
   return out
+}
+
+/** Planting islands larger than this (m²) are gardens or parks, left alone. */
+const MAX_ISLAND_M2 = 300
+/** Islands smaller than this (m²) are weeds and stains: paved over. */
+const MIN_ISLAND_M2 = 12
+
+/**
+ * Green islands enclosed by pavement (the planting between parking rows) are
+ * straight-edged in reality: tiny ones are paved over, the rest become their
+ * oriented rectangle.
+ */
+const tidyIslands = (ground: Uint8Array, width: number, height: number) => {
+  const area = PHOTO_PX_PER_M * PHOTO_PX_PER_M
+  const green = (i: number) => ground[i] === Ground.lawn || ground[i] === Ground.tree
+  for (const island of components(width, height, green, MAX_ISLAND_M2 * area)) {
+    const edge = rim(width, height, island)
+    if (edge.some((i) => ground[i] !== Ground.paved && ground[i] !== Ground.building)) continue
+    if (island.length < MIN_ISLAND_M2 * area) {
+      for (const i of island) ground[i] = Ground.paved
+      continue
+    }
+    const rect = orientedRect(width, island)
+    if (rect.fill < 0.45) continue
+    const kind = ground[island[0] ?? 0] ?? Ground.lawn
+    for (const i of island) ground[i] = Ground.paved
+    const pad = Math.ceil(Math.max(rect.length, rect.width) / 2) + 1
+    for (let y = Math.max(0, Math.floor(rect.cy - pad)); y < Math.min(height, rect.cy + pad); y++) {
+      for (let x = Math.max(0, Math.floor(rect.cx - pad)); x < Math.min(width, rect.cx + pad); x++) {
+        if (ground[y * width + x] === Ground.paved && inRect(rect, x + 0.5, y + 0.5)) ground[y * width + x] = kind === Ground.tree ? Ground.lawn : kind
+      }
+    }
+  }
 }
 
 const hex = ([r, g, b]: Rgb) => `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`
@@ -392,10 +466,15 @@ export const readPhoto = (
   for (const area of map.areas) {
     if (area.kind === "parking") for (const i of polygonPixels(raster, area.pts)) parking[i] = 1
   }
-  const ground = classifyGround(raster, { ...buildingMasks(width, height, map.buildings), skip })
+  const masks = buildingMasks(width, height, map.buildings)
+  const ground = classifyGround(raster, { ...masks, skip })
+  // Clay courts and running tracks are tile-coloured too.
+  const noSheds = new Uint8Array(skip)
+  for (const area of map.areas) if (area.kind === "pitch") for (const i of polygonPixels(raster, area.pts)) noSheds[i] = 1
+  const extra = findMissingBuildings(raster, masks.footprint, roadMask(map, width, height), noSheds)
   const paved = pavedMask(cleanPaved(ground, width, height, parking), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
   const parked = findParkedCars(map, raster, ground).flatMap((b) => [round1(b.x), round1(b.y), Math.round(b.heading * 100) / 100])
-  return { map: { ...map, buildings, parked }, crowns: findCrowns(ground, width, height), paved }
+  return { map: { ...map, buildings: [...buildings, ...extra], parked }, crowns: findCrowns(ground, width, height), paved }
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10
@@ -420,11 +499,7 @@ const occupied = (b: Bay) => {
  */
 export const findParkedCars = (map: GameMap, raster: Raster, ground: Uint8Array): Array<Bay> => {
   const { width, height } = raster
-  const blocked = new Uint8Array(width * height)
-  for (const r of map.roads) {
-    if (r.aisle === true || r.kind === "footway" || r.kind === "track") continue
-    paintStroke(blocked, width, height, r.pts, r.width / 2 + 0.5)
-  }
+  const blocked = roadMask(map, width, height)
   const aisles = map.roads.filter((r) => r.aisle === true)
   const lots = map.areas.filter((a) => a.kind === "parking")
   const candidates = [
@@ -467,4 +542,49 @@ const paintStroke = (mask: Uint8Array, width: number, height: number, pts: Reado
       }
     }
   }
+}
+
+/** Pixels of every street and service road (not aisles or paths), plus half a meter. */
+const roadMask = (map: GameMap, width: number, height: number): Uint8Array => {
+  const mask = new Uint8Array(width * height)
+  for (const r of map.roads) {
+    if (r.aisle === true || r.kind === "footway" || r.kind === "track") continue
+    paintStroke(mask, width, height, r.pts, r.width / 2 + 0.5)
+  }
+  return mask
+}
+
+/** Sheds, garages and annexes OSM lacks: area limits in m². */
+const MIN_SHED_M2 = 12
+const MAX_SHED_M2 = 600
+
+/**
+ * Roofs the photo shows where OSM has no building: compact, nearly
+ * rectangular patches of roof tile (orange to red) away from streets and
+ * mapped buildings. Each becomes a one-storey building with a flat roof in
+ * its measured colour. White flat roofs are left out: at 1 m they cannot be
+ * told from vans, trailers and bright paving (most bright finds were those).
+ */
+export const findMissingBuildings = (raster: Raster, footprint: Uint8Array, roads: Uint8Array, skip: Uint8Array): Array<Building> => {
+  const { width, height } = raster
+  const near = morph(footprint, width, height, 1, true)
+  const roofish = (i: number) => {
+    if (near[i] === 1 || roads[i] === 1 || skip[i] === 1) return false
+    const [r, g, b] = rgbAt(raster, i)
+    return r - g > 30 && r - b > 55 && r > 120
+  }
+  const area = PHOTO_PX_PER_M * PHOTO_PX_PER_M
+  const out: Array<Building> = []
+  for (const patch of components(width, height, roofish, MAX_SHED_M2 * area)) {
+    if (patch.length < MIN_SHED_M2 * area) continue
+    const rect = orientedRect(width, patch)
+    if (rect.fill < 0.7 || Math.min(rect.length, rect.width) < 2.5 * PHOTO_PX_PER_M || rect.length > rect.width * 4) continue
+    out.push({
+      id: -(out.length + 1),
+      levels: 1,
+      pts: rectCorners(rect).map((v) => Math.round((v / PHOTO_PX_PER_M) * 10) / 10),
+      roof: { colors: [hex(medianRgb(raster, patch))], pitched: false },
+    })
+  }
+  return out
 }

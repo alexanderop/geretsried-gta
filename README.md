@@ -28,14 +28,21 @@ OSM has shapes but almost no looks, so `pnpm map` also reads the Bavarian DOP40 
 - **Roofs**: one median colour per roof plane, stored per building as `roof.colors`, plus `roof.pitched`.
   Every eave owns the part of the roof nearest to it (`src/map/roof.ts`), so long blocks split along
   the ridge, each wing of an L or T gets its own ridge, and short wing ends stay gables. Flat roofs
-  keep one colour. The renderer paints the planes in those colours and adds tile detail from a texture.
+  keep one colour. The photo leans, so a plane's footprint also catches part of its neighbour: the
+  roof's pixels are split into a lit and a shaded tone, and a plane holding clearly more of one tone
+  than the roof as a whole gets that tone. Leaves are left out; a plane mostly under a tree takes the
+  roof's colour. The renderer paints the planes in those colours and adds tile detail from a texture.
+- **Missing sheds and garages**: compact, nearly rectangular patches of roof tile (12–600 m²) away from
+  streets, pitches and mapped buildings become one-storey buildings. White flat roofs are not added:
+  at 1 m they cannot be told from vans, trailers and bright paving.
 - **Shadows**: their direction and length (`SHADOW_DIR`, `SHADOW_PER_M`) were measured in the photo,
   so buildings, trees and cars cast them the way the photo shows (towards the north-east).
 - **Trees**: green-and-dark (or green-and-rough) pixels outside forests, fields and building shadows,
   covered with round crowns, biggest first → `public/trees.bin` (~150k crowns, 5 bytes each). Each
   crown gets one of three tones so they vary.
 - **Paved ground**: grey pixels (yards, driveways, parking) plus OSM parking lots, cleaned into hard
-  shapes (closing fills cars, opening drops specks), as the alpha of `public/ground.png` (2 m/px). The
+  shapes (closing fills cars, opening drops specks; green islands in paving under 12 m² are paved
+  over, larger ones squared into straight planting strips), as the alpha of `public/ground.png` (2 m/px). The
   renderer gives the mask a hard edge and fills it with smooth light paving.
 - **Parked cars** (`src/map/parking.ts`): 2.5 × 5 m bays along every OSM parking aisle and in rows
   filling lots without mapped aisles, minus bays the photo shows as lawn or building or that reach a
