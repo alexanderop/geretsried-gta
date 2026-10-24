@@ -13,12 +13,12 @@ import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
 import { planJobs } from "./town-jobs.ts"
 import { SAVE_COST, SPRAY_COST, planShops, spotNear, stepShop } from "./shops.ts"
 import { toSave } from "./save.ts"
-import { gangJobDone, newRespect, turfs } from "./gangs.ts"
+import { gangJobDone, isHostile, newRespect, turfAt, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
 import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
 import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./weapons.ts"
 import { collect, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
-import { fire, leaveCar, stepCombat } from "./combat.ts"
+import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
 import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
 import type { Game, Input, Spawn } from "./state.ts"
@@ -31,6 +31,10 @@ const WALK = 4
 const SPRINT = 7.5
 const PLAYER_RADIUS = 0.4
 const NPC_COUNT = 70
+/** Every GANG_EVERY-th pedestrian is in the gang whose turf they walk. */
+const GANG_EVERY = 4
+/** A gang that hates you sends the members this close at you. */
+const GANG_SIGHT = 16
 const NPC_NEAR = 120
 const NPC_FAR = 650
 const WALKER_COUNT = 120
@@ -168,7 +172,11 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   game.parked = game.parked.filter((c) => Math.hypot(c.x - x, c.y - y) < NPC_FAR)
   for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
     const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
-    if (walker !== null) game.walkers.push(walker)
+    if (walker === null) continue
+    // Every few people on a gang's turf wear its colours.
+    const gang = walker.id % GANG_EVERY === 0 ? turfAt(game.turf, walker.x, walker.y) : null
+    if (gang !== null) walker.gang = gang
+    game.walkers.push(walker)
   }
   for (let attempt = 0; game.npcs.length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
     const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
@@ -276,6 +284,7 @@ export const step = (world: World, game: Game, input: Input): void => {
   if (game.wasted <= 0 && isDead(player.vitals)) wasted(game)
   jobsStep(world, game)
   shopsStep(game)
+  if (Math.round(game.time * 60) % 30 === 0) gangsStep(game)
   tickScore(game.score, DT)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
 }
@@ -566,6 +575,16 @@ const jobsStep = (world: World, game: Game) => {
     game.messages.push({ kind: "cash", amount: event.reward })
     const g = event.job.gang
     if (g !== undefined) gangJobDone(game.respect, g.for, g.against)
+  }
+}
+
+/** A gang with low respect for you attacks: its members near you on its turf come at you. */
+const gangsStep = (game: Game) => {
+  if (game.wasted > 0) return
+  const p = playerPos(game)
+  for (const w of game.walkers) {
+    if (w.gang === undefined || w.dead || w.down > 0 || !isHostile(game.respect, w.gang)) continue
+    if (Math.hypot(w.x - p.x, w.y - p.y) < GANG_SIGHT) enrage(game, w)
   }
 }
 

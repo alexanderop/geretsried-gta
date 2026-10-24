@@ -17,6 +17,7 @@ import type { Vitals } from "#/sim/damage.ts"
 import { isAvailable, type Pickup } from "#/sim/pickups.ts"
 import { ISLAND_M, PUMP_HP, type Pump } from "#/sim/stations.ts"
 import type { Shop } from "#/sim/shops.ts"
+import { GANGS, type GangId } from "#/sim/gangs.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
 import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
@@ -74,11 +75,18 @@ const flames = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, z: num
   spriteQuad(m, { x, y, z: z - 0.05, angle: 0, length: size * 2.2, width: size * 2.2 }, Sprite.glow, box(boxes, Sprite.glow), [255, 140, 40, 120], Mode.sprite)
 }
 
+/** A gang member's mark: a ring of their colour on the ground round their feet, so the crowd reads from above. */
+const gangRing = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, g: GangId) => {
+  const [r, gg, b] = GANGS[g].color
+  spriteQuad(m, { x, y, z: 0.13, angle: 0, length: 2.2, width: 2.2 }, Sprite.glow, box(boxes, Sprite.glow), [r, gg, b, 230], Mode.sprite)
+}
+
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => {
+  if (w.gang !== undefined && w.down <= 0) gangRing(m, boxes, w.x, w.y, w.gang)
   if (w.down > 0) body(m, boxes, prop("pose-body-man"), w, bodyAlpha(w, CORPSE_FADE_S))
   else {
     const bob = 1 + Math.sin(w.stride) * 0.05
-    sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 1.25 * bob, 0.9)
+    sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 1.25 * bob, 0.9, w.gang === undefined ? WHITE : gangTint(w.gang))
   }
   if (w.vitals.fire > 0) flames(m, boxes, w.x, w.y, PED_Z + 0.1, 1.3, time, w.id)
 }
@@ -87,11 +95,22 @@ const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => 
 const fighter = (m: MeshBuilder, boxes: SpriteBoxes, f: Fighter, time: number) => {
   if (f.down > 0 || f.dead) body(m, boxes, prop(f.kind === "cop" ? "pose-body-cop" : "pose-body-man"), f, bodyAlpha(f, CORPSE_FADE_S))
   else {
-    const layer = f.kind === "thug" ? prop("pose-thug-punch") : prop(f.moving ? "pose-cop-run" : "pose-cop-aim")
     const sway = f.moving ? Math.sin(f.stride / 2) * 0.08 : 0
-    posed(m, boxes, layer, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, PERSON_W * (1 + Math.sin(f.stride) * 0.04))
+    // Gang members keep their jackets in the gang's colours, a touch bigger than the passers-by.
+    if (f.gang !== undefined) gangRing(m, boxes, f.x, f.y, f.gang)
+    if (f.gang !== undefined) sprite(m, boxes, Sprite.ped + f.sprite, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, 1.35 * (1 + Math.sin(f.stride) * 0.05), 0.9, gangTint(f.gang))
+    else {
+      const layer = f.kind === "thug" ? prop("pose-thug-punch") : prop(f.moving ? "pose-cop-run" : "pose-cop-aim")
+      posed(m, boxes, layer, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, PERSON_W * (1 + Math.sin(f.stride) * 0.04))
+    }
   }
   if (f.vitals.fire > 0) flames(m, boxes, f.x, f.y, PED_Z + 0.1, 1.3, time, f.id)
+}
+
+/** A gang's colours over a pedestrian sprite: strong enough to read from above, light enough to keep the face. */
+const gangTint = (g: GangId): Rgba => {
+  const [r, gg, b] = GANGS[g].color
+  return [Math.round(90 + r * 0.65), Math.round(90 + gg * 0.65), Math.round(90 + b * 0.65), 255]
 }
 
 /** The player's pose for the weapon in hand: fists are the plain walking sprite. */

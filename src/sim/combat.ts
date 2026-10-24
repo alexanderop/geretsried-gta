@@ -16,6 +16,7 @@ import { WEAPONS, bulletAngles, type WeaponId } from "./weapons.ts"
 import { blast, inBox, inCone, rayBox, rayCircle, rayWall, type Box } from "./hitscan.ts"
 import { commit, tactics } from "./wanted.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
+import { FRIENDLY, memberKilled } from "./gangs.ts"
 import { ISLAND_M, ISLAND_W, hurtPump, type Pump } from "./stations.ts"
 
 /** Anything with a body a shot can hit. */
@@ -150,11 +151,29 @@ const cast = (world: World, game: Game, from: Shooter, ox: number, oy: number, a
   return { t: best, target }
 }
 
-/** A tough guy you hit gets up off the sidewalk and comes for you. */
-const enrage = (game: Game, w: Walker) => {
+/** A tough guy you hit (or a gang member who hates you) gets up off the sidewalk and comes for you. */
+export const enrage = (game: Game, w: Walker): void => {
   game.walkers = game.walkers.filter((o) => o !== w)
-  game.fighters.push({ id: w.id, kind: "thug", x: w.x, y: w.y, angle: w.angle, vitals: w.vitals, sprite: w.sprite, stride: 0, moving: false, cooldown: 0.6, down: w.down, dead: false, temper: 14 })
+  game.fighters.push({
+    id: w.id,
+    kind: "thug",
+    x: w.x,
+    y: w.y,
+    angle: w.angle,
+    vitals: w.vitals,
+    sprite: w.sprite,
+    stride: 0,
+    moving: false,
+    cooldown: 0.6,
+    down: w.down,
+    dead: false,
+    temper: w.gang === undefined ? 14 : GANG_TEMPER_S,
+    ...(w.gang === undefined ? {} : { gang: w.gang }),
+  })
 }
+
+/** Seconds a gang member keeps after you. */
+const GANG_TEMPER_S = 25
 
 const killFighter = (game: Game, f: Fighter, from: Shooter) => {
   if (f.dead) return
@@ -162,6 +181,7 @@ const killFighter = (game: Game, f: Fighter, from: Shooter) => {
   f.down = CORPSE_S
   f.vitals.fire = 0
   if (from === "player") commit(game.wanted, f.kind === "cop" ? "copKill" : "kill")
+  if (f.gang !== undefined) memberKilled(game.respect, f.gang)
 }
 
 /** `amount` of `source` damage to whatever was hit; `down` seconds off their feet for people who survive it. */
@@ -192,10 +212,13 @@ const damage = (game: Game, target: Target, amount: number, source: DamageSource
   if (isDead(w.vitals)) {
     kill(w)
     if (from === "player") commit(game.wanted, "kill")
+    if (w.gang !== undefined && from === "player") memberKilled(game.respect, w.gang)
     return
   }
   if (down > 0) knockDown(w, down)
-  if (w.tough && from === "player" && source !== "explosion") enrage(game, w)
+  // A gang that respects you lets one punch go; any other gang member hits back.
+  const fights = w.tough || (w.gang !== undefined && game.respect[w.gang] < FRIENDLY)
+  if (fights && from === "player" && source !== "explosion") enrage(game, w)
 }
 
 /** Fire `weapon` from (x, y) towards `angle`: what happens depends on the weapon's kind. */
@@ -536,7 +559,7 @@ const stepFighters = (world: World, game: Game, level: number, dt: number) => {
       f.moving = true
       continue
     }
-    const chase = f.kind === "cop" ? level > 0 && alive : f.temper > 0 && d < 30 && alive
+    const chase = f.kind === "cop" ? level > 0 && alive : f.temper > 0 && d < (f.gang === undefined ? 30 : 45) && alive
     if (f.kind === "thug") f.temper -= dt
     if (!chase) continue
     f.angle = aim

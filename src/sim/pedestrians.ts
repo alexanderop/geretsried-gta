@@ -1,6 +1,7 @@
 import type { Road } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
 import { WALKABLE } from "#/world/world.ts"
+import type { GangId } from "./gangs.ts"
 import { PERSON_HP, burnPerson, hurt, isDead, vitals, type Vitals } from "./damage.ts"
 
 /** Someone walking the footpath and sidewalk network. */
@@ -32,6 +33,8 @@ export type Walker = {
   readonly tough: boolean
   readonly vitals: Vitals
   readonly sprite: number
+  /** A gang member, in their gang's colours, on their turf. */
+  gang?: GangId
 }
 
 /** Seconds a body stays on the ground, fading over the last of them. */

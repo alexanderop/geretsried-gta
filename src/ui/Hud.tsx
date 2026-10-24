@@ -24,6 +24,8 @@ export type HudState = {
   readonly mission: string
   /** Seconds left on the job, or null when no clock runs. */
   readonly timer: number | null
+  /** GTA 2's respect meters: each gang's colour, name and respect (-100 … 100). */
+  readonly respect: ReadonlyArray<{ readonly id: string; readonly name: string; readonly color: string; readonly value: number }>
   /** A payphone rings near you: GTA 2's ringing phone icon. */
   readonly ringing: boolean
   /** The weapon slot under the money, GTA 2 style: an icon and the rounds left (null: no ammo, like fists). */
@@ -52,6 +54,7 @@ export const emptyHud: HudState = {
   mission: "",
   timer: null,
   ringing: false,
+  respect: [],
   weapon: { id: "fists", name: "Fäuste", ammo: null },
   pickup: null,
   paid: null,
@@ -108,6 +111,28 @@ const Shield = ({ armour }: { readonly armour: number }) => (
     {Math.round(armour)}
   </span>
 )
+
+/** One gang's meter, GTA 2 style: a head in their colour, then a bar that fills right of the middle as they like you, left as they hate you. */
+const RespectMeter = ({ name, color, value }: { readonly name: string; readonly color: string; readonly value: number }) => {
+  const k = Math.max(-1, Math.min(1, value / 100))
+  return (
+    <div className="flex items-center gap-2" aria-label={`${name}: ${Math.round(value)} Respekt`}>
+      <svg viewBox="0 0 20 20" className="h-7 w-7" aria-hidden="true">
+        <circle cx="10" cy="10" r="8" fill={color} stroke="#000" strokeWidth="1.5" />
+        <circle cx="7" cy="9" r="1.4" fill="#000" />
+        <circle cx="13" cy="9" r="1.4" fill="#000" />
+        <path d={k >= 0 ? "M6 13 Q10 16 14 13" : "M6 15 Q10 12 14 15"} fill="none" stroke="#000" strokeWidth="1.5" />
+      </svg>
+      <div className="relative h-3.5 w-28 rounded-sm border-2 border-black bg-black/60">
+        <div className="absolute top-0 left-1/2 h-full w-px bg-white/50" />
+        <div
+          className="absolute top-0 h-full"
+          style={{ background: k >= 0 ? color : "#ff3b30", left: k >= 0 ? "50%" : `${50 + k * 50}%`, width: `${Math.abs(k) * 50}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export function Hud({ hud, help }: { readonly hud: HudState; readonly help: boolean }) {
   const clock = hud.timer === null ? "" : `${Math.floor(hud.timer / 60)}:${String(Math.max(0, Math.floor(hud.timer % 60))).padStart(2, "0")}`
@@ -184,6 +209,13 @@ export function Hud({ hud, help }: { readonly hud: HudState; readonly help: bool
       )}
 
       <div className="absolute top-3 left-4 flex flex-col gap-1">
+        {hud.respect.length > 0 && (
+          <div data-testid="respect" className="mb-1 flex flex-col gap-1">
+            {hud.respect.map((g) => (
+              <RespectMeter key={g.id} {...g} />
+            ))}
+          </div>
+        )}
         {hud.inCar && (
           <div data-testid="speed" className="text-3xl">
             {hud.kmh} <span className="text-base">km/h</span>

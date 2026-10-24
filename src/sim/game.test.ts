@@ -377,3 +377,32 @@ describe("save points and spray shops", () => {
     expect(game.cops.every((c) => Math.hypot(c.car.vx, c.car.vy) < 3)).toBe(true)
   })
 })
+
+describe("gangs", () => {
+  it("walk their turf in their colours, and come at you when they hate you", () => {
+    const game = newGame(world, 6)
+    run(game, idle, 1)
+    const member = must(game.walkers.find((w) => w.gang !== undefined))
+    const gang = must(member.gang)
+    game.respect[gang] = -60
+    Object.assign(game.player, { x: member.x + 5, y: member.y })
+    run(game, idle, 1)
+    expect(game.fighters.some((f) => f.gang === gang)).toBe(true)
+  })
+
+  it("pay respect for a gang job: up with them, down with their rival", () => {
+    const game = newGame(world, 6)
+    const job = must(game.jobs.jobs.find((j) => j.gang?.for === "gelting"))
+    const phone = must(game.jobs.phones[job.phone])
+    Object.assign(game.player, { x: phone.x, y: phone.y })
+    step(world, game, idle)
+    expect(game.jobs.active?.job.id).toBe(job.id)
+    if (job.goal.kind !== "deliver") throw new Error("expected a delivery")
+    Object.assign(game.player, { x: job.goal.pickup.x, y: job.goal.pickup.y })
+    step(world, game, idle)
+    Object.assign(game.player, { x: job.goal.dropoff.x, y: job.goal.dropoff.y })
+    step(world, game, idle)
+    expect(game.respect.gelting).toBeGreaterThan(0)
+    expect(game.respect.gartenberg).toBeLessThan(0)
+  })
+})

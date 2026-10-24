@@ -142,6 +142,13 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 - **Spray shops**: real car repair shops (Huber's Karosserie-Lack-Center, Werkstatt Wilhelm, Auto Stapf)
   have a glowing spray-can pad; drive onto it for $300 and the car gets a new colour (the sprite's hue
   turned in the shader) and the wanted level drops to zero, so the police lose you.
+- **Gangs** (`src/sim/gangs.ts`): three gangs with their turf round the OSM places Gartenberg (the
+  Gartenberger Krachlederne, green), Stein (the Steiner Steinböcke, blue) and Gelting (the Geltinger
+  Bauernmafia, orange, placed between Gelting's town signs, its node lies outside the map); the town
+  splits between the nearest. Every fourth pedestrian on a turf wears its colours (tinted, a ring of
+  colour at their feet). GTA 2's respect meters sit top left (-100 … 100). Each gang's phone gives a job
+  for it: +25 with them, -15 with their rival; killing one of theirs costs 4 (their rival likes it). At
+  -25 or less, members near you on their turf come at you with their fists; from 40 up they let a punch go.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

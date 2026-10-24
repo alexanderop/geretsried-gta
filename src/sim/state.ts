@@ -9,7 +9,7 @@ import type { Walker } from "./pedestrians.ts"
 import type { Wanted } from "./wanted.ts"
 import type { Score } from "./score.ts"
 import type { Jobs } from "./mission.ts"
-import type { Respect, Turf } from "./gangs.ts"
+import type { GangId, Respect, Turf } from "./gangs.ts"
 import type { Cop } from "./police.ts"
 import type { Vitals } from "./damage.ts"
 import type { Arsenal } from "./weapons.ts"
@@ -69,6 +69,8 @@ export type Fighter = {
   dead: boolean
   /** A thug's temper: seconds until he gives up on you. */
   temper: number
+  /** A gang member come for you. */
+  readonly gang?: GangId
 }
 
 /** What fired a shot: the player, or the police (whose bullets are meant for the player). */

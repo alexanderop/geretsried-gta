@@ -8,6 +8,7 @@ import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
 import { wantedLevel } from "#/sim/wanted.ts"
 import { WEAPONS } from "#/sim/weapons.ts"
+import { GANGS } from "#/sim/gangs.ts"
 import { SAVE_KEY, applySave, decodeSave, encodeSave, type SaveData } from "#/sim/save.ts"
 import { GameAudio } from "./audio.ts"
 import { Hud, emptyHud, type HudState } from "./Hud.tsx"
@@ -197,6 +198,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           big: game.time < bigUntil ? shown.big : "",
           mission: game.time < missionUntil ? shown.mission : "",
           timer: jobClock(game),
+          respect: game.turf.map((t) => ({ id: t.gang, name: GANGS[t.gang].name, color: `rgb(${GANGS[t.gang].color.join(",")})`, value: game.respect[t.gang] })),
           ringing: game.jobs.phones.some((ph, i) => isRinging(game.jobs, i) && Math.hypot(ph.x - p.x, ph.y - p.y) < 70),
         }
         setHud(shown)
