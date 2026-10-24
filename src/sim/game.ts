@@ -73,11 +73,15 @@ export const newGame = (world: World, seed = 1): Game => {
   const angle = Math.atan2(by - best.ay, bx - best.ax)
   const nx = -Math.sin(angle)
   const ny = Math.cos(angle)
-  // Half on the sidewalk, like people park in Geretsried, so traffic can pass.
-  const lane = road.width / 2 + 1
-  const car: Car = { x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, model: 0 }
+  // Half on the sidewalk, like people park in Geretsried, so traffic can pass;
+  // the other curb or the lane itself if a wall is in the way.
+  const spots = [road.width / 2 + 1, -(road.width / 2 + 1), road.width / 4].map(
+    (lane): Car => ({ x: ax + nx * lane, y: ay + ny * lane, angle, vx: 0, vy: 0, model: 0 }),
+  )
+  const car = spots.find((c) => !carHitsWall(world, c)) ?? spots[2] ?? { x: ax, y: ay, angle, vx: 0, vy: 0, model: 0 }
+  const side = Math.sign((car.x - ax) * nx + (car.y - ay) * ny) || 1
   const game: Game = {
-    player: { x: car.x + nx * 2.5, y: car.y + ny * 2.5, angle: angle - Math.PI / 2, car: null },
+    player: { x: car.x - nx * 2.5 * side, y: car.y - ny * 2.5 * side, angle: angle - Math.PI / 2, car: null },
     parked: [car],
     npcs: [],
     nextId: 0,
