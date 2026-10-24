@@ -17,6 +17,7 @@ import type { Bbox } from "../src/map/project.ts"
 
 const RAW = "data/raw.json"
 const PLACES = "data/places.json"
+const EXTRA = "data/extra.json"
 const OUT = "public/geretsried.map.json"
 const GROUND_OUT = "public/ground.png"
 const TREES_OUT = "public/trees.bin"
@@ -43,6 +44,18 @@ const PLACES_QUERY = `[out:json][timeout:120];
   nwr["shop"](${B});
   nwr["amenity"~"^(fuel|pharmacy|bank|police|post_office|townhall|fast_food|restaurant|cafe|ice_cream|pub|biergarten|cinema|hospital|doctors|school|library)$"](${B});
   node["highway"="traffic_signals"](${B});
+);
+out center tags;`
+
+/** Churches, districts, crossings, bus stops and bottle banks; town signs a little past the west edge name Gelting. */
+const EXTRA_QUERY = `[out:json][timeout:120];
+(
+  nwr["amenity"="place_of_worship"](${B});
+  node["place"~"^(suburb|quarter|neighbourhood|village)$"](${B});
+  node["highway"="crossing"](${B});
+  node["highway"="bus_stop"](${B});
+  nwr["amenity"="recycling"]["recycling:glass_bottles"="yes"](${B});
+  node["traffic_sign"="city_limit"]["name"](${BBOX.south},${BBOX.west - 0.02},${BBOX.north},${BBOX.east});
 );
 out center tags;`
 
@@ -94,8 +107,10 @@ const program = Effect.gen(function* () {
   yield* fs.makeDirectory("data", { recursive: true })
   if (fresh || !(yield* fs.exists(RAW))) yield* fs.writeFileString(RAW, yield* download(QUERY))
   if (fresh || !(yield* fs.exists(PLACES))) yield* fs.writeFileString(PLACES, yield* download(PLACES_QUERY))
-  const placesRaw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(PlacesResponse))(yield* fs.readFileString(PLACES))
-  const places = placesRaw.elements.flatMap((e) => {
+  if (fresh || !(yield* fs.exists(EXTRA))) yield* fs.writeFileString(EXTRA, yield* download(EXTRA_QUERY))
+  const decode = Schema.decodeUnknownEffect(Schema.fromJsonString(PlacesResponse))
+  const placesRaw = [...(yield* decode(yield* fs.readFileString(PLACES))).elements, ...(yield* decode(yield* fs.readFileString(EXTRA))).elements]
+  const places = placesRaw.flatMap((e) => {
     const lat = e.lat ?? e.center?.lat
     const lon = e.lon ?? e.center?.lon
     return lat === undefined || lon === undefined ? [] : [{ id: e.id, lat, lon, tags: e.tags }]
@@ -112,7 +127,8 @@ const program = Effect.gen(function* () {
   yield* Console.log(
     `${OUT}: ${Math.round(map.width)}×${Math.round(map.height)} m, ${map.roads.length} roads, ` +
       `${map.buildings.length} buildings, ${map.areas.length} areas, ${map.waterways.length} waterways, ` +
-      `${map.pois.length} places, ${map.signals.length} traffic lights, ${crowns.length} trees, ` +
+      `${map.pois.length} places, ${map.signals.length} traffic lights, ${map.crossings.length} crossings, ${map.districts.length} districts, ` +
+      `${map.props.length} props, ${crowns.length} trees, ` +
       `${(Number(size) / 1e6).toFixed(1)} MB`,
   )
 })

@@ -49,6 +49,8 @@ const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
   school: ["🏫", "#475569"],
   doctor: ["🩺", "#0e7490"],
   civic: ["🏛️", "#475569"],
+  church: ["⛪", "#a16207"],
+  car_repair: ["🔧", "#7c2d12"],
   shop: ["🛍️", "#6b7280"],
 }
 

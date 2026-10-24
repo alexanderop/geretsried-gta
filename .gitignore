@@ -6,3 +6,4 @@ test-results
 data/places.json
 compare
 data/dop40
+data/extra.json

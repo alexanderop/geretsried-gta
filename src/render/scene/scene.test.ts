@@ -16,7 +16,7 @@ const map: GameMap = {
   areas: [],
   waterways: [],
   pois: [],
-  signals: [],
+  signals: [], crossings: [], props: [], districts: [],
   covered: [],
 }
 

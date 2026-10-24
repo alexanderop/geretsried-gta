@@ -49,7 +49,8 @@ export type Road = typeof Road.Type
 export const Roof = Schema.Struct({ colors: Schema.Array(Schema.NullOr(Schema.String)), pitched: Schema.Boolean })
 export type Roof = typeof Roof.Type
 
-export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points, roof: Schema.optionalKey(Roof) })
+/** `canopy`: OSM building=roof, a roof on pillars (petrol stations): no walls, nothing solid underneath. */
+export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points, roof: Schema.optionalKey(Roof), canopy: Schema.optionalKey(Schema.Boolean) })
 export type Building = typeof Building.Type
 
 export const Area = Schema.Struct({ kind: AreaKind, pts: Points })
@@ -71,6 +72,8 @@ export const PoiKind = Schema.Literals([
   "school",
   "doctor",
   "civic",
+  "church",
+  "car_repair",
   "shop",
 ])
 export type PoiKind = typeof PoiKind.Type
@@ -88,6 +91,20 @@ export const Signal = Schema.Struct({
 })
 export type Signal = typeof Signal.Type
 
+/** A marked pedestrian crossing on OSM node `node` (zebra, or with its own lights). */
+export const Crossing = Schema.Struct({ node: Schema.Number, x: Schema.Number, y: Schema.Number, signals: Schema.Boolean })
+export type Crossing = typeof Crossing.Type
+
+/** Street furniture OSM maps as points: bus stops and glass bottle banks. */
+export const PropKind = Schema.Literals(["bus_stop", "glass"])
+export type PropKind = typeof PropKind.Type
+export const Prop = Schema.Struct({ kind: PropKind, x: Schema.Number, y: Schema.Number })
+export type Prop = typeof Prop.Type
+
+/** A part of town with its own name (OSM place=suburb, village, …): where the gangs have their turf. */
+export const District = Schema.Struct({ name: Schema.String, x: Schema.Number, y: Schema.Number })
+export type District = typeof District.Type
+
 /** A stretch of road the aerial photo shows as tree canopy; the renderer draws it in. */
 export const Covered = Schema.Struct({ width: Schema.Number, pts: Points })
 export type Covered = typeof Covered.Type
@@ -103,6 +120,9 @@ export const GameMap = Schema.Struct({
   waterways: Schema.Array(Waterway),
   pois: Schema.Array(Poi),
   signals: Schema.Array(Signal),
+  crossings: Schema.Array(Crossing),
+  props: Schema.Array(Prop),
+  districts: Schema.Array(District),
   covered: Schema.Array(Covered),
 })
 export type GameMap = typeof GameMap.Type

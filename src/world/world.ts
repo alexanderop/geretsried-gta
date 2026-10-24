@@ -31,12 +31,12 @@ export type World = {
 }
 
 export const makeWorld = (map: GameMap): World => {
-  // Buildings are solid: nothing drives or walks through them.
+  // Buildings are solid: nothing drives or walks through them. Canopies (petrol stations) stand on pillars: you drive under them.
   const solids = map.buildings.map((b) => b.pts)
   const buildingGrid = new Grid(map.width, map.height, CELL)
   const buildingBoxes = solids.map((pts, i) => {
     const box = boxOf(pts)
-    buildingGrid.insert(i, box)
+    if (map.buildings[i]?.canopy !== true) buildingGrid.insert(i, box)
     return box
   })
 

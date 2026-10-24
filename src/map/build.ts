@@ -1,4 +1,4 @@
-import type { Area, AreaKind, Building, GameMap, Poi, PoiKind, Road, RoadKind, Signal, Waterway } from "./types.ts"
+import type { Area, AreaKind, Building, Crossing, District, GameMap, Poi, PoiKind, Prop, Road, RoadKind, Signal, Waterway } from "./types.ts"
 import { makeProjection, type Bbox, type LatLon } from "./project.ts"
 
 /** One `way` as Overpass returns it with `out geom`. */
@@ -88,6 +88,8 @@ const POI_KINDS: Readonly<Record<string, PoiKind>> = {
   townhall: "civic",
   library: "civic",
   cinema: "civic",
+  place_of_worship: "church",
+  car_repair: "car_repair",
 }
 
 const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null => {
@@ -156,7 +158,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
         ...(tags.service === "parking_aisle" ? { aisle: true } : {}),
       })
     } else if (tags.building !== undefined) {
-      buildings.push({ id: way.id, levels: buildingLevels(tags), pts: flat(way.geometry) })
+      buildings.push({ id: way.id, levels: buildingLevels(tags), pts: flat(way.geometry), ...(tags.building === "roof" ? { canopy: true } : {}) })
     } else if (tags.waterway !== undefined) {
       const width = tags.waterway === "river" ? 40 : tags.waterway === "canal" ? 12 : 3
       waterways.push({ width, pts: flat(way.geometry) })
@@ -168,7 +170,16 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
 
   const pois: Array<Poi> = []
   const signals: Array<Signal> = []
+  const crossings: Array<Crossing> = []
+  const props: Array<Prop> = []
+  const districts: Array<District> = []
+  /** Town signs by name: a place whose node lies outside the box (Gelting) is put between its signs. */
+  const signs = new Map<string, Array<LatLon>>()
   for (const place of places) {
+    if (place.tags.traffic_sign === "city_limit" && place.tags.name !== undefined) {
+      signs.set(place.tags.name, [...(signs.get(place.tags.name) ?? []), place])
+      continue
+    }
     if (!inside(place)) continue
     const [px, py] = projection.toMeters(place)
     const x = round(px)
@@ -178,9 +189,35 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
       signals.push({ node: place.id, x, y, direction: d === "forward" || d === "backward" ? d : "both" })
       continue
     }
+    const { tags } = place
+    if (tags.highway === "crossing") {
+      if (tags.crossing === "zebra" || tags.crossing === "traffic_signals" || tags.crossing === "marked" || tags.crossing_ref === "zebra")
+        crossings.push({ node: place.id, x, y, signals: tags.crossing === "traffic_signals" })
+      continue
+    }
+    if (tags.highway === "bus_stop") {
+      props.push({ kind: "bus_stop", x, y })
+      continue
+    }
+    if (tags.amenity === "recycling") {
+      props.push({ kind: "glass", x, y })
+      continue
+    }
+    if (tags.place !== undefined) {
+      if (tags.name !== undefined) districts.push({ name: tags.name, x, y })
+      continue
+    }
+    // Only churches: a prayer room in an industrial estate is no save point.
+    if (tags.amenity === "place_of_worship" && tags.religion !== "christian") continue
     const kind = poiKind(place.tags)
     const name = place.tags.brand ?? place.tags.name
     if (kind !== null && name !== undefined) pois.push({ name, kind, x, y })
+  }
+
+  for (const [name, at] of signs) {
+    if (districts.some((d) => d.name === name) || at.length < 2) continue
+    const [px, py] = projection.toMeters({ lat: at.reduce((s, p) => s + p.lat, 0) / at.length, lon: at.reduce((s, p) => s + p.lon, 0) / at.length })
+    if (px > -500 && py > 0 && py < projection.height) districts.push({ name, x: round(Math.max(0, px)), y: round(py) })
   }
 
   // Big areas first so small ones (ponds, parks) paint on top.
@@ -196,6 +233,9 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
     waterways,
     pois,
     signals,
+    crossings,
+    props,
+    districts,
     covered: [],
   }
 }
