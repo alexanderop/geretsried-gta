@@ -1,4 +1,5 @@
-import type { GameMap } from "#/map/types.ts"
+import type { GameMap, PoiKind } from "#/map/types.ts"
+import { lightFor, type Light, type TrafficLight } from "#/sim/signals.ts"
 import { CAR_LENGTH, forwardSpeed } from "#/sim/car.ts"
 import { silhouette, type Assets } from "./assets.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
@@ -47,6 +48,7 @@ export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, spr
   ctx.setTransform(z, 0, 0, z, -left * z, -top * z)
   for (const car of game.parked) drawCar(ctx, sprites, car.x, car.y, car.angle, car.model)
   for (const npc of game.npcs) drawCar(ctx, sprites, npc.x, npc.y, npc.angle, npc.model)
+  for (const light of game.signals.lights) drawLight(ctx, light, game.time)
   const { player } = game
   if (player.car !== null) drawCar(ctx, sprites, player.car.x, player.car.y, player.car.angle, player.car.model)
   else drawPedestrian(ctx, sprites, player.x, player.y, player.angle)
@@ -95,6 +97,101 @@ const drawCar = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: 
 const drawPedestrian = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: number, angle: number) =>
   drawSprite(ctx, sprites.peds[0], x, y, angle, 1.6, 0.3)
 
+const LAMP: Readonly<Record<Light, string>> = { red: "#ff3b30", yellow: "#ffcc00", green: "#34c759" }
+
+/** A signal head on the right-hand curb, facing traffic on the light's road; glows in its current colour. */
+const drawLight = (ctx: CanvasRenderingContext2D, light: TrafficLight, time: number) => {
+  const heads = light.junction.size === 1 ? [light.heading, light.heading + Math.PI / 2] : [light.heading]
+  for (const heading of heads) {
+    for (const side of light.direction === "both" ? [1, -1] : [light.direction === "forward" ? 1 : -1]) {
+      const facing = heading + (side === 1 ? 0 : Math.PI)
+      const state = lightFor(light.junction, facing, time)
+      // Right-hand curb for traffic driving along `facing`.
+      const off = light.roadWidth / 2 + 0.8
+      const x = light.x - Math.sin(facing) * off
+      const y = light.y + Math.cos(facing) * off
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.rotate(facing)
+      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 2.2)
+      glow.addColorStop(0, `${LAMP[state]}aa`)
+      glow.addColorStop(1, `${LAMP[state]}00`)
+      ctx.fillStyle = glow
+      ctx.fillRect(-2.2, -2.2, 4.4, 4.4)
+      ctx.fillStyle = "#1c1c1e"
+      ctx.fillRect(-0.45, -1.2, 0.9, 2.4)
+      const lamps: ReadonlyArray<Light> = ["red", "yellow", "green"]
+      lamps.forEach((lamp, i) => {
+        ctx.fillStyle = lamp === state ? LAMP[lamp] : "#3a3a3c"
+        ctx.beginPath()
+        ctx.arc(0, -0.75 + i * 0.75, 0.3, 0, Math.PI * 2)
+        ctx.fill()
+      })
+      ctx.restore()
+    }
+  }
+}
+
+const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
+  supermarket: ["🛒", "#d62828"],
+  drugstore: ["🧴", "#7b2cbf"],
+  bakery: ["🥨", "#b5651d"],
+  fuel: ["⛽", "#1d4ed8"],
+  pharmacy: ["💊", "#15803d"],
+  bank: ["🏦", "#334155"],
+  food: ["🍽️", "#c2410c"],
+  police: ["🚓", "#166534"],
+  post: ["✉️", "#ca8a04"],
+  school: ["🏫", "#475569"],
+  doctor: ["🩺", "#0e7490"],
+  civic: ["🏛️", "#475569"],
+  shop: ["🛍️", "#6b7280"],
+}
+
+/** Always labelled; the rest only when you are close (on foot). */
+const IMPORTANT: ReadonlySet<PoiKind> = new Set(["supermarket", "drugstore", "fuel", "police", "pharmacy", "post", "civic"])
+
+export const poiIcon = (kind: PoiKind) => POI_STYLE[kind][0]
+
+/** Name tags over shops and places, in screen space; later labels yield to earlier ones. */
+export const drawPlaces = (ctx: CanvasRenderingContext2D, map: GameMap, camera: Camera, dpr: number) => {
+  const { width, height } = ctx.canvas
+  const z = camera.zoom * dpr
+  const close = camera.zoom > 9
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.font = `bold ${12 * dpr}px ui-sans-serif, system-ui, sans-serif`
+  ctx.textBaseline = "middle"
+  const taken: Array<readonly [number, number, number, number]> = []
+  const order = map.pois.toSorted((a, b) => Number(IMPORTANT.has(b.kind)) - Number(IMPORTANT.has(a.kind)))
+  for (const poi of order) {
+    if (!close && !IMPORTANT.has(poi.kind)) continue
+    const sx = (poi.x - camera.x) * z + width / 2
+    const sy = (poi.y - camera.y) * z + height / 2
+    if (sx < -200 || sy < -50 || sx > width + 200 || sy > height + 50) continue
+    const [icon, color] = POI_STYLE[poi.kind]
+    const text = `${icon} ${poi.name}`
+    const w = ctx.measureText(text).width + 14 * dpr
+    const h = 22 * dpr
+    const x0 = sx - w / 2
+    const y0 = sy - h - 10 * dpr
+    if (taken.some(([x, y, tw, th]) => x0 < x + tw && x0 + w > x && y0 < y + th && y0 + h > y)) continue
+    taken.push([x0, y0, w, h])
+    ctx.fillStyle = "rgba(0,0,0,0.35)"
+    ctx.beginPath()
+    ctx.roundRect(x0 + 2 * dpr, y0 + 2 * dpr, w, h, 6 * dpr)
+    ctx.fill()
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.roundRect(x0, y0, w, h, 6 * dpr)
+    ctx.moveTo(sx - 6 * dpr, y0 + h)
+    ctx.lineTo(sx, y0 + h + 8 * dpr)
+    ctx.lineTo(sx + 6 * dpr, y0 + h)
+    ctx.fill()
+    ctx.fillStyle = "#fff"
+    ctx.fillText(text, x0 + 7 * dpr, y0 + h / 2 + 1)
+  }
+}
+
 /** A one-time overview of the whole town for the minimap. */
 export const bakeMinimap = (map: GameMap, size: number): HTMLCanvasElement => {
   const s = size / Math.max(map.width, map.height)
@@ -122,6 +219,13 @@ export const bakeMinimap = (map: GameMap, size: number): HTMLCanvasElement => {
     if (r.kind === "footway" || r.kind === "track") continue
     ctx.lineWidth = Math.max(r.width * 1.5, 1.5 / s)
     strokeLine(ctx, r.pts)
+  }
+  for (const poi of map.pois) {
+    if (!IMPORTANT.has(poi.kind)) continue
+    ctx.fillStyle = POI_STYLE[poi.kind][1]
+    ctx.beginPath()
+    ctx.arc(poi.x, poi.y, 2.2 / s, 0, Math.PI * 2)
+    ctx.fill()
   }
   return canvas
 }

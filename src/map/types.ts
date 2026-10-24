@@ -48,6 +48,36 @@ export type Area = typeof Area.Type
 export const Waterway = Schema.Struct({ width: Schema.Number, pts: Points })
 export type Waterway = typeof Waterway.Type
 
+export const PoiKind = Schema.Literals([
+  "supermarket",
+  "drugstore",
+  "bakery",
+  "fuel",
+  "pharmacy",
+  "bank",
+  "food",
+  "police",
+  "post",
+  "school",
+  "doctor",
+  "civic",
+  "shop",
+])
+export type PoiKind = typeof PoiKind.Type
+
+/** A named place worth showing: shops, fuel, police, … */
+export const Poi = Schema.Struct({ name: Schema.String, kind: PoiKind, x: Schema.Number, y: Schema.Number })
+export type Poi = typeof Poi.Type
+
+/** A traffic light on OSM node `node`. `direction` is relative to the way(s) through that node. */
+export const Signal = Schema.Struct({
+  node: Schema.Number,
+  x: Schema.Number,
+  y: Schema.Number,
+  direction: Schema.Literals(["forward", "backward", "both"]),
+})
+export type Signal = typeof Signal.Type
+
 export const GameMap = Schema.Struct({
   width: Schema.Number,
   height: Schema.Number,
@@ -57,5 +87,7 @@ export const GameMap = Schema.Struct({
   buildings: Schema.Array(Building),
   areas: Schema.Array(Area),
   waterways: Schema.Array(Waterway),
+  pois: Schema.Array(Poi),
+  signals: Schema.Array(Signal),
 })
 export type GameMap = typeof GameMap.Type

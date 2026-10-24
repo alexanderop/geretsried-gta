@@ -61,9 +61,9 @@ def key_magenta(im: Image.Image) -> Image.Image:
             r, g, b, _ = px[x, y]
             d = ((255 - r) ** 2 + g ** 2 + (255 - b) ** 2) ** 0.5
             a = max(0.0, min(1.0, (d - 60) / 90))
-            if a < 1:
-                spill = max(0, min(r, b) - g)
-                r, b = r - spill, b - spill
+            # Pull magenta out everywhere: the generator bakes it into edge pixels too.
+            spill = max(0, min(r, b) - g)
+            r, b = r - spill, b - spill
             px[x, y] = (r, g, b, int(a * 255))
     return im
 

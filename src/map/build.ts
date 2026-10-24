@@ -1,4 +1,4 @@
-import type { Area, AreaKind, Building, GameMap, Road, RoadKind, Waterway } from "./types.ts"
+import type { Area, AreaKind, Building, GameMap, Poi, PoiKind, Road, RoadKind, Signal, Waterway } from "./types.ts"
 import { makeProjection, type Bbox, type LatLon } from "./project.ts"
 
 /** One `way` as Overpass returns it with `out geom`. */
@@ -56,13 +56,54 @@ const areaKind = (tags: Readonly<Record<string, string>>): AreaKind | null => {
   }
 }
 
+/** A node, or a way reduced to its center (Overpass `out center`). */
+export type OsmPlace = {
+  readonly id: number
+  readonly lat: number
+  readonly lon: number
+  readonly tags: Readonly<Record<string, string>>
+}
+
+const POI_KINDS: Readonly<Record<string, PoiKind>> = {
+  supermarket: "supermarket",
+  convenience: "supermarket",
+  discount: "supermarket",
+  chemist: "drugstore",
+  bakery: "bakery",
+  pastry: "bakery",
+  fuel: "fuel",
+  pharmacy: "pharmacy",
+  bank: "bank",
+  restaurant: "food",
+  fast_food: "food",
+  cafe: "food",
+  ice_cream: "food",
+  pub: "food",
+  biergarten: "food",
+  police: "police",
+  post_office: "post",
+  school: "school",
+  doctors: "doctor",
+  hospital: "doctor",
+  townhall: "civic",
+  library: "civic",
+  cinema: "civic",
+}
+
+const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null => {
+  const amenity = tags.amenity === undefined ? undefined : POI_KINDS[tags.amenity]
+  if (amenity !== undefined) return amenity
+  if (tags.shop === undefined || tags.shop === "vacant") return null
+  return POI_KINDS[tags.shop] ?? "shop"
+}
+
 const round = (n: number) => Math.round(n * 10) / 10
 
 /**
  * Turn raw Overpass ways into the compact map the game loads.
  * Keeps every feature that touches the bbox; the renderer clips the rest.
  */
-export const buildMap = (ways: ReadonlyArray<OsmWay>, bbox: Bbox): GameMap => {
+export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmPlace>, bbox: Bbox): GameMap => {
   const projection = makeProjection(bbox)
   const inside = (p: LatLon) => p.lat >= bbox.south && p.lat <= bbox.north && p.lon >= bbox.west && p.lon <= bbox.east
   const flat = (geometry: ReadonlyArray<LatLon>) =>
@@ -101,6 +142,23 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, bbox: Bbox): GameMap => {
     }
   }
 
+  const pois: Array<Poi> = []
+  const signals: Array<Signal> = []
+  for (const place of places) {
+    if (!inside(place)) continue
+    const [px, py] = projection.toMeters(place)
+    const x = round(px)
+    const y = round(py)
+    if (place.tags.highway === "traffic_signals") {
+      const d = place.tags["traffic_signals:direction"]
+      signals.push({ node: place.id, x, y, direction: d === "forward" || d === "backward" ? d : "both" })
+      continue
+    }
+    const kind = poiKind(place.tags)
+    const name = place.tags.brand ?? place.tags.name
+    if (kind !== null && name !== undefined) pois.push({ name, kind, x, y })
+  }
+
   // Big areas first so small ones (ponds, parks) paint on top.
   areas.sort((a, b) => polygonArea(b.pts) - polygonArea(a.pts))
 
@@ -112,6 +170,8 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, bbox: Bbox): GameMap => {
     buildings,
     areas,
     waterways,
+    pois,
+    signals,
   }
 }
 

@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react"
 import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import type { World } from "#/world/world.ts"
 import { ChunkCache } from "#/render/chunks.ts"
-import { bakeMinimap, drawFrame, drawMinimap, followCamera, makeSprites, type Camera } from "#/render/draw.ts"
+import { bakeMinimap, drawFrame, drawMinimap, drawPlaces, followCamera, makeSprites, poiIcon, type Camera } from "#/render/draw.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
 
-type Hud = { street: string; kmh: number; inCar: boolean; nearCar: boolean }
+type Hud = { street: string; kmh: number; inCar: boolean; nearCar: boolean; place: string }
 
 declare global {
   interface Window {
@@ -17,7 +17,7 @@ declare global {
 
 export function Game({ world, assets }: { readonly world: World; readonly assets: Assets }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [hud, setHud] = useState<Hud>({ street: "", kmh: 0, inCar: false, nearCar: false })
+  const [hud, setHud] = useState<Hud>({ street: "", kmh: 0, inCar: false, nearCar: false, place: "" })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -51,14 +51,17 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       }
       followCamera(camera, game)
       drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
+      drawPlaces(ctx, world.map, camera, devicePixelRatio)
       drawMinimap(ctx, minimap, world.map, game)
       if ((hudTimer += 1) % 6 === 0) {
         const p = playerPos(game)
         const near = (x: number, y: number) => Math.hypot(x - p.x, y - p.y) < 4
+        const place = world.map.pois.find((poi) => Math.hypot(poi.x - p.x, poi.y - p.y) < 30)
         setHud({
           street: world.roadAt(p.x, p.y, 15)?.road.name ?? "",
           kmh: Math.round(speedKmh(game)),
           inCar: game.player.car !== null,
+          place: place === undefined ? "" : `${poiIcon(place.kind)} ${place.name}`,
           nearCar: game.parked.some((c) => near(c.x, c.y)) || game.npcs.some((n) => near(n.x, n.y)),
         })
       }
@@ -79,6 +82,11 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         <div data-testid="street" className="text-2xl font-black tracking-wide text-yellow-300 [text-shadow:2px_2px_0_#000]">
           {hud.street || "Geretsried"}
         </div>
+        {hud.place !== "" && (
+          <div data-testid="place" className="text-lg font-bold text-white [text-shadow:2px_2px_0_#000]">
+            {hud.place}
+          </div>
+        )}
         {hud.inCar && (
           <div data-testid="speed" className="text-4xl font-black [text-shadow:2px_2px_0_#000]">
             {hud.kmh} <span className="text-lg">km/h</span>

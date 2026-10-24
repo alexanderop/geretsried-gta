@@ -4,6 +4,7 @@ import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
+import { makeSignals, type Signals } from "./signals.ts"
 
 export type Input = {
   readonly up: boolean
@@ -25,6 +26,7 @@ export type Game = {
   npcs: Array<Npc>
   nextId: number
   time: number
+  readonly signals: Signals
   readonly random: () => number
 }
 
@@ -86,6 +88,7 @@ export const newGame = (world: World, seed = 1): Game => {
     npcs: [],
     nextId: 0,
     time: 0,
+    signals: makeSignals(world),
     random,
   }
   fillTraffic(world, game, 40)
@@ -185,7 +188,7 @@ export const step = (world: World, game: Game, input: Input): void => {
     }
   }
 
-  for (const npc of game.npcs) stepNpc(world, npc, blockedAhead(game, npc), DT, game.random)
+  for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
 }
 

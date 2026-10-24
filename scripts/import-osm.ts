@@ -10,6 +10,7 @@ import { buildMap } from "../src/map/build.ts"
 import type { Bbox } from "../src/map/project.ts"
 
 const RAW = "data/raw.json"
+const PLACES = "data/places.json"
 const OUT = "public/geretsried.map.json"
 const OVERPASS = "https://overpass-api.de/api/interpreter"
 
@@ -28,6 +29,27 @@ const QUERY = `[out:json][timeout:120];
 );
 out geom;`
 
+const B = `${BBOX.south},${BBOX.west},${BBOX.north},${BBOX.east}`
+const PLACES_QUERY = `[out:json][timeout:120];
+(
+  nwr["shop"](${B});
+  nwr["amenity"~"^(fuel|pharmacy|bank|police|post_office|townhall|fast_food|restaurant|cafe|ice_cream|pub|biergarten|cinema|hospital|doctors|school|library)$"](${B});
+  node["highway"="traffic_signals"](${B});
+);
+out center tags;`
+
+const PlacesResponse = Schema.Struct({
+  elements: Schema.Array(
+    Schema.Struct({
+      id: Schema.Number,
+      lat: Schema.optionalKey(Schema.Number),
+      lon: Schema.optionalKey(Schema.Number),
+      center: Schema.optionalKey(Schema.Struct({ lat: Schema.Number, lon: Schema.Number })),
+      tags: Schema.Record(Schema.String, Schema.String),
+    }),
+  ),
+})
+
 const OverpassResponse = Schema.Struct({
   elements: Schema.Array(
     Schema.Struct({
@@ -44,34 +66,41 @@ class OverpassError extends Schema.TaggedError<OverpassError>()("OverpassError",
   status: Schema.Number,
 }) {}
 
-const download = Effect.gen(function* () {
-  yield* Console.log("Downloading Geretsried from Overpass…")
-  const res = yield* Effect.tryPromise(() =>
-    fetch(OVERPASS, {
-      method: "POST",
-      headers: { "User-Agent": "geretsried-gta-poc" },
-      body: new URLSearchParams({ data: QUERY }),
-    }),
-  )
-  if (!res.ok) return yield* new OverpassError({ status: res.status })
-  return yield* Effect.tryPromise(() => res.text())
-})
+const download = (query: string) =>
+  Effect.gen(function* () {
+    yield* Console.log("Downloading from Overpass…")
+    const res = yield* Effect.tryPromise(() =>
+      fetch(OVERPASS, {
+        method: "POST",
+        headers: { "User-Agent": "geretsried-gta-poc" },
+        body: new URLSearchParams({ data: query }),
+      }),
+    )
+    if (!res.ok) return yield* new OverpassError({ status: res.status })
+    return yield* Effect.tryPromise(() => res.text())
+  })
 
 const program = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem
-  const fetchFresh = process.argv.includes("--fetch") || !(yield* fs.exists(RAW))
-  if (fetchFresh) {
-    yield* fs.makeDirectory("data", { recursive: true })
-    yield* fs.writeFileString(RAW, yield* download)
-  }
+  const fresh = process.argv.includes("--fetch")
+  yield* fs.makeDirectory("data", { recursive: true })
+  if (fresh || !(yield* fs.exists(RAW))) yield* fs.writeFileString(RAW, yield* download(QUERY))
+  if (fresh || !(yield* fs.exists(PLACES))) yield* fs.writeFileString(PLACES, yield* download(PLACES_QUERY))
+  const placesRaw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(PlacesResponse))(yield* fs.readFileString(PLACES))
+  const places = placesRaw.elements.flatMap((e) => {
+    const lat = e.lat ?? e.center?.lat
+    const lon = e.lon ?? e.center?.lon
+    return lat === undefined || lon === undefined ? [] : [{ id: e.id, lat, lon, tags: e.tags }]
+  })
   const raw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(OverpassResponse))(yield* fs.readFileString(RAW))
   const ways = raw.elements.filter((e) => e.type === "way")
-  const map = buildMap(ways, BBOX)
+  const map = buildMap(ways, places, BBOX)
   yield* fs.writeFileString(OUT, JSON.stringify(map))
   const size = (yield* fs.stat(OUT)).size
   yield* Console.log(
     `${OUT}: ${Math.round(map.width)}×${Math.round(map.height)} m, ${map.roads.length} roads, ` +
       `${map.buildings.length} buildings, ${map.areas.length} areas, ${map.waterways.length} waterways, ` +
+      `${map.pois.length} places, ${map.signals.length} traffic lights, ` +
       `${(Number(size) / 1e6).toFixed(1)} MB`,
   )
 })

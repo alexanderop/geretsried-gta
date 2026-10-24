@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildMap, polygonArea, type OsmWay } from "./build.ts"
+import { buildMap, polygonArea, type OsmPlace, type OsmWay } from "./build.ts"
 import { makeProjection } from "./project.ts"
 
 const bbox = { south: 47.85, west: 11.45, north: 47.86, east: 11.47 }
@@ -30,7 +30,12 @@ describe("buildMap", () => {
     way(5, { landuse: "forest" }, [[47.851, 11.451], [47.851, 11.46], [47.859, 11.46]]),
     way(6, { natural: "water" }, [[47.852, 11.452], [47.852, 11.453], [47.853, 11.453]]),
   ]
-  const map = buildMap(ways, bbox)
+  const places: Array<OsmPlace> = [
+    { id: 900, lat: 47.855, lon: 11.457, tags: { shop: "supermarket", brand: "EDEKA", name: "EDEKA Mustermann" } },
+    { id: 901, lat: 47.855, lon: 11.458, tags: { shop: "vacant", name: "Leer" } },
+    { id: 902, lat: 47.855, lon: 11.459, tags: { highway: "traffic_signals", "traffic_signals:direction": "forward" } },
+  ]
+  const map = buildMap(ways, places, bbox)
 
   it("keeps roads with name, kind and node ids", () => {
     expect(map.roads.map((r) => [r.name, r.kind])).toEqual([
@@ -42,6 +47,14 @@ describe("buildMap", () => {
 
   it("drops features entirely outside the bbox", () => {
     expect(map.roads).toHaveLength(2)
+  })
+
+  it("keeps named places by brand and skips vacant shops", () => {
+    expect(map.pois.map((p) => [p.name, p.kind])).toEqual([["EDEKA", "supermarket"]])
+  })
+
+  it("keeps traffic lights with their direction", () => {
+    expect(map.signals.map((s) => [s.node, s.direction])).toEqual([[902, "forward"]])
   })
 
   it("reads building levels", () => {

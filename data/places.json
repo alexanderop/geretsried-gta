@@ -1,0 +1,5110 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-24T12:03:35Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 586017,
+  "lat": 47.8737929,
+  "lon": 11.4650203,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "signal",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 10848723,
+  "lat": 47.8703864,
+  "lon": 11.4724991,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 10848727,
+  "lat": 47.8724638,
+  "lon": 11.4707609,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 11596450,
+  "lat": 47.8589804,
+  "lon": 11.4816448,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 11596457,
+  "lat": 47.8562797,
+  "lon": 11.4876684,
+  "tags": {
+    "button_operated": "yes",
+    "crossing": "traffic_signals",
+    "highway": "traffic_signals",
+    "tactile_paving": "no",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both",
+    "traffic_signals:sound": "no",
+    "traffic_signals:vibration": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 34821458,
+  "lat": 47.8876992,
+  "lon": 11.5033562,
+  "tags": {
+    "addr:city": "Dietramszell",
+    "addr:country": "DE",
+    "addr:housenumber": "7",
+    "addr:postcode": "83623",
+    "addr:street": "Hauptstraße",
+    "addr:suburb": "Ascholding",
+    "amenity": "restaurant",
+    "contact:instagram": "https://www.instagram.com/landgasthof__lacherdinger/",
+    "cuisine": "regional",
+    "email": "gasthof@lacherdinger.de",
+    "name": "Landgasthof Lacherdinger",
+    "opening_hours": "Mo 11:00-14:00,17:00-21:00; Th,Fr 10:00-14:00,17:00-21:00; Sa,Su 11:00-21:00",
+    "operator": "Familie Riedl",
+    "phone": "+49 8171 29559",
+    "website": "https://gasthof-lacherdinger.de/",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 59940788,
+  "lat": 47.8809374,
+  "lon": 11.4681219,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 60382765,
+  "lat": 47.8507310,
+  "lon": 11.4777044,
+  "tags": {
+    "button_operated": "yes",
+    "crossing": "traffic_signals",
+    "highway": "traffic_signals",
+    "tactile_paving": "no",
+    "traffic_signals": "crossing",
+    "traffic_signals:direction": "both",
+    "traffic_signals:sound": "no",
+    "traffic_signals:vibration": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 254662250,
+  "lat": 47.8492082,
+  "lon": 11.4962214,
+  "tags": {
+    "name": "Schuhe Herrmann",
+    "shop": "shoes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 274623058,
+  "lat": 47.8931986,
+  "lon": 11.4896121,
+  "tags": {
+    "addr:city": "Dietramszell",
+    "addr:country": "DE",
+    "addr:housenumber": "22",
+    "addr:postcode": "83623",
+    "addr:street": "Am Holz",
+    "addr:suburb": "Ascholding",
+    "amenity": "restaurant",
+    "cuisine": "regional",
+    "name": "Gasthaus \"Holzwirt\"",
+    "phone": "+49 8171 78366",
+    "url": "http://www.holzwirt-ascholding.de",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 297477465,
+  "lat": 47.8763776,
+  "lon": 11.4703008,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "amenity": "fuel",
+    "brand": "Freie Tankstelle",
+    "brand:wikidata": "Q1009104",
+    "fuel:diesel": "yes",
+    "fuel:octane_100": "yes",
+    "fuel:octane_98": "yes",
+    "name": "Freie Tankstelle",
+    "opening_hours": "Mo-Su 07:00-22:00",
+    "operator": "Schwägerl-Bäde",
+    "post_office": "post_partner",
+    "post_office:brand": "Hermes PaketShop",
+    "post_office:brand:wikidata": "Q105702843",
+    "post_office:service_provider": "Hermes Group",
+    "post_office:service_provider:wikidata": "Q1613532",
+    "ref:Hermes": "641106",
+    "self_service": "yes",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 323119606,
+  "lat": 47.8607350,
+  "lon": 11.4818568,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 370650899,
+  "lat": 47.8568454,
+  "lon": 11.4891091,
+  "tags": {
+    "addr:postcode": "82538",
+    "name": "Bäckerei Backhupferl",
+    "opening_hours": "Mo-Sa 08:00-19:00",
+    "shop": "bakery",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370866517,
+  "lat": 47.8490267,
+  "lon": 11.4979155,
+  "tags": {
+    "brand": "Lidl",
+    "brand:wikidata": "Q151954",
+    "brand:wikipedia": "en:Lidl",
+    "check_date:opening_hours": "2023-03-01",
+    "name": "Lidl",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "shop": "supermarket",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370866520,
+  "lat": 47.8488272,
+  "lon": 11.4974665,
+  "tags": {
+    "brand": "KiK",
+    "brand:wikidata": "Q883965",
+    "brand:wikipedia": "en:KiK",
+    "name": "KiK",
+    "opening_hours": "Mo-Sa 09:00-19:00",
+    "shop": "clothes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370866524,
+  "lat": 47.8494407,
+  "lon": 11.4973854,
+  "tags": {
+    "brand": "Fristo",
+    "brand:wikidata": "Q1465151",
+    "brand:wikipedia": "de:Fristo",
+    "name": "Fristo",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "shop": "beverages",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370866528,
+  "lat": 47.8490144,
+  "lon": 11.4969205,
+  "tags": {
+    "brand": "JYSK",
+    "brand:wikidata": "Q138913",
+    "brand:wikipedia": "en:Jysk (store)",
+    "name": "JYSK",
+    "opening_hours": "Mo-Fr 10:00-18:30",
+    "shop": "furniture"
+  }
+},
+{
+  "type": "node",
+  "id": 370866540,
+  "lat": 47.8509809,
+  "lon": 11.4903968,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Bunsenweg",
+    "brand": "Netto Marken-Discount",
+    "brand:wikidata": "Q879858",
+    "brand:wikipedia": "de:Netto Marken-Discount",
+    "check_date:opening_hours": "2024-07-20",
+    "name": "Netto Marken-Discount",
+    "opening_hours": "Mo-Sa 07:00-20:00; PH off",
+    "shop": "supermarket",
+    "toilets:wheelchair": "no",
+    "website": "https://www.netto-online.de/filialen/Geretsried/Bunsenweg-1/4068/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370882637,
+  "lat": 47.8570074,
+  "lon": 11.4825547,
+  "tags": {
+    "name": "Quelle",
+    "shop": "electronics"
+  }
+},
+{
+  "type": "node",
+  "id": 370882648,
+  "lat": 47.8582347,
+  "lon": 11.4835297,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "17",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "restaurant",
+    "cuisine": "asian",
+    "name": "HoangAnh",
+    "opening_hours": "Mo-Su 11:30-21:30",
+    "phone": "+49 8171 2337996",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 370882654,
+  "lat": 47.8584485,
+  "lon": 11.4830627,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "11",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "bank",
+    "atm": "yes",
+    "check_date": "2024-12-03",
+    "name": "VR-Bank",
+    "opening_hours": "Mo 09:00-12:00; Tu 09:00-12:00,14:00-16:00; We 09:00-12:00; Th 09:00-12:00,14:00-18:00; Fr 09:00-12:00"
+  }
+},
+{
+  "type": "node",
+  "id": 370882658,
+  "lat": 47.8477866,
+  "lon": 11.4742616,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1-5",
+    "addr:postcode": "82538",
+    "addr:street": "Steiner Ring",
+    "email": "info@isartaler-zweirad.de",
+    "fax": "+49 8171 919302",
+    "name": "Isartaler Zweirad-Haus",
+    "opening_hours": "Tu-Fr 10:00-18:00; Sa 09:00-13:00",
+    "operator": "Thomas Worm",
+    "phone": "+49 8171 929824",
+    "shop": "bicycle",
+    "website": "https://www.isartaler-zweirad.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 370882660,
+  "lat": 47.8569803,
+  "lon": 11.4856547,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:postcode": "82538",
+    "brand": "TEDi",
+    "brand:wikidata": "Q1364603",
+    "name": "TEDi",
+    "opening_hours": "Mo-Sa 09:00-20:00",
+    "shop": "variety_store",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 370891567,
+  "lat": 47.8585340,
+  "lon": 11.4787874,
+  "tags": {
+    "name": "Ana’s Waschservice",
+    "shop": "laundry"
+  }
+},
+{
+  "type": "node",
+  "id": 370891568,
+  "lat": 47.8576372,
+  "lon": 11.4780333,
+  "tags": {
+    "check_date": "2024-12-18",
+    "name": "Juchheim Cosmetics",
+    "note": "Brrr, name sic.",
+    "shop": "beauty",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 370894683,
+  "lat": 47.8562571,
+  "lon": 11.4793805,
+  "tags": {
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Isar-Apotheke",
+    "opening_hours": "Mo-Fr 08:00-19:00; Sa 08:00-13:00",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 370894688,
+  "lat": 47.8570987,
+  "lon": 11.4775368,
+  "tags": {
+    "amenity": "restaurant",
+    "cuisine": "italian",
+    "name": "Italy",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 370894691,
+  "lat": 47.8575549,
+  "lon": 11.4776025,
+  "tags": {
+    "amenity": "bank",
+    "atm": "yes",
+    "name": "Sparkasse",
+    "opening_hours": "Mo,Tu,Th,Fr 08:30-16:00; We 08:30-12:30",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 371355923,
+  "lat": 47.8484641,
+  "lon": 11.4767223,
+  "tags": {
+    "name": "Musik Dörfler",
+    "shop": "music"
+  }
+},
+{
+  "type": "node",
+  "id": 371372815,
+  "lat": 47.8475791,
+  "lon": 11.4750206,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "8",
+    "addr:postcode": "82538",
+    "addr:street": "Steiner Ring",
+    "amenity": "restaurant",
+    "contact:mobile": "+49 163 8683525",
+    "cuisine": "vietnamese;asian",
+    "delivery": "yes",
+    "diet:meat": "yes",
+    "diet:vegetarian": "yes",
+    "image": "https://lh5.googleusercontent.com/p/AF1QipN4Lcls3itAMtmDoa7blrifT0D936CpOe67bImA=s973-k-no",
+    "internet_access": "wlan",
+    "name": "Pho Viet Restaurant",
+    "old_name": "Restaurant Ostasien",
+    "opening_hours": "Mo-Fr 11:30-14:30,17:00-22:00; Sa 17:00-22:00; Su 11:30-14:30,17:00-22:00",
+    "outdoor_seating": "yes",
+    "takeaway": "yes",
+    "website": "https://www.phoviet-geretsried.de"
+  }
+},
+{
+  "type": "node",
+  "id": 371372882,
+  "lat": 47.8471672,
+  "lon": 11.4752623,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "12",
+    "addr:postcode": "82538",
+    "addr:street": "Steiner Ring",
+    "name": "Bäckerei Lidl",
+    "opening_hours": "Mo-Fr 06:30-18:00, Sa 06:00-13:00, Su 06:30-11:00",
+    "phone": "+49 8171 4818311",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 371372930,
+  "lat": 47.8467906,
+  "lon": 11.4751360,
+  "tags": {
+    "name": "Kiosk Wendler",
+    "opening_hours": "Mo-Fr 08:30-12:00,13:00-18:00; Sa 07:30-12:30",
+    "shop": "kiosk",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 371378486,
+  "lat": 47.8468448,
+  "lon": 11.4747943,
+  "tags": {
+    "female": "yes",
+    "male": "yes",
+    "name": "Haardesign Erika",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 371385757,
+  "lat": 47.8526061,
+  "lon": 11.4872247,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "11",
+    "addr:postcode": "82538",
+    "addr:street": "Spreestraße",
+    "name": "KFZ-Meisterbetrieb Gerd Matheis",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 371388333,
+  "lat": 47.8511712,
+  "lon": 11.4906640,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Bunsenweg",
+    "brand": "Action",
+    "brand:wikidata": "Q2634111",
+    "brand:wikipedia": "nl:Action (winkel)",
+    "check_date:opening_hours": "2024-09-19",
+    "name": "Action",
+    "opening_hours": "Mo-Sa 09:00-20:00; PH off",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "shop": "variety_store",
+    "toilets:wheelchair": "no",
+    "website": "https://www.action.com/de-de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 371388341,
+  "lat": 47.8510828,
+  "lon": 11.4941769,
+  "tags": {
+    "description": "Fabrikverkauf; Frischfisch, Räucher-Delikatessen, Feinkost, Salate, Antipasti, Dips",
+    "name": "Dahlhoff Feinkost",
+    "shop": "butcher"
+  }
+},
+{
+  "type": "node",
+  "id": 617797351,
+  "lat": 47.8763397,
+  "lon": 11.4656262,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "80",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "paediatrics",
+    "name": "Dr. Bundscherer Kinderarzt",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 732713309,
+  "lat": 47.8837802,
+  "lon": 11.4589870,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "5",
+    "addr:postcode": "82538",
+    "addr:street": "Blumenstraße",
+    "amenity": "fuel",
+    "compressed_air": "no",
+    "fuel:cng": "no",
+    "fuel:lpg": "yes",
+    "name": "Tyczka GmbH",
+    "opening_hours": "Mo-Th 07:30-17:00; Fr 07:30-14:00",
+    "operator": "Tyczka GmbH",
+    "source": "http://www.gas-tankstellen.de",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 849480307,
+  "lat": 47.8986036,
+  "lon": 11.4403940,
+  "tags": {
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Sonnenapotheke",
+    "opening_hours": "Mo-Th 08:00-12:30,14:00-18:00; Sa 08:00-12:00; PH off; Fr 08:00-18:00",
+    "website": "https://www.sonnen-apo-wolfratshausen.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1033718208,
+  "lat": 47.8987761,
+  "lon": 11.4406427,
+  "tags": {
+    "amenity": "doctors",
+    "email": "praxis@stotzingen.de",
+    "fax": "+49 8171 26601",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Dr.Stotzingen",
+    "opening_hours": "Mo-Th 08:00-12:00, Mo,Tu,Th 15:00-18:30, Fr 08:00-13:00",
+    "phone": "+49 8171 16169",
+    "website": "https://www.praxis-stotzingen.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1075032839,
+  "lat": 47.8704993,
+  "lon": 11.4720375,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "air_conditioning": "no",
+    "amenity": "cafe",
+    "contact:facebook": "https://www.facebook.com/Eiscafe-lArena-Inh-Fam-Franco-Faulisi-2114399802159640/",
+    "cuisine": "ice_cream;coffee_shop",
+    "indoor_seating": "yes",
+    "internet_access": "no",
+    "name": "Cafe L´Arena",
+    "opening_hours": "Mo-Su 09:00-21:30",
+    "outdoor_seating": "yes",
+    "phone": "+49 8171 929683",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1075035551,
+  "lat": 47.8752823,
+  "lon": 11.4668543,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "51",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "bank",
+    "atm": "yes",
+    "drive_through": "no",
+    "level": "0",
+    "name": "Sparkasse",
+    "opening_hours": "Mo-Fr 08:30-12:30, Mo 14:00-16:00, Tu 14:00-16:00, Th 14:00-18:00, Fr 14:00-16:00",
+    "operator": "Sparkasse",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1210248202,
+  "lat": 47.8827003,
+  "lon": 11.4581480,
+  "tags": {
+    "highway": "traffic_signals",
+    "kerb": "no",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 1244301713,
+  "lat": 47.8833886,
+  "lon": 11.4598056,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "brand": "Ihle",
+    "brand:wikidata": "Q1626371",
+    "brand:wikipedia": "de:Landbäckerei Ihle",
+    "name": "Ihle",
+    "opening_hours": "Mo-Sa 07:00-19:00",
+    "shop": "bakery",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1309264619,
+  "lat": 47.8755706,
+  "lon": 11.4669660,
+  "tags": {
+    "brand": "Rossmann",
+    "brand:wikidata": "Q316004",
+    "brand:wikipedia": "de:Dirk Rossmann GmbH",
+    "check_date:opening_hours": "2024-11-29",
+    "contact:phone": "+49 8171 649469",
+    "contact:website": "https://www.rossmann.de",
+    "name": "Rossmann",
+    "opening_hours": "Mo-Fr 08:00-20:00; Sa 08:00-16:00; PH off",
+    "operator": "Dirk Rossmann GmbH",
+    "ref:shop:num": "1359",
+    "ref:vatin": "DE115055186",
+    "shop": "chemist",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1426913756,
+  "lat": 47.8682465,
+  "lon": 11.4743485,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "13",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "library",
+    "name": "Stadtbibliothek Geretsried",
+    "opening_hours": "Tu 12:00-18:00; We 10:00-16:00; Th 12:00-19:00; Fr 12:00-18:00; Sa 09:00-12:30",
+    "source": "http://buecherei.geretsried.de/",
+    "wheelchair": "yes",
+    "wikidata": "Q28662256"
+  }
+},
+{
+  "type": "node",
+  "id": 1426976161,
+  "lat": 47.8682629,
+  "lon": 11.4724465,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housename": "Schulzentrum Geretsried",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "school",
+    "name": "Staatliche Realschule Geretsried",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 1426976162,
+  "lat": 47.8684501,
+  "lon": 11.4720602,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housename": "Schulzentrum Geretsried",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "school",
+    "check_date": "2024-09-13",
+    "name": "Gymnasium Geretsried",
+    "website": "https://gymger.de/",
+    "wheelchair": "limited",
+    "wikidata": "Q61160387"
+  }
+},
+{
+  "type": "node",
+  "id": 1712686643,
+  "lat": 47.8748990,
+  "lon": 11.4681277,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "52",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "bank",
+    "brand": "HypoVereinsbank",
+    "brand:wikidata": "Q220189",
+    "brand:wikipedia": "en:HypoVereinsbank",
+    "check_date:opening_hours": "2024-11-29",
+    "name": "HypoVereinsbank",
+    "opening_hours": "Mo-Fr 10:00-12:00",
+    "toilets:wheelchair": "no",
+    "website": "http://www.hvb.de",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1729099136,
+  "lat": 47.8979980,
+  "lon": 11.4406034,
+  "tags": {
+    "name": "Traditionswerk Isartal",
+    "opening_hours": "Mo-Fr 09:30-18:00; Sa 09:30-16:00",
+    "shop": "clothes",
+    "website": "https://traditionswerk-isartal.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 1897680494,
+  "lat": 47.8989525,
+  "lon": 11.4433274,
+  "tags": {
+    "instagram": "https://www.instagram.com/isartaler_backwerk/",
+    "name": "Isartaler Backwerk",
+    "opening_hours": "Mo-Fr 07:00-18:30, Sa 06:30-14:00; PH off",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 1911099478,
+  "lat": 47.8749199,
+  "lon": 11.4675671,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "47b",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "cafe",
+    "check_date:opening_hours": "2024-11-29",
+    "cuisine": "regional",
+    "internet_access": "no",
+    "name": "Schmid-Bäck'",
+    "opening_hours": "Mo-Fr 06:00-19:00; Sa 06:00-16:00; Su 07:30-16:00",
+    "operator": "Schmid-Bäck' GmbH & Co. KG",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1911099479,
+  "lat": 47.8761253,
+  "lon": 11.4703439,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "name": "Völkers Bikeshop",
+    "opening_hours": "Mo 14:00-18:00, Tu-Fr 10:00-12:30, Tu-Fr 14:00-18:00, Sa 09:00-12:30",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 4822744",
+    "service:bicycle:Bicycle_Sales_and_Service": "yes",
+    "service:bicycle:pump": "yes",
+    "service:bicycle:repair": "yes",
+    "service:bicycle:second_hand": "yes",
+    "service:bicycle:tools": "yes",
+    "shop": "bicycle",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1911099480,
+  "lat": 47.8747908,
+  "lon": 11.4665687,
+  "tags": {
+    "brand": "Hofpfisterei",
+    "brand:wikidata": "Q1623217",
+    "brand:wikipedia": "en:Hofpfisterei",
+    "name": "Hofpfisterei",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sa 08:00-13:00",
+    "shop": "bakery",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1911099481,
+  "lat": 47.8750375,
+  "lon": 11.4682005,
+  "tags": {
+    "indoor_seating": "yes",
+    "name": "Bäckerei Mühlenbäck",
+    "opening_hours": "Mo-Fr 05:00-18:00; Sa 05:00-12:30; Su,PH 07:00-11:00",
+    "outdoor_seating": "yes",
+    "shop": "bakery",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 1912662383,
+  "lat": 47.8583043,
+  "lon": 11.4833667,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "15",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "ice_cream",
+    "name": "Dolce Gelato",
+    "opening_hours": "Mo-Su 11:00-21:00",
+    "outdoor_seating": "yes",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 1912667319,
+  "lat": 47.8581671,
+  "lon": 11.4837016,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "19",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "name": "Mühlenbäck",
+    "opening_hours": "Mo-Th 05:00-17:00, Fr 05:00-13:00, Sa 06:00-12:30, Su 07:00-11:00",
+    "payment:cards": "yes",
+    "payment:coins": "yes",
+    "payment:notes": "yes",
+    "phone": "+49 8171 81396",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 1936528573,
+  "lat": 47.8859211,
+  "lon": 11.4610473,
+  "tags": {
+    "name": "Amiti",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 1936804857,
+  "lat": 47.8750425,
+  "lon": 11.4678933,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "56",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "brand": "Intersport",
+    "brand:wikidata": "Q666888",
+    "check_date:opening_hours": "2024-06-30",
+    "name": "Intersport Utzinger",
+    "opening_hours": "Mo-Th 09:00-18:00; Fr 09:00-18:30; Sa 09:00-14:00",
+    "shop": "sports",
+    "toilets:wheelchair": "no",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 1979675462,
+  "lat": 47.8743382,
+  "lon": 11.4662544,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "doctors",
+    "contact:fax": "+49 8171 642 18",
+    "contact:phone": "+49 8171 642 16",
+    "healthcare": "doctor",
+    "name": "Dr. Heiner Müller",
+    "opening_hours": "Mo-Fr 09:00-12:00; Mo,Tu,Th 16:00-18:00"
+  }
+},
+{
+  "type": "node",
+  "id": 1987200719,
+  "lat": 47.8792422,
+  "lon": 11.4652863,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "11",
+    "addr:postcode": "82538",
+    "addr:street": "Schlesische Straße",
+    "currency:EUR": "yes",
+    "email": "info@schmid-baeck.de",
+    "fax": "+49 8171 6783",
+    "name": "Schmid-Bäck'",
+    "opening_hours": "Mo-Fr 06:00-12:30, Sa 06:00-12:00, Su 07:30-10:30",
+    "operator": "Schmid-Bäck' GmbH & Co. KG",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 6850",
+    "shop": "bakery",
+    "website": "https://www.schmid-baeck.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 1992178889,
+  "lat": 47.8675196,
+  "lon": 11.4746700,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "crossing",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 1999669013,
+  "lat": 47.8989890,
+  "lon": 11.4431889,
+  "tags": {
+    "addr:city": "Wolfratshausen",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82515",
+    "addr:street": "Faulhaberstraße",
+    "brand": "Edeka",
+    "brand:wikidata": "Q701755",
+    "name": "Edeka",
+    "opening_hours": "Mo-Fr 08:00-20:00; Sa 07:30-20:00",
+    "payment:cash": "yes",
+    "payment:girocard": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "payment:visa": "yes",
+    "shop": "supermarket",
+    "website": "https://www.edeka-heininger-dietz.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2330643907,
+  "lat": 47.8588650,
+  "lon": 11.4800636,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "34",
+    "addr:postcode": "82538",
+    "addr:street": "Carl-Maria-von-Weber-Weg",
+    "check_date": "2024-12-17",
+    "name": "Haar Genau Friseurteam",
+    "opening_hours": "Mo-Fr 08:00-17:30; Sa 07:30-12:30",
+    "phone": "+49 176 96088419",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 2503056399,
+  "lat": 47.8878044,
+  "lon": 11.5030219,
+  "tags": {
+    "addr:city": "Dietramszell",
+    "addr:country": "DE",
+    "addr:housenumber": "7",
+    "addr:postcode": "83623",
+    "addr:street": "Hauptstraße",
+    "addr:suburb": "Ascholding",
+    "amenity": "biergarten",
+    "cuisine": "regional",
+    "email": "gasthaus@lacherdinger.de",
+    "name": "Landgasthof Lacherdinger",
+    "opening_hours": "Mo 11:00-14:00,17:00-21:00; Th,Fr 10:00-14:00,17:00-21:00; Sa,Su 11:00-21:00",
+    "operator": "Familie Riedl",
+    "phone": "+49 8171 29559",
+    "website": "https://lacherdinger.de/",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 2560122458,
+  "lat": 47.8591018,
+  "lon": 11.4821345,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "cafe",
+    "contact:facebook": "waldmannscafekonditorei",
+    "contact:instagram": "cafe_waldmann",
+    "cuisine": "coffee_shop",
+    "email": "kontakt@cafe-waldmann.de",
+    "indoor_seating": "yes",
+    "name": "Cafe Waldmann",
+    "opening_hours": "We 09:00-17:00; Th 09:00-17:00; Fr 09:00-17:00; Sa-Su 08:00-17:00",
+    "outdoor_seating": "yes",
+    "phone": "+49817152145",
+    "toilets:wheelchair": "no",
+    "website": "https://cafe-waldmann.de/",
+    "website:menu": "https://cafe-waldmann.de/wp-content/uploads/2023/08/waldmanns-karte-web.pdf",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 2599419101,
+  "lat": 47.8578291,
+  "lon": 11.4783643,
+  "tags": {
+    "amenity": "fast_food",
+    "cuisine": "kebab",
+    "name": "Munzur Kebap",
+    "old_name": "Metzgerei Knöbl",
+    "opening_hours": "Mo-Fr 08:00-18:30; Sa 09:00-16:30",
+    "operator": "Munzur"
+  }
+},
+{
+  "type": "node",
+  "id": 2599419102,
+  "lat": 47.8582226,
+  "lon": 11.4790052,
+  "tags": {
+    "addr:postcode": "82538",
+    "amenity": "restaurant",
+    "name": "Restaurant Ammos",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2599419104,
+  "lat": 47.8639632,
+  "lon": 11.4790093,
+  "tags": {
+    "name": "Schreibwaren Schröter",
+    "shop": "stationery",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 2599419105,
+  "lat": 47.8702889,
+  "lon": 11.4722634,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Jahnstraße",
+    "indoor_seating": "yes",
+    "name": "Bäckerei Konditorei Lidl GmbH",
+    "opening_hours": "Jan-Dec: Mo-Sa 06:30-18:00; Su 08:00-12:00",
+    "outdoor_seating": "yes",
+    "payment:credit_cards": "no",
+    "payment:debit_cards": "yes",
+    "shop": "bakery",
+    "smoking": "outside",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2604594270,
+  "lat": 47.8753056,
+  "lon": 11.4664622,
+  "tags": {
+    "brand": "C&A",
+    "brand:wikidata": "Q701338",
+    "brand:wikipedia": "en:C&A",
+    "name": "C&A",
+    "opening_hours": "Mo-Sa 09:00-19:00",
+    "shop": "clothes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2604594271,
+  "lat": 47.8751425,
+  "lon": 11.4662435,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "13a",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "cafe",
+    "email": "info@karl-dreizehn.de",
+    "highchair": "yes",
+    "internet_access": "wlan",
+    "internet_access:fee": "no",
+    "level": "0",
+    "name": "Karl 13",
+    "opening_hours": "Mo-Sa 09:00-19:00, Su 09:00-17:00",
+    "outdoor_seating": "yes",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 911722",
+    "smoking": "outside",
+    "takeaway": "yes",
+    "toilets": "yes",
+    "toilets:wheelchair": "no",
+    "website": "https://karl-dreizehn.de/",
+    "website:menu": "https://karl-dreizehn.de/wp-content/uploads/2025/03/Menu_Karldreizehn.pdf",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2606308164,
+  "lat": 47.8667878,
+  "lon": 11.4758280,
+  "tags": {
+    "name": "K1 Kadem",
+    "shop": "hairdresser",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 2638411716,
+  "lat": 47.8579090,
+  "lon": 11.4746716,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "signal",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 2734533211,
+  "lat": 47.8748620,
+  "lon": 11.4754925,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "29",
+    "addr:postcode": "82538",
+    "addr:street": "Alpenstraße",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Hausarztpraxis Dr. Lenz",
+    "toilets:wheelchair": "no",
+    "website": "https://www.praxislenz.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2971507475,
+  "lat": 47.8570691,
+  "lon": 11.4869981,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "33",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Rossmann",
+    "brand:wikidata": "Q316004",
+    "check_date:opening_hours": "2024-12-14",
+    "contact:phone": "+49 8171 9194739",
+    "contact:website": "https://www.rossmann.de",
+    "name": "Rossmann",
+    "opening_hours": "Mo-Fr 08:00-20:00; Sa 08:00-20:00; PH off",
+    "operator": "Dirk Rossmann GmbH",
+    "ref:shop:num": "2578",
+    "ref:vatin": "DE115055186",
+    "shop": "chemist",
+    "toilets:wheelchair": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2971507476,
+  "lat": 47.8567943,
+  "lon": 11.4875008,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "43",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "PENNY",
+    "brand:wikidata": "Q284688",
+    "brand:wikipedia": "en:Penny (supermarket)",
+    "name": "PENNY",
+    "opening_hours": "Mo-Sa 07:30-20:00",
+    "shop": "supermarket",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 2971507477,
+  "lat": 47.8566245,
+  "lon": 11.4873380,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "41",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "pharmacy",
+    "dispensing": "yes",
+    "drive_through": "no",
+    "healthcare": "pharmacy",
+    "name": "Ahorn Apotheke",
+    "opening_hours": "Mo-Fr 08:00-18:30; Sa 08:00-14:00",
+    "phone": "+49 8171 818070"
+  }
+},
+{
+  "type": "node",
+  "id": 3021770416,
+  "lat": 47.8493312,
+  "lon": 11.4954388,
+  "tags": {
+    "name": "more & more",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 3037633488,
+  "lat": 47.8751160,
+  "lon": 11.4667408,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "28",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "brand": "Ernsting's family",
+    "brand:wikidata": "Q1361016",
+    "brand:wikipedia": "de:Ernsting’s family",
+    "name": "Ernsting's family",
+    "opening_hours": "Mo-Sa 09:00-19:00",
+    "shop": "clothes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3089123695,
+  "lat": 47.8748831,
+  "lon": 11.4609725,
+  "tags": {
+    "name": "Dirtpark",
+    "shop": "sports"
+  }
+},
+{
+  "type": "node",
+  "id": 3102568030,
+  "lat": 47.8706343,
+  "lon": 11.4721609,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "orthopaedics",
+    "name": "Orthopädie Isar-Loisachtal",
+    "opening_hours": "Mo-Th 08:00-13:00,14:00-16:00; Fr 08:00-14:00",
+    "website": "http://www.orthopaedie-isar-loisachtal.de",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "node",
+  "id": 3137326934,
+  "lat": 47.8763677,
+  "lon": 11.4655234,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "78",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "restaurant",
+    "name": "Il Soprano",
+    "toilets:wheelchair": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3203730734,
+  "lat": 47.8561788,
+  "lon": 11.4794923,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "13",
+    "addr:postcode": "82538",
+    "addr:street": "Johann-Sebastian-Bach-Straße",
+    "name": "BRK KleiderMarkt",
+    "opening_hours": "Mo-Fr 09:00-13:00, Tu,Th,Fr 15:00-18:30",
+    "operator": "BRK",
+    "second_hand": "yes",
+    "shop": "charity",
+    "social_facility": "clothing_bank",
+    "social_facility:for": "underprivileged",
+    "website": "http://www.kvtoel.brk.de/angebote/kleidermaerkte.html",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3360141775,
+  "lat": 47.8834593,
+  "lon": 11.4599804,
+  "tags": {
+    "brand": "Deichmann",
+    "brand:wikidata": "Q664543",
+    "brand:wikipedia": "en:Deichmann SE",
+    "name": "Deichmann",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "payment:visa": "yes",
+    "shop": "shoes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3387759520,
+  "lat": 47.8750701,
+  "lon": 11.4658906,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "fast_food",
+    "brand": "Subway",
+    "brand:wikidata": "Q244457",
+    "brand:wikipedia": "en:Subway (restaurant)",
+    "cuisine": "sandwich",
+    "name": "Subway",
+    "opening_hours": "Mo-Su 10:00-21:00",
+    "operator": "Subway",
+    "smoking": "no",
+    "takeaway": "yes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3439787548,
+  "lat": 47.8784920,
+  "lon": 11.4620937,
+  "tags": {
+    "name": "Diveworld",
+    "shop": "outdoor"
+  }
+},
+{
+  "type": "node",
+  "id": 3450934542,
+  "lat": 47.8566827,
+  "lon": 11.4873882,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "39",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "cafe",
+    "name": "da Daniele",
+    "opening_hours": "Mo-Fr 07:00-22:00; Sa 07:30-22:00",
+    "outdoor_seating": "yes",
+    "phone": "+49 160 96435665"
+  }
+},
+{
+  "type": "node",
+  "id": 3528911942,
+  "lat": 47.8560826,
+  "lon": 11.4936073,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "6b",
+    "addr:postcode": "82538",
+    "addr:street": "Wallensteinstraße",
+    "name": "BSZ Direktmarketing GmbH",
+    "shop": "stationery"
+  }
+},
+{
+  "type": "node",
+  "id": 3528911943,
+  "lat": 47.8571626,
+  "lon": 11.4922929,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "12",
+    "addr:postcode": "82538",
+    "addr:street": "Lausitzer Straße",
+    "amenity": "pub",
+    "name": "Piatsa",
+    "outdoor_seating": "yes",
+    "smoking": "separated"
+  }
+},
+{
+  "type": "node",
+  "id": 3634202112,
+  "lat": 47.8571405,
+  "lon": 11.4860965,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "29a",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Orterer Getränkemarkt",
+    "brand:wikidata": "Q23787118",
+    "brand:wikipedia": "de:Orterer Gruppe",
+    "check_date:opening_hours": "2024-12-01",
+    "name": "Orterer Getränkemarkt",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "operator": "Orterer Getränkemärkte GmbH",
+    "phone": "+49 8171 3 29 79",
+    "shop": "beverages",
+    "toilets:wheelchair": "no",
+    "website": "https://www.orterer.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3634202113,
+  "lat": 47.8572701,
+  "lon": 11.4862467,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "29b",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Takko Fashion",
+    "brand:wikidata": "Q1371302",
+    "brand:wikipedia": "de:Takko",
+    "name": "Takko Fashion",
+    "opening_hours": "Mo-Sa 09:00-20:00",
+    "operator": "Takko",
+    "shop": "clothes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3634202114,
+  "lat": 47.8573031,
+  "lon": 11.4864174,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "29c",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Denns BioMarkt",
+    "brand:wikidata": "Q48883773",
+    "name": "Denns BioMarkt",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "operator": "Dennree GmbH",
+    "operator:wikidata": "Q1189641",
+    "organic": "only",
+    "shop": "supermarket",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3749645677,
+  "lat": 47.8470480,
+  "lon": 11.4750152,
+  "tags": {
+    "amenity": "restaurant",
+    "name": "Primo Pizza"
+  }
+},
+{
+  "type": "node",
+  "id": 4327649793,
+  "lat": 47.8514106,
+  "lon": 11.4957549,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "8",
+    "addr:postcode": "82538",
+    "addr:street": "Wöhlerweg",
+    "name": "Klamottenfabrik",
+    "shop": "clothes",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4380830782,
+  "lat": 47.8748871,
+  "lon": 11.4663871,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "24",
+    "addr:postcode": "82538",
+    "addr:street": "Lenauweg",
+    "female": "yes",
+    "male": "yes",
+    "name": "TOP HAAR Friseur GmbH",
+    "opening_hours": "Mo-Fr 09:00-18:00",
+    "operator": "TOP HAAR GmbH",
+    "shop": "hairdresser",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4391769142,
+  "lat": 47.8701430,
+  "lon": 11.4723011,
+  "tags": {
+    "name": "Piegsa Gesundheitshaus",
+    "opening_hours": "Mo-Fr 08:30-18:00; Sa 09:00-12:00",
+    "shop": "medical_supply"
+  }
+},
+{
+  "type": "node",
+  "id": 4518246190,
+  "lat": 47.8800997,
+  "lon": 11.4617755,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "27",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "name": "Hockey Sports Ott",
+    "name:de": "Hockey Sports Ott",
+    "name:en": "Hockey Sports Ott",
+    "opening_hours": "Mo-Fr 09:00-12:30,14:00-18:30; Sa 09:00-13:00",
+    "phone": "+49 8171 649244",
+    "shop": "sports",
+    "website": "https://www.hockey-sports.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 4702000527,
+  "lat": 47.8859897,
+  "lon": 11.4331043,
+  "tags": {
+    "name": "Auto Stapf",
+    "shop": "car"
+  }
+},
+{
+  "type": "node",
+  "id": 4702002246,
+  "lat": 47.8858382,
+  "lon": 11.4331409,
+  "tags": {
+    "name": "Auto Stapf",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 4878151385,
+  "lat": 47.8761648,
+  "lon": 11.4659294,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "76",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Iris Apotheke",
+    "opening_hours": "Mo-Sa 08:00-18:30",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4878151390,
+  "lat": 47.8763297,
+  "lon": 11.4651229,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "65",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "doctors",
+    "contact:email": "info@arztpraxis-sippel.de",
+    "contact:fax": "+49 8171 63593",
+    "contact:phone": "+49 8171 61699",
+    "contact:website": "http://www.arztpraxis-sippel.de/",
+    "healthcare": "doctor",
+    "healthcare:speciality": "internal;community;diabetology;general;emergency;blood_check;endocrinology;vaccination",
+    "level": "0",
+    "name": "Praxis Dr. Sippel",
+    "opening_hours": "Mo-Fr 08:00-12:00, Mo-Tu 15:00-18:00, Th 15:00-18:00",
+    "operator": "Dr. med. Wolfgang Sippel",
+    "start_date": "2015-01-01",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5098679786,
+  "lat": 47.8766337,
+  "lon": 11.4647792,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "67",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "addr:suburb": "Gartenberg",
+    "amenity": "bank",
+    "atm": "yes",
+    "fax": "+49 89 444565-9919",
+    "name": "VR Bank München Land eG",
+    "opening_hours": "Mo-Fr 08:15-12:30; Mo,Tu,Fr 13:30-16:00; Th 13:30-18:00",
+    "phone": "+49 89 4445654919",
+    "toilets:wheelchair": "no",
+    "website": "https://www.vr-bank-muenchen-land.de/ganz-meine-bank/geschaeftsstellen-ansprechpartner/geschaeftsstellen/geschaeftsstelle-geretsried-gartenberg.html",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5200611242,
+  "lat": 47.8923864,
+  "lon": 11.4446153,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 5200611243,
+  "lat": 47.8922328,
+  "lon": 11.4446086,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 5200611244,
+  "lat": 47.8922048,
+  "lon": 11.4450089,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 5227987021,
+  "lat": 47.8762207,
+  "lon": 11.4653635,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "63",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "email": "info@dampf-oase.de",
+    "name": "Die Dampfoase",
+    "opening_hours": "Mo-Fr 10:00-18:30, Sa 09:00-16:00",
+    "operator": "Nicole Wilfert",
+    "phone": "+49 8171 2399089",
+    "shop": "convenience",
+    "website": "https://dampf-oase.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 5228081242,
+  "lat": 47.8751948,
+  "lon": 11.4676102,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "56",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Paracelsus Apotheke",
+    "opening_hours": "Mo-Fr 08:30-18:30; Sa 08:30-13:00",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5228081243,
+  "lat": 47.8752314,
+  "lon": 11.4680971,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Fasanenweg",
+    "name": "Reisebüro Hecher",
+    "shop": "travel_agency"
+  }
+},
+{
+  "type": "node",
+  "id": 5308006421,
+  "lat": 47.8743713,
+  "lon": 11.4686644,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "44",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "level": "0",
+    "opening_hours": "24/7",
+    "operator": "Lütfullah Aydin",
+    "phone": "+49 89 23515164",
+    "shop": "vacant"
+  }
+},
+{
+  "type": "node",
+  "id": 5693584393,
+  "lat": 47.8837187,
+  "lon": 11.4651572,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Dr. Brechtelsbauer",
+    "phone": "+49 8171 600 88",
+    "website": "https://www.hausarztpraxis-isartal.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 6259468485,
+  "lat": 47.8572752,
+  "lon": 11.4772562,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "25",
+    "addr:postcode": "82538",
+    "addr:street": "Johann-Sebastian-Bach-Straße",
+    "email": "info@zirngibl-bestattungen.de",
+    "name": "Zirngibl Bestattungen GmbH",
+    "operator": "Tara Carroll",
+    "phone": "+49 8171 2581234",
+    "religion": "christian",
+    "shop": "funeral_directors",
+    "website": "https://zirngibl-bestattungen.de"
+  }
+},
+{
+  "type": "node",
+  "id": 6261802797,
+  "lat": 47.8642126,
+  "lon": 11.4784861,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "crossing",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 6261802825,
+  "lat": 47.8635192,
+  "lon": 11.4795437,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "43",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Arztpraxis Lewke",
+    "opening_hours": "Mo-Fr 08:00-12:00, Mo 17:30-19:30, Fr 17:00-19:00",
+    "operator": "Dorothea Lewke",
+    "phone": "+49 8171 9978818",
+    "website": "http://arztpraxis-lewke.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 6273942444,
+  "lat": 47.8705690,
+  "lon": 11.4744515,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Jahnstraße",
+    "currency:EUR": "yes",
+    "email": "info@die3friseure.net",
+    "fax": "+49 8171 649218",
+    "name": "Die drei Friseure",
+    "opening_hours": "Su-Fr 08:00-18:00",
+    "operator": "Beate Block / Petra Deininger GbR",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "phone": "+49 8171 649333",
+    "shop": "hairdresser",
+    "website": "https://www.die3friseure.net/home.html",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 6326891510,
+  "lat": 47.8805323,
+  "lon": 11.4669337,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "emergency",
+    "traffic_signals:direction": "backward"
+  }
+},
+{
+  "type": "node",
+  "id": 6326891511,
+  "lat": 47.8803479,
+  "lon": 11.4663402,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "emergency",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 7049594540,
+  "lat": 47.8744977,
+  "lon": 11.4661192,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "brand": "EDEKA",
+    "brand:wikidata": "Q701755",
+    "brand:wikipedia": "de:Edeka",
+    "indoor": "yes",
+    "name": "Edeka",
+    "opening_hours": "Mo-Sa 07:00-20:00",
+    "operator": "Edeka",
+    "payment:cash": "yes",
+    "payment:contactless": "yes",
+    "payment:credit_cards": "yes",
+    "payment:girocard": "yes",
+    "post_office": "post_partner",
+    "post_office:brand": "Deutsche Post",
+    "post_office:service_provider": "Deutsche Post",
+    "post_office:service_provider:wikidata": "Q157645",
+    "ref:DeutschePost": "470",
+    "shop": "supermarket",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7049594541,
+  "lat": 47.8745597,
+  "lon": 11.4663435,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "internet_access": "no",
+    "level": "0",
+    "name": "Back & Snack",
+    "opening_hours": "Mo-Sa 07:00-20:00, Su 07:00-10:00",
+    "shop": "bakery",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7126133882,
+  "lat": 47.8746290,
+  "lon": 11.4654768,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "brand": "Thalia",
+    "brand:wikidata": "Q2408854",
+    "name": "Thalia",
+    "shop": "books",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7216140284,
+  "lat": 47.8566141,
+  "lon": 11.4931053,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "4",
+    "addr:postcode": "82538",
+    "addr:street": "Wallensteinstraße",
+    "name": "Automobilwerkstatt Wilhelm",
+    "operator": "Robert Wilhelm",
+    "phone": "+49 171 8747751",
+    "service:vehicle:brakes": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:diagnostics": "yes",
+    "service:vehicle:inspection": "yes",
+    "service:vehicle:oil_change": "yes",
+    "service:vehicle:repairs": "yes",
+    "service:vehicle:tyres": "yes",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 7238123086,
+  "lat": 47.8747690,
+  "lon": 11.4656216,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "5",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "name": "Frankenberger Goldschmiede",
+    "opening_hours": "Mo-Fr 08:30-12:30, Mo,Tu 14:30-18:00, We 15:30-18:00, Th,Fr 14:30-18:00, Sa 09:00-12:00",
+    "operator": "Josef Frankenberger",
+    "payment:american_express": "yes",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "payment:visa": "yes",
+    "phone": "+49 8171 60421",
+    "shop": "jewelry",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7238123088,
+  "lat": 47.8750054,
+  "lon": 11.4658376,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "check_date:opening_hours": "2024-11-29",
+    "name": "Apollo Optik Geretsried",
+    "opening_hours": "Mo-Fr 09:00-18:30, Sa 09:00-14:00",
+    "shop": "optician",
+    "toilets:wheelchair": "no",
+    "website": "https://www.filialen.apollo.de/bayern/geretsried/karl-lederer-platz-9.html",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7372551532,
+  "lat": 47.8527412,
+  "lon": 11.4887825,
+  "tags": {
+    "indoor_seating": "yes",
+    "name": "Bäckerei Manfred Burger",
+    "opening_hours": "Mo-Fr 05:30-17:00; Sa 05:30-12:00; Su 06:30-12:00",
+    "outdoor_seating": "yes",
+    "payment:credit_cards": "no",
+    "payment:debit_cards": "yes",
+    "shop": "bakery",
+    "smoking": "outside",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7468151545,
+  "lat": 47.8984350,
+  "lon": 11.4413501,
+  "tags": {
+    "female": "yes",
+    "male": "yes",
+    "name": "Haarstudio Christina",
+    "opening_hours": "Tu-Fr 08:30-18:00",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 7795550767,
+  "lat": 47.8832636,
+  "lon": 11.4617200,
+  "tags": {
+    "name": "Sitzmacher",
+    "opening_hours": "Mo-Fr 10:00-18:00; Sa 10:00-16:00",
+    "operator": "Mayer's Diwan Möbelvertrieb e.K.",
+    "shop": "furniture",
+    "website": "https://www.sitzmacher.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 8000452145,
+  "lat": 47.8762765,
+  "lon": 11.4702266,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "amenity": "pub",
+    "contact:facebook": "https://www.facebook.com/SportsPubZumAltenOl/",
+    "name": "Zum Alten Öl",
+    "opening_hours": "Tu-Th 13:00-24:00, Fr 10:00-02:00, Sa 09:00-02:00, Su 09:00-16:00",
+    "outdoor_seating": "yes",
+    "phone": "+49 8171 8904",
+    "smoking": "outside"
+  }
+},
+{
+  "type": "node",
+  "id": 8196017299,
+  "lat": 47.8542501,
+  "lon": 11.4932797,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "61",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Premio",
+    "brand:wikidata": "Q100895958",
+    "name": "Premio Reifen Forster",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 8196025941,
+  "lat": 47.8504286,
+  "lon": 11.4984972,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "12",
+    "addr:postcode": "82538",
+    "addr:street": "Jeschkenstraße",
+    "email": "info@fahrzeugtechnik-cm.de",
+    "fax": "+49 8171 4830810",
+    "name": "Fahrzeugtechnik CM",
+    "opening_hours": "Mo-Fr 07:30-18:00",
+    "operator": "Privat",
+    "phone": "+49 8171 4830844",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:diagnostics": "yes",
+    "service:vehicle:electrical": "yes",
+    "service:vehicle:oil_change": "yes",
+    "service:vehicle:repairs": "yes",
+    "service:vehicle:tyres": "yes",
+    "shop": "car_repair",
+    "website": "https://www.fahrzeugtechnik-cm.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 8367157177,
+  "lat": 47.8833444,
+  "lon": 11.4597040,
+  "tags": {
+    "brand": "Vinzenzmurr",
+    "brand:wikidata": "Q2527361",
+    "brand:wikipedia": "de:Vinzenzmurr",
+    "name": "Vinzenzmurr",
+    "shop": "butcher"
+  }
+},
+{
+  "type": "node",
+  "id": 8412115622,
+  "lat": 47.8802362,
+  "lon": 11.4617706,
+  "tags": {
+    "shop": "vacant"
+  }
+},
+{
+  "type": "node",
+  "id": 8725981797,
+  "lat": 47.8991840,
+  "lon": 11.4426154,
+  "tags": {
+    "addr:city": "Wolfratshausen",
+    "addr:country": "DE",
+    "addr:housenumber": "4",
+    "addr:postcode": "82515",
+    "addr:street": "Faulhaberstraße",
+    "contact:phone": "+49 81716497007",
+    "contact:website": "https://instagram.com/elegancefriseursalon",
+    "female": "yes",
+    "male": "yes",
+    "name": "Friseur Elegance",
+    "opening_hours": "Tu-We 09:00-16:00; Th 09:00-18:00; Fr 09:00-16:00; Sa 09:00-14:00",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 9018455328,
+  "lat": 47.8573409,
+  "lon": 11.4857605,
+  "tags": {
+    "check_date": "2024-12-03",
+    "description": "Computer",
+    "name": "Nexial",
+    "opening_hours": "Mo-Fr 08:00-18:00",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 9018462446,
+  "lat": 47.8582565,
+  "lon": 11.4828895,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "10",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "check_date": "2024-12-02",
+    "email": "Geretsried-Zentrum-2@kind.com",
+    "fax": "+49 8171 52668",
+    "name": "Optik Kind Geretsried-Zentrum II",
+    "opening_hours": "Mo-Fr 09:00-13:00,14:00-18:00; Sa off",
+    "operator": "KIND GmbH & Co. KG",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:maestro": "yes",
+    "phone": "+49 8171 52658",
+    "shop": "optician",
+    "website": "https://www.kind.com/de-de/fachgeschaefte/Geretsried-Zentrum-II/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9050506576,
+  "lat": 47.8575891,
+  "lon": 11.4859693,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "25",
+    "addr:postcode": "82538",
+    "addr:street": "Marienburgweg",
+    "check_date": "2024-12-03",
+    "name": "GG-Radsport",
+    "opening_hours": "Mo-Sa 09:00-12:00, Mo-Fr 14:00-17:00",
+    "operator": "Georg Grommes",
+    "phone": "+49 8171 31993",
+    "service:bicycle:pump": "yes",
+    "service:bicycle:repair": "yes",
+    "service:bicycle:retail": "yes",
+    "service:bicycle:tools": "yes",
+    "shop": "bicycle",
+    "website": "https://sites.google.com/view/gg-radsport/"
+  }
+},
+{
+  "type": "node",
+  "id": 9071256351,
+  "lat": 47.8860017,
+  "lon": 11.4360709,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "65",
+    "addr:postcode": "82538",
+    "addr:street": "Leitenstraße",
+    "level": "0",
+    "name": "KFZ-Technik Peter Stoiber",
+    "opening_hours": "Mo-Fr 16:00-19:30",
+    "operator": "Peter Stoiber",
+    "phone": "+49 170 4310748",
+    "service:vehicle:body_repair": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:diagnostics": "yes",
+    "service:vehicle:inspection": "yes",
+    "service:vehicle:oil_change": "yes",
+    "service:vehicle:tyres": "yes",
+    "shop": "car_repair",
+    "website": "https://www.kfz-stoiber.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 9078898351,
+  "lat": 47.8745039,
+  "lon": 11.4658753,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "12-14",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "ice_cream",
+    "indoor_seating": "yes",
+    "name": "Amormio Gelati Caffè",
+    "opening_hours": "Mo-Su 09:00-22:00",
+    "outdoor_seating": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9119953453,
+  "lat": 47.8749663,
+  "lon": 11.4674580,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "47a",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "description": "Fisch, Fleisch, Gemüse und weitere internationale Produkte.",
+    "name": "Damaskus Markt",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "shop": "supermarket"
+  }
+},
+{
+  "type": "node",
+  "id": 9161424552,
+  "lat": 47.8583387,
+  "lon": 11.4826879,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "10",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "restaurant",
+    "cuisine": "pizza;burger;bistro",
+    "name": "Bistro Malor",
+    "opening_hours": "Mo,Tu 11:00-20:00; We-Sa 11:00-22:00",
+    "website": "https://bistro-malor.de/bistro.html"
+  }
+},
+{
+  "type": "node",
+  "id": 9172434598,
+  "lat": 47.8561615,
+  "lon": 11.4794141,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Dr. Schmucker",
+    "opening_hours": "Mo-We,Fr 09:30-13:00; Th 09:30-18:00"
+  }
+},
+{
+  "type": "node",
+  "id": 9591626378,
+  "lat": 47.8768811,
+  "lon": 11.4644636,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "69",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "clothes": "women;underwear;sports",
+    "name": "Das Miedereck",
+    "opening_hours": "Mo-Fr 09:00-12:30,14:30-18:30; Sa 09:30-13:00",
+    "operator": "Karin Kolitsch",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 61843",
+    "shop": "clothes",
+    "website": "https://das-miedereck.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 9653740976,
+  "lat": 47.8832906,
+  "lon": 11.4596139,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "amenity": "fast_food",
+    "capacity": "10",
+    "cuisine": "kebab",
+    "delivery": "no",
+    "drive_through": "no",
+    "name": "Dönerworks",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "outdoor_seating": "no",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 172 5328829",
+    "start_date": "2022-02-01",
+    "takeaway": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9653740977,
+  "lat": 47.8832455,
+  "lon": 11.4595272,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "amenity": "fast_food",
+    "cuisine": "asian",
+    "currency:EUR": "yes",
+    "drive_through": "no",
+    "level": "0",
+    "name": "An Niehn Asian Streetfood",
+    "opening_hours": "Mo-Sa 09:00-20:00",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "stroller": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9653740978,
+  "lat": 47.8833482,
+  "lon": 11.4598850,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "name": "Cigo Kiosk, Lotto, DHL",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 228 4333112",
+    "shop": "lottery",
+    "website": "https://www.deutschepost.de/de/s/standorte.html?objectid=4122202&isFeedbackDeeplink=true&template=locationdetail"
+  }
+},
+{
+  "type": "node",
+  "id": 9655634393,
+  "lat": 47.8499379,
+  "lon": 11.4949511,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:postcode": "82538",
+    "addr:street": "Jeschkenstraße",
+    "name": "Brylka",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "node",
+  "id": 9672921495,
+  "lat": 47.8826161,
+  "lon": 11.4575096,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 9672921496,
+  "lat": 47.8825779,
+  "lon": 11.4578153,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals:direction": "backward"
+  }
+},
+{
+  "type": "node",
+  "id": 9672921497,
+  "lat": 47.8824358,
+  "lon": 11.4578211,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 9828013105,
+  "lat": 47.8596887,
+  "lon": 11.4689227,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Tattenkofener Straße",
+    "name": "Hofladen Tonibauer",
+    "opening_hours": "We-Fr 08:00-13:00, We-Fr 16:00-18:00, Sa 08:00-12:00",
+    "operator": "Robert Mayr",
+    "organic": "only",
+    "payment:cash": "yes",
+    "phone": "+49 8171 31374",
+    "shop": "farm"
+  }
+},
+{
+  "type": "node",
+  "id": 9955217554,
+  "lat": 47.8592749,
+  "lon": 11.4927068,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "103",
+    "addr:postcode": "82538",
+    "addr:street": "Breslauer Weg",
+    "amenity": "pub",
+    "cuisine": "pizza",
+    "name": "Fitness Forum & Squash",
+    "opening_hours": "Mo-Fr 08:30-22:00; Sa,Su 09:00-18:00",
+    "outdoor_seating": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10676191444,
+  "lat": 47.8751637,
+  "lon": 11.4675058,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "blinker",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 10724923189,
+  "lat": 47.8756530,
+  "lon": 11.4668028,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "68",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "brand": "Aldi Süd",
+    "brand:wikidata": "Q41171672",
+    "name": "Aldi Süd",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "payment:cash": "yes",
+    "payment:coins": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "payment:mastercard": "yes",
+    "payment:notes": "yes",
+    "phone": "0800 8002434",
+    "shop": "supermarket",
+    "website": "https://filialen.aldi-sued.de/bayern/geretsried/egerlandstrasse-60"
+  }
+},
+{
+  "type": "node",
+  "id": 10724923190,
+  "lat": 47.8757812,
+  "lon": 11.4665586,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "72",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "lottery": "yes",
+    "name": "Lotto- und Tabakladen Stirl",
+    "opening_hours": "Mo-Sa 07:30-18:00; PH off",
+    "shop": "tobacco"
+  }
+},
+{
+  "type": "node",
+  "id": 10724923191,
+  "lat": 47.8759201,
+  "lon": 11.4663162,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "74",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "clothes": "women;underwear",
+    "contact:facebook": "https://www.facebook.com/people/Elegante-Modeboutique/100028971775070/",
+    "name": "Elegante Modeboutique",
+    "opening_hours": "Mo-Fr 09:30-19:00; Sa 09:30-15:00; PH off",
+    "operator": "Liliana Wellmann",
+    "post_office": "post_partner",
+    "post_office:brand": "Hermes PaketShop",
+    "post_office:brand:wikidata": "Q105702843",
+    "post_office:service_provider": "Hermes Group",
+    "post_office:service_provider:wikidata": "Q1613532",
+    "ref:Hermes": "679145",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 10728530554,
+  "lat": 47.8754750,
+  "lon": 11.4684758,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "7",
+    "addr:postcode": "82538",
+    "addr:street": "Fasanenweg",
+    "email": "agnes.bauernladen@gmx.de",
+    "name": "Der Bauernladen",
+    "opening_hours": "Tu-Th 09:00-13:00, Tu-Th 15:00-18:00, Fr 09:00-18:00, Sa 09:00-13:00",
+    "operator": "GbdR Holzer",
+    "phone": "+49 8171 8966",
+    "shop": "convenience",
+    "website": "http://www.bauernladen-geretsried.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 10728530555,
+  "lat": 47.8767905,
+  "lon": 11.4645794,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "69",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "name": "Mix Land Markt",
+    "opening_hours": "Mo-Th 08:30-19:00, Fr-Sa 08:30-20:00",
+    "phone": "+49 8171 9197857",
+    "shop": "convenience"
+  }
+},
+{
+  "type": "node",
+  "id": 10840276624,
+  "lat": 47.8567943,
+  "lon": 11.4862651,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "28",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "check_date:opening_hours": "2024-11-30",
+    "female": "yes",
+    "male": "yes",
+    "name": "B&L Hairstyling",
+    "opening_hours": "Mo-Th 09:00-19:00; Fr 09:00-20:00; Sa 09:00-18:00",
+    "shop": "hairdresser",
+    "website": "https://www.hairstyling-beni-leo.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11091610284,
+  "lat": 47.8758072,
+  "lon": 11.4661409,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "blinker",
+    "traffic_signals:direction": "backward"
+  }
+},
+{
+  "type": "node",
+  "id": 11091610285,
+  "lat": 47.8759283,
+  "lon": 11.4659180,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "blinker",
+    "traffic_signals:direction": "forward"
+  }
+},
+{
+  "type": "node",
+  "id": 11092475964,
+  "lat": 47.8499267,
+  "lon": 11.4971049,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Jeschkenstraße",
+    "amenity": "fast_food",
+    "cuisine": "kebab;chicken",
+    "drive_through": "no",
+    "name": "Sempol Imbiss",
+    "opening_hours": "Mo-Fr 09:00-19:00, Sa 09:00-16:00",
+    "phone": "+49 174 1366604",
+    "website": "https://webonjo.com/e/de-view.php?seo=sempol-imbiss-461111"
+  }
+},
+{
+  "type": "node",
+  "id": 11238652463,
+  "lat": 47.8972067,
+  "lon": 11.4409216,
+  "tags": {
+    "addr:city": "Wolfratshausen",
+    "addr:country": "DE",
+    "addr:housenumber": "8",
+    "addr:postcode": "82515",
+    "addr:street": "Föhrenwaldstraße",
+    "email": "m.kiss@der-cardoc.de",
+    "name": "Kiss der CarDoc",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sa \"Auf Anfrage\"",
+    "phone": "+4981712581185",
+    "service:vehicle:body_repair": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:electrical": "yes",
+    "service:vehicle:glass": "yes",
+    "service:vehicle:transmission": "yes",
+    "shop": "car_repair",
+    "website": "https://der-cardoc.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11415565943,
+  "lat": 47.8867127,
+  "lon": 11.4359861,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "21",
+    "addr:postcode": "82538",
+    "addr:street": "Bürgermeister-Graf-Ring",
+    "name": "KW-Bikes",
+    "phone": "+49 8171 6399220",
+    "shop": "bicycle",
+    "website": "https://kw-bikes.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11420500208,
+  "lat": 47.8827663,
+  "lon": 11.4585064,
+  "tags": {
+    "button_operated": "yes",
+    "crossing:markings": "dashes",
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "forward",
+    "traffic_signals:sound": "yes",
+    "traffic_signals:vibration": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 11420500209,
+  "lat": 47.8828868,
+  "lon": 11.4585372,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "traffic_lights",
+    "traffic_signals:direction": "backward"
+  }
+},
+{
+  "type": "node",
+  "id": 11420500210,
+  "lat": 47.8555166,
+  "lon": 11.4820238,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "crossing",
+    "traffic_signals:direction": "both"
+  }
+},
+{
+  "type": "node",
+  "id": 11469126123,
+  "lat": 47.8601086,
+  "lon": 11.4853246,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Breslauer Weg",
+    "check_date:opening_hours": "2024-12-10",
+    "name": "miwomo",
+    "opening_hours:signed": "no",
+    "operator": "THOMA Reisemobile",
+    "shop": "caravan",
+    "website": "https://thoma-reisemobile.de"
+  }
+},
+{
+  "type": "node",
+  "id": 11504711844,
+  "lat": 47.8749685,
+  "lon": 11.4680958,
+  "tags": {
+    "brand": "KIND Hörgeräte",
+    "brand:wikidata": "Q43598590",
+    "name": "KIND Hörgeräte",
+    "opening_hours": "Mo-Fr 09:00-18:00; Sa 09:00-01:00",
+    "shop": "hearing_aids",
+    "website": "https://www.kind.com/de-de/fachgeschaefte/hoergeraete-brillen-geretsried-zentrum-i"
+  }
+},
+{
+  "type": "node",
+  "id": 11773694740,
+  "lat": 47.8744023,
+  "lon": 11.4662906,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "doctors",
+    "contact:email": "info@bauer-gyn.de",
+    "contact:phone": "+49 8171 62494",
+    "healthcare": "doctor",
+    "healthcare:speciality": "gynaecology",
+    "name": "Bauer Gyn",
+    "opening_hours": "Mo 09:00-12:30, Tu 09:00-12:00, We 09:00-13:00, Th 09:00-13:00, Fr 09:00-12:30, Mo-Tu 15:00-18:00, Th 15:00-18:00",
+    "operator": "Dr. med. D. Stuck & Dr. med E. Bauer"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067938,
+  "lat": 47.8758004,
+  "lon": 11.4670384,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "66",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "beauty": "nails",
+    "name": "Le Nails Nagelstudio",
+    "opening_hours": "Mo-Fr 09:00-19:00, Sa 09:00-16:00",
+    "phone": "+49 8171 4189583",
+    "shop": "beauty"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067939,
+  "lat": 47.8762628,
+  "lon": 11.4657613,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "76",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "shop": "vacant"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067940,
+  "lat": 47.8764198,
+  "lon": 11.4654417,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "80",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "shop": "vacant"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067949,
+  "lat": 47.8750805,
+  "lon": 11.4671751,
+  "tags": {
+    "beauty": "nails",
+    "name": "Orchidee Nagel Studio",
+    "opening_hours": "Mo-Fr 10:00-19:00; Sa 10:00-15:00",
+    "shop": "beauty"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067951,
+  "lat": 47.8738666,
+  "lon": 11.4690829,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Prießnitzweg",
+    "email": "lionsbarbershop@gmx.de",
+    "male": "yes",
+    "name": "Lion‘s Barbershop",
+    "opening_hours": "Tu-We 09:00-18:00, Th 10:00-19:00, Fr 09:00-19:00, Sa 09:00-18:00",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 2380059",
+    "shop": "hairdresser",
+    "website": "https://www.lions-barbershop.de/salons/geretsried/"
+  }
+},
+{
+  "type": "node",
+  "id": 11907067952,
+  "lat": 47.8739906,
+  "lon": 11.4693065,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2a",
+    "addr:postcode": "82538",
+    "addr:street": "Prießnitzweg",
+    "beauty": "skin_care;nails",
+    "email": "skinandglow.info@gmail.com",
+    "name": "Skin and Glow - Kosmetik",
+    "operator": "Natalja Athanasiadis und Olga Runk GbR",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 999767",
+    "shop": "beauty",
+    "website": "https://www.skinandglow.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11922102082,
+  "lat": 47.8752407,
+  "lon": 11.4655643,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "email": "info@siegerts-hairstyle.de",
+    "female": "yes",
+    "male": "yes",
+    "name": "Siegert's Hairstyle",
+    "opening_hours": "Tu 09:00-20:00, We 09:00-18:00, Th 09:00-20:00, Fr 08:00-18:00",
+    "operator": "Alexandra Siegert",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 4829891",
+    "shop": "hairdresser",
+    "website": "https://siegerts-hairstyle.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11922102083,
+  "lat": 47.8758723,
+  "lon": 11.4658375,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "59",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "email": "geretsried@augenoptikpfeiffer.de",
+    "name": "Augenoptik Pfeiffer",
+    "opening_hours": "Tu-Fr 09:00-12:30; Tu-Fr 14:00-18:00; Sa 09:00-12:00",
+    "operator": "Andreas Pfeiffer",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 62020",
+    "shop": "optician",
+    "website": "https://www.augenoptikpfeiffer.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 11922102084,
+  "lat": 47.8760379,
+  "lon": 11.4655579,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "61",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "restaurant",
+    "cuisine": "italian",
+    "name": "Rialto Eiscafe Und Pizzeria",
+    "opening_hours": "Mo 10:00-21:30, We-Sa 10:00-21:30, Su 11:30-21:00",
+    "phone": "+49 8171 63184",
+    "website": "http://rialto-eiscafe-und-pizzeria.iehours.com/de"
+  }
+},
+{
+  "type": "node",
+  "id": 11922102085,
+  "lat": 47.8760800,
+  "lon": 11.4654792,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "61",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "female": "yes",
+    "male": "yes",
+    "name": "Friseur Villa Jasmin",
+    "opening_hours": "Mo-Fr 09:00-18:30, Sa 09:00-16:00",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 9996474",
+    "shop": "hairdresser",
+    "website": "https://drilacim.com/job/friseur-villa-jasmin/"
+  }
+},
+{
+  "type": "node",
+  "id": 11975691738,
+  "lat": 47.8824825,
+  "lon": 11.4575618,
+  "tags": {
+    "highway": "traffic_signals",
+    "traffic_signals": "signal",
+    "traffic_signals:direction": "backward"
+  }
+},
+{
+  "type": "node",
+  "id": 12030838891,
+  "lat": 47.8746993,
+  "lon": 11.4665660,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "post_office",
+    "name": "Deutsche Post Filiale 470",
+    "opening_hours": "Mo-Fr 08:00-18:00, Sa 08:00-13:00",
+    "operator": "Deutsche Post",
+    "operator:wikidata": "Q157645"
+  }
+},
+{
+  "type": "node",
+  "id": 12030838892,
+  "lat": 47.8565416,
+  "lon": 11.4868280,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "34",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "post_office",
+    "name": "Deutsche Post Filiale 571",
+    "opening_hours": "Mo-Fr 09:00-17:30, Sa 09:00-13:00",
+    "operator": "Deutsche Post",
+    "operator:wikidata": "Q157645"
+  }
+},
+{
+  "type": "node",
+  "id": 12030838893,
+  "lat": 47.8468095,
+  "lon": 11.4751315,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Tegernseeweg",
+    "amenity": "post_office",
+    "name": "Deutsche Post Filiale 569",
+    "opening_hours": "Mo-Fr 08:30-12:00, Mo-Fr 13:00-18:00, Sa 08:30-12:30",
+    "operator": "Deutsche Post",
+    "operator:wikidata": "Q157645"
+  }
+},
+{
+  "type": "node",
+  "id": 12090365481,
+  "lat": 47.8562219,
+  "lon": 11.4870925,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "61",
+    "addr:postcode": "82538",
+    "addr:street": "Altvaterstraße",
+    "name": "Flamingo Damenmode",
+    "opening_hours": "Mo 13:00-18:00; Tu-Fr 10:00-18:00; Sa 10:00-14:00",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 12141654253,
+  "lat": 47.8757916,
+  "lon": 11.4704796,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "21",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "female": "yes",
+    "male": "yes",
+    "name": "Marlis Frisierkommode",
+    "opening_hours": "Tu-Fr 09:00-18:00, Sa 08:00-13:00",
+    "phone": "+49 8171 81534",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 12211219347,
+  "lat": 47.8581956,
+  "lon": 11.4836310,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "19",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "beauty": "nails",
+    "name": "Angel Nails",
+    "opening_hours": "Mo-Fr 09:00-18:30, Sa 09:00-16:00",
+    "phone": "+49 173 4366789",
+    "shop": "beauty"
+  }
+},
+{
+  "type": "node",
+  "id": 12211219348,
+  "lat": 47.8583507,
+  "lon": 11.4832751,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "15",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "name": "Stroblume",
+    "opening_hours": "Mo-Fr 08:30-14:30, Mo-Fr 17:00-18:00, Sa 08:30-12:30",
+    "shop": "florist"
+  }
+},
+{
+  "type": "node",
+  "id": 12320282360,
+  "lat": 47.8833591,
+  "lon": 11.4601044,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "name": "ALP Schuh- und Schlüsseldienst",
+    "opening_hours": "Mo-Sa 09:00-18:00",
+    "phone": "+49 1575 3970077",
+    "shop": "locksmith"
+  }
+},
+{
+  "type": "node",
+  "id": 12394577978,
+  "lat": 47.8574909,
+  "lon": 11.4859070,
+  "tags": {
+    "check_date": "2024-12-03",
+    "name": "Aphrodite-aestetic",
+    "opening_hours": "Mo-We,Fr 09:00-18:00; Th 09:00-20:00",
+    "shop": "beauty"
+  }
+},
+{
+  "type": "node",
+  "id": 12415370229,
+  "lat": 47.8561455,
+  "lon": 11.4870170,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "61",
+    "addr:postcode": "82538",
+    "addr:street": "Altvaterstraße",
+    "email": "info@fellomenal-hundesalon.de",
+    "level": "0",
+    "name": "Fellomenal Hundesalon",
+    "opening_hours": "\"nach Vereinbarung\"",
+    "operator": "Sandra Staal",
+    "phone": "+49 176 61 60 06 44",
+    "shop": "pet_grooming",
+    "start_date": "2024-09-16",
+    "website": "https://www.fellomenal-hundesalon.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 12427142627,
+  "lat": 47.8579590,
+  "lon": 11.4791821,
+  "tags": {
+    "check_date": "2024-12-17",
+    "name": "Bellini",
+    "opening_hours": "Tu-Fr 09:00-18:00  Do 9:00-18:00  Sa 9:00-12:00",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 12430667625,
+  "lat": 47.8579424,
+  "lon": 11.4785463,
+  "tags": {
+    "check_date": "2024-12-18",
+    "name": "Feinkost Christos",
+    "shop": "greengrocer"
+  }
+},
+{
+  "type": "node",
+  "id": 12430682959,
+  "lat": 47.8558428,
+  "lon": 11.4803670,
+  "tags": {
+    "check_date": "2025-08-07",
+    "check_date:opening_hours": "2025-08-07",
+    "female:signed": "no",
+    "male:signed": "no",
+    "name": "Pia's Hair & Beauty",
+    "opening_hours:signed": "no",
+    "shop": "hairdresser"
+  }
+},
+{
+  "type": "node",
+  "id": 12507126315,
+  "lat": 47.8763151,
+  "lon": 11.4702539,
+  "tags": {
+    "amenity": "post_office",
+    "name": "Hermes Paketshop Schwägerl",
+    "operator": "Hermes",
+    "operator:wikidata": "Q1613532"
+  }
+},
+{
+  "type": "node",
+  "id": 12507126316,
+  "lat": 47.8759061,
+  "lon": 11.4663169,
+  "tags": {
+    "amenity": "post_office",
+    "name": "Hermes Paketshop Elegante",
+    "operator": "Hermes",
+    "operator:wikidata": "Q1613532"
+  }
+},
+{
+  "type": "node",
+  "id": 12507126416,
+  "lat": 47.8747661,
+  "lon": 11.4666096,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "22",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "amenity": "fast_food",
+    "cuisine": "kebab",
+    "drive_through": "no",
+    "name": "Aram Döner",
+    "opening_hours": "Mo-Sa 10:00-20:00",
+    "outdoor_seating": "no",
+    "phone": "+49 176 81308200",
+    "start_date": "2025-01-10",
+    "website": "https://www.instagram.com/aram_doener/"
+  }
+},
+{
+  "type": "node",
+  "id": 12642567790,
+  "lat": 47.8754103,
+  "lon": 11.4672505,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "58",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "restaurant",
+    "cuisine": "indian",
+    "name": "Shinwari",
+    "opening_hours": "Tu-Su 11:00-14:30; Tu-Su 17:30-22:00",
+    "phone": "+49 8171 2389570",
+    "website": "https://shinwarirestaurant.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 12824919032,
+  "lat": 47.8575819,
+  "lon": 11.4854821,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "27",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Woolworth",
+    "brand:wikidata": "Q183538",
+    "name": "Woolworth",
+    "opening_hours": "Mo-Sa 09:00-20:00",
+    "shop": "department_store"
+  }
+},
+{
+  "type": "node",
+  "id": 12917521828,
+  "lat": 47.8707348,
+  "lon": 11.4719968,
+  "tags": {
+    "amenity": "fast_food",
+    "cuisine": "pizza",
+    "delivery": "only",
+    "name": "Pizza Roma",
+    "phone": "+49 8171 2396200"
+  }
+},
+{
+  "type": "node",
+  "id": 13180313166,
+  "lat": 47.8577879,
+  "lon": 11.4838821,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "pharmacy",
+    "dispensing": "yes",
+    "drive_through": "no",
+    "email": "apotheke@rehmaus.de",
+    "healthcare": "pharmacy",
+    "level": "0",
+    "name": "Rehmaus Apotheke",
+    "opening_hours": "Mo-Fr 08:30-18:30, Sa 09:00-13:00",
+    "operator": "Loreen Hartwig",
+    "phone": "+49 8171 2387227",
+    "website": "https://www.rehmausapotheke.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13180330668,
+  "lat": 47.8571504,
+  "lon": 11.4853139,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "24",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "beauty": "tanning",
+    "name": "Sun Style Bodystyling Studio",
+    "opening_hours": "Mo-Fr 10:00-21:00, Su 11:00-19:00",
+    "operator": "Friedrich Walter",
+    "phone": "+49 8171 34256",
+    "shop": "beauty",
+    "website": "https://www.sunstyle.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 13180338083,
+  "lat": 47.8573596,
+  "lon": 11.4848971,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "20",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "name": "Spielwaren Krömer",
+    "opening_hours": "Mo-Fr 09:00-12:30, Mo-Fr 13:00-18:00, Sa 09:00-16:00",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "payment:coins": "yes",
+    "payment:contactless": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "payment:notes": "yes",
+    "payment:visa": "yes",
+    "phone": "+49 8171 2348933",
+    "shop": "toys"
+  }
+},
+{
+  "type": "node",
+  "id": 13499132437,
+  "lat": 47.8752003,
+  "lon": 11.4680481,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Fasanenweg",
+    "email": "info@haar-design-irene.de",
+    "female": "yes",
+    "level": "0",
+    "male": "yes",
+    "name": "Haardesign Irene",
+    "opening_hours": "Tu-Fr 08:00-18:00; Sa 08:00-13:00",
+    "operator": "Irene Georgiadis",
+    "phone": "+49 8171 2387735",
+    "shop": "hairdresser",
+    "website": "https://haar-design-irene.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 13499132438,
+  "lat": 47.8794230,
+  "lon": 11.4614844,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "16",
+    "addr:postcode": "82538",
+    "addr:street": "Kirchplatz",
+    "email": "info@smbikes.de",
+    "name": "SMBIKES",
+    "phone": "+49 163 1706029",
+    "service:bicycle:bike": "yes",
+    "service:bicycle:dealer": "yes",
+    "service:bicycle:ebike": "yes",
+    "service:bicycle:repair": "yes",
+    "service:bicycle:service": "yes",
+    "shop": "bicycle"
+  }
+},
+{
+  "type": "node",
+  "id": 13499132441,
+  "lat": 47.8815900,
+  "lon": 11.4630774,
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "4",
+    "addr:postcode": "82538",
+    "addr:street": "Banater Straße",
+    "level": "0",
+    "name": "Lotto im Opus G",
+    "opening_hours": "Mo-Fr 07:00-18:00; Sa 07:00-13:00; Su off",
+    "shop": "kiosk"
+  }
+},
+{
+  "type": "way",
+  "id": 92735882,
+  "center": {
+    "lat": 47.8744105,
+    "lon": 11.4649272
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "addr:suburb": "Gartenberg",
+    "amenity": "townhall",
+    "building": "yes",
+    "email": "stadtverwaltung@geretsried.de",
+    "fax": "+49 8171 6298501",
+    "heritage": "4",
+    "heritage:operator": "BLfD",
+    "image": "https://commons.wikimedia.org/wiki/File:Geretsried-Gartenberg_Town-Hall_2007.jpg",
+    "name": "Rathaus Geretsried",
+    "operator": "Stadt Geretsried",
+    "phone": "+49 8171 62980",
+    "polling_station": "yes",
+    "ref:BLfD": "D-1-73-126-15",
+    "townhall:type": "city",
+    "website": "https://www.geretsried.de",
+    "wikidata": "Q41255771"
+  }
+},
+{
+  "type": "way",
+  "id": 92736527,
+  "center": {
+    "lat": 47.8673293,
+    "lon": 11.4731387
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "school",
+    "contact:fax": "+49 8171 3481922",
+    "contact:phone": "+49 8171 348190",
+    "isced:level": "2",
+    "name": "Mittelschule Geretsried",
+    "website": "https://www.mittelschule-geretsried.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 92736528,
+  "center": {
+    "lat": 47.8687133,
+    "lon": 11.4721265
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "amenity": "school",
+    "check_date": "2024-09-13",
+    "name": "Schulzentrum Geretsried"
+  }
+},
+{
+  "type": "way",
+  "id": 119894071,
+  "center": {
+    "lat": 47.8568927,
+    "lon": 11.4821602
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "14",
+    "addr:postcode": "82538",
+    "addr:street": "Richard-Wagner-Straße",
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "Gaststätte Isarwinkel",
+    "opening_hours": "Mo-Su 10:00-14:00, Mo-Su 17:00-22:30",
+    "outdoor_seating": "yes",
+    "phone": "+49 8171 31307",
+    "website": "https://www.isarwinkel-geretsried.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 120402846,
+  "center": {
+    "lat": 47.8579447,
+    "lon": 11.4845871
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "25",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Audi;Seat;Škoda;Volkswagen",
+    "building": "yes",
+    "email": "info@autohaus-billion.de",
+    "fax": "+49 8171 930355",
+    "name": "Autohaus Billion",
+    "opening_hours": "Mo-Fr 08:00-18:00; Sa 09:00-12:00",
+    "operator": "Florian Billion",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "phone": "+49 8171 93030",
+    "second_hand": "yes",
+    "service:vehicle:batteries": "yes",
+    "service:vehicle:body_repair": "yes",
+    "service:vehicle:brakes": "yes",
+    "service:vehicle:car_parts": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:diagnostics": "yes",
+    "service:vehicle:electrical": "yes",
+    "service:vehicle:glass": "yes",
+    "service:vehicle:inspection": "yes",
+    "service:vehicle:motor": "yes",
+    "service:vehicle:oil_change": "yes",
+    "service:vehicle:transmission": "yes",
+    "service:vehicle:tyres": "yes",
+    "service:vehicle:used_car_sales": "yes",
+    "service:vehicle:wheels": "yes",
+    "shop": "car",
+    "website": "https://autohaus-billion.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 121822081,
+  "center": {
+    "lat": 47.8698689,
+    "lon": 11.4758622
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "4",
+    "addr:postcode": "82538",
+    "addr:street": "Jahnstraße",
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "Sportheim",
+    "website": "https://www.tus-geretsried.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 121822645,
+  "center": {
+    "lat": 47.8830886,
+    "lon": 11.4600894
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "branch": "Geretsried",
+    "brand": "Kaufland",
+    "brand:wikidata": "Q685967",
+    "brand:wikipedia": "en:Kaufland",
+    "building": "retail",
+    "building:levels": "1",
+    "currency:EUR": "yes",
+    "name": "Kaufland",
+    "opening_hours": "Mo-Sa 07:00-20:00; Su,PH off",
+    "organic": "yes",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 98130",
+    "shop": "supermarket",
+    "stroller": "yes",
+    "toilets:wheelchair": "yes",
+    "website": "https://filiale.kaufland.de/service/filiale/geretsried-7860.html",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 122032724,
+  "center": {
+    "lat": 47.8605376,
+    "lon": 11.4681415
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1",
+    "addr:postcode": "82538",
+    "addr:street": "Tattenkofener Straße",
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "Gasthof Geiger"
+  }
+},
+{
+  "type": "way",
+  "id": 127227156,
+  "center": {
+    "lat": 47.8798562,
+    "lon": 11.4703221
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "44",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "brand": "Fristo",
+    "brand:wikidata": "Q1465151",
+    "brand:wikipedia": "de:Fristo",
+    "building": "yes",
+    "name": "Fristo",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "shop": "beverages",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 127227157,
+  "center": {
+    "lat": 47.8803765,
+    "lon": 11.4701099
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "44b",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "brand": "Penny",
+    "brand:wikidata": "Q284688",
+    "brand:wikipedia": "en:Penny (supermarket)",
+    "building": "yes",
+    "check_date:opening_hours": "2024-06-26",
+    "name": "Penny",
+    "opening_hours": "Mo-Sa 07:00-20:00",
+    "shop": "supermarket",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 127228192,
+  "center": {
+    "lat": 47.8795150,
+    "lon": 11.4703848
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "42",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "building": "yes",
+    "name": "Friedl Reifen & Kfz-Service",
+    "shop": "tyres"
+  }
+},
+{
+  "type": "way",
+  "id": 127229793,
+  "center": {
+    "lat": 47.8808904,
+    "lon": 11.4686336
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "54",
+    "addr:postcode": "82538",
+    "addr:street": "Böhmerwaldstraße",
+    "branch": "Baustoffe",
+    "brand": "BayWa",
+    "brand:wikidata": "Q812055",
+    "building": "yes",
+    "name": "BayWa",
+    "opening_hours": "Mo-Fr 07:00-17:00; Sa 08:00-12:00",
+    "shop": "doityourself",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 127604843,
+  "center": {
+    "lat": 47.8565550,
+    "lon": 11.4801540
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes",
+    "check_date": "2025-08-07",
+    "name": "Karl-Lederer-Hauptschule Geretsried",
+    "website": "https://www.hs-geretsried.de"
+  }
+},
+{
+  "type": "way",
+  "id": 127717998,
+  "center": {
+    "lat": 47.8493992,
+    "lon": 11.4939820
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "31",
+    "addr:postcode": "82538",
+    "addr:street": "Jeschkenstraße",
+    "amenity": "police",
+    "building": "yes",
+    "name": "Polizeiinspektion Geretsried",
+    "opening_hours": "24/7",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 128266477,
+  "center": {
+    "lat": 47.8534346,
+    "lon": 11.4963623
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "20",
+    "addr:postcode": "82538",
+    "addr:street": "Wallensteinstraße",
+    "building": "yes",
+    "email": "info@fliesenmarkt-sued.de",
+    "fax": "+49 8171 80618",
+    "name": "Fliesenmarkt-Süd GmbH",
+    "opening_hours": "Mo-Tu 08:30-12:00, Th 08:30-12:00, Fr 08:30-12:00, Tu 13:30-18:00, Th 13:30-18:00",
+    "operator": "Matthias Lanzl & Lucas Eigen",
+    "phone": "+49 8171 31046",
+    "shop": "tiles",
+    "website": "https://www.fliesenmarkt-sued.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 128271980,
+  "center": {
+    "lat": 47.8567328,
+    "lon": 11.4744488
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "5",
+    "addr:postcode": "82538",
+    "addr:street": "Robert-Schumann-Weg",
+    "amenity": "school",
+    "building": "school",
+    "email": "sekretariat@franz-marc-schule.de",
+    "fax": "+49 8171 939647",
+    "isced:level": "1;2",
+    "name": "Franz-Marc-Schule",
+    "phone": "+49 8171 93963",
+    "website": "http://fmsger.cbiss.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 128399427,
+  "center": {
+    "lat": 47.8486634,
+    "lon": 11.4755537
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "100",
+    "addr:postcode": "82538",
+    "addr:street": "Richard-Wagner-Straße",
+    "building": "yes",
+    "shop": "vacant"
+  }
+},
+{
+  "type": "way",
+  "id": 149415484,
+  "center": {
+    "lat": 47.8564282,
+    "lon": 11.4815673
+  },
+  "tags": {
+    "amenity": "school"
+  }
+},
+{
+  "type": "way",
+  "id": 178608364,
+  "center": {
+    "lat": 47.8721562,
+    "lon": 11.4708634
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "21",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "bank",
+    "atm": "yes",
+    "building": "yes",
+    "drive_through": "no",
+    "name": "Raiffeisenbank Isar-Loisachtal eG",
+    "operator": "Raiffeisenbank",
+    "website": "https://www.rileg.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 179417452,
+  "center": {
+    "lat": 47.8995099,
+    "lon": 11.4432598
+  },
+  "tags": {
+    "addr:city": "Wolfratshausen",
+    "addr:country": "DE",
+    "addr:housenumber": "2b",
+    "addr:postcode": "82515",
+    "addr:street": "Faulhaberstraße",
+    "amenity": "restaurant",
+    "building": "yes",
+    "contact:facebook": "https://www.facebook.com/gasthofzurpost.waldram/",
+    "cuisine": "german",
+    "name": "Zur Post",
+    "opening_hours": "Mo-Su 10:00-24:00; Tu 10:00-15:00; We off",
+    "opening_hours:kitchen": "Th-Su 11:30-14:00,18:00-21:00; Mo,Tu 11:30-14:00; We off",
+    "operator": "Jutta Gold",
+    "outdoor_seating": "yes",
+    "phone": "+49 8171 29678",
+    "takeaway": "Fr 17:00-20:00;Sa,Su 11:30-15:00",
+    "website": "http://www.restaurant-wolfratshausen.com",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 186928843,
+  "center": {
+    "lat": 47.8745760,
+    "lon": 11.4644509
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "1a",
+    "addr:postcode": "82538",
+    "addr:street": "Karl-Lederer-Platz",
+    "addr:suburb": "Gartenberg",
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "Ratsstuben",
+    "toilets:wheelchair": "no",
+    "website": "https://www.ratsstuben-geretsried.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187592318,
+  "center": {
+    "lat": 47.8834322,
+    "lon": 11.4620941
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3-5",
+    "addr:postcode": "82538",
+    "addr:street": "Bayerwaldstraße",
+    "building": "yes",
+    "designation": "Euronics",
+    "name": "Isartaler Elektromarkt",
+    "opening_hours": "Mo-Fr 09:00-19:00; Sa 09:00-16:00",
+    "phone": "+49 8171 93310",
+    "shop": "electronics",
+    "toilets:wheelchair": "no",
+    "website": "https://www.euronics.de/xxl-geretsried-isartaler-elektromarkt/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187819158,
+  "center": {
+    "lat": 47.8807083,
+    "lon": 11.4621492
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Banater Straße",
+    "building": "yes",
+    "check_date": "2026-05-10",
+    "shop": "vacant",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187819159,
+  "center": {
+    "lat": 47.8808401,
+    "lon": 11.4604635
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "21",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "brand": "Hyundai",
+    "brand:wikidata": "Q55931",
+    "brand:wikipedia": "en:Hyundai Motor Company",
+    "building": "yes",
+    "check_date:opening_hours": "2026-03-05",
+    "contact:fax": "+49 8171 99939 99",
+    "email": "info@pennig.de",
+    "name": "Pennig",
+    "opening_hours": "Mo-We,Fr 09:00-18:00; Th 09:00-19:00; Sa 09:00-15:00",
+    "opening_hours:url": "https://www.pennig.de/de/wir-ueber-uns/kontakt-und-oeffnungszeiten",
+    "operator": "Autohaus Pennig OHG",
+    "phone": "+49 8171 999390",
+    "service": "dealer;repair",
+    "shop": "car",
+    "toilets:wheelchair": "no",
+    "trade": "yes",
+    "website": "https://www.pennig.de/de/home",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "way",
+  "id": 187819175,
+  "center": {
+    "lat": 47.8814460,
+    "lon": 11.4609238
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "3",
+    "addr:postcode": "82538",
+    "addr:street": "Banater Straße",
+    "brand": "Orterer Getränkemarkt",
+    "brand:wikidata": "Q23787118",
+    "brand:wikipedia": "de:Orterer Gruppe",
+    "building": "commercial",
+    "name": "Orterer Getränkemarkt",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "operator": "Orterer Getränkemärkte GmbH",
+    "phone": "+49 8171 387800",
+    "shop": "beverages",
+    "toilets:wheelchair": "no",
+    "website": "https://www.orterer.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187819182,
+  "center": {
+    "lat": 47.8806159,
+    "lon": 11.4611009
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "brand": "Rewe To Go",
+    "brand:wikidata": "Q16968817",
+    "brand:wikipedia": "en:REWE",
+    "building": "commercial",
+    "check_date": "2026-03-05",
+    "name": "Rewe To Go",
+    "opening_hours": "24/7",
+    "operator": "Aral",
+    "payment:american_express": "yes",
+    "payment:cash": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "payment:visa": "yes",
+    "shop": "convenience",
+    "source": "been there",
+    "tenant": "Leonardo Malagrino",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187819185,
+  "center": {
+    "lat": 47.8811082,
+    "lon": 11.4602056
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "17",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "building": "yes",
+    "name": "Elektro Friedl",
+    "opening_hours": "Mo-Fr 09:00-18:00; Sa 09:00-12:30",
+    "shop": "electronics",
+    "toilets:wheelchair": "no",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "way",
+  "id": 187819190,
+  "center": {
+    "lat": 47.8825223,
+    "lon": 11.4592178
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "10",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "building": "yes",
+    "car:brakes": "yes",
+    "car:diagnostics": "yes",
+    "car:inspection": "yes",
+    "car:motor": "yes",
+    "car:oil_change": "yes",
+    "car:repair": "yes",
+    "car:sales": "yes;used",
+    "car:tyres": "yes",
+    "name": "Michael Schmidt Motor GmbH",
+    "opening_hours": "Mo-Fr 07:30-12:00,13:00-17:00; Sa 09:00-12:00",
+    "operator": "Michael Schmidt",
+    "phone": "+49 8171 41869600",
+    "second_hand": "only",
+    "shop": "car",
+    "truck:repair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 187946705,
+  "center": {
+    "lat": 47.8747302,
+    "lon": 11.4675514
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "47",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "building": "yes",
+    "email": "einkauf@isarkaufhaus.de",
+    "fax": "+49 8171 34699204",
+    "name": "Isar Kaufhaus",
+    "opening_hours": "Mo-Fr 09:30-18:00; Sa 09:30-16:00",
+    "payment:cash": "yes",
+    "payment:coins": "yes",
+    "payment:contactless": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "payment:mastercard": "yes",
+    "payment:notes": "yes",
+    "phone": "+49 8171 346990",
+    "shop": "department_store",
+    "toilets:wheelchair": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188048829,
+  "center": {
+    "lat": 47.8775419,
+    "lon": 11.4638441
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "77",
+    "addr:postcode": "82538",
+    "addr:street": "Egerlandstraße",
+    "amenity": "fast_food",
+    "building": "yes",
+    "delivery": "yes",
+    "drive_through": "no",
+    "name": "Der neue Döner-Laden",
+    "operator": "Der neue döner-Laden",
+    "outdoor_seating": "no",
+    "smoking": "outside",
+    "takeaway": "yes",
+    "wheelchair": "limited"
+  }
+},
+{
+  "type": "way",
+  "id": 188048905,
+  "center": {
+    "lat": 47.8793761,
+    "lon": 11.4625692
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Schalmeienweg",
+    "building": "commercial",
+    "name": "Füger Fachhandel",
+    "opening_hours": "Mo-Th 07:30-17:00; Fr 07:30-13:00",
+    "operator": "Füger Fachhandel",
+    "payment:coins": "yes",
+    "payment:contactless": "yes",
+    "payment:credit_cards": "yes",
+    "payment:mastercard": "yes",
+    "payment:notes": "yes",
+    "phone": "+49 8171 98100",
+    "shop": "trade",
+    "trade": "plumbing",
+    "website": "https://www.fueger-fachhandel.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188573522,
+  "center": {
+    "lat": 47.8759370,
+    "lon": 11.4625464
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23a",
+    "addr:postcode": "82538",
+    "addr:street": "Graslitzer Straße",
+    "building": "yes",
+    "denomination": "protestant",
+    "email": "bestattung.klein@t-online.de",
+    "fax": "+49 8171 61277",
+    "name": "Bestattung Klein oHG",
+    "opening_hours": "Mo-Fr 08:00-16:30",
+    "operator": "Thomas & Amelia Balan",
+    "phone": "+49 8171 6911",
+    "religion": "christian",
+    "shop": "funeral_directors",
+    "website": "https://www.bestattung-klein.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 188593074,
+  "center": {
+    "lat": 47.8670626,
+    "lon": 11.4728760
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593870,
+  "center": {
+    "lat": 47.8684424,
+    "lon": 11.4723564
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593871,
+  "center": {
+    "lat": 47.8679927,
+    "lon": 11.4712885
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593872,
+  "center": {
+    "lat": 47.8676947,
+    "lon": 11.4716151
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593873,
+  "center": {
+    "lat": 47.8681813,
+    "lon": 11.4731824
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593874,
+  "center": {
+    "lat": 47.8679525,
+    "lon": 11.4724987
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188593875,
+  "center": {
+    "lat": 47.8683300,
+    "lon": 11.4715000
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 188648197,
+  "center": {
+    "lat": 47.8530195,
+    "lon": 11.4959073
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "71",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "building": "yes",
+    "email": "autotechnikdudek@t-online.de",
+    "name": "Autotechnik Dudek",
+    "opening_hours": "Mo-Th 08:00-12:00; Mo-Th 13:00-17:00, Fr 08:00-13:00",
+    "operator": "Benjamin Dudek",
+    "phone": "+49 8171 529490",
+    "service:vehicle:air_conditioning": "yes",
+    "service:vehicle:batteries": "yes",
+    "service:vehicle:brakes": "yes",
+    "service:vehicle:car_repair": "yes",
+    "service:vehicle:diagnostics": "yes",
+    "service:vehicle:inspection": "yes",
+    "service:vehicle:motor": "yes",
+    "service:vehicle:oil_change": "yes",
+    "service:vehicle:tyres": "yes",
+    "service:vehicle:wheels": "yes",
+    "shop": "car_repair",
+    "source": "Bayern (2m)",
+    "website": "https://autotechnikdudek.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 189042651,
+  "center": {
+    "lat": 47.8567955,
+    "lon": 11.4893816
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "113",
+    "addr:postcode": "82538",
+    "addr:street": "Breslauer Weg",
+    "brand": "EDEKA",
+    "brand:wikidata": "Q701755",
+    "building": "retail",
+    "building:levels": "1",
+    "check_date:opening_hours": "2024-12-10",
+    "name": "EDEKA Heininger",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "operator": "Heininger",
+    "roof:levels": "0",
+    "shop": "supermarket",
+    "source": "Bayern (2m)",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 189412278,
+  "center": {
+    "lat": 47.8744141,
+    "lon": 11.4642836
+  },
+  "tags": {
+    "amenity": "biergarten",
+    "name": "Ratsstuben",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 191173220,
+  "center": {
+    "lat": 47.8859271,
+    "lon": 11.4323904
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "25",
+    "addr:postcode": "82538",
+    "addr:street": "Lauterbachstraße",
+    "addr:suburb": "Gelting",
+    "building": "yes",
+    "name": "Wiedenbauer Fahrzeugtechnik",
+    "shop": "car_repair",
+    "source": "Bayern (2m)"
+  }
+},
+{
+  "type": "way",
+  "id": 191173969,
+  "center": {
+    "lat": 47.8862508,
+    "lon": 11.4336847
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "26",
+    "addr:postcode": "82538",
+    "addr:street": "Lauterbachstraße",
+    "addr:suburb": "Gelting",
+    "building": "yes",
+    "name": "Meyer Motor Cars",
+    "phone": "+49 8171 9998870",
+    "second_hand": "yes",
+    "shop": "car",
+    "source": "Bayern (2m)",
+    "website": "http://www.meyermotorcars.com/"
+  }
+},
+{
+  "type": "way",
+  "id": 191173975,
+  "center": {
+    "lat": 47.8856277,
+    "lon": 11.4350913
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "42",
+    "addr:postcode": "82538",
+    "addr:street": "Lauterbachstraße",
+    "addr:suburb": "Gelting",
+    "building": "yes",
+    "name": "Herbig Weinimport",
+    "shop": "wine",
+    "source": "Bayern (2m)"
+  }
+},
+{
+  "type": "way",
+  "id": 191173979,
+  "center": {
+    "lat": 47.8891839,
+    "lon": 11.4333392
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "8",
+    "addr:postcode": "82538",
+    "addr:street": "Bürgermeister-Graf-Ring",
+    "addr:suburb": "Gelting",
+    "brand": "Yamaha",
+    "brand:wikidata": "Q158888",
+    "building": "yes",
+    "building:levels": "2",
+    "name": "Motorrad-Isartal GmbH",
+    "opening_hours": "Tu-Sa 10:00-12:00; Tu-Fr 14:00-17:00",
+    "operator": "Tim Wilsing",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:debit_cards": "yes",
+    "phone": "+49 8171 43370",
+    "shop": "motorcycle",
+    "website": "https://www.motorrad-isartal.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 191173990,
+  "center": {
+    "lat": 47.8911997,
+    "lon": 11.4333751
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Leitenstraße",
+    "brand": "BMW",
+    "brand:wikidata": "Q26678",
+    "building": "yes",
+    "name": "Autohaus Schmidt",
+    "second_hand": "only",
+    "shop": "car",
+    "source": "Bayern (2m)"
+  }
+},
+{
+  "type": "way",
+  "id": 191173995,
+  "center": {
+    "lat": 47.8865220,
+    "lon": 11.4332300
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2",
+    "addr:postcode": "82538",
+    "addr:street": "Breitenbachstraße",
+    "addr:suburb": "Gelting",
+    "building": "yes",
+    "name": "Biometzgerei Pichler Großhandel",
+    "shop": "butcher",
+    "source": "Bayern (2m)"
+  }
+},
+{
+  "type": "way",
+  "id": 218664626,
+  "center": {
+    "lat": 47.8825934,
+    "lon": 11.4739072
+  },
+  "tags": {
+    "amenity": "school",
+    "name": "Isardammschule"
+  }
+},
+{
+  "type": "way",
+  "id": 256176854,
+  "center": {
+    "lat": 47.8683262,
+    "lon": 11.4713352
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes",
+    "operator": "Gymnasium Geretsried"
+  }
+},
+{
+  "type": "way",
+  "id": 288093391,
+  "center": {
+    "lat": 47.8523583,
+    "lon": 11.4996129
+  },
+  "tags": {
+    "access": "private",
+    "amenity": "fast_food",
+    "building": "yes",
+    "fast_food": "cafeteria",
+    "name": "Cafeteria"
+  }
+},
+{
+  "type": "way",
+  "id": 307076316,
+  "center": {
+    "lat": 47.8985167,
+    "lon": 11.4398151
+  },
+  "tags": {
+    "building": "yes",
+    "name": "fair",
+    "opening_hours": "Fr-Su 10:00-19:00",
+    "phone": "+49 8171 999918",
+    "shop": "coffee",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 335236443,
+  "center": {
+    "lat": 47.8688774,
+    "lon": 11.4712384
+  },
+  "tags": {
+    "amenity": "school",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 538514835,
+  "center": {
+    "lat": 47.8536202,
+    "lon": 11.4949225
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "67",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "amenity": "fuel",
+    "brand": "Esso",
+    "brand:wikidata": "Q867662",
+    "building": "house",
+    "compressed_air": "yes",
+    "fuel:adblue:canister": "yes",
+    "fuel:biodiesel": "yes",
+    "fuel:diesel": "yes",
+    "fuel:discount": "yes",
+    "fuel:octane_95": "yes",
+    "fuel:octane_98": "yes",
+    "name": "ESSO Geretsried",
+    "opening_hours": "Mo-Sa 06:00-22:00, Su 07:00-22:00",
+    "payment:cards": "yes",
+    "payment:coins": "yes",
+    "payment:credit_cards": "yes",
+    "payment:notes": "yes",
+    "phone": "+49 8171 90547",
+    "self_service": "yes",
+    "website": "https://www.esso.de/de-de/find-station/esso-geretsried-essostationgeretsriedsudetenstr67-100368932",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 540160721,
+  "center": {
+    "lat": 47.8804843,
+    "lon": 11.4608831
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "23",
+    "addr:postcode": "82538",
+    "addr:street": "Elbestraße",
+    "amenity": "fuel",
+    "brand": "Aral",
+    "brand:wikidata": "Q565734",
+    "building": "roof",
+    "compressed_air": "yes",
+    "fuel:diesel": "yes",
+    "fuel:octane_100": "yes",
+    "fuel:octane_95": "yes",
+    "fuel:octane_98": "yes",
+    "layer": "1",
+    "name": "Aral",
+    "operator": "Aral",
+    "payment:cash": "yes",
+    "payment:maestro": "yes",
+    "source": "been there",
+    "tenant": "Leonardo Malagrino",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 668663478,
+  "center": {
+    "lat": 47.8641512,
+    "lon": 11.4788589
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "39",
+    "addr:postcode": "82538",
+    "addr:street": "Adalbert-Stifter-Straße",
+    "building": "yes",
+    "name": "Occasione Mode & Livestyle",
+    "opening_hours": "Mo-Fr 10:00-18:00; Sa 10:00-13:00",
+    "payment:cash": "yes",
+    "phone": "+49 8171 348675",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "way",
+  "id": 772887800,
+  "center": {
+    "lat": 47.8552845,
+    "lon": 11.4895840
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Carglass",
+    "brand:wikidata": "Q1035997",
+    "building": "yes",
+    "name": "Carglass",
+    "opening_hours": "Mo-Fr 08:00-12:00, Mo-Fr 13:00-17:00, Sa 09:00-13:00",
+    "phone": "0800 4209050",
+    "ref": "435",
+    "service:vehicle:glass": "yes",
+    "shop": "car_repair",
+    "website": "https://www.standorte.carglass.de"
+  }
+},
+{
+  "type": "way",
+  "id": 858188287,
+  "center": {
+    "lat": 47.8775215,
+    "lon": 11.4656495
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "9",
+    "addr:postcode": "82538",
+    "addr:street": "Amselweg",
+    "building": "yes",
+    "email": "info@metzgerei-laenger.de",
+    "fax": "+49 8171 64192",
+    "name": "Metzgerei Länger",
+    "opening_hours": "Mo 07:30-12:30, Tu-Fr 07:30-18:00, Sa 07:00-12:00",
+    "operator": "Metzgerei Länger GmbH",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 649573",
+    "shop": "butcher",
+    "website": "https://metzgerei-laenger.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 859265285,
+  "center": {
+    "lat": 47.8841937,
+    "lon": 11.4615483
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "18",
+    "addr:postcode": "82538",
+    "addr:street": "Blumenstraße",
+    "building": "yes",
+    "email": "info@lackcenter-huber.de",
+    "fax": "+49 8171 72357",
+    "name": "Huber GmbH, Karosserie-Lack-Center",
+    "opening_hours": "Mo-Th 07:30-12:00,13:00-17:30, Fr 07:30-13:00",
+    "operator": "Marcus Dorbritz, Ulrich Gebauer",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 16343",
+    "service:vehicle:body_repair": "yes",
+    "service:vehicle:painting": "yes",
+    "service:vehicle:repairs": "yes",
+    "shop": "car_repair",
+    "website": "https://www.lackcenter-huber.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 902606983,
+  "center": {
+    "lat": 47.8902894,
+    "lon": 11.5042505
+  },
+  "tags": {
+    "addr:city": "Ascholding",
+    "addr:country": "DE",
+    "addr:housenumber": "5a",
+    "addr:postcode": "83623",
+    "addr:street": "Eglinger Straße",
+    "addr:suburb": "Ascholding",
+    "brand": "EDEKA",
+    "brand:wikidata": "Q701755",
+    "brand:wikipedia": "de:Edeka",
+    "building": "retail",
+    "name": "EDEKA",
+    "official_name": "EDEKA März",
+    "opening_hours": "Mo-Sa 07:00-19:00",
+    "operator": "EDEKA Südbayern Handels Stiftung & Co.KG",
+    "payment:cards": "yes",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:telephone_cards": "yes",
+    "phone": "+4981716490680",
+    "post_office": "post_annex",
+    "post_office:brand": "DHL",
+    "post_office:brand:wikidata": "Q489815",
+    "post_office:id_check": "DHL",
+    "post_office:letter_from": "DHL",
+    "post_office:parcel_from": "yes",
+    "post_office:parcel_pickup": "yes",
+    "post_office:parcel_to": "yes",
+    "post_office:stamps": "DHL",
+    "ref:DHL": "405",
+    "shop": "supermarket",
+    "website": "https://www.edeka.de/eh/s%C3%BCdbayern/edeka-m%C3%A4rz-eglinger-stra%C3%9Fe-5a/index.jsp"
+  }
+},
+{
+  "type": "way",
+  "id": 1198262253,
+  "center": {
+    "lat": 47.8863987,
+    "lon": 11.4668130
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "26",
+    "addr:postcode": "82538",
+    "addr:street": "Maiglöckchenweg",
+    "building": "yes",
+    "check_date": "2023-08-15",
+    "currency:EUR": "yes",
+    "email": "ellen@blumenzauberundmehr.de",
+    "fax": "+49 8171 999237",
+    "name": "Blumenzauber und mehr",
+    "opening_hours": "Mo-Fr 08:00-18:30",
+    "operator": "Ellen Langhammer",
+    "payment:cash": "yes",
+    "payment:mastercard": "yes",
+    "phone": "+49 8171 999236",
+    "shop": "florist",
+    "stroller": "yes",
+    "website": "http://www.blumenzauberundmehr.de/",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1227641285,
+  "center": {
+    "lat": 47.8877642,
+    "lon": 11.4634683
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "2-4",
+    "addr:postcode": "82538",
+    "addr:street": "Malvenweg",
+    "amenity": "school",
+    "name": "Freie Waldorfschule Isartal",
+    "opening_hours": "Mo-Fr 08:00-16:00",
+    "operator": "Freie Waldorfschule Isartal in Geretsried",
+    "website": "https://www.waldorfschule-isartal.de/",
+    "wikidata": "Q56426417"
+  }
+},
+{
+  "type": "way",
+  "id": 1237824571,
+  "center": {
+    "lat": 47.8887377,
+    "lon": 11.4309128
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "8",
+    "addr:postcode": "82538",
+    "addr:street": "Lauterbachstraße",
+    "addr:suburb": "Gelting",
+    "building": "yes",
+    "name": "Fisch & Feinkost Reeh",
+    "operator": "Volker Reeh",
+    "phone": "+49 8171 2347300",
+    "shop": "deli",
+    "website": "https://www.fisch-reeh.de/"
+  }
+},
+{
+  "type": "way",
+  "id": 1271753003,
+  "center": {
+    "lat": 47.8567873,
+    "lon": 11.4738888
+  },
+  "tags": {
+    "amenity": "school"
+  }
+},
+{
+  "type": "way",
+  "id": 1271753004,
+  "center": {
+    "lat": 47.8569319,
+    "lon": 11.4806408
+  },
+  "tags": {
+    "amenity": "school",
+    "name:signed": "no"
+  }
+},
+{
+  "type": "way",
+  "id": 1385213575,
+  "center": {
+    "lat": 47.8532357,
+    "lon": 11.4931183
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:country": "DE",
+    "addr:housenumber": "68",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "brand": "Aldi Süd",
+    "brand:wikidata": "Q41171672",
+    "building": "supermarket",
+    "building:levels": "1",
+    "name": "Aldi Süd",
+    "opening_hours": "Mo-Sa 08:00-20:00",
+    "payment:cash": "yes",
+    "payment:credit_cards": "yes",
+    "payment:maestro": "yes",
+    "payment:mastercard": "yes",
+    "payment:visa": "yes",
+    "roof:levels": "0",
+    "roof:shape": "flat",
+    "shop": "supermarket",
+    "website": "https://filialen.aldi-sued.de/bayern/geretsried/sudetenstrasse-68",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1434034107,
+  "center": {
+    "lat": 47.8534463,
+    "lon": 11.4958082
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "69",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "building": "yes",
+    "name": "Kfz Meisterwerkstatt Wor Automobile",
+    "opening_hours": "Mo-Fr 09:00-18:00, Sa 09:00-15:00",
+    "phone": "+49 170 3800008",
+    "shop": "car_repair"
+  }
+},
+{
+  "type": "way",
+  "id": 1434034109,
+  "center": {
+    "lat": 47.8534829,
+    "lon": 11.4954047
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "67a",
+    "addr:postcode": "82538",
+    "addr:street": "Sudetenstraße",
+    "building": "yes",
+    "email": "lezuch@freenet.de",
+    "fax": "+49 8171 919787",
+    "name": "L&R Automobile GbR",
+    "opening_hours": "Mo-Fr 08:00-12:00; Mo-Fr 13:00-18:00,Sa 09:00-13:00",
+    "operator": "Martin Lezuch & Engelbert Rothas",
+    "phone": "+49 160 96817770",
+    "second_hand": "only",
+    "shop": "car",
+    "website": "https://lrauto.de/"
+  }
+},
+{
+  "type": "relation",
+  "id": 2014408,
+  "center": {
+    "lat": 47.8566047,
+    "lon": 11.4809516
+  },
+  "tags": {
+    "addr:city": "Geretsried",
+    "addr:housenumber": "4",
+    "addr:postcode": "82538",
+    "addr:street": "Johann-Sebastian-Bach-Straße",
+    "amenity": "school",
+    "building": "yes",
+    "name": "Karl-Lederer-Grundschule Geretsried",
+    "type": "multipolygon"
+  }
+}
+
+  ]
+}

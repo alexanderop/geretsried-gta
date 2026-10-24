@@ -1,4 +1,5 @@
 import type { World } from "#/world/world.ts"
+import { controls, lightFor, type Signals } from "./signals.ts"
 import { DRIVABLE } from "#/world/world.ts"
 
 /** An NPC car glued to the road graph. It drives from vertex `from` toward `from + dir`. */
@@ -15,6 +16,9 @@ export type Npc = {
   angle: number
   readonly model: number
 }
+
+/** Meters between a stopped car's center and the light. */
+const STOP_GAP = 4
 
 const CRUISE: Readonly<Record<string, number>> = {
   primary: 14,
@@ -113,13 +117,24 @@ export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR:
  * Advance one NPC. `blocked` says whether something is close in front,
  * so the car brakes instead of driving through it.
  */
-export const stepNpc = (world: World, npc: Npc, blocked: boolean, dt: number, random: () => number): void => {
-  const kind = world.map.roads[npc.road]?.kind ?? "residential"
-  const cruise = CRUISE[kind] ?? 8
-  const target = blocked ? 0 : cruise
-  npc.speed += Math.sign(target - npc.speed) * Math.min(Math.abs(target - npc.speed), (blocked ? 14 : 4) * dt)
-  npc.s += npc.speed * dt
-  let len = segmentLength(world, npc)
+export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, blocked: boolean, dt: number, random: () => number): void => {
+  const road = world.map.roads[npc.road]
+  const cruise = CRUISE[road?.kind ?? "residential"] ?? 8
+  const segment = segmentLength(world, npc)
+  // Red light at the end of this segment: stop a few meters before it.
+  const node = road?.nodes[npc.from + npc.dir]
+  const light = node === undefined ? undefined : signals.byNode.get(node)
+  const toLight = segment - npc.s
+  let stopAt = Infinity
+  if (light !== undefined && controls(light, npc.dir, npc.x, npc.y, npc.angle)) {
+    const state = lightFor(light.junction, npc.angle, time)
+    // On yellow, only cars that can still stop do.
+    if (state === "red" || (state === "yellow" && toLight > 10)) stopAt = Math.max(0, toLight - STOP_GAP)
+  }
+  const target = blocked ? 0 : Math.min(cruise, stopAt < 40 ? stopAt * 0.6 : cruise)
+  npc.speed += Math.sign(target - npc.speed) * Math.min(Math.abs(target - npc.speed), (blocked || stopAt < 40 ? 14 : 4) * dt)
+  npc.s += Math.min(npc.speed * dt, stopAt)
+  let len = segment
   let guard = 0
   while (npc.s >= len && guard++ < 16) {
     npc.s -= len
