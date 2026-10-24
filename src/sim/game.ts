@@ -5,6 +5,7 @@ import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
 import { makeSignals, type Signals } from "./signals.ts"
+import { spawnWalker, stepWalker, type Walker } from "./pedestrians.ts"
 
 export type Input = {
   readonly up: boolean
@@ -24,6 +25,7 @@ export type Game = {
   /** Cars standing around that the player can take. */
   parked: Array<Car>
   npcs: Array<Npc>
+  walkers: Array<Walker>
   nextId: number
   time: number
   readonly signals: Signals
@@ -37,6 +39,8 @@ const PLAYER_RADIUS = 0.4
 const NPC_COUNT = 70
 const NPC_NEAR = 120
 const NPC_FAR = 650
+const WALKER_COUNT = 120
+const WALKER_FAR = 220
 const ENTER_RANGE = 4
 
 /** Small seeded PRNG (mulberry32) so tests are repeatable. */
@@ -86,6 +90,7 @@ export const newGame = (world: World, seed = 1): Game => {
     player: { x: car.x - nx * 2.5 * side, y: car.y - ny * 2.5 * side, angle: angle - Math.PI / 2, car: null },
     parked: [car],
     npcs: [],
+    walkers: [],
     nextId: 0,
     time: 0,
     signals: makeSignals(world),
@@ -108,6 +113,11 @@ const carHitsWall = (world: World, car: Car) =>
 const fillTraffic = (world: World, game: Game, minR: number) => {
   const { x, y } = playerPos(game)
   game.npcs = game.npcs.filter((n) => Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
+  game.walkers = game.walkers.filter((w) => Math.hypot(w.x - x, w.y - y) < WALKER_FAR + 50)
+  for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
+    const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
+    if (walker !== null) game.walkers.push(walker)
+  }
   for (let attempt = 0; game.npcs.length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
     const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
     if (npc === null) return
@@ -133,6 +143,7 @@ const blockedAhead = (game: Game, npc: Npc) => {
   const p = playerPos(game)
   if (check(p.x, p.y)) return true
   if (game.parked.some((c) => check(c.x, c.y))) return true
+  if (game.walkers.some((w) => check(w.x, w.y))) return true
   return game.npcs.some((o) => o !== npc && check(o.x, o.y))
 }
 
@@ -188,6 +199,8 @@ export const step = (world: World, game: Game, input: Input): void => {
     }
   }
 
+  const threat = player.car
+  for (const w of game.walkers) stepWalker(world, w, threat, DT, game.random)
   for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
 }

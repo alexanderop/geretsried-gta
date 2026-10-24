@@ -1,5 +1,6 @@
 import type { GameMap, PoiKind } from "#/map/types.ts"
 import { lightFor, type Light, type TrafficLight } from "#/sim/signals.ts"
+import type { Walker } from "#/sim/pedestrians.ts"
 import { CAR_LENGTH, forwardSpeed } from "#/sim/car.ts"
 import { silhouette, type Assets } from "./assets.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
@@ -48,6 +49,7 @@ export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, spr
   ctx.setTransform(z, 0, 0, z, -left * z, -top * z)
   for (const car of game.parked) drawCar(ctx, sprites, car.x, car.y, car.angle, car.model)
   for (const npc of game.npcs) drawCar(ctx, sprites, npc.x, npc.y, npc.angle, npc.model)
+  for (const w of game.walkers) drawWalker(ctx, sprites, w)
   for (const light of game.signals.lights) drawLight(ctx, light, game.time)
   const { player } = game
   if (player.car !== null) drawCar(ctx, sprites, player.car.x, player.car.y, player.car.angle, player.car.model)
@@ -96,6 +98,18 @@ const drawCar = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: 
 // Drawn larger than life so you can find yourself, like GTA 2.
 const drawPedestrian = (ctx: CanvasRenderingContext2D, sprites: Sprites, x: number, y: number, angle: number) =>
   drawSprite(ctx, sprites.peds[0], x, y, angle, 1.6, 0.3)
+
+/** Bob while walking; lie flat (rotated, darker) when knocked down. */
+const drawWalker = (ctx: CanvasRenderingContext2D, sprites: Sprites, w: Walker) => {
+  if (w.down > 0) {
+    ctx.globalAlpha = 0.8
+    drawSprite(ctx, sprites.peds[w.sprite], w.x, w.y, w.angle + Math.PI / 2, 1.8, 0.1)
+    ctx.globalAlpha = 1
+    return
+  }
+  const bob = 1 + Math.sin(w.stride) * 0.05
+  drawSprite(ctx, sprites.peds[w.sprite], w.x, w.y, w.angle + Math.sin(w.stride / 2) * 0.08, 1.7 * bob, 0.3)
+}
 
 const LAMP: Readonly<Record<Light, string>> = { red: "#ff3b30", yellow: "#ffcc00", green: "#34c759" }
 

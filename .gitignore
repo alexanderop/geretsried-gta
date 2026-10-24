@@ -3,3 +3,4 @@ dist
 data/raw.json
 *.tsbuildinfo
 test-results
+data/places.json

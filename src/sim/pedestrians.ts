@@ -1,0 +1,160 @@
+import type { Road } from "#/map/types.ts"
+import type { World } from "#/world/world.ts"
+import { WALKABLE } from "#/world/world.ts"
+
+/** Someone walking the footpath and sidewalk network. */
+export type Walker = {
+  readonly id: number
+  road: number
+  from: number
+  dir: 1 | -1
+  s: number
+  /** Signed sideways offset from the way's center line: the sidewalk, or a dodge. */
+  side: number
+  /** -1 left, 1 right: which sidewalk this person keeps to on streets. */
+  readonly curb: 1 | -1
+  readonly pace: number
+  x: number
+  y: number
+  angle: number
+  /** Walk-cycle phase, for the bob. */
+  stride: number
+  /** Seconds left running from a car. */
+  panic: number
+  /** Seconds left lying on the ground after being hit. */
+  down: number
+  readonly sprite: number
+}
+
+const PED_SPRITES = [1, 2, 3]
+
+/** Where on the cross-section this person belongs: middle of a path, or out on the sidewalk. */
+const homeSide = (road: Road, curb: 1 | -1) => (road.kind === "footway" ? curb * 0.3 : curb * (road.width / 2 + 1))
+
+const vertex = (pts: ReadonlyArray<number>, i: number) => [pts[i * 2] ?? 0, pts[i * 2 + 1] ?? 0] as const
+
+const place = (world: World, w: Walker) => {
+  const road = world.map.roads[w.road]
+  if (road === undefined) return
+  const [ax, ay] = vertex(road.pts, w.from)
+  const [bx, by] = vertex(road.pts, w.from + w.dir)
+  const len = Math.hypot(bx - ax, by - ay) || 1
+  const t = Math.min(1, w.s / len)
+  const dx = (bx - ax) / len
+  const dy = (by - ay) / len
+  w.x = ax + (bx - ax) * t - dy * w.side * w.dir
+  w.y = ay + (by - ay) * t + dx * w.side * w.dir
+  const target = Math.atan2(dy, dx)
+  w.angle += Math.atan2(Math.sin(target - w.angle), Math.cos(target - w.angle)) * 0.2
+}
+
+export const spawnWalker = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number): Walker | null => {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const a = random() * Math.PI * 2
+    const r = minR + random() * (maxR - minR)
+    const hit = world.roadAt(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 15)
+    if (hit === null || !WALKABLE.has(hit.road.kind)) continue
+    const count = hit.road.pts.length / 2
+    const from = Math.floor(random() * (count - 1))
+    const dir: 1 | -1 = random() < 0.5 ? 1 : -1
+    const curb: 1 | -1 = random() < 0.5 ? 1 : -1
+    const w: Walker = {
+      id,
+      road: hit.index,
+      from: dir === 1 ? from : from + 1,
+      dir,
+      s: 0,
+      side: homeSide(hit.road, curb) * dir,
+      curb,
+      pace: 1.1 + random() * 0.6,
+      x: 0,
+      y: 0,
+      angle: 0,
+      stride: random() * 10,
+      panic: 0,
+      down: 0,
+      sprite: PED_SPRITES[id % PED_SPRITES.length] ?? 1,
+    }
+    const [ax, ay] = vertex(hit.road.pts, w.from)
+    const [bx, by] = vertex(hit.road.pts, w.from + dir)
+    w.angle = Math.atan2(by - ay, bx - ax)
+    place(world, w)
+    if (world.isSolid(w.x, w.y)) continue
+    return w
+  }
+  return null
+}
+
+const nextLeg = (world: World, w: Walker, random: () => number): Pick<Walker, "road" | "from" | "dir"> => {
+  const road = world.map.roads[w.road]
+  const at = w.from + w.dir
+  const node = road?.nodes[at]
+  const options: Array<Pick<Walker, "road" | "from" | "dir">> = []
+  for (const j of (node === undefined ? undefined : world.walkJunctions.get(node)) ?? []) {
+    const r = world.map.roads[j.road]
+    if (r === undefined) continue
+    const back = j.road === w.road
+    if (j.vertex + 1 < r.pts.length / 2 && !(back && w.dir === -1)) options.push({ road: j.road, from: j.vertex, dir: 1 })
+    if (j.vertex > 0 && !(back && w.dir === 1)) options.push({ road: j.road, from: j.vertex, dir: -1 })
+  }
+  return options[Math.floor(random() * options.length)] ?? { road: w.road, from: at, dir: w.dir === 1 ? -1 : 1 }
+}
+
+/** A car that may run someone over: position, velocity. */
+export type Threat = { readonly x: number; readonly y: number; readonly vx: number; readonly vy: number }
+
+/** Walk on; dodge sideways from a fast car coming at you; get knocked down if it hits. */
+export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: number, random: () => number): void => {
+  if (w.down > 0) {
+    w.down -= dt
+    return
+  }
+  const road = world.map.roads[w.road]
+  if (road === undefined) return
+  const home = homeSide(road, w.curb) * w.dir
+
+  if (threat !== null) {
+    const speed = Math.hypot(threat.vx, threat.vy)
+    const dx = w.x - threat.x
+    const dy = w.y - threat.y
+    const dist = Math.hypot(dx, dy)
+    if (speed > 3 && dist < 1.6) {
+      w.down = 4
+      w.panic = 0
+      return
+    }
+    // Coming at me fast and close: run.
+    if (speed > 4 && dist < 12 && dx * threat.vx + dy * threat.vy > 0) w.panic = 2
+  }
+
+  if (w.panic > 0) {
+    w.panic -= dt
+    // Dodge away from the street's center line, out past the curb.
+    const away = Math.sign(w.side || w.curb)
+    w.side = Math.max(-(road.width / 2 + 5), Math.min(road.width / 2 + 5, w.side + away * 5 * dt))
+  } else {
+    w.side += (home - w.side) * Math.min(1, dt * 1.5)
+  }
+
+  const speed = w.panic > 0 ? 4 : w.pace
+  w.stride += speed * dt * 4
+  w.s += speed * dt
+  const pts = road.pts
+  let len = Math.hypot((pts[(w.from + w.dir) * 2] ?? 0) - (pts[w.from * 2] ?? 0), (pts[(w.from + w.dir) * 2 + 1] ?? 0) - (pts[w.from * 2 + 1] ?? 0))
+  let guard = 0
+  while (w.s >= len && guard++ < 8) {
+    w.s -= len
+    const sideOnRoad = w.side * w.dir
+    Object.assign(w, nextLeg(world, w, random))
+    w.side = sideOnRoad * w.dir
+    const r = world.map.roads[w.road]
+    if (r === undefined) break
+    len = Math.hypot((r.pts[(w.from + w.dir) * 2] ?? 0) - (r.pts[w.from * 2] ?? 0), (r.pts[(w.from + w.dir) * 2 + 1] ?? 0) - (r.pts[w.from * 2 + 1] ?? 0))
+  }
+  place(world, w)
+  // Narrow street, wall right at the curb: step in toward the path until clear.
+  for (let tries = 0; tries < 3 && world.isSolid(w.x, w.y); tries++) {
+    w.side *= 0.5
+    place(world, w)
+  }
+}

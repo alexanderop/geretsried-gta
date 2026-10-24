@@ -19,6 +19,14 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 
+## What is in the town
+
+- **Shops and places**: every named `shop=*` and the important `amenity=*` from OSM (EDEKA, Penny, Aldi, Lidl, Kaufland, Netto, Rossmann, fuel, police, …) as map labels, minimap dots and a HUD hint.
+- **Traffic lights**: the 27 real `highway=traffic_signals` nodes, grouped into junctions with a 46 s cycle (`src/sim/signals.ts`). NPC cars stop at red; a test drives 60 s of traffic and fails on any red-light crossing.
+- **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
+
+`pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).
+
 ## Sprites
 
 Painted by Codex (`codex-images` skill), then keyed, sliced and made seamless by

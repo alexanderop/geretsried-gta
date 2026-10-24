@@ -7,6 +7,9 @@ const CELL = 32
 /** Roads NPC traffic drives on. */
 export const DRIVABLE: ReadonlySet<RoadKind> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
 
+/** Ways pedestrians use: footpaths, and the sidewalks along streets. */
+export const WALKABLE: ReadonlySet<RoadKind> = new Set([...DRIVABLE, "footway", "service"])
+
 /** A place where a road's vertex meets other roads (OSM node). */
 export type Junction = ReadonlyArray<{ readonly road: number; readonly vertex: number }>
 
@@ -21,6 +24,8 @@ export type World = {
   /** Nearest road within `maxDist` meters, with how far you are from its center line. */
   readonly roadAt: (x: number, y: number, maxDist?: number) => { road: Road; index: number; dist: number } | null
   readonly junctions: ReadonlyMap<number, Junction>
+  /** Same as `junctions`, for the walking network. */
+  readonly walkJunctions: ReadonlyMap<number, Junction>
   /** The smallest land-use area under the point (areas are stored largest first). */
   readonly areaAt: (x: number, y: number) => AreaKind | null
 }
@@ -91,17 +96,20 @@ export const makeWorld = (map: GameMap): World => {
     return best
   }
 
-  const junctions = new Map<number, Array<{ road: number; vertex: number }>>()
-  map.roads.forEach((road, ri) => {
-    if (!DRIVABLE.has(road.kind)) return
-    road.nodes.forEach((node, vi) => {
-      const list = junctions.get(node) ?? []
-      list.push({ road: ri, vertex: vi })
-      junctions.set(node, list)
+  const graph = (kinds: ReadonlySet<RoadKind>) => {
+    const out = new Map<number, Array<{ road: number; vertex: number }>>()
+    map.roads.forEach((road, ri) => {
+      if (!kinds.has(road.kind)) return
+      road.nodes.forEach((node, vi) => {
+        const list = out.get(node) ?? []
+        list.push({ road: ri, vertex: vi })
+        out.set(node, list)
+      })
     })
-  })
+    return out
+  }
 
-  return { map, isSolid, isWater, roadAt, junctions, areaAt }
+  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt }
 }
 
 const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): number => {
