@@ -19,33 +19,38 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 
-### The ground is the aerial photo
+### The picture: WebGL2, GTA 2 style
 
-`pnpm photo` (`scripts/photo-tiles.ts`) cuts the Bavarian DOP40 orthophoto into 528 tiles of 256 m at its
-native 0.4 m per pixel (`public/photo/<tx>_<ty>.webp`, grid math in `src/map/photo-tiles.ts`, about 30 MB).
-It asks the WMS for each tile in EPSG:4326, which is linear in lat/lon just like the map projection
-(`src/map/project.ts`), so the photo lines up with the OSM geometry to the pixel. Each tile carries a
-one-pixel border from its neighbours, so smooth upscaling has no seams. Every tile gets the same light
-look (`scripts/photo-style.ts`: unsharp mask, haze cut, gentle S-curve, a little more saturation), so
-colours cannot jump between tiles. Downloads are cached in `data/dop40/tiles/`, one request at a time.
+The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no dependencies), like GTA 2:
 
-The renderer (`src/render/photo.ts`) loads tiles lazily around the view, decodes them off the main thread
-and keeps 48 in an LRU. Cars, pedestrians, traffic lights, shop labels and the player are sprites on top.
-The photo already shows parked cars, trees, roofs and shadows, so none of those are drawn.
+- **Camera** (`src/render/camera.ts`): straight down with a 64° perspective, 96 m up on foot, climbing to
+  160 m as the car speeds up, looking 0.8 s ahead. Roofs come towards you, so walls show towards the
+  screen edges. `?compare=` uses an orthographic view of the same square instead.
+- **Chunks** (`src/render/scene/scene.ts`): every 128 m chunk is built once into a static vertex buffer
+  (about 1 ms, 60 KB) as it comes near the view: lawn and paving (the photo's paved mask, given a one
+  pixel hard edge in the shader), land use and water, streets as polygons from the OSM centre lines
+  (sidewalk slabs, kerb, asphalt, dashed centre and solid edge lines on main roads, cut out at
+  junctions), buildings extruded from their footprints (storeys × 3 m), tree crowns at the photo's
+  positions, and shadows. Ground layers lie a few centimetres apart, so the depth test layers them.
+- **Facades** (`src/render/scene/facade.ts`): a shop front where a shop is inside or at the wall,
+  corrugated metal for halls over 800 m² of up to two storeys, an apartment block from three storeys, a
+  Bavarian house otherwise. Texture coordinates are in meters, so windows keep their size; walls facing
+  the sun are lit.
+- **Roofs**: the footprint at eave height in the two plane colours the photo measured, split along the
+  ridge, with clay tile (pitched) or gravel (flat) detail and a crisp edge line.
+- **Passes**: opaque (alpha-to-coverage for tree crowns), shadows (each pixel darkened once through the
+  stencil), then cars, people and traffic lights as sprites at their height, so buildings hide them.
+  Shop labels, the player ring, the minimap and the HUD are 2D on top.
 
-- **Roads under trees**: `pnpm map` walks every paved road and marks stretches of 15 m or more whose
-  centre and quarter lines are all tree canopy in the photo (building shadows excluded); the renderer
-  draws those in as a soft, translucent asphalt band (`covered` in the map JSON, `src/render/covered.ts`).
-- **Minimap**: `pnpm photo` also box-filters all tiles into `public/photo/overview.webp` (8 m/px, ~150 KB);
-  streets and important places are drawn on top.
-- **Camera**: 7.5 px/m on foot (the photo magnified 3× at most), 7 → 4.5 px/m in a car as it speeds up,
-  looking 0.8 s ahead. A yellow ring and a light outline keep the player findable on the photo.
+Storeys come from OSM where it has them; otherwise from the building type (`buildingLevels` in
+`src/map/build.ts`: garages one, apartments four, the rest two).
+
+The photo tiles (`pnpm photo`, `scripts/photo-tiles.ts`, `public/photo/`) are no longer drawn; only their
+overview is, as the minimap.
 
 ### What else comes from the aerial photo
 
-The drawn map (`src/render/chunks.ts`) is only the fallback for a tile that fails to load; its textures,
-`trees.bin` and `ground.png` are downloaded only then (`LazyChunks`). It, the
-collision data and the minimap still come from OSM plus `pnpm map`, which also reads the DOP40 orthophoto
+The map, the collision data and the minimap come from OSM plus `pnpm map`, which also reads the DOP40 orthophoto
 (`scripts/dop40.ts`: 42 WMS tiles at 1 m/px, cached in `data/dop40/`) inside the OSM geometry
 (`src/map/photo.ts`):
 
@@ -71,8 +76,7 @@ collision data and the minimap still come from OSM plus `pnpm map`, which also r
 - Parked cars are not solid: the ones in the photo cannot be told apart at 1 m per pixel, and an
   invisible obstacle is worse than driving through a picture of a car.
 
-Lawn, pavement, asphalt and tree sprites are re-toned at load to the median colours measured in the photo;
-paving and asphalt also lose most of their painted speckle.
+Tree crowns over the asphalt of a street are left out, so roads stay readable.
 
 ## What is in the town
 
@@ -86,8 +90,10 @@ paving and asphalt also lose most of their painted speckle.
 
 Painted by Codex (`codex-images` skill), then keyed, sliced and made seamless by
 `python3 scripts/process-sprites.py <codex-dir> [<newer-dir> ...]` into `public/sprites/`.
-Roofs, asphalt and trees were prompted with a real aerial photo of Sudetenstraße as reference
-(DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0).
+Trees were prompted with a real aerial photo of Sudetenstraße as reference
+(DOP40 © Bayerische Vermessungsverwaltung, CC BY 4.0). The GTA 2 style facades, road, sidewalk, lawn and
+clay tiles were painted seamless; the script only resizes them to 512 px and turns the roof tiles (and the
+flat-roof gravel) into grey detail that the renderer multiplies with the photo's roof colour.
 
 The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 
@@ -98,12 +104,12 @@ The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 | `src/map/` | Map schema (Effect `Schema`), projection, OSM → map builder, loader |
 | `src/world/` | Spatial grid, building collision, "which street am I on", road junction graph |
 | `src/sim/` | Car physics, NPC traffic on the road graph, the 60 Hz game step |
-| `src/render/` | Canvas 2D: map baked into 128 m chunks (LRU), cars, minimap |
+| `src/render/` | WebGL2 renderer (`gl/`), 3D chunk and sprite geometry (`scene/`, pure), camera, 2D overlay and minimap |
 | `src/ui/` | React shell, HUD, keyboard |
 
 ## Checks
 
-`pnpm check` — typecheck (TS 7), oxlint, Vitest (projection, builder, photo reading on synthetic images, car handling, a 20 s drive that must never clip a building, traffic that stays on roads).
+`pnpm check` — typecheck (TS 7), oxlint, Vitest (projection, builder, photo reading on synthetic images, triangulation, road and marking geometry, facade choice, the camera, car handling, a 20 s drive that must never clip a building, traffic that stays on roads).
 
 ## License of the map data
 

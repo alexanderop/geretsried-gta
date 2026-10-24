@@ -1,7 +1,7 @@
 /**
- * The DOP40 aerial photo as the game's ground, cut into square WebP tiles
- * (public/photo/<tx>_<ty>.webp) on a grid in map meters, origin at the map's
- * north-west corner. Shared by the offline cutter and the renderer.
+ * The DOP40 aerial photo cut into square WebP tiles (public/photo/<tx>_<ty>.webp)
+ * on a grid in map meters, origin at the map's north-west corner, and the
+ * overview the minimap shows.
  */
 import type { Box } from "#/world/geometry.ts"
 
@@ -20,8 +20,6 @@ export const PHOTO_TILE_PAD = 1
 export const PHOTO_OVERVIEW_URL = "/photo/overview.webp"
 export const OVERVIEW_M_PER_PX = 8
 
-export const photoTileUrl = (tx: number, ty: number) => `/photo/${tx}_${ty}.webp`
-
 /** Tiles needed to cover a map of `width` × `height` meters. */
 export const photoTileGrid = (width: number, height: number) => ({
   cols: Math.ceil(width / PHOTO_TILE_M),
@@ -36,18 +34,5 @@ export const photoTileBox = (tx: number, ty: number, margin = 0): Box => {
     minY: ty * PHOTO_TILE_M - pad,
     maxX: (tx + 1) * PHOTO_TILE_M + pad,
     maxY: (ty + 1) * PHOTO_TILE_M + pad,
-  }
-}
-
-/** Where the square (x, y, size) in meters sits: which tile, and its pixel rectangle inside that tile's image. */
-export const photoSource = (x: number, y: number, size: number) => {
-  const tx = Math.floor(x / PHOTO_TILE_M)
-  const ty = Math.floor(y / PHOTO_TILE_M)
-  return {
-    tx,
-    ty,
-    sx: PHOTO_TILE_PAD + (x - tx * PHOTO_TILE_M) * PHOTO_TILE_PX_PER_M,
-    sy: PHOTO_TILE_PAD + (y - ty * PHOTO_TILE_M) * PHOTO_TILE_PX_PER_M,
-    side: size * PHOTO_TILE_PX_PER_M,
   }
 }

@@ -1,0 +1,157 @@
+/**
+ * Vertex buffers for the WebGL renderer, filled on the CPU without a GPU so
+ * tests can build them. One vertex is 28 bytes: position (x, y, z meters,
+ * float32), texture coordinates (u, v, float32), a colour that multiplies
+ * the texture (rgba8) and how to draw it (mode, texture layer: uint8 each).
+ */
+
+export const STRIDE = 28
+
+/** What the fragment shader does with a vertex's texture. */
+export const Mode = {
+  /** A material texture times the colour. */
+  material: 0,
+  /** Lawn or paving, by the paved mask from the aerial photo. */
+  ground: 1,
+  /** The colour times a grey detail texture (roofs coloured from the photo). */
+  detail: 2,
+  /** A sprite times the colour. */
+  sprite: 3,
+  /** A sprite's shape in the colour: shadows. */
+  silhouette: 4,
+  /** Just the colour. */
+  color: 5,
+} as const
+export type Mode = (typeof Mode)[keyof typeof Mode]
+
+export type Rgba = readonly [number, number, number, number]
+
+/** Material texture array layers; `MATERIAL_FILES` lists the file of each. */
+export const Material = {
+  lawn: 0,
+  road: 1,
+  sidewalk: 2,
+  paving: 3,
+  water: 4,
+  forest: 5,
+  farmland: 6,
+  facadeBlock: 7,
+  facadeHouse: 8,
+  facadeShop: 9,
+  facadeIndustrial: 10,
+  roofTiles: 11,
+  roofGravel: 12,
+} as const
+export type Material = (typeof Material)[keyof typeof Material]
+
+export const MATERIAL_FILES: ReadonlyArray<string> = [
+  "lawn",
+  "road",
+  "sidewalk",
+  "pavement",
+  "water",
+  "forest",
+  "farmland",
+  "facade-block",
+  "facade-house",
+  "facade-shop",
+  "facade-industrial",
+  "roof-tiles",
+  "roof-gravel",
+]
+
+/** Two index lists share one vertex buffer: opaque surfaces, then the shadows laid over the ground. */
+export type Mesh = {
+  readonly vertices: Uint8Array
+  readonly indices: Uint32Array
+  readonly opaque: number
+  readonly shadow: number
+}
+
+export class MeshBuilder {
+  private bytes = new ArrayBuffer(STRIDE * 4096)
+  private f32 = new Float32Array(this.bytes)
+  private u8 = new Uint8Array(this.bytes)
+  private readonly lists: { opaque: Array<number>; shadow: Array<number> } = { opaque: [], shadow: [] }
+  /** Where `tri` puts its triangles. */
+  target: "opaque" | "shadow" = "opaque"
+  count = 0
+
+  vertex(x: number, y: number, z: number, u: number, v: number, color: Rgba, mode: Mode, layer: number): number {
+    if ((this.count + 1) * STRIDE > this.bytes.byteLength) this.grow()
+    const f = (this.count * STRIDE) / 4
+    this.f32[f] = x
+    this.f32[f + 1] = y
+    this.f32[f + 2] = z
+    this.f32[f + 3] = u
+    this.f32[f + 4] = v
+    const b = this.count * STRIDE + 20
+    this.u8[b] = color[0]
+    this.u8[b + 1] = color[1]
+    this.u8[b + 2] = color[2]
+    this.u8[b + 3] = color[3]
+    this.u8[b + 4] = mode
+    this.u8[b + 5] = layer
+    return this.count++
+  }
+
+  tri(a: number, b: number, c: number): void {
+    this.lists[this.target].push(a, b, c)
+  }
+
+  quad(a: number, b: number, c: number, d: number): void {
+    this.tri(a, b, c)
+    this.tri(a, c, d)
+  }
+
+  /** Empty it for the next mesh, keeping the memory. */
+  reset(): void {
+    this.count = 0
+    this.lists.opaque.length = 0
+    this.lists.shadow.length = 0
+    this.target = "opaque"
+  }
+
+  finish(): Mesh {
+    const { opaque, shadow } = this.lists
+    const indices = new Uint32Array(opaque.length + shadow.length)
+    indices.set(opaque)
+    indices.set(shadow, opaque.length)
+    return { vertices: this.u8.slice(0, this.count * STRIDE), indices, opaque: opaque.length, shadow: shadow.length }
+  }
+
+  private grow() {
+    const next = new ArrayBuffer(this.bytes.byteLength * 2)
+    new Uint8Array(next).set(this.u8)
+    this.bytes = next
+    this.f32 = new Float32Array(next)
+    this.u8 = new Uint8Array(next)
+  }
+}
+
+/** Sprite texture array layers: cars, people, tree crowns, then the traffic light's parts. */
+export const Sprite = { car: 0, ped: 8, tree: 12, housing: 20, lamp: 21, glow: 22 } as const
+export const SPRITE_LAYERS = 23
+
+/** How much of its square layer each sprite fills (u, v), and so its aspect. */
+export type SpriteBoxes = ReadonlyArray<readonly [number, number]>
+
+/**
+ * A flat sprite quad at height z, centred at (x, y), turned by `angle` like a
+ * canvas rotate: `length` along the sprite's +u, `width` along +v.
+ */
+export const spriteQuad = (
+  m: MeshBuilder,
+  q: { readonly x: number; readonly y: number; readonly z: number; readonly angle: number; readonly length: number; readonly width: number },
+  layer: number,
+  box: readonly [number, number],
+  color: Rgba,
+  mode: Mode,
+): void => {
+  const c = Math.cos(q.angle)
+  const s = Math.sin(q.angle)
+  const hl = q.length / 2
+  const hw = q.width / 2
+  const corner = (lx: number, ly: number, u: number, v: number) => m.vertex(q.x + lx * c - ly * s, q.y + lx * s + ly * c, q.z, u, v, color, mode, layer)
+  m.quad(corner(-hl, -hw, 0, 0), corner(hl, -hw, box[0], 0), corner(hl, hw, box[0], box[1]), corner(-hl, hw, 0, box[1]))
+}
