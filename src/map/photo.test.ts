@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { buildingMasks, classifyGround, findCrowns, Ground, pavedMask, ridgeSide, sampleRoof, type Raster, type Rgb } from "./photo.ts"
+import { buildingMasks, classifyGround, cleanPaved, findCrowns, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
+import { eaves } from "./roof.ts"
+import { aisleBays, lotBays } from "./parking.ts"
 import { decodePng, encodePng } from "./png.ts"
 import { decodeCrowns, encodeCrowns } from "./crowns.ts"
 
@@ -20,27 +22,55 @@ const PAVED: Rgb = [205, 196, 182]
 const LIT_TILES: Rgb = [215, 120, 80]
 const SHADED_TILES: Rgb = [130, 70, 50]
 
-// A 20 × 8 m house, ridge running east-west at y = 14.
-const house = [10, 10, 30, 10, 30, 18, 10, 18]
+// A 20 × 8 m house, ridge running east-west at y = 14; walls: north, east, south, west.
+const house = [10, 10, 30, 10, 30, 18, 10, 18, 10, 10]
 
 describe("sampleRoof", () => {
-  it("reads the colour on each side of the ridge and calls a two-tone roof pitched", () => {
+  it("reads the colour of each roof plane and calls a two-tone roof pitched", () => {
     const photo = raster(40, 30, (_, y) => (y < 14 ? LIT_TILES : SHADED_TILES))
     const roof = sampleRoof(photo, house)
     expect(roof?.pitched).toBe(true)
-    // Half 0 is the side the ridge's left-hand normal points away from.
-    const north = ridgeSide(20, 11, 20, 14, 0)
-    expect(roof?.halves[north]).toEqual(LIT_TILES)
-    expect(roof?.halves[1 - north]).toEqual(SHADED_TILES)
+    // The long walls carry the planes; the short gable ends carry none.
+    expect(roof?.planes).toEqual([LIT_TILES, null, SHADED_TILES, null])
   })
 
   it("calls an even grey roof flat", () => {
     const roof = sampleRoof(raster(40, 30, () => [150, 150, 148]), house)
     expect(roof?.pitched).toBe(false)
+    expect(roof?.planes).toEqual([[150, 150, 148]])
   })
 
   it("ignores a footprint that only shows trees", () => {
     expect(sampleRoof(raster(40, 30, () => TREE), house)).toBeNull()
+  })
+})
+
+describe("eaves", () => {
+  it("gives each wing of an L its own planes and leaves the wing ends as gables", () => {
+    // Wing A runs east (0..20 × 0..10), wing B runs south (0..10 × 0..25).
+    const l = [0, 0, 20, 0, 20, 10, 10, 10, 10, 25, 0, 25, 0, 0]
+    expect(eaves(l, 10)).toEqual([true, false, true, true, false, true])
+  })
+
+  it("makes a square house hipped: every wall is an eave", () => {
+    expect(eaves([0, 0, 10, 0, 10, 10, 0, 10, 0, 0], 10)).toEqual([true, true, true, true])
+  })
+})
+
+describe("parking bays", () => {
+  it("lines both sides of an aisle with 2.5 m bays, cars pointing at the aisle", () => {
+    const bays = aisleBays([0, 0, 10, 0])
+    expect(bays).toHaveLength(8)
+    expect(new Set(bays.map((b) => Math.abs(b.y)))).toEqual(new Set([5.5]))
+    expect(Math.abs(Math.sin(bays[0]?.heading ?? 0))).toBeCloseTo(1)
+  })
+
+  it("fills a lot with rows that stay inside it", () => {
+    const lot = [0, 0, 30, 0, 30, 16, 0, 16, 0, 0]
+    const bays = lotBays(lot)
+    // Two rows back to back along the long side, then a 6 m aisle: 2 × 12 bays.
+    expect(bays).toHaveLength(24)
+    expect(bays.every((b) => b.x > 0 && b.x < 30 && b.y > 0 && b.y < 16)).toBe(true)
   })
 })
 
@@ -85,6 +115,22 @@ describe("classifyGround and findCrowns", () => {
     expect(alphaAt(4, 0)).toBe(255)
     // All roof: nothing to pave.
     expect(alphaAt(5, 0)).toBe(0)
+  })
+})
+
+describe("cleanPaved", () => {
+  it("fills cars in a lot, drops paved specks in a lawn and paves OSM parking", () => {
+    const w = 30
+    const ground = new Uint8Array(w * w).fill(Ground.lawn)
+    for (let y = 0; y < w; y++) for (let x = 15; x < w; x++) ground[y * w + x] = Ground.paved
+    ground[10 * w + 20] = Ground.tree // a dark car in the lot
+    ground[5 * w + 5] = Ground.paved // a stray paved pixel in the lawn
+    const parking = new Uint8Array(w * w)
+    parking[25 * w + 2] = 1
+    const clean = cleanPaved(ground, w, w, parking)
+    expect(clean[10 * w + 20]).toBe(Ground.paved)
+    expect(clean[5 * w + 5]).toBe(Ground.lawn)
+    expect(clean[25 * w + 2]).toBe(Ground.paved)
   })
 })
 

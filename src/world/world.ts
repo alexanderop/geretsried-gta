@@ -1,6 +1,7 @@
 import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
+import { CAR_LENGTH, CAR_WIDTH } from "#/sim/car.ts"
 
 const CELL = 32
 
@@ -31,9 +32,11 @@ export type World = {
 }
 
 export const makeWorld = (map: GameMap): World => {
+  // Buildings and parked cars are solid: anything that cannot be driven or walked through.
+  const solids = [...map.buildings.map((b) => b.pts), ...parkedOutlines(map.parked)]
   const buildingGrid = new Grid(map.width, map.height, CELL)
-  const buildingBoxes = map.buildings.map((b, i) => {
-    const box = boxOf(b.pts)
+  const buildingBoxes = solids.map((pts, i) => {
+    const box = boxOf(pts)
     buildingGrid.insert(i, box)
     return box
   })
@@ -61,10 +64,10 @@ export const makeWorld = (map: GameMap): World => {
   const isSolid = (x: number, y: number) => {
     for (const i of buildingGrid.at(x, y)) {
       const box = buildingBoxes[i]
-      const b = map.buildings[i]
-      if (box === undefined || b === undefined) continue
+      const pts = solids[i]
+      if (box === undefined || pts === undefined) continue
       if (x < box.minX || x > box.maxX || y < box.minY || y > box.maxY) continue
-      if (pointInPolygon(x, y, b.pts)) return true
+      if (pointInPolygon(x, y, pts)) return true
     }
     return false
   }
@@ -119,4 +122,20 @@ const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): nu
     if (d < best) best = d
   }
   return best
+}
+
+/** Footprints of the parked cars (flat [x, y, heading, ...]) as closed rectangles. */
+const parkedOutlines = (parked: ReadonlyArray<number>): Array<Array<number>> => {
+  const out: Array<Array<number>> = []
+  for (let i = 0; i + 2 < parked.length; i += 3) {
+    const x = parked[i] ?? 0
+    const y = parked[i + 1] ?? 0
+    const hx = Math.cos(parked[i + 2] ?? 0)
+    const hy = Math.sin(parked[i + 2] ?? 0)
+    const l = CAR_LENGTH / 2
+    const w = CAR_WIDTH / 2 - 0.1
+    const corner = (s: number, t: number) => [x + hx * l * s - hy * w * t, y + hy * l * s + hx * w * t]
+    out.push([...corner(1, 1), ...corner(1, -1), ...corner(-1, -1), ...corner(-1, 1), ...corner(1, 1)])
+  }
+  return out
 }

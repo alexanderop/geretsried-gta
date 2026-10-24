@@ -36,11 +36,17 @@ export const Road = Schema.Struct({
   oneway: Schema.Boolean,
   pts: Points,
   nodes: Schema.Array(Schema.Number),
+  /** A parking lot aisle (OSM service=parking_aisle): bays on both sides. */
+  aisle: Schema.optionalKey(Schema.Boolean),
 })
 export type Road = typeof Road.Type
 
-/** Roof colours read from the aerial photo: either side of the ridge (see `ridgeSide`), as #rrggbb. */
-export const Roof = Schema.Struct({ colors: Schema.Tuple([Schema.String, Schema.String]), pitched: Schema.Boolean })
+/**
+ * Roof colours read from the aerial photo, as #rrggbb: one per wall, the roof
+ * plane rising from it (null for a gable end; see src/map/roof.ts), or a single
+ * colour for a flat roof.
+ */
+export const Roof = Schema.Struct({ colors: Schema.Array(Schema.NullOr(Schema.String)), pitched: Schema.Boolean })
 export type Roof = typeof Roof.Type
 
 export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points, roof: Schema.optionalKey(Roof) })
@@ -93,6 +99,8 @@ export const GameMap = Schema.Struct({
   waterways: Schema.Array(Waterway),
   pois: Schema.Array(Poi),
   signals: Schema.Array(Signal),
+  /** Parked cars seen in the aerial photo, flat [x, y, heading, ...] (meters, radians). */
+  parked: Schema.Array(Schema.Number),
 })
 export type GameMap = typeof GameMap.Type
 

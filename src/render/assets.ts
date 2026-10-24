@@ -51,7 +51,7 @@ export type Assets = {
   readonly cars: ReadonlyArray<HTMLImageElement>
   /** Pedestrian sprites facing right; 0 is the player. */
   readonly peds: ReadonlyArray<HTMLImageElement>
-  /** Tree crowns and bushes seen from above, toned like the photo; see FOREST_TREES in chunks.ts. */
+  /** Tree crowns and bushes seen from above: sprite s in tone t is `s * TREE_TONES.length + t`. */
   readonly trees: ReadonlyArray<HTMLCanvasElement>
 }
 
@@ -81,12 +81,17 @@ type Rgb = readonly [number, number, number]
  * photo (sunlit lawn, tree crowns, paved ground), slightly toned so roads stay
  * darker than yards.
  */
-const PHOTO_TONES: Partial<Record<TextureName, Rgb>> = {
-  grass: [128, 136, 92],
-  asphalt: [196, 190, 181],
-  pavement: [206, 197, 184],
+const PHOTO_TONES: Partial<Record<TextureName, readonly [Rgb, number]>> = {
+  grass: [[128, 136, 92], 1],
+  asphalt: [[192, 188, 181], 0.35],
+  pavement: [[205, 199, 189], 0.3],
 }
-const TREE_TONE: Rgb = [88, 100, 62]
+/** Every tree sprite comes in these tones (dark green, olive, blue-green), so crowns vary like real ones. */
+export const TREE_TONES: ReadonlyArray<Rgb> = [
+  [62, 76, 46],
+  [84, 92, 56],
+  [58, 72, 50],
+]
 
 const canvasOf = (img: HTMLImageElement): readonly [HTMLCanvasElement, CanvasRenderingContext2D | null] => {
   const c = document.createElement("canvas")
@@ -97,10 +102,14 @@ const canvasOf = (img: HTMLImageElement): readonly [HTMLCanvasElement, CanvasRen
   return [c, ctx]
 }
 
-/** Shift an image's mean colour to `tone` (opaque pixels only), keeping its detail. */
-export const retint = (img: HTMLImageElement, tone: Rgb | undefined): HTMLCanvasElement => {
+/**
+ * Shift an image's mean colour to `tone` (opaque pixels only) and scale its
+ * detail by `contrast`: the photo's paving is smooth, the painted one speckled.
+ */
+export const retint = (img: HTMLImageElement, look: readonly [Rgb, number] | undefined): HTMLCanvasElement => {
   const [c, ctx] = canvasOf(img)
-  if (ctx === null || tone === undefined) return c
+  if (ctx === null || look === undefined) return c
+  const [tone, contrast] = look
   const data = ctx.getImageData(0, 0, c.width, c.height)
   const px = data.data
   const sum = [0, 0, 0]
@@ -111,7 +120,7 @@ export const retint = (img: HTMLImageElement, tone: Rgb | undefined): HTMLCanvas
     n++
   }
   for (let i = 0; i < px.length; i += 4) {
-    for (let k = 0; k < 3; k++) px[i + k] = (px[i + k] ?? 0) + (tone[k] ?? 0) - (sum[k] ?? 0) / Math.max(1, n)
+    for (let k = 0; k < 3; k++) px[i + k] = (tone[k] ?? 0) + ((px[i + k] ?? 0) - (sum[k] ?? 0) / Math.max(1, n)) * contrast
   }
   ctx.putImageData(data, 0, 0)
   return c
@@ -169,7 +178,7 @@ export const loadAssets = Effect.all(
     cars: Effect.all(Array.from({ length: CAR_MODELS }, (_, i) => sprite(`car-${i}`)), { concurrency: "unbounded" }),
     peds: Effect.all(Array.from({ length: PEDS }, (_, i) => sprite(`ped-${i}`)), { concurrency: "unbounded" }),
     trees: Effect.all(Array.from({ length: TREES }, (_, i) => sprite(`tree-${i}`)), { concurrency: "unbounded" }).pipe(
-      Effect.map((trees) => trees.map((img) => retint(img, TREE_TONE))),
+      Effect.map((trees) => trees.flatMap((img) => TREE_TONES.map((treeTone) => retint(img, [treeTone, 1])))),
     ),
   },
   { concurrency: "unbounded" },

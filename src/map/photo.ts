@@ -6,13 +6,13 @@
 import type { GameMap } from "./types.ts"
 import { GROUND_M_PER_PX } from "./types.ts"
 import { polygonArea } from "./build.ts"
-import { boxOf, centroid, distToSegmentSq, longestEdgeAngle, pointInPolygon } from "#/world/geometry.ts"
+import { boxOf, distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
+import { eaves, nearestWall, wallCount } from "./roof.ts"
+import { aisleBays, carCorners, lotBays, type Bay } from "./parking.ts"
 
-/** Pixels per meter of the aerial photo raster the importer works on. */
-export const PHOTO_PX_PER_M = 1
+import { PHOTO_PX_PER_M, type Raster } from "./raster.ts"
 
-/** An RGBA image in map space: pixel (x, y) covers meters [x, x+1) × [y, y+1). */
-export type Raster = { readonly width: number; readonly height: number; readonly rgba: Uint8Array }
+export { PHOTO_PX_PER_M, type Raster }
 
 export type Rgb = readonly [number, number, number]
 
@@ -71,61 +71,73 @@ const medianRgb = (raster: Raster, pixels: ReadonlyArray<number>): Rgb => [
   median(pixels.map((i) => raster.rgba[i * 4 + 2] ?? 0)),
 ]
 
-/** A roof as the photo shows it: the colour on either side of the ridge, and whether it is pitched. */
+/** A roof as the photo shows it. */
 export type RoofSample = {
-  /** Halves left and right of the ridge (the longest wall through the centroid), see `ridgeSide`. */
-  readonly halves: readonly [Rgb, Rgb]
+  /**
+   * Colour of the roof plane over each wall (see `nearestWall` in roof.ts);
+   * null for a gable end, which has no plane. One entry when the roof is flat.
+   */
+  readonly planes: ReadonlyArray<Rgb | null>
   readonly pitched: boolean
 }
 
-/**
- * Which half of the roof a point is on: 0 when it lies on the side of the
- * ridge that the ridge direction's left-hand normal (-dy, dx) points away from.
- */
-export const ridgeSide = (x: number, y: number, cx: number, cy: number, angle: number): 0 | 1 =>
-  (x - cx) * -Math.sin(angle) + (y - cy) * Math.cos(angle) > 0 ? 1 : 0
-
-const MIN_HALF_PX = 3
+const MIN_PLANE_PX = 3
 
 /**
- * Median roof colour on both sides of the ridge. Samples stay a meter inside
- * the footprint (the photo leans and walls blur), falling back to the whole
- * footprint for small sheds. Null when the roof is too small to read.
+ * Median roof colour of each roof plane. Samples stay a meter inside the
+ * footprint (the photo leans and walls blur), falling back to the whole
+ * footprint for small sheds. Null when the roof is too small to read or only
+ * shows green (a tree over it, or a footprint off the photo).
  */
 export const sampleRoof = (raster: Raster, pts: ReadonlyArray<number>): RoofSample | null => {
-  const angle = longestEdgeAngle(pts)
-  const [cx, cy] = centroid(pts)
+  if (wallCount(pts) < 3) return null
+  const all = polygonPixels(raster, pts, 0)
+  const centre = (i: number): readonly [number, number] => [
+    ((i % raster.width) + 0.5) / PHOTO_PX_PER_M,
+    (Math.floor(i / raster.width) + 0.5) / PHOTO_PX_PER_M,
+  ]
+  let deepest = 0
+  for (const i of all) {
+    const [x, y] = centre(i)
+    const wall = nearestWall(x, y, pts, () => true)
+    const d = distToSegmentSq(x, y, pts[wall * 2] ?? 0, pts[wall * 2 + 1] ?? 0, pts[wall * 2 + 2] ?? 0, pts[wall * 2 + 3] ?? 0)
+    deepest = Math.max(deepest, Math.sqrt(d))
+  }
+  const isEave = eaves(pts, deepest * 2 + 1 / PHOTO_PX_PER_M)
   for (const inset of [1, 0.4, 0]) {
-    const halves: [Array<number>, Array<number>] = [[], []]
-    for (const i of polygonPixels(raster, pts, inset)) {
-      const x = ((i % raster.width) + 0.5) / PHOTO_PX_PER_M
-      const y = (Math.floor(i / raster.width) + 0.5) / PHOTO_PX_PER_M
-      halves[ridgeSide(x, y, cx, cy, angle)].push(i)
+    const pixels = inset === 0 ? all : polygonPixels(raster, pts, inset)
+    if (pixels.length < MIN_PLANE_PX * 2) continue
+    const whole = medianRgb(raster, pixels)
+    if (isGreen(whole)) return null
+    const groups = isEave.map((): Array<number> => [])
+    for (const i of pixels) {
+      const [x, y] = centre(i)
+      groups[nearestWall(x, y, pts, (w) => isEave[w] === true)]?.push(i)
     }
-    if (halves[0].length < MIN_HALF_PX || halves[1].length < MIN_HALF_PX) continue
-    const a = medianRgb(raster, halves[0])
-    const b = medianRgb(raster, halves[1])
-    // Green is a tree over the roof or a footprint off the photo: not a roof colour.
-    if (isGreen(a) && isGreen(b)) return null
-    const [ra, rb] = isGreen(a) ? [b, b] : isGreen(b) ? [a, a] : [a, b]
-    return { halves: [ra, rb], pitched: isPitched(ra, rb, polygonArea(pts)) }
+    const planes = groups.map((group, w) => {
+      if (isEave[w] !== true) return null
+      if (group.length < MIN_PLANE_PX) return whole
+      const color = medianRgb(raster, group)
+      return isGreen(color) ? whole : color
+    })
+    return isPitched(planes, whole, polygonArea(pts)) ? { planes, pitched: true } : { planes: [whole], pitched: false }
   }
   return null
 }
 
 /**
- * A pitched roof shows one lit and one shaded half; tiles are warm (orange,
- * red, brown). Flat roofs are even and grey. A grey pitched roof whose ridge
- * runs along the sun reads flat, which only costs it the ridge line.
+ * A pitched roof shows lit and shaded planes; tiles are warm (orange, red,
+ * brown). Flat roofs are even and grey. A grey pitched roof whose ridge runs
+ * along the sun reads flat, which only costs it its planes.
  */
-export const isPitched = (a: Rgb, b: Rgb, area: number): boolean => {
-  const [r, g, bl] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]
-  if (r > g + 12 && r > bl + 25) return true
-  // On a big footprint, uneven halves are more likely two different roofs.
+export const isPitched = (planes: ReadonlyArray<Rgb | null>, whole: Rgb, area: number): boolean => {
+  const [r, g, b] = whole
+  if (r > g + 12 && r > b + 25) return true
+  // On a big footprint, uneven planes are more likely different roofs.
   if (area > BIG_ROOF_M2) return false
-  const la = luma(a)
-  const lb = luma(b)
-  return Math.abs(la - lb) > 0.12 * Math.max(la, lb)
+  const lumas = planes.flatMap((p) => (p === null ? [] : [luma(p)]))
+  const max = Math.max(...lumas)
+  return max - Math.min(...lumas) > 0.12 * max
 }
 
 const BIG_ROOF_M2 = 900
@@ -230,8 +242,8 @@ export const findCrowns = (ground: Uint8Array, width: number, height: number): A
     const y = Math.floor(i / width)
     const r = Math.min(MAX_CROWN_R * PHOTO_PX_PER_M, (dist[i] ?? 0) + 1)
     crowns.push([(x + 0.5) / PHOTO_PX_PER_M, (y + 0.5) / PHOTO_PX_PER_M, r / PHOTO_PX_PER_M])
-    // Crowns may overlap a little, like real canopies; centres keep apart.
-    const keep = r * 1.1
+    // Crowns overlap a little, like real canopies; centres keep well apart.
+    const keep = r * 1.4
     for (let dy = -Math.ceil(keep); dy <= keep; dy++) {
       for (let dx = -Math.ceil(keep); dx <= keep; dx++) {
         const tx = x + dx
@@ -306,6 +318,56 @@ export const pavedMask = (ground: Uint8Array, width: number, height: number, cel
   return { width: w, height: h, rgba }
 }
 
+/** Binary box dilation (`grow`) or erosion of a 0/1 mask by `r` pixels, with summed-area counts. */
+const morph = (mask: Uint8Array, width: number, height: number, r: number, grow: boolean): Uint8Array => {
+  const sum = new Int32Array((width + 1) * (height + 1))
+  for (let y = 0; y < height; y++) {
+    let row = 0
+    for (let x = 0; x < width; x++) {
+      row += mask[y * width + x] ?? 0
+      sum[(y + 1) * (width + 1) + x + 1] = (sum[y * (width + 1) + x + 1] ?? 0) + row
+    }
+  }
+  const out = new Uint8Array(width * height)
+  for (let y = 0; y < height; y++) {
+    const y0 = Math.max(0, y - r)
+    const y1 = Math.min(height, y + r + 1)
+    for (let x = 0; x < width; x++) {
+      const x0 = Math.max(0, x - r)
+      const x1 = Math.min(width, x + r + 1)
+      const n =
+        (sum[y1 * (width + 1) + x1] ?? 0) - (sum[y0 * (width + 1) + x1] ?? 0) - (sum[y1 * (width + 1) + x0] ?? 0) + (sum[y0 * (width + 1) + x0] ?? 0)
+      out[y * width + x] = grow ? (n > 0 ? 1 : 0) : n === (x1 - x0) * (y1 - y0) ? 1 : 0
+    }
+  }
+  return out
+}
+
+/**
+ * Paved ground as clean shapes: yards and lots are uniform and end at hard
+ * edges, while pixel classes are speckled (cars, weeds, shade). Closing fills
+ * the cars and cracks, opening drops paved specks in lawns. `parking` pixels
+ * (OSM lots) are paved whatever the photo says. Buildings count as paved so
+ * yards run up to the walls.
+ */
+export const cleanPaved = (ground: Uint8Array, width: number, height: number, parking: Uint8Array): Uint8Array => {
+  const paved = new Uint8Array(width * height)
+  for (let i = 0; i < paved.length; i++) {
+    const g = ground[i]
+    paved[i] = g === Ground.paved || g === Ground.building || parking[i] === 1 ? 1 : 0
+  }
+  const closed = morph(morph(paved, width, height, 1, true), width, height, 1, false)
+  const opened = morph(morph(closed, width, height, 2, false), width, height, 2, true)
+  const out = new Uint8Array(ground)
+  for (let i = 0; i < out.length; i++) {
+    const g = out[i]
+    if (g === Ground.building || g === Ground.forest) continue
+    if (opened[i] === 1 || parking[i] === 1) out[i] = Ground.paved
+    else if (g === Ground.paved) out[i] = Ground.lawn
+  }
+  return out
+}
+
 const hex = ([r, g, b]: Rgb) => `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`
 
 /**
@@ -320,12 +382,89 @@ export const readPhoto = (
   const { width, height } = raster
   const buildings = map.buildings.map((b) => {
     const roof = sampleRoof(raster, b.pts)
-    return roof === null ? b : { ...b, roof: { colors: [hex(roof.halves[0]), hex(roof.halves[1])] as const, pitched: roof.pitched } }
+    return roof === null ? b : { ...b, roof: { colors: roof.planes.map((p) => (p === null ? null : hex(p))), pitched: roof.pitched } }
   })
   const skip = new Uint8Array(width * height)
   for (const area of map.areas) {
     if (area.kind === "forest" || area.kind === "water" || area.kind === "farmland") for (const i of polygonPixels(raster, area.pts)) skip[i] = 1
   }
+  const parking = new Uint8Array(width * height)
+  for (const area of map.areas) {
+    if (area.kind === "parking") for (const i of polygonPixels(raster, area.pts)) parking[i] = 1
+  }
   const ground = classifyGround(raster, { ...buildingMasks(width, height, map.buildings), skip })
-  return { map: { ...map, buildings }, crowns: findCrowns(ground, width, height), paved: pavedMask(ground, width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M) }
+  const paved = pavedMask(cleanPaved(ground, width, height, parking), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
+  const parked = findParkedCars(map, raster, ground).flatMap((b) => [round1(b.x), round1(b.y), Math.round(b.heading * 100) / 100])
+  return { map: { ...map, buildings, parked }, crowns: findCrowns(ground, width, height), paved }
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+/**
+ * Share of bays with a car. At 1 m per pixel a car is a handful of pixels,
+ * too few to tell from a shadow or an oil stain, so occupancy is a fixed
+ * share, picked per bay by a hash of its position.
+ */
+const OCCUPANCY = 0.7
+
+const occupied = (b: Bay) => {
+  let h = Math.imul(Math.round(b.x * 10), 374761393) ^ Math.imul(Math.round(b.y * 10), 668265263)
+  h = Math.imul(h ^ (h >>> 13), 1274126177)
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296 < OCCUPANCY
+}
+
+/**
+ * Cars in parking lots: bays along every parking aisle and rows in lots
+ * without mapped aisles. Bays the photo shows as a building or lawn, or that
+ * reach onto a street or an earlier bay, are dropped.
+ */
+export const findParkedCars = (map: GameMap, raster: Raster, ground: Uint8Array): Array<Bay> => {
+  const { width, height } = raster
+  const blocked = new Uint8Array(width * height)
+  for (const r of map.roads) {
+    if (r.aisle === true || r.kind === "footway" || r.kind === "track") continue
+    paintStroke(blocked, width, height, r.pts, r.width / 2 + 0.5)
+  }
+  const aisles = map.roads.filter((r) => r.aisle === true)
+  const lots = map.areas.filter((a) => a.kind === "parking")
+  const candidates = [
+    ...aisles.flatMap((r) => aisleBays(r.pts)),
+    ...lots.filter((lot) => !aisles.some((r) => r.pts.length >= 2 && pointInPolygon(r.pts[0] ?? 0, r.pts[1] ?? 0, lot.pts))).flatMap((lot) => lotBays(lot.pts)),
+  ]
+  const px = (x: number, y: number) => {
+    const ix = Math.floor(x * PHOTO_PX_PER_M)
+    const iy = Math.floor(y * PHOTO_PX_PER_M)
+    return ix >= 0 && iy >= 0 && ix < width && iy < height ? iy * width + ix : -1
+  }
+  const cars: Array<Bay> = []
+  for (const bay of candidates) {
+    const centre = px(bay.x, bay.y)
+    if (centre < 0 || blocked[centre] === 1) continue
+    const corners = carCorners(bay, 1.8, 4.4).map(([x, y]) => px(x, y))
+    if (corners.some((i) => i < 0 || blocked[i] === 1 || ground[i] === Ground.building)) continue
+    if (corners.filter((i) => ground[i] === Ground.lawn).length > 1) continue
+    if (!occupied(bay)) continue
+    cars.push(bay)
+    const hx = Math.cos(bay.heading) * 1.8
+    const hy = Math.sin(bay.heading) * 1.8
+    paintStroke(blocked, width, height, [bay.x - hx, bay.y - hy, bay.x + hx, bay.y + hy], 0.9)
+  }
+  return cars
+}
+
+/** Set every pixel within `radius` meters of the polyline. */
+const paintStroke = (mask: Uint8Array, width: number, height: number, pts: ReadonlyArray<number>, radius: number) => {
+  const rSq = (radius * PHOTO_PX_PER_M) ** 2
+  for (let i = 0; i + 3 < pts.length; i += 2) {
+    const ax = (pts[i] ?? 0) * PHOTO_PX_PER_M
+    const ay = (pts[i + 1] ?? 0) * PHOTO_PX_PER_M
+    const bx = (pts[i + 2] ?? 0) * PHOTO_PX_PER_M
+    const by = (pts[i + 3] ?? 0) * PHOTO_PX_PER_M
+    const pad = radius * PHOTO_PX_PER_M
+    for (let y = Math.max(0, Math.floor(Math.min(ay, by) - pad)); y <= Math.min(height - 1, Math.ceil(Math.max(ay, by) + pad)); y++) {
+      for (let x = Math.max(0, Math.floor(Math.min(ax, bx) - pad)); x <= Math.min(width - 1, Math.ceil(Math.max(ax, bx) + pad)); x++) {
+        if (distToSegmentSq(x + 0.5, y + 0.5, ax, ay, bx, by) <= rSq) mask[y * width + x] = 1
+      }
+    }
+  }
 }

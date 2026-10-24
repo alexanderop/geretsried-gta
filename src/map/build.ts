@@ -129,6 +129,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
         oneway: tags.oneway === "yes" || tags.junction === "roundabout",
         pts: flat(way.geometry),
         nodes: [...way.nodes],
+        ...(tags.service === "parking_aisle" ? { aisle: true } : {}),
       })
     } else if (tags.building !== undefined) {
       const levels = Number(tags["building:levels"])
@@ -172,6 +173,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
     waterways,
     pois,
     signals,
+    parked: [],
   }
 }
 

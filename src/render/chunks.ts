@@ -1,9 +1,11 @@
 import type { AreaKind, Building } from "#/map/types.ts"
 import { polygonArea } from "#/map/build.ts"
 import type { World } from "#/world/world.ts"
-import { boxOf, centroid, longestEdgeAngle, type Box } from "#/world/geometry.ts"
+import { boxOf, centroid, distToSegmentSq, longestEdgeAngle, pointInPolygon, type Box } from "#/world/geometry.ts"
+import { nearestWall } from "#/map/roof.ts"
+import { CAR_LENGTH } from "#/sim/car.ts"
 import { Grid } from "#/world/grid.ts"
-import { TEXTURES, silhouette, type Assets, type RoofTexture, type TextureName } from "./assets.ts"
+import { TEXTURES, TREE_TONES, silhouette, type Assets, type RoofTexture, type TextureName } from "./assets.ts"
 import { GROUND, ROAD_COLORS } from "./palette.ts"
 import { GROUND_M_PER_PX } from "#/map/types.ts"
 import { SHADOW_DIR, SHADOW_PER_M, buildingHeight } from "#/map/photo.ts"
@@ -13,6 +15,9 @@ export const CHUNK_M = 128
 export const BAKE_PX_PER_M = 6
 const CHUNK_PX = CHUNK_M * BAKE_PX_PER_M
 const MAX_CHUNKS = 64
+
+/** Both sidewalks together, in meters: pedestrians walk 1 m outside the asphalt. */
+const SIDEWALKS = 2.6
 
 const STREETS = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
 const MARKED = new Set(["primary", "secondary", "tertiary"])
@@ -44,8 +49,15 @@ export class ChunkCache {
   private readonly map: World["map"]
   /** Photo tree crowns by the chunk(s) they touch. */
   private readonly crowns = new Map<string, Array<number>>()
+  /** Parked cars (index into map.parked / 3) by the chunk(s) they touch. */
+  private readonly parked = new Map<string, Array<number>>()
+  private readonly carShadows: ReadonlyArray<HTMLCanvasElement>
   /** Scratch layer for masked and see-through passes, reused by every bake. */
   private readonly layer = document.createElement("canvas")
+  /** Photo roof planes of the chunk being baked, see `paintPlanes`. */
+  private readonly planes = document.createElement("canvas")
+  /** The chunk's paved-ground mask at MASK_PX_PER_M, see `drawPaved`. */
+  private readonly mask = document.createElement("canvas")
 
   constructor(
     private readonly world: World,
@@ -54,6 +66,7 @@ export class ChunkCache {
     const map = world.map
     this.map = map
     this.treeShadows = assets.trees.map(silhouette)
+    this.carShadows = assets.cars.map(silhouette)
     const index = <T extends { readonly pts: ReadonlyArray<number> }>(items: ReadonlyArray<T>, pad: (t: T) => number) => {
       const grid = new Grid(map.width, map.height, CHUNK_M)
       items.forEach((item, i) => grid.insert(i, boxOf(item.pts, pad(item))))
@@ -65,20 +78,15 @@ export class ChunkCache {
     this.waterways = index(map.waterways, (w) => w.width)
     this.layer.width = CHUNK_PX
     this.layer.height = CHUNK_PX
+    this.mask.width = CHUNK_M * MASK_PX_PER_M
+    this.mask.height = CHUNK_M * MASK_PX_PER_M
+    this.planes.width = CHUNK_M * ROOF_PX_PER_M
+    this.planes.height = CHUNK_M * ROOF_PX_PER_M
     const { xs, ys, rs } = assets.crowns
     for (let i = 0; i < rs.length; i++) {
-      const x = (xs[i] ?? 0) / 10
-      const y = (ys[i] ?? 0) / 10
-      const reach = (rs[i] ?? 0) / 10 + CROWN_SHADOW_M
-      for (let cy = Math.floor((y - reach) / CHUNK_M); cy <= Math.floor((y + reach) / CHUNK_M); cy++) {
-        for (let cx = Math.floor((x - reach) / CHUNK_M); cx <= Math.floor((x + reach) / CHUNK_M); cx++) {
-          const key = `${cx},${cy}`
-          const list = this.crowns.get(key)
-          if (list === undefined) this.crowns.set(key, [i])
-          else list.push(i)
-        }
-      }
+      bucket(this.crowns, i, (xs[i] ?? 0) / 10, (ys[i] ?? 0) / 10, (rs[i] ?? 0) / 10 + CROWN_SHADOW_M)
     }
+    for (let i = 0; i * 3 < map.parked.length; i++) bucket(this.parked, i, map.parked[i * 3] ?? 0, map.parked[i * 3 + 1] ?? 0, CAR_LENGTH)
   }
 
   /** The baked chunk, or null if `budget` says not to bake more this frame. */
@@ -177,14 +185,14 @@ export class ChunkCache {
     for (const i of roadIds) {
       const r = road(i)
       if (r === undefined || !STREETS.has(r.kind)) continue
-      ctx.lineWidth = r.width + 4.6
+      ctx.lineWidth = r.width + SIDEWALKS + 0.5
       strokeLine(ctx, r.pts)
     }
     ctx.strokeStyle = pattern("pavement")
     for (const i of roadIds) {
       const r = road(i)
       if (r === undefined || !STREETS.has(r.kind)) continue
-      ctx.lineWidth = r.width + 4
+      ctx.lineWidth = r.width + SIDEWALKS
       strokeLine(ctx, r.pts)
     }
     ctx.strokeStyle = "#8d887c"
@@ -211,11 +219,13 @@ export class ChunkCache {
     }
     ctx.setLineDash([])
 
+    this.drawParked(ctx, cx, cy)
     const buildingIds = ids(this.buildings)
     this.drawShadows(ctx, box, buildingIds)
+    this.paintPlanes(box, buildingIds)
     for (const i of buildingIds) {
       const b = map.buildings[i]
-      if (b !== undefined) this.drawRoof(ctx, b, pattern)
+      if (b !== undefined) this.drawRoof(ctx, box, b, pattern)
     }
     this.drawForest(ctx, box)
     this.drawCrowns(ctx, cx, cy)
@@ -224,7 +234,7 @@ export class ChunkCache {
 
   /** A fresh scratch layer with the chunk's map transform. */
   private scratch(box: Box): CanvasRenderingContext2D | null {
-    const ctx = this.layer.getContext("2d", { willReadFrequently: true })
+    const ctx = this.layer.getContext("2d")
     if (ctx === null) return null
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.globalCompositeOperation = "source-over"
@@ -245,18 +255,23 @@ export class ChunkCache {
    * paved ground, through the ground mask (scaled up smoothly, so edges stay soft).
    */
   private drawPaved(ctx: CanvasRenderingContext2D, box: Box, pattern: (name: TextureName) => CanvasPattern | string) {
+    const maskCtx = this.mask.getContext("2d", { willReadFrequently: true })
     const layer = this.scratch(box)
-    if (layer === null) return
+    if (layer === null || maskCtx === null) return
+    // Upscale the 2 m mask smoothly to 0.5 m, then steepen alpha into a hard edge;
+    // the final upscale to the bake resolution only softens it by a pixel or two.
+    const side = this.mask.width
     const px = CHUNK_M / GROUND_M_PER_PX
-    layer.drawImage(this.assets.ground, box.minX / GROUND_M_PER_PX, box.minY / GROUND_M_PER_PX, px, px, box.minX, box.minY, CHUNK_M, CHUNK_M)
-    // The smooth upscale blurs edges over 2 m; steepen alpha back into a crisp but anti-aliased edge.
-    const mask = layer.getImageData(0, 0, CHUNK_PX, CHUNK_PX)
+    maskCtx.clearRect(0, 0, side, side)
+    maskCtx.drawImage(this.assets.ground, box.minX / GROUND_M_PER_PX, box.minY / GROUND_M_PER_PX, px, px, 0, 0, side, side)
+    const mask = maskCtx.getImageData(0, 0, side, side)
     const alpha = mask.data
     for (let i = 3; i < alpha.length; i += 4) alpha[i] = ((alpha[i] ?? 0) - 110) * 4
-    layer.putImageData(mask, 0, 0)
-    layer.globalCompositeOperation = "source-in"
+    maskCtx.putImageData(mask, 0, 0)
     layer.fillStyle = pattern("pavement")
     layer.fillRect(box.minX, box.minY, CHUNK_M, CHUNK_M)
+    layer.globalCompositeOperation = "destination-in"
+    layer.drawImage(this.mask, box.minX, box.minY, CHUNK_M, CHUNK_M)
     this.flush(ctx, box, 1)
   }
 
@@ -298,12 +313,56 @@ export class ChunkCache {
   }
 
   /**
-   * Roofs. With a colour from the aerial photo, each side of the ridge (the
-   * longest wall through the centre) gets its measured colour, which already
-   * carries the photo's lit and shaded halves; the texture only adds tile
-   * detail. Without one, a texture picked by hash and fake lighting.
+   * Roof planes with colours from the aerial photo, painted pixel by pixel
+   * (ROOF_PX_PER_M) into the `planes` layer: each point takes the colour of
+   * its nearest eave (src/map/roof.ts), so L and T blocks get a ridge per wing.
+   * A thin fringe outside each footprint keeps the clipped edges solid.
    */
-  private drawRoof(ctx: CanvasRenderingContext2D, b: Building, pattern: (name: TextureName, angle?: number) => CanvasPattern | string) {
+  private paintPlanes(box: Box, buildingIds: ReadonlyArray<number>) {
+    const ctx = this.planes.getContext("2d")
+    if (ctx === null) return
+    const side = CHUNK_M * ROOF_PX_PER_M
+    const image = ctx.createImageData(side, side)
+    const px = image.data
+    const fringeSq = (1.5 / ROOF_PX_PER_M) ** 2
+    for (const fringe of [false, true]) {
+      for (const id of buildingIds) {
+        const b = this.map.buildings[id]
+        const colors = b?.roof?.colors
+        if (b === undefined || colors === undefined) continue
+        const rgb = colors.map((c) => (c === null ? null : parseHex(c)))
+        const flat = rgb.length === 1 ? rgb[0] : undefined
+        const bb = boxOf(b.pts, 1)
+        const x0 = Math.max(0, Math.floor((bb.minX - box.minX) * ROOF_PX_PER_M))
+        const x1 = Math.min(side, Math.ceil((bb.maxX - box.minX) * ROOF_PX_PER_M))
+        const y0 = Math.max(0, Math.floor((bb.minY - box.minY) * ROOF_PX_PER_M))
+        const y1 = Math.min(side, Math.ceil((bb.maxY - box.minY) * ROOF_PX_PER_M))
+        for (let py = y0; py < y1; py++) {
+          for (let qx = x0; qx < x1; qx++) {
+            const at = (py * side + qx) * 4
+            if (fringe && px[at + 3] !== 0) continue
+            const x = box.minX + (qx + 0.5) / ROOF_PX_PER_M
+            const y = box.minY + (py + 0.5) / ROOF_PX_PER_M
+            if (fringe ? nearestWallDistSq(x, y, b.pts) > fringeSq : !pointInPolygon(x, y, b.pts)) continue
+            const c = flat ?? rgb[nearestWall(x, y, b.pts, (w) => rgb[w] !== null)]
+            if (c === undefined || c === null) continue
+            px[at] = c[0]
+            px[at + 1] = c[1]
+            px[at + 2] = c[2]
+            px[at + 3] = 255
+          }
+        }
+      }
+    }
+    ctx.putImageData(image, 0, 0)
+  }
+
+  /**
+   * Roofs. With colours from the aerial photo: the painted planes, which
+   * already carry the photo's lit and shaded sides, plus tile detail from a
+   * texture. Without: a texture picked by hash and fake lighting.
+   */
+  private drawRoof(ctx: CanvasRenderingContext2D, box: Box, b: Building, pattern: (name: TextureName, angle?: number) => CanvasPattern | string) {
     const angle = longestEdgeAngle(b.pts)
     const [cx, cy] = centroid(b.pts)
     const dx = Math.cos(angle)
@@ -344,17 +403,13 @@ export class ChunkCache {
     ctx.clip()
     const roof = b.roof
     if (roof !== undefined) {
-      ctx.fillStyle = roof.colors[0]
-      half(-1)
-      ctx.fillStyle = roof.colors[1]
-      half(1)
+      ctx.drawImage(this.planes, box.minX, box.minY, CHUNK_M, CHUNK_M)
       const texture: RoofTexture = roof.pitched ? "roofOrange" : "roofFlat"
       ctx.globalCompositeOperation = "overlay"
       ctx.fillStyle = this.detailPattern(ctx, texture, angle)
       ctx.fillRect(cx - far, cy - far, far * 2, far * 2)
       ctx.globalCompositeOperation = "source-over"
-      if (roof.pitched) ridge("rgba(255,240,220,0.35)", 0.25)
-      else rim("rgba(255,255,255,0.3)")
+      if (!roof.pitched) rim("rgba(255,255,255,0.3)")
     } else {
       const area = polygonArea(b.pts)
       const hash = Math.abs(Math.imul(b.id, 2654435761)) / 2 ** 32
@@ -389,6 +444,27 @@ export class ChunkCache {
     return p
   }
 
+  /** Parked cars from the photo, each a random model, nose either way. */
+  private drawParked(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+    const { parked } = this.map
+    for (const pass of ["shadow", "car"] as const) {
+      for (const i of this.parked.get(`${cx},${cy}`) ?? []) {
+        const model = PARKED_MODELS[Math.floor(hash2(i, 1, 9) * PARKED_MODELS.length)] ?? 0
+        const img = pass === "shadow" ? this.carShadows[model] : this.assets.cars[model]
+        if (img === undefined) continue
+        const length = CAR_LENGTH * 1.08
+        const width = (length * img.height) / img.width
+        const off = pass === "shadow" ? 0.5 : 0
+        ctx.save()
+        ctx.translate((parked[i * 3] ?? 0) + SHADOW_DIR[0] * off, (parked[i * 3 + 1] ?? 0) + SHADOW_DIR[1] * off)
+        ctx.rotate((parked[i * 3 + 2] ?? 0) + (hash2(i, 2, 9) < 0.5 ? Math.PI : 0))
+        ctx.globalAlpha = pass === "shadow" ? SHADOW_ALPHA : 1
+        ctx.drawImage(img, -length / 2, -width / 2, length, width)
+        ctx.restore()
+      }
+    }
+  }
+
   /** Forest trees on a fixed 7 m jittered grid in map space, so neighbouring chunks agree on border trees. */
   private drawForest(ctx: CanvasRenderingContext2D, box: Box) {
     const { world } = this
@@ -402,7 +478,7 @@ export class ChunkCache {
         if (world.areaAt(x, y) !== "forest") continue
         const size = 9 + hash2(gx, gy, 5) * 7
         if (world.roadAt(x, y, size * 0.3 + 1) !== null || world.isWater(x, y) || world.isSolid(x, y)) continue
-        const sprite = FOREST_TREES[Math.floor(hash2(gx, gy, 4) * FOREST_TREES.length)] ?? 0
+        const sprite = tinted(FOREST_TREES[Math.floor(hash2(gx, gy, 4) * FOREST_TREES.length)] ?? 0, hash2(gx, gy, 7))
         trees.push({ x, y, size, sprite, turn: hash2(gx, gy, 6) * Math.PI * 2 })
       }
     }
@@ -416,13 +492,13 @@ export class ChunkCache {
     for (const i of this.crowns.get(`${cx},${cy}`) ?? []) {
       const r = (rs[i] ?? 0) / 10
       const h = hash2(i, 0, 7)
-      const pool = r < 2.6 ? SMALL_CROWNS : CROWNS
+      const pool = r < 3.6 ? SMALL_CROWNS : CROWNS
       trees.push({
         x: (xs[i] ?? 0) / 10,
         y: (ys[i] ?? 0) / 10,
         // Sprites have a soft rim; the photo measures the dense part of the crown.
-        size: r * 2 * 1.25,
-        sprite: pool[Math.floor(h * pool.length)] ?? 0,
+        size: r * 2 * 1.2,
+        sprite: tinted(pool[Math.floor(h * pool.length)] ?? 0, hash2(i, 0, 9)),
         turn: hash2(i, 0, 8) * Math.PI * 2,
       })
     }
@@ -452,13 +528,52 @@ export class ChunkCache {
 
 type Tree = { readonly x: number; readonly y: number; readonly size: number; readonly sprite: number; readonly turn: number }
 
+/** Index into `assets.trees` of sprite `sprite` in a tone picked by `h` (0..1). */
+const tinted = (sprite: number, h: number) => sprite * TREE_TONES.length + Math.floor(h * TREE_TONES.length)
+
 /** Sprite indices in trees.png: 0 beech, 1 spruce, 2 birch, 3 apple, 4 bush, 5 thuja, 6 maple, 7 shrub. */
 const FOREST_TREES = [0, 1, 1, 1, 6]
 /** Town trees are mostly broad-leaved; small crowns are bushes and hedges. */
 const CROWNS = [0, 0, 0, 1, 2, 3, 6, 6]
-const SMALL_CROWNS = [3, 4, 5, 7]
+const SMALL_CROWNS = [0, 4, 5, 5]
+/**
+ * Car sprites 0 blue, 1 grey, 2 silver-white, 3 red, 4 black, 5 teal, 6 orange,
+ * 7 yellow, weighted like the cars parked in German towns: mostly grey, black and white, never orange or yellow.
+ */
+const PARKED_MODELS = [1, 1, 1, 2, 2, 2, 4, 4, 4, 0, 0, 3, 5]
+
 /** How far a crown's shadow can reach past its radius, in meters. */
 const CROWN_SHADOW_M = 8
+
+/** Add item `i` at (x, y) to the list of every chunk within `reach` meters. */
+const bucket = (chunks: Map<string, Array<number>>, i: number, x: number, y: number, reach: number) => {
+  for (let cy = Math.floor((y - reach) / CHUNK_M); cy <= Math.floor((y + reach) / CHUNK_M); cy++) {
+    for (let cx = Math.floor((x - reach) / CHUNK_M); cx <= Math.floor((x + reach) / CHUNK_M); cx++) {
+      const key = `${cx},${cy}`
+      const list = chunks.get(key)
+      if (list === undefined) chunks.set(key, [i])
+      else list.push(i)
+    }
+  }
+}
+
+/** Resolution of the roof plane layer; the bake scales it up smoothly. */
+const ROOF_PX_PER_M = 2
+/** Resolution at which the paved mask gets its hard edge. */
+const MASK_PX_PER_M = 2
+
+const parseHex = (hex: string): readonly [number, number, number] => {
+  const n = Number.parseInt(hex.slice(1), 16)
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
+}
+
+const nearestWallDistSq = (x: number, y: number, pts: ReadonlyArray<number>) => {
+  let best = Infinity
+  for (let i = 0; i + 3 < pts.length; i += 2) {
+    best = Math.min(best, distToSegmentSq(x, y, pts[i] ?? 0, pts[i + 1] ?? 0, pts[i + 2] ?? 0, pts[i + 3] ?? 0))
+  }
+  return best
+}
 
 /** Building and tree shadows: a cool dark, about as deep as in the photo. */
 const SHADOW_COLOR = "rgb(14,22,40)"

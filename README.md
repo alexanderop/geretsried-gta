@@ -25,17 +25,25 @@ OSM has shapes but almost no looks, so `pnpm map` also reads the Bavarian DOP40 
 (`scripts/dop40.ts`: 42 WMS tiles at 1 m/px, cached in `data/dop40/`) inside the OSM geometry
 (`src/map/photo.ts`):
 
-- **Roofs**: the median colour on each side of the ridge (the longest wall), stored per building
-  as `roof.colors`, plus `roof.pitched` (warm tiles or a lit and a shaded half). The renderer paints
-  the two halves in those colours and only adds tile detail from the texture.
+- **Roofs**: one median colour per roof plane, stored per building as `roof.colors`, plus `roof.pitched`.
+  Every eave owns the part of the roof nearest to it (`src/map/roof.ts`), so long blocks split along
+  the ridge, each wing of an L or T gets its own ridge, and short wing ends stay gables. Flat roofs
+  keep one colour. The renderer paints the planes in those colours and adds tile detail from a texture.
 - **Shadows**: their direction and length (`SHADOW_DIR`, `SHADOW_PER_M`) were measured in the photo,
   so buildings, trees and cars cast them the way the photo shows (towards the north-east).
 - **Trees**: green-and-dark (or green-and-rough) pixels outside forests, fields and building shadows,
-  covered with round crowns, biggest first → `public/trees.bin` (~230k crowns, 5 bytes each).
-- **Paved ground**: grey pixels (yards, driveways, parking) as the alpha of `public/ground.png`
-  (2 m/px), which the renderer uses as a mask for the pavement texture.
+  covered with round crowns, biggest first → `public/trees.bin` (~150k crowns, 5 bytes each). Each
+  crown gets one of three tones so they vary.
+- **Paved ground**: grey pixels (yards, driveways, parking) plus OSM parking lots, cleaned into hard
+  shapes (closing fills cars, opening drops specks), as the alpha of `public/ground.png` (2 m/px). The
+  renderer gives the mask a hard edge and fills it with smooth light paving.
+- **Parked cars** (`src/map/parking.ts`): 2.5 × 5 m bays along every OSM parking aisle and in rows
+  filling lots without mapped aisles, minus bays the photo shows as lawn or building or that reach a
+  street; 70 % hold a car (`parked` in the map JSON). At 1 m per pixel the photo cannot tell a car from
+  a shadow, so which bays are taken is a hash. Parked cars are solid.
 
-Lawn, pavement, asphalt and tree sprites are re-toned at load to the median colours measured in the photo.
+Lawn, pavement, asphalt and tree sprites are re-toned at load to the median colours measured in the photo;
+paving and asphalt also lose most of their painted speckle.
 
 ## What is in the town
 
@@ -72,6 +80,6 @@ The game starts at Sudetenstraße 19 (`START` in `src/sim/game.ts`).
 
 Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the Open Database License (ODbL). `public/geretsried.map.json` is a derived database and stays under the ODbL.
 
-Roof colours, tree crowns (`public/trees.bin`) and the paved-ground mask (`public/ground.png`) are derived from
+Roof colours, tree crowns (`public/trees.bin`), parked-car positions and the paved-ground mask (`public/ground.png`) are derived from
 the DOP40 orthophoto, © [Bayerische Vermessungsverwaltung](https://geodaten.bayern.de/opengeodata/),
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). No photo pixels ship with the game.
