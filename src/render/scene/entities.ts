@@ -11,7 +11,7 @@ import type { Walker } from "#/sim/pedestrians.ts"
 import { MeshBuilder, Mode, Sprite, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
-const SHADOW: Rgba = [14, 22, 40, 125]
+const SHADOW: Rgba = [14, 22, 40, 100]
 const SHADOW_Z = 0.1
 const CAR_Z = 1.5
 const PED_Z = 1.75
@@ -33,11 +33,11 @@ const car = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed & { readonly model: 
 
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker) => {
   if (w.down > 0) {
-    sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.PI / 2 }, 0.3, 2.1, 0.1, [200, 200, 200, 255])
+    sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.PI / 2 }, 0.3, 1.5, 0.1, [200, 200, 200, 255])
     return
   }
   const bob = 1 + Math.sin(w.stride) * 0.05
-  sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 2 * bob, 0.9)
+  sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 1.25 * bob, 0.9)
 }
 
 const LAMP: Readonly<Record<Light, Rgba>> = { red: [255, 59, 48, 255], yellow: [255, 204, 0, 255], green: [52, 199, 89, 255] }
@@ -85,6 +85,6 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   for (const l of game.signals.lights) light(m, boxes, l, game.time)
   const { player } = game
   if (player.car !== null) car(m, boxes, player.car)
-  // Drawn larger than life so you can find yourself, like GTA 2.
-  else sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.8, 0.9)
+  // A touch larger than the others, so you find yourself in a crowd.
+  else sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.4, 0.9)
 }

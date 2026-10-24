@@ -60,8 +60,8 @@ void main() {
     float m = texture(u_mask, v_xy * u_maskScale).r;
     float w = max(fwidth(m), 1e-3);
     float paved = smoothstep(0.55 - w, 0.55 + w, m);
-    vec3 lawn = texture(u_mat, vec3(v_xy / 16.0, 0.0)).rgb;
-    vec3 pave = texture(u_mat, vec3(v_xy / 8.0, 3.0)).rgb * vec3(1.0, 0.98, 0.95);
+    vec3 lawn = texture(u_mat, vec3(v_xy / 6.0, 0.0)).rgb;
+    vec3 pave = texture(u_mat, vec3(v_xy / 5.0, 3.0)).rgb * vec3(1.0, 0.98, 0.95);
     c = vec4(mix(lawn, pave, paved), 1.0);
   } else if (v_mode == 2u) {
     c = vec4(v_color.rgb * texture(u_mat, vec3(v_uv, v_layer)).r * 2.0, 1.0);

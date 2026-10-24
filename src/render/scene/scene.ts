@@ -14,9 +14,10 @@ import type { AreaKind, Building, Road } from "#/map/types.ts"
 import type { Crowns } from "#/map/crowns.ts"
 import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
 import type { World } from "#/world/world.ts"
-import { boxOf, centroid, longestEdgeAngle, type Box } from "#/world/geometry.ts"
+import { boxOf, centroid, longestEdgeAngle, pointInPolygon, type Box } from "#/world/geometry.ts"
 import { Grid } from "#/world/grid.ts"
 import { facadeFor, type Facade } from "./facade.ts"
+import { roofTone } from "./roof-tone.ts"
 import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
 import { Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
@@ -27,8 +28,8 @@ export const wallHeight = (levels: number) => levels * STOREY_M
 /** Height of each ground layer: a few centimetres apart, invisible from 100 m up but enough for the depth test. */
 const Z = { area: 0.02, water: 0.03, track: 0.035, footway: 0.04, sidewalk: 0.05, kerb: 0.06, road: 0.07, marking: 0.08, shadow: 0.1 } as const
 
-/** Meters one texture tile covers. */
-const TILE = { road: 10, sidewalk: 4, paving: 8, water: 24, forest: 40, farmland: 40, lawn: 16, roof: 5, gravel: 12 } as const
+/** Meters one texture tile covers: at the close camera a ground meter is about 70 screen pixels, so 512 px tiles must not cover much more than 6 m. */
+const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland: 30, lawn: 6, roof: 5, gravel: 6 } as const
 /** Width of a facade tile in meters, and its height: two storeys. */
 const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6 }
 const FACADE_H = 2 * STOREY_M
@@ -51,7 +52,7 @@ const PIECE_M = 32
 const WHITE: Rgba = [255, 255, 255, 255]
 const KERB: Rgba = [196, 192, 182, 255]
 const LINE: Rgba = [236, 234, 222, 255]
-const SHADOW: Rgba = [14, 22, 40, 125]
+const SHADOW: Rgba = [14, 22, 40, 100]
 /** Tree tones: the crowns vary like real ones. */
 const TREE_TINTS: ReadonlyArray<Rgba> = [
   [235, 245, 225, 255],
@@ -93,22 +94,20 @@ export const hash2 = (x: number, y: number, salt: number) => {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
-const parseHex = (hex: string): Rgba => {
+const parseHex = (hex: string): readonly [number, number, number] => {
   const n = Number.parseInt(hex.slice(1), 16)
-  const c = [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
-  // The photo's colours are hazy; GTA 2 is not.
-  const mean = ((c[0] ?? 0) + (c[1] ?? 0) + (c[2] ?? 0)) / 3
-  const vivid = (v: number) => Math.max(0, Math.min(255, mean + (v - mean) * 1.3))
-  return [vivid(c[0] ?? 0), vivid(c[1] ?? 0), vivid(c[2] ?? 0), 255]
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
 }
 
 const scale = (c: Rgba, k: number): Rgba => [Math.min(255, c[0] * k), Math.min(255, c[1] * k), Math.min(255, c[2] * k), c[3]]
 
+const GRAVEL: Rgba = [150, 150, 146, 255]
+
 /** Roof colours for buildings the photo has none for (hidden under trees, or outside it). */
 const FALLBACK_ROOFS: ReadonlyArray<Rgba> = [
-  [176, 92, 62, 255],
-  [120, 84, 70, 255],
-  [92, 92, 96, 255],
+  [178, 64, 34, 255],
+  [112, 56, 38, 255],
+  [66, 68, 74, 255],
 ]
 
 /** The two roof colours either side of the ridge (equal for a flat roof), and whether it is pitched. */
@@ -116,11 +115,12 @@ export const roofColors = (b: Building, nx: number, ny: number, d: number): { re
   const roof = b.roof
   if (roof === undefined) {
     const c = FALLBACK_ROOFS[Math.floor(hash2(b.id, 0, 3) * FALLBACK_ROOFS.length)] ?? WHITE
-    return { sides: [c, scale(c, 0.75)], pitched: b.levels < 3 }
+    return b.levels < 3 ? { sides: [c, scale(c, 0.75)], pitched: true } : { sides: [GRAVEL, GRAVEL], pitched: false }
   }
   const colors = roof.colors
   const first = colors.find((c) => c !== null)
-  const base = first == null ? WHITE : parseHex(first)
+  const tone = (hex: string) => roofTone(parseHex(hex), roof.pitched)
+  const base = first == null ? GRAVEL : tone(first)
   if (!roof.pitched || colors.length === 1) return { sides: [base, base], pitched: roof.pitched }
   // Per side of the ridge: the plane over the longest wall there.
   const best: [Rgba | null, Rgba | null] = [null, null]
@@ -136,7 +136,7 @@ export const roofColors = (b: Building, nx: number, ny: number, d: number): { re
     const len = Math.hypot(bx - ax, by - ay)
     if (len > (bestLen[side] ?? 0)) {
       bestLen[side] = len
-      best[side] = parseHex(c)
+      best[side] = tone(c)
     }
   })
   return { sides: [best[0] ?? best[1] ?? base, best[1] ?? best[0] ?? base], pitched: true }
@@ -373,6 +373,16 @@ export class Scene {
     if (n < 3) return
     const h = wallHeight(b.levels)
     const orient = signedArea(ring) >= 0 ? 1 : -1
+    const angle = longestEdgeAngle(b.pts)
+    const [mx, my] = centroid(ring)
+    const rx = Math.cos(angle)
+    const ry = Math.sin(angle)
+    const nx = -ry
+    const ny = rx
+    const d = nx * mx + ny * my
+    const { sides, pitched } = roofColors(b, nx, ny, d)
+    // Flat roofs sit inside a parapet: the walls run on past the roof.
+    const top = pitched ? h : h + PARAPET_M
     const tint = 0.9 + hash2(b.id, 0, 1) * 0.15
     let u = hash2(b.id, 0, 2) * FACADE_W[facade]
     for (let i = 0; i < n; i++) {
@@ -384,9 +394,9 @@ export class Scene {
       const len = Math.hypot(bx - ax, by - ay)
       if (len < 1e-3) continue
       // Outward normal; walls facing the sun (away from the shadows) are lit.
-      const nx = (orient * (by - ay)) / len
-      const ny = (orient * -(bx - ax)) / len
-      const light = 0.62 + 0.38 * Math.max(0, -(nx * SHADOW_DIR[0] + ny * SHADOW_DIR[1]))
+      const wx = (orient * (by - ay)) / len
+      const wy = (orient * -(bx - ax)) / len
+      const light = 0.62 + 0.38 * Math.max(0, -(wx * SHADOW_DIR[0] + wy * SHADOW_DIR[1]))
       const c = scale(WHITE, tint * light)
       const wall = (z0: number, z1: number, layer: Material, v0: number, v1: number) => {
         const u0 = u / FACADE_W[facade]
@@ -394,23 +404,15 @@ export class Scene {
         m.quad(m.vertex(ax, ay, z0, u0, v0, c, Mode.material, layer), m.vertex(bx, by, z0, u1, v0, c, Mode.material, layer), m.vertex(bx, by, z1, u1, v1, c, Mode.material, layer), m.vertex(ax, ay, z1, u0, v1, c, Mode.material, layer))
       }
       // The texture's bottom row is the ground floor; image rows run down, so v falls as z rises.
-      if (facade === "industrial") wall(0, h, FACADE_LAYER.industrial, 1, 0)
-      else if (facade === "shop" && h > FACADE_H) {
+      if (facade === "industrial") wall(0, top, FACADE_LAYER.industrial, 1, 0)
+      else if (facade === "shop" && top > FACADE_H) {
         wall(0, FACADE_H, FACADE_LAYER.shop, 1, 0)
-        wall(FACADE_H, h, FACADE_LAYER.block, 1, 1 - (h - FACADE_H) / FACADE_H)
-      } else wall(0, h, FACADE_LAYER[facade], 1, 1 - h / FACADE_H)
+        wall(FACADE_H, top, FACADE_LAYER.block, 1, 1 - (top - FACADE_H) / FACADE_H)
+      } else wall(0, top, FACADE_LAYER[facade], 1, 1 - top / FACADE_H)
       u += len
     }
 
     const tris = triangulate(ring)
-    const angle = longestEdgeAngle(b.pts)
-    const [mx, my] = centroid(ring)
-    const rx = Math.cos(angle)
-    const ry = Math.sin(angle)
-    const nx = -ry
-    const ny = rx
-    const d = nx * mx + ny * my
-    const { sides, pitched } = roofColors(b, nx, ny, d)
     const tile = pitched ? TILE.roof : TILE.gravel
     const layer = pitched ? Material.roofTiles : Material.roofGravel
     const vertex = (x: number, y: number, z: number, c: Rgba, mode: Mode) => m.vertex(x, y, z, (x * rx + y * ry) / tile, (x * nx + y * ny) / tile, c, mode, layer)
@@ -423,8 +425,13 @@ export class Scene {
       fan(m, clipHalfPlane(tri, nx, ny, d), (x, y) => vertex(x, y, h, sides[0], Mode.detail))
       fan(m, clipHalfPlane(tri, -nx, -ny, -d), (x, y) => vertex(x, y, h, sides[1], Mode.detail))
     }
-    // A light parapet round a flat roof, a dark eave line round a pitched one: GTA 2's crisp roof edges.
-    strip(m, [...ring, ring[0] ?? 0, ring[1] ?? 0], pitched ? 0.14 : 0.3, h + 0.02, pitched ? scale(sides[0], 0.55) : scale(sides[0], 1.2))
+    const closed = [...ring, ring[0] ?? 0, ring[1] ?? 0]
+    // GTA 2's crisp roof edges: a dark eave line round a pitched roof, a parapet with a light coping round a flat one.
+    if (pitched) strip(m, closed, 0.14, h + 0.02, scale(sides[0], 0.55))
+    else {
+      parapet(m, closed, orient, h, top)
+      vents(m, b, ring, h)
+    }
 
     m.target = "shadow"
     const ox = SHADOW_DIR[0] * h * SHADOW_PER_M
@@ -477,6 +484,69 @@ export class Scene {
       }
     }
   }
+}
+
+/** Height of the low wall round a flat roof, and its thickness. */
+const PARAPET_M = 0.6
+const COPING_M = 0.35
+const COPING: Rgba = [205, 202, 194, 255]
+const PARAPET_INSIDE: Rgba = [128, 126, 120, 255]
+
+/** The parapet's top (coping) and inner face, from the outline in towards the roof. */
+const parapet = (m: MeshBuilder, closed: ReadonlyArray<number>, orient: number, h: number, top: number) => {
+  const { left, right } = band(closed, COPING_M)
+  // The left of each wall is inside when the ring winds positively.
+  const inner = orient > 0 ? left : right
+  let prev: readonly [number, number, number, number] | null = null
+  for (let i = 0; i < closed.length / 2; i++) {
+    const x = closed[i * 2] ?? 0
+    const y = closed[i * 2 + 1] ?? 0
+    const ix = inner[i * 2] ?? x
+    const iy = inner[i * 2 + 1] ?? y
+    const outerTop = m.vertex(x, y, top, 0, 0, COPING, Mode.color, 0)
+    const innerTop = m.vertex(ix, iy, top, 0, 0, COPING, Mode.color, 0)
+    const innerLow = m.vertex(ix, iy, top, 0, 0, PARAPET_INSIDE, Mode.color, 0)
+    const innerFoot = m.vertex(ix, iy, h, 0, 0, PARAPET_INSIDE, Mode.color, 0)
+    if (prev !== null) {
+      m.quad(prev[0], outerTop, innerTop, prev[1])
+      m.quad(prev[2], innerLow, innerFoot, prev[3])
+    }
+    prev = [outerTop, innerTop, innerLow, innerFoot]
+  }
+}
+
+const VENT_TOP: Rgba = [186, 188, 190, 255]
+const VENT_SIDE: Rgba = [118, 120, 124, 255]
+const VENT_DARK: Rgba = [90, 92, 96, 255]
+
+/** A few vents and air-conditioning boxes on a flat roof, where they fit clear of the parapet. */
+const vents = (m: MeshBuilder, b: Building, ring: ReadonlyArray<number>, h: number) => {
+  const area = Math.abs(signedArea(ring))
+  if (area < 60) return
+  const box = boxOf(ring)
+  const want = Math.min(6, Math.max(1, Math.round(area / 180)))
+  let placed = 0
+  for (let k = 0; k < want * 6 && placed < want; k++) {
+    const size = 1 + hash2(b.id, k, 11) * 1.4
+    const x = box.minX + hash2(b.id, k, 12) * (box.maxX - box.minX)
+    const y = box.minY + hash2(b.id, k, 13) * (box.maxY - box.minY)
+    const r = size / 2 + COPING_M + 0.4
+    const corners = [x - r, y - r, x + r, y - r, x + r, y + r, x - r, y + r]
+    if (![0, 1, 2, 3].every((c) => pointInPolygon(corners[c * 2] ?? 0, corners[c * 2 + 1] ?? 0, ring))) continue
+    block(m, x, y, size / 2, h, h + 0.5 + hash2(b.id, k, 14) * 0.7)
+    placed++
+  }
+}
+
+/** An axis-aligned box from z0 to z1: a light top, sides shaded by the sun. */
+const block = (m: MeshBuilder, x: number, y: number, r: number, z0: number, z1: number) => {
+  const v = (px: number, py: number, z: number, c: Rgba) => m.vertex(px, py, z, 0, 0, c, Mode.color, 0)
+  m.quad(v(x - r, y - r, z1, VENT_TOP), v(x + r, y - r, z1, VENT_TOP), v(x + r, y + r, z1, VENT_TOP), v(x - r, y + r, z1, VENT_TOP))
+  const side = (ax: number, ay: number, bx: number, by: number, c: Rgba) => m.quad(v(ax, ay, z0, c), v(bx, by, z0, c), v(bx, by, z1, c), v(ax, ay, z1, c))
+  side(x - r, y - r, x + r, y - r, VENT_SIDE)
+  side(x + r, y - r, x + r, y + r, VENT_SIDE)
+  side(x + r, y + r, x - r, y + r, VENT_DARK)
+  side(x - r, y + r, x - r, y - r, VENT_DARK)
 }
 
 /** How high a crown of radius r stands: bushes low, big trees up to 14 m. */

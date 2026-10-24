@@ -158,7 +158,7 @@ def detail(im: Image.Image, contrast: float) -> Image.Image:
 
 roof = find("roof-tiles")
 if roof is not None:
-    detail(Image.open(roof).resize((512, 512), Image.LANCZOS), 1.1).save(OUT / "roof-tiles.webp", "WEBP", quality=88)
+    detail(Image.open(roof).resize((512, 512), Image.LANCZOS), 1.6).save(OUT / "roof-tiles.webp", "WEBP", quality=88)
     print("roof-tiles.webp")
 detail(Image.open(OUT / "roof-flat.webp"), 1.6).save(OUT / "roof-gravel.webp", "WEBP", quality=88)
 print("roof-gravel.webp")

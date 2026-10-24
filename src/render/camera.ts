@@ -8,41 +8,64 @@ import { forwardSpeed } from "#/sim/car.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
 import type { Box } from "#/world/geometry.ts"
 
-export type Camera = { x: number; y: number; height: number }
+/** Where the camera is, and the look-ahead it is easing towards the travel direction. */
+export type Camera = { x: number; y: number; height: number; leadX: number; leadY: number }
 
-/** Vertical field of view. */
-const FOV = (64 * Math.PI) / 180
+/**
+ * Vertical field of view: narrow, from high up, like GTA 2. Walls show
+ * clearly towards the screen edges (a house leans out about 2.5 m there on
+ * foot) without the near-wide-angle stretch a low camera would give.
+ */
+const FOV = (26 * Math.PI) / 180
 const FOCAL = 1 / Math.tan(FOV / 2)
 const NEAR = 2
 
 /**
- * Meters from the screen's centre to its top edge on the ground: close on
- * foot, pulling back with speed (the same view the 2D camera had at 7.5 and
- * 7 → 4.5 px per meter on a 900 px tall window).
+ * Meters from the screen's centre to its top edge on the ground. GTA 2 is
+ * close: about 40 m across a 16:10 screen on foot, 50 m in a standing car,
+ * opening to 90 m at top speed.
  */
-const ON_FOOT_HALF = 60
-const CAR_HALF = 64
-const MAX_HALF = 100
+const ON_FOOT_HALF = 12.5
+const CAR_HALF = 15.6
+const MAX_HALF = 28
+/** Speed (m/s) at which the view is widest: about the cars' top speed. */
+const FULL_SPEED = 34
 const halfFor = (game: Game) => {
   if (game.player.car === null) return ON_FOOT_HALF
-  const zoom = Math.max(450 / MAX_HALF, 450 / CAR_HALF - Math.abs(forwardSpeed(game.player.car)) * 0.08)
-  return 450 / zoom
+  const t = Math.min(1, Math.abs(forwardSpeed(game.player.car)) / FULL_SPEED)
+  return CAR_HALF + (MAX_HALF - CAR_HALF) * t * (2 - t)
 }
 
 export const heightFor = (half: number) => half * FOCAL
 
-/** Seconds of travel the camera looks ahead. */
-const LEAD_S = 0.8
+/** Seconds of travel the camera looks ahead, and how far at most (share of the half view). */
+const LEAD_S = 0.55
+const MAX_LEAD = 0.6
 
+/**
+ * GTA 2's camera: it trails the player a little, looks ahead in the
+ * direction of travel, and climbs and sinks slowly with speed. The look-ahead
+ * eases on its own, so a sharp turn swings the view round smoothly.
+ */
 export const followCamera = (camera: Camera, game: Game): void => {
   const p = playerPos(game)
-  const lead = game.player.car === null ? { x: 0, y: 0 } : { x: game.player.car.vx * LEAD_S, y: game.player.car.vy * LEAD_S }
-  camera.x += (p.x + lead.x - camera.x) * 0.12
-  camera.y += (p.y + lead.y - camera.y) * 0.12
-  camera.height += (heightFor(halfFor(game)) - camera.height) * 0.04
+  const car = game.player.car
+  const half = camera.height / FOCAL
+  let lx = car === null ? 0 : car.vx * LEAD_S
+  let ly = car === null ? 0 : car.vy * LEAD_S
+  const len = Math.hypot(lx, ly)
+  if (len > half * MAX_LEAD) {
+    lx *= (half * MAX_LEAD) / len
+    ly *= (half * MAX_LEAD) / len
+  }
+  camera.leadX += (lx - camera.leadX) * 0.05
+  camera.leadY += (ly - camera.leadY) * 0.05
+  camera.x += (p.x + camera.leadX - camera.x) * 0.15
+  camera.y += (p.y + camera.leadY - camera.y) * 0.15
+  camera.height += (heightFor(halfFor(game)) - camera.height) * 0.03
 }
 
-export const startCamera = (game: Game): Camera => ({ ...playerPos(game), height: heightFor(ON_FOOT_HALF) })
+export const startCamera = (game: Game): Camera => ({ x: playerPos(game).x, y: playerPos(game).y, height: heightFor(ON_FOOT_HALF), leadX: 0, leadY: 0 })
 
 /**
  * A view: perspective from the camera, or straight-down orthographic for
@@ -54,7 +77,7 @@ export type View = { readonly camera: Camera; readonly aspect: number; readonly 
 /** Column-major clip-from-map matrix for WebGL. */
 export const viewMatrix = ({ camera, aspect, ortho }: View): Float32Array => {
   const { x, y, height: h } = camera
-  const far = h + 50
+  const far = h + 60
   if (ortho !== null) {
     const sx = 1 / (ortho * aspect)
     const sy = 1 / ortho
