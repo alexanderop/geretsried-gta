@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import type { World } from "#/world/world.ts"
+import { makeProjection } from "#/map/project.ts"
 import { ChunkCache } from "#/render/chunks.ts"
 import { bakeMinimap, drawFrame, drawMinimap, drawPlaces, followCamera, makeSprites, poiIcon, type Camera } from "#/render/draw.ts"
 import type { Assets } from "#/render/assets.ts"
@@ -13,6 +14,19 @@ declare global {
     /** Debug handle for agent-browser checks. */
     __gta?: { game: GameState; world: World }
   }
+}
+
+/**
+ * `?compare=lat,lon,half`: frame exactly the square of `half` meters around a
+ * point, the same square `pnpm compare` fetches as an aerial photo.
+ */
+const compareView = (world: World): Camera | null => {
+  const raw = new URLSearchParams(location.search).get("compare")
+  if (raw === null) return null
+  const [lat, lon, half] = raw.split(",").map(Number)
+  if (lat === undefined || lon === undefined || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
+  const [x, y] = makeProjection(world.map.bbox).toMeters({ lat, lon })
+  return { x, y, zoom: window.innerWidth / (2 * (half ?? 80)) }
 }
 
 export function Game({ world, assets }: { readonly world: World; readonly assets: Assets }) {
@@ -29,6 +43,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     const sprites = makeSprites(assets)
     const minimap = bakeMinimap(world.map, 220)
     const camera: Camera = { ...playerPos(game), zoom: 7 }
+    const compare = compareView(world)
+    if (compare !== null) Object.assign(camera, compare)
     const keyboard = listenKeyboard(window)
 
     const resize = () => {
@@ -48,6 +64,13 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       while (acc >= DT) {
         step(world, game, keyboard.take())
         acc -= DT
+      }
+      if (compare !== null) {
+        // Fixed camera, every chunk baked at once, nothing but the map.
+        drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game, { bakeBudget: 999, entities: false })
+        document.body.dataset.ready = "1"
+        raf = requestAnimationFrame(frame)
+        return
       }
       followCamera(camera, game)
       drawFrame(ctx, chunks, sprites, { ...camera, zoom: camera.zoom * devicePixelRatio }, game)
@@ -75,6 +98,12 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     }
   }, [world, assets])
 
+  if (new URLSearchParams(location.search).has("compare"))
+    return (
+      <div className="h-dvh w-dvw overflow-hidden bg-black">
+        <canvas ref={canvasRef} className="block h-full w-full" />
+      </div>
+    )
   return (
     <div className="relative h-dvh w-dvw overflow-hidden bg-black font-mono text-white select-none">
       <canvas ref={canvasRef} className="block h-full w-full" />

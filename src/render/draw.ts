@@ -23,7 +23,17 @@ export const followCamera = (camera: Camera, game: Game): void => {
   camera.zoom += (targetZoom(game) - camera.zoom) * 0.04
 }
 
-export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, sprites: Sprites, camera: Camera, game: Game): void => {
+/** Options for still frames that are compared against aerial photos. */
+export type FrameOptions = { readonly bakeBudget: number; readonly entities: boolean }
+
+export const drawFrame = (
+  ctx: CanvasRenderingContext2D,
+  chunks: ChunkCache,
+  sprites: Sprites,
+  camera: Camera,
+  game: Game,
+  options: FrameOptions = { bakeBudget: 3, entities: true },
+): void => {
   const { width, height } = ctx.canvas
   const z = camera.zoom
   const left = camera.x - width / 2 / z
@@ -33,7 +43,7 @@ export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, spr
   ctx.fillRect(0, 0, width, height)
   ctx.imageSmoothingEnabled = true
 
-  const budget = { left: 3 }
+  const budget = { left: options.bakeBudget }
   const scale = z / BAKE_PX_PER_M
   for (let cy = Math.floor(top / CHUNK_M); cy * CHUNK_M < top + height / z; cy++) {
     for (let cx = Math.floor(left / CHUNK_M); cx * CHUNK_M < left + width / z; cx++) {
@@ -47,6 +57,7 @@ export const drawFrame = (ctx: CanvasRenderingContext2D, chunks: ChunkCache, spr
   }
 
   ctx.setTransform(z, 0, 0, z, -left * z, -top * z)
+  if (!options.entities) return
   for (const car of game.parked) drawCar(ctx, sprites, car.x, car.y, car.angle, car.model)
   for (const npc of game.npcs) drawCar(ctx, sprites, npc.x, npc.y, npc.angle, npc.model)
   for (const w of game.walkers) drawWalker(ctx, sprites, w)
