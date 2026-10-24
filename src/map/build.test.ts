@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildMap, polygonArea, type OsmPlace, type OsmWay } from "./build.ts"
+import { buildMap, buildingLevels, polygonArea, type OsmPlace, type OsmWay } from "./build.ts"
 import { makeProjection } from "./project.ts"
 
 const bbox = { south: 47.85, west: 11.45, north: 47.86, east: 11.47 }
@@ -71,5 +71,14 @@ describe("buildMap", () => {
   it("sorts areas largest first so ponds paint over forests", () => {
     expect(map.areas.map((a) => a.kind)).toEqual(["forest", "water"])
     expect(polygonArea(map.areas[0]?.pts ?? [])).toBeGreaterThan(polygonArea(map.areas[1]?.pts ?? []))
+  })
+})
+
+describe("buildingLevels", () => {
+  it("takes OSM's storeys, else what the building type usually has", () => {
+    expect(buildingLevels({ building: "garage", "building:levels": "3" })).toBe(3)
+    expect(buildingLevels({ building: "garages" })).toBe(1)
+    expect(buildingLevels({ building: "apartments" })).toBe(4)
+    expect(buildingLevels({ building: "yes" })).toBe(2)
   })
 })

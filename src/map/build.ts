@@ -97,6 +97,30 @@ const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null => {
   return POI_KINDS[tags.shop] ?? "shop"
 }
 
+/** Storeys a building type has when OSM does not say (most do not): the walls the renderer extrudes. */
+const TYPICAL_LEVELS: Readonly<Record<string, number>> = {
+  garage: 1,
+  garages: 1,
+  shed: 1,
+  carport: 1,
+  hut: 1,
+  roof: 1,
+  stable: 1,
+  barn: 1,
+  farm_auxiliary: 1,
+  service: 1,
+  kiosk: 1,
+  retail: 1,
+  // Geretsried's post-war blocks (Sudetenstraße, Egerlandstraße) have four storeys.
+  apartments: 4,
+}
+
+export const buildingLevels = (tags: Readonly<Record<string, string>>): number => {
+  const levels = Number(tags["building:levels"])
+  if (Number.isFinite(levels) && levels > 0) return levels
+  return TYPICAL_LEVELS[tags.building ?? ""] ?? 2
+}
+
 const round = (n: number) => Math.round(n * 10) / 10
 
 /**
@@ -132,8 +156,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
         ...(tags.service === "parking_aisle" ? { aisle: true } : {}),
       })
     } else if (tags.building !== undefined) {
-      const levels = Number(tags["building:levels"])
-      buildings.push({ id: way.id, levels: Number.isFinite(levels) && levels > 0 ? levels : 2, pts: flat(way.geometry) })
+      buildings.push({ id: way.id, levels: buildingLevels(tags), pts: flat(way.geometry) })
     } else if (tags.waterway !== undefined) {
       const width = tags.waterway === "river" ? 40 : tags.waterway === "canal" ? 12 : 3
       waterways.push({ width, pts: flat(way.geometry) })

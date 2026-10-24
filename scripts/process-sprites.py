@@ -16,8 +16,8 @@ SRCS = [Path(a) for a in sys.argv[1:]]
 
 
 def find(name: str) -> Path | None:
-    """Latest Codex run wins: later directories on the command line override earlier ones."""
-    hits = [d / name / f"{name}.png" for d in SRCS if (d / name / f"{name}.png").exists()]
+    """Latest Codex run wins: later directories on the command line override earlier ones. Accepts <dir>/<name>/<name>.png or <dir>/<name>.png."""
+    hits = [p for d in SRCS for p in (d / name / f"{name}.png", d / f"{name}.png") if p.exists()]
     return hits[-1] if hits else None
 
 OUT = Path(__file__).resolve().parent.parent / "public" / "sprites"
@@ -143,3 +143,28 @@ for name, (out, gain, saturation) in TEXTURES.items():
         im = ImageEnhance.Color(im).enhance(saturation)
     im.save(OUT / f"{out}.webp", "WEBP", quality=85)
     print(f"{out}.webp")
+
+
+# GTA 2 style textures, painted seamless already: only resized, so windows and slabs keep their edges.
+GTA2 = ["facade-block", "facade-house", "facade-shop", "facade-industrial", "road", "sidewalk", "lawn"]
+for name in GTA2:
+    path = find(name)
+    if path is None:
+        print(f"skip {name}: missing")
+        continue
+    Image.open(path).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=88)
+    print(f"{name}.webp")
+
+
+def detail(im: Image.Image, contrast: float) -> Image.Image:
+    """Grey luminance detail around 128: the renderer multiplies it (x2) with a roof colour measured in the photo."""
+    a = np.asarray(im.convert("L"), dtype=np.float32)
+    return Image.fromarray(np.clip(128 + (a - a.mean()) * contrast, 0, 255).astype(np.uint8))
+
+
+roof = find("roof-tiles")
+if roof is not None:
+    detail(Image.open(roof).resize((512, 512), Image.LANCZOS), 1.1).save(OUT / "roof-tiles.webp", "WEBP", quality=88)
+    print("roof-tiles.webp")
+detail(Image.open(OUT / "roof-flat.webp"), 1.6).save(OUT / "roof-gravel.webp", "WEBP", quality=88)
+print("roof-gravel.webp")
