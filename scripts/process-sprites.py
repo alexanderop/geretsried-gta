@@ -25,14 +25,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 # name in Codex dir -> (output name, brightness, saturation)
 TEXTURES = {
-    "grass": ("grass", 0.85, 0.8),
-    "asphalt-light": ("asphalt", 1.0, 1.0),
     "pavement": ("pavement", 1.0, 1.0),
-    "roof-brown": ("roof-brown", 1.0, 1.0),
-    "roof-anthracite": ("roof-anthracite", 1.0, 1.0),
-    "roof-orange": ("roof-orange", 0.95, 0.9),
     "roof-flat": ("roof-flat", 1.0, 1.0),
-    "roof-grey": ("roof-grey", 1.0, 1.0),
     "forest": ("forest", 0.95, 0.85),
     "water": ("water", 0.85, 0.85),
     "farmland": ("farmland", 0.95, 0.85),
