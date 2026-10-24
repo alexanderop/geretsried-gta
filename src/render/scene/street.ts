@@ -203,3 +203,59 @@ export const streetLamps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
   }
   return out
 }
+
+/** A bus shelter or a bottle bank where OSM maps one: a sprite seen from above at its roof height, and its shadow. */
+export type StreetProp = { readonly kind: "shelter" | "glass"; readonly x: number; readonly y: number; readonly angle: number }
+
+const PROP_SIZE = { shelter: { length: 4.2, z: 2.6 }, glass: { length: 1.9, z: 1.6 } } as const
+
+export const streetProp = (m: MeshBuilder, boxes: SpriteBoxes, p: StreetProp) => {
+  const layer = prop(p.kind === "shelter" ? "prop-shelter" : "prop-glass")
+  const b = boxes[layer] ?? [1, 0.6]
+  const { length, z } = PROP_SIZE[p.kind]
+  flat(m, boxes, layer, { x: p.x, y: p.y, z, angle: p.angle, length, width: (length * b[1]) / b[0] }, WHITE, true)
+}
+
+const SIDEWALK_M = 2.6
+
+/**
+ * Bus shelters at OSM's bus stops, on the back of the sidewalk facing the
+ * street (a few meters along, clear of the payphone that may stand there),
+ * and bottle banks at the glass recycling points. Pure.
+ */
+export const streetProps = (world: World, avoid: ReadonlyArray<Placed>): Array<StreetProp> => {
+  const out: Array<StreetProp> = []
+  for (const p of world.map.props) {
+    if (p.kind === "glass") {
+      if (!world.isSolid(p.x, p.y)) out.push({ kind: "glass", x: p.x, y: p.y, angle: 0 })
+      continue
+    }
+    const hit = world.roadAt(p.x, p.y, 25)
+    if (hit === null || hit.road.kind === "footway" || hit.road.kind === "track") continue
+    const { pts } = hit.road
+    let best = { d: Infinity, x: p.x, y: p.y, angle: 0 }
+    for (let i = 0; i + 3 < pts.length; i += 2) {
+      const ax = pts[i] ?? 0
+      const ay = pts[i + 1] ?? 0
+      const bx = pts[i + 2] ?? 0
+      const by = pts[i + 3] ?? 0
+      const len2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1
+      const t = Math.max(0, Math.min(1, ((p.x - ax) * (bx - ax) + (p.y - ay) * (by - ay)) / len2))
+      const x = ax + (bx - ax) * t
+      const y = ay + (by - ay) * t
+      const d = Math.hypot(x - p.x, y - p.y)
+      if (d < best.d) best = { d, x, y, angle: Math.atan2(by - ay, bx - ax) }
+    }
+    // On the stop's side of the street, at the back of the sidewalk, 3.5 m along from the stop itself.
+    const nx = -Math.sin(best.angle)
+    const ny = Math.cos(best.angle)
+    const side = Math.sign((p.x - best.x) * nx + (p.y - best.y) * ny) || 1
+    const off = hit.road.width / 2 + SIDEWALK_M - 0.9
+    const x = best.x + nx * off * side + Math.cos(best.angle) * 3.5
+    const y = best.y + ny * off * side + Math.sin(best.angle) * 3.5
+    if (world.isSolid(x, y) || avoid.some((a) => Math.hypot(a.x - x, a.y - y) < 2.5)) continue
+    // Its glass back to the houses, its open side to the street.
+    out.push({ kind: "shelter", x, y, angle: best.angle + (side === 1 ? Math.PI : 0) })
+  }
+  return out
+}

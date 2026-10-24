@@ -18,6 +18,8 @@ describe("a save", () => {
     game.player.arsenal.ammo.smg = 77
     game.jobs.done.push("brezn", "mercedes")
     game.respect.stein = 40
+    const pkg = game.packages[2]
+    if (pkg !== undefined) pkg.found = true
     const text = encodeSave(toSave(game))
     const fresh = newGame(world, 4)
     const data = decodeSave(text)

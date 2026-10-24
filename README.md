@@ -149,6 +149,10 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   colour at their feet). GTA 2's respect meters sit top left (-100 … 100). Each gang's phone gives a job
   for it: +25 with them, -15 with their rival; killing one of theirs costs 4 (their rival likes it). At
   -25 or less, members near you on their turf come at you with their fists; from 40 up they let a punch go.
+- **Hidden packages** (`placePackages` in `src/sim/pickups.ts`): ten spinning parcels tucked behind shops
+  and in parks, 350 m apart, $1000 each, counted in the save.
+- **Street props**: a glass bus shelter at the back of the sidewalk at each of OSM's 92 bus stops, and
+  bottle banks at its glass recycling points (`streetProps` in `src/render/scene/street.ts`).
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

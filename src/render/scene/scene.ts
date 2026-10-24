@@ -22,7 +22,7 @@ import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, s
 import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
 import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/stations.ts"
 import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
-import { signalHead, stopLine, streetLamp, streetLamps, zebra, type StreetLamp } from "./street.ts"
+import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, zebra, type StreetLamp, type StreetProp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 export const CHUNK_M = 128
@@ -94,7 +94,11 @@ type Chunk = {
 }
 
 /** A piece of street furniture, drawn by street.ts. */
-type StreetItem = { readonly kind: "stop"; readonly stop: StopLine } | { readonly kind: "zebra"; readonly zebra: Zebra } | { readonly kind: "lamp"; readonly lamp: StreetLamp }
+type StreetItem =
+  | { readonly kind: "stop"; readonly stop: StopLine }
+  | { readonly kind: "zebra"; readonly zebra: Zebra }
+  | { readonly kind: "lamp"; readonly lamp: StreetLamp }
+  | { readonly kind: "prop"; readonly prop: StreetProp }
 
 /** Deterministic 0..1 hash. */
 export const hash2 = (x: number, y: number, salt: number) => {
@@ -255,8 +259,9 @@ export class Scene {
     ]
     const furniture = [...signals.stops.map((st) => signalHead(st).pole), ...signals.zebras]
     items.push(...streetLamps(world, furniture).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
+    items.push(...streetProps(world, furniture).map((p): StreetItem => ({ kind: "prop", prop: p })))
     for (const item of items) {
-      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.lamp
+      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.prop
       // Room for an arm over the road and a shadow 7 m long.
       const reach = 14
       own(at.x, at.y, { minX: at.x - reach, minY: at.y - reach, maxX: at.x + reach, maxY: at.y + reach })?.street.push(this.street.length)
@@ -325,6 +330,7 @@ export class Scene {
       if (item?.kind === "stop") stopLine(m, this.sprites, item.stop)
       else if (item?.kind === "zebra") zebra(m, this.sprites, item.zebra, ZEBRA_M)
       else if (item?.kind === "lamp") streetLamp(m, this.sprites, item.lamp)
+      else if (item?.kind === "prop") streetProp(m, this.sprites, item.prop)
     }
     this.forest(m, cx, cy)
     for (const i of chunk.crowns) {

@@ -16,6 +16,8 @@ export const SaveData = Schema.Struct({
   ammo: Schema.Struct({ pistol: Count, smg: Count, shotgun: Count, molotov: Count, rocket: Count, flamer: Count }),
   done: Schema.Array(Schema.String),
   respect: Schema.Struct({ gartenberg: Count, stein: Count, gelting: Count }),
+  /** Which hidden packages were found, by their place in the list. */
+  packages: Schema.Array(Count),
 })
 export type SaveData = typeof SaveData.Type
 
@@ -28,6 +30,7 @@ export const toSave = (game: Game): SaveData => ({
   ammo: { ...game.player.arsenal.ammo },
   done: [...game.jobs.done],
   respect: { ...game.respect },
+  packages: game.packages.flatMap((p, i) => (p.found ? [i] : [])),
 })
 
 export const encodeSave = (data: SaveData): string => JSON.stringify(data)
@@ -49,5 +52,8 @@ export const applySave = (game: Game, data: SaveData, at: { readonly x: number; 
   Object.assign(game.player.arsenal.ammo, data.ammo)
   game.jobs.done.splice(0, game.jobs.done.length, ...data.done)
   for (const g of GANG_IDS) game.respect[g] = data.respect[g]
+  game.packages.forEach((p, i) => {
+    p.found = data.packages.includes(i)
+  })
   if (at !== null) Object.assign(game.player, { x: at.x, y: at.y })
 }

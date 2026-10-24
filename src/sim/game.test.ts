@@ -406,3 +406,17 @@ describe("gangs", () => {
     expect(game.respect.gartenberg).toBeLessThan(0)
   })
 })
+
+describe("hidden packages", () => {
+  it("lie round town, far apart, and pay $1000 once each", () => {
+    const game = newGame(world, 2)
+    expect(game.packages.length).toBeGreaterThanOrEqual(8)
+    const p = must(game.packages[0])
+    Object.assign(game.player, { x: p.x, y: p.y })
+    step(world, game, idle)
+    expect(p.found).toBe(true)
+    expect(game.score.money).toBe(1000)
+    step(world, game, idle)
+    expect(game.score.money).toBe(1000)
+  })
+})

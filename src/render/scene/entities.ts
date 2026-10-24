@@ -298,6 +298,11 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   mission(m, boxes, game)
   for (const p of game.pickups) pickup(m, boxes, p, time)
   for (const p of game.pumps) pump(m, boxes, p, time)
+  for (const p of game.packages) {
+    if (p.found || Math.abs(p.x - player.x) > VIEW_M || Math.abs(p.y - player.y) > VIEW_M) continue
+    const layer = prop("prop-package")
+    sprite(m, boxes, layer, { x: p.x, y: p.y, angle: time * 0.8 }, 0.5 + Math.sin(time * 3 + p.x) * 0.1, 1.1, 0.3)
+  }
   for (const sh of game.shops) if (Math.abs(sh.x - player.x) < VIEW_M && Math.abs(sh.y - player.y) < VIEW_M) shopPad(m, boxes, sh, time)
   for (const c of game.wrecks) sprite(m, boxes, Sprite.fx + Fx.wreck, c, CAR_Z, CAR_LENGTH * 1.08, 0.7)
   for (const c of game.parked) {

@@ -17,7 +17,7 @@ import { gangJobDone, isHostile, newRespect, turfAt, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
 import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
 import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./weapons.ts"
-import { collect, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
+import { PACKAGE_REWARD, collect, placePackages, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
 import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
 import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
@@ -110,6 +110,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const phoneAt = { x: ax + nx * curb * side - Math.cos(angle) * 7, y: ay + ny * curb * side - Math.sin(angle) * 7 }
   const phone = world.isSolid(phoneAt.x, phoneAt.y) ? { x: home.x, y: home.y } : phoneAt
   const stations = planStations(world)
+  const pickups = placePickups(world, home, hidden)
   const game: Game = {
     player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal() },
     parked: [car],
@@ -122,7 +123,8 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     fires: [],
     effects: [],
     decals: [],
-    pickups: placePickups(world, home, hidden),
+    pickups,
+    packages: placePackages(world, pickups, hidden),
     pumps: pumpsOf(stations),
     pillars: stations.flatMap((st) => st.pillars),
     nextId: 0,
@@ -304,9 +306,17 @@ const wants = (game: Game) => (kind: PickupKind) => {
   return arsenal.ammo[kind] < WEAPONS[kind].max
 }
 
-/** Walk over a pickup to take it. */
+/** Walk over a pickup to take it, or onto a hidden package to find it. */
 const pickUp = (game: Game) => {
   const { player } = game
+  const found = game.packages.find((p) => !p.found && Math.hypot(p.x - player.x, p.y - player.y) < 1.6)
+  if (found !== undefined) {
+    found.found = true
+    game.score.money += PACKAGE_REWARD
+    const n = game.packages.filter((p) => p.found).length
+    game.messages.push({ kind: "mission", text: `Geheimpaket gefunden! ${n} von ${game.packages.length}` }, { kind: "cash", amount: PACKAGE_REWARD })
+    game.sounds.push({ id: "pickup", x: player.x, y: player.y })
+  }
   const got = collect(game.pickups, player.x, player.y, wants(game))
   if (got === null) return
   if (got.kind === "health") {

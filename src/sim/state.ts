@@ -13,7 +13,7 @@ import type { GangId, Respect, Turf } from "./gangs.ts"
 import type { Cop } from "./police.ts"
 import type { Vitals } from "./damage.ts"
 import type { Arsenal } from "./weapons.ts"
-import type { Pickup } from "./pickups.ts"
+import type { Package, Pickup } from "./pickups.ts"
 import type { Pump } from "./stations.ts"
 import type { Shop } from "./shops.ts"
 import type { SaveData } from "./save.ts"
@@ -128,6 +128,8 @@ export type Game = {
   effects: Array<Effect>
   decals: Array<Decal>
   readonly pickups: ReadonlyArray<Pickup>
+  /** Hidden packages round town. */
+  readonly packages: ReadonlyArray<Package>
   /** Petrol pump islands: they blow up. */
   readonly pumps: ReadonlyArray<Pump>
   /** The pillars under petrol station canopies: cars bump into them. */

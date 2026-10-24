@@ -137,3 +137,22 @@ export const collect = (pickups: ReadonlyArray<Pickup>, x: number, y: number, wa
   }
   return null
 }
+
+/** GTA 2's hidden packages: tucked away behind shops and in parks, far apart; each pays once. */
+export type Package = { readonly x: number; readonly y: number; found: boolean }
+
+export const PACKAGE_COUNT = 10
+export const PACKAGE_REWARD = 1000
+const PACKAGE_SPACING = 350
+
+/** The same PACKAGE_COUNT spots every game, chosen in another order than the pickups, away from them. */
+export const placePackages = (world: World, pickups: ReadonlyArray<Spot>, hidden: Hidden = () => false): Array<Package> => {
+  const ordered = candidates(world, hidden).toSorted((a, b) => (hash({ x: a.y, y: a.x }) % 9973) - (hash({ x: b.y, y: b.x }) % 9973))
+  const chosen: Array<Spot> = []
+  for (const s of ordered) {
+    if (chosen.length >= PACKAGE_COUNT) break
+    if (pickups.some((p) => Math.hypot(p.x - s.x, p.y - s.y) < 15)) continue
+    if (chosen.every((c) => Math.hypot(c.x - s.x, c.y - s.y) >= PACKAGE_SPACING)) chosen.push(s)
+  }
+  return chosen.map((s) => ({ x: s.x, y: s.y, found: false }))
+}
