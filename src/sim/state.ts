@@ -54,6 +54,8 @@ export type Fighter = {
   readonly sprite: number
   /** Walk-cycle phase. */
   stride: number
+  /** Took a step this tick (a running pose), or stood (aiming, punching). */
+  moving: boolean
   /** Seconds until the next shot or punch. */
   cooldown: number
   /** Seconds left on the ground (knocked down, or how long the body stays). */
@@ -125,8 +127,10 @@ export type Game = {
   readonly wanted: Wanted
   /** The payphone job, or null on a map without its places. */
   readonly mission: Mission | null
-  /** Seconds the police have stood next to you while you stand still. */
+  /** Seconds an officer has had hold of you (see `arrested` in game.ts). */
   bust: number
+  /** Seconds you still count as fighting back after your last shot or punch: nobody arrests you then. */
+  fighting: number
   /** Seconds left lying WASTED before you wake up at the doctor's. */
   wasted: number
   /** Announcements since the HUD last took them. */

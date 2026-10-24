@@ -264,3 +264,22 @@ WEAPON_ICONS = ["fist", "pistol", "smg", "shotgun", "molotov", "rocket", "flamer
 save_blobs("weapon-icons", [f"icon-{n}" for n in WEAPON_ICONS], 128, 4)
 save_blobs("pickups", [f"pickup-{n}" for n in ["pistol", "smg", "shotgun", "molotov", "rocket", "flamer", "health", "armour"]], 256, 8)
 save_blobs("fx", [f"fx-{n}" for n in ["muzzle", "tracer", "blast-early", "blast-big", "smoke", "fire", "wreck", "scorch"]], 256, 16, frozenset({"fx-tracer"}), frozenset({"fx-scorch", "fx-smoke"}))
+
+# Street furniture, petrol station and GTA 2 props (loose sheets, lamps painted unlit: the renderer lights them).
+save_blobs("trafficlight", [f"signal-{n}" for n in ["mast", "pole", "head", "button", "stopline", "zebra", "bollard", "lamp"]], 256, 40)
+save_blobs("fuel-props", [f"fuel-{n}" for n in ["island", "pump", "pylon", "air", "barrels", "wash", "kiosk", "drum"]], 256, 12)
+save_blobs("gta-props", [f"prop-{n}" for n in ["phone", "church", "spray", "star", "package", "heart", "shelter", "glass"]], 256, 16)
+# The phone without its ring: the biggest blob of the ringing booth.
+ringing = OUT / "prop-phone.webp"
+if ringing.exists():
+    quiet = keep_main_shape(Image.open(ringing).convert("RGBA"))
+    quiet = quiet.crop(quiet.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    quiet.save(OUT / "prop-phone-quiet.webp", "WEBP", quality=90)
+    print("prop-phone-quiet.webp", quiet.size)
+# People in poses: cops on foot, a tough guy, the armed player, the knocked out.
+save_blobs("people", [f"pose-{n}" for n in ["cop-aim", "cop-run", "thug-punch", "player-pistol", "player-smg", "player-throw", "body-man", "body-cop"]], 160, 16)
+
+canopy = find("fuel-canopy")
+if canopy is not None:
+    Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
+    print("canopy.webp")

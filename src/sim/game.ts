@@ -35,9 +35,12 @@ const ENTER_RANGE = 4
 export const LIVES = 5
 /** A police car within this many meters sees you. */
 const COP_SIGHT = 45
-/** A police car this close while you stand still for BUST_S arrests you. */
-const BUST_RANGE = 5.5
-const BUST_S = 3
+/** GTA 2's arrest: on foot, not fighting back, with an officer at your side (or a stopped police car against you) for BUST_S. */
+const BUST_RANGE = 3.6
+const BUST_HAND = 1.7
+const BUST_S = 2
+/** Seconds after your last shot or punch in which you count as fighting back, so nobody arrests you. */
+const FIGHTING_S = 1.5
 /** A car smokes below this many hp. */
 export const SMOKE_HP = 35
 /** Seconds you lie WASTED before waking up at the doctor's. */
@@ -141,6 +144,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     wanted: noHeat(),
     mission: planMission(world, phone),
     bust: 0,
+    fighting: 0,
     wasted: 0,
     messages: [],
     sounds: [],
@@ -240,6 +244,7 @@ export const step = (world: World, game: Game, input: Input): void => {
   game.time += DT
   game.crashCooldown = Math.max(0, game.crashCooldown - DT)
   game.wallCooldown = Math.max(0, game.wallCooldown - DT)
+  game.fighting = Math.max(0, game.fighting - DT)
   const { player } = game
   tickArsenal(player.arsenal, DT)
 
@@ -285,6 +290,7 @@ export const step = (world: World, game: Game, input: Input): void => {
 /** Ctrl (or Space on foot): the weapon in hand, if it has reloaded. */
 const attack = (world: World, game: Game) => {
   const { player } = game
+  game.fighting = FIGHTING_S
   const weapon = pull(player.arsenal)
   if (weapon !== null) fire(world, game, "player", weapon, player.x, player.y, player.angle)
 }
@@ -469,7 +475,9 @@ const police = (world: World, game: Game) => {
     }
     stepCop(world, cop, target, DT, hits)
     const d = dist(cop.car.x, cop.car.y)
-    if (onFoot && d < EXIT_RANGE && Math.hypot(cop.car.vx, cop.car.vy) < 6 && onFootCops() < level * FOOT_COPS_PER_LEVEL) {
+    // On foot you are arrested by hand: the officers get out at any level. From two heads they also leave the car to chase a driver.
+    const leaves = game.player.car === null || onFoot
+    if (leaves && d < EXIT_RANGE && Math.hypot(cop.car.vx, cop.car.vy) < 6 && onFootCops() < Math.max(1, level * FOOT_COPS_PER_LEVEL)) {
       // Out of the car, which stays where it stopped.
       game.cops = game.cops.filter((c) => c !== cop)
       cop.car.vx = 0
@@ -487,12 +495,38 @@ const police = (world: World, game: Game) => {
   }
   const seen = game.cops.some((c) => dist(c.car.x, c.car.y) < COP_SIGHT) || game.fighters.some((f) => f.kind === "cop" && !f.dead && dist(f.x, f.y) < COP_SIGHT)
   coolDown(game.wanted, seen, DT)
-  const still = game.player.car === null || Math.hypot(game.player.car.vx, game.player.car.vy) < 1.5
-  const byCar = game.cops.some((c) => dist(c.car.x, c.car.y) < BUST_RANGE)
-  const byHand = game.player.car === null && game.fighters.some((f) => f.kind === "cop" && !f.dead && f.down <= 0 && dist(f.x, f.y) < 1.8)
-  const caught = level > 0 && game.wasted <= 0 && still && (byCar || byHand)
-  game.bust = caught ? game.bust + DT : 0
+  shoveAside(world, game)
+  game.bust = arrested(game, level) ? game.bust + DT : 0
   if (game.bust >= BUST_S) busted(game)
+}
+
+/**
+ * Is the player being arrested this step? Only on foot, only while not
+ * fighting back, and only with an officer on foot right beside them (or a
+ * police car stopped against them), GTA 2 style.
+ */
+export const arrested = (game: Game, level: number): boolean => {
+  const { player } = game
+  if (level === 0 || game.wasted > 0 || player.car !== null || game.fighting > 0) return false
+  const near = (x: number, y: number, r: number) => Math.hypot(x - player.x, y - player.y) < r
+  const byHand = game.fighters.some((f) => f.kind === "cop" && !f.dead && f.down <= 0 && near(f.x, f.y, BUST_HAND))
+  const byCar = [...game.cops.map((c) => c.car), ...game.parked.filter((c) => c.model === POLICE_MODEL)].some((c) => Math.hypot(c.vx, c.vy) < 1 && near(c.x, c.y, BUST_RANGE))
+  return byHand || byCar
+}
+
+/** Police cars do not drive over someone on foot: they push past. */
+const shoveAside = (world: World, game: Game) => {
+  const { player } = game
+  if (player.car !== null || game.wasted > 0) return
+  for (const c of game.cops) {
+    const dx = player.x - c.car.x
+    const dy = player.y - c.car.y
+    const d = Math.hypot(dx, dy)
+    if (d >= 2.3 || d === 0) continue
+    const nx = player.x + (dx / d) * (2.3 - d)
+    const ny = player.y + (dy / d) * (2.3 - d)
+    if (!world.isSolid(nx, ny)) Object.assign(player, { x: nx, y: ny })
+  }
 }
 
 /** Arrested: half your money, every gun and a life gone, back to Sudetenstraße 19 on foot. */

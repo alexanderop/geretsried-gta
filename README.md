@@ -104,7 +104,9 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   ends and bump you. From two cop heads the officers get out near you and come on foot with pistols;
   from three they also shoot from the cars at close range (`tactics` in `src/sim/wanted.ts`). Killing
   an officer is a whole cop head; killing anyone, or shooting where the police can see, adds heat too.
-  Standing still next to a police car (or with an officer on foot at your side) for 3 s is **BUSTED**:
+  On foot and not fighting back (no shot or punch for 1.5 s), an officer at your side (or a police car
+  stopped against you) for 2 s is **BUSTED**; on foot the officers get out at any level to arrest you, and
+  police cars push past you instead of driving over you. Shooting back keeps them at a distance:
   half your money, your guns and a life gone, back at Sudetenstraße 19. Losing the last life starts over.
 - **Damage** (`src/sim/damage.ts`): one model for the player, pedestrians, police and cars (hp, armour,
   what hit last, fire). Walls, cars and police cars hurt your car; under 35 hp it smokes, under 25 it

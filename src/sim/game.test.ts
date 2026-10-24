@@ -111,6 +111,42 @@ describe("police", () => {
   })
 })
 
+const withCop = (seed: number) => {
+  const game = newGame(world, seed)
+  game.npcs = []
+  game.wanted.heat = 1.5
+  const { player } = game
+  game.fighters.push({ id: 999, kind: "cop", x: player.x + 1, y: player.y, angle: Math.PI, vitals: vitals(100), sprite: 1, stride: 0, moving: false, cooldown: 99, down: 0, dead: false, temper: 0 })
+  return game
+}
+
+describe("busted", () => {
+  it("never happens while you fight back, even with an officer at your side", () => {
+    const game = withCop(9)
+    // Punching the air away from the officer: fighting back, but nobody gets hurt.
+    game.player.angle = Math.PI
+    for (let t = 0; t < 4 / DT; t++) {
+      game.player.angle = Math.PI
+      step(world, game, { ...idle, attack: true })
+    }
+    expect(game.messages.some((m) => m.kind === "busted")).toBe(false)
+  })
+
+  it("happens two seconds after you stop fighting with an officer beside you", () => {
+    const game = withCop(9)
+    run(game, idle, 4)
+    expect(game.messages.some((m) => m.kind === "busted")).toBe(true)
+  })
+
+  it("never happens in a car, however close the police", () => {
+    const game = withCop(9)
+    step(world, game, { ...idle, use: true })
+    expect(game.player.car).not.toBeNull()
+    run(game, idle, 4)
+    expect(game.messages.some((m) => m.kind === "busted")).toBe(false)
+  })
+})
+
 describe("car damage", () => {
   it("sets a battered car alight; it blows up, and whoever stays in is WASTED and wakes at the doctor's", () => {
     const game = newGame(world, 3)

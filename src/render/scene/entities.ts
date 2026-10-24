@@ -16,7 +16,8 @@ import type { Vitals } from "#/sim/damage.ts"
 import { isAvailable, type Pickup } from "#/sim/pickups.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
-import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import type { WeaponId } from "#/sim/weapons.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
 const SHADOW: Rgba = [14, 22, 40, 100]
@@ -43,6 +44,19 @@ const car = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed & { readonly model: 
 const lying = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, alpha: number, tint: Rgba = WHITE) =>
   sprite(m, boxes, layer, { x: at.x, y: at.y, angle: at.angle + Math.PI / 2 }, 0.3, 1.5, 0.1, [Math.round(tint[0] * 0.8), Math.round(tint[1] * 0.8), Math.round(tint[2] * 0.8), Math.round(255 * alpha)])
 
+/** A knocked-out body painted lying on its back, head to feet along its length (a grown-up is 1.8 m). */
+const body = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, alpha: number) =>
+  sprite(m, boxes, layer, { x: at.x, y: at.y, angle: at.angle + 2.2 }, 0.25, 1.8, 0.05, [235, 235, 235, Math.round(255 * alpha)])
+
+/** Shoulder to shoulder, as wide as the plain pedestrians (1.25 m sprites, 124 of 128 px wide). */
+const PERSON_W = 1.2
+
+/** A person in a pose sprite (arms reaching forward), scaled by the body's width so poses match the pedestrians. */
+const posed = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, z: number, width: number, color: Rgba = WHITE) => {
+  const b = box(boxes, layer)
+  sprite(m, boxes, layer, at, z, (width * b[0]) / b[1], 0.9, color)
+}
+
 /** Flames on someone or something burning. */
 const flames = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, z: number, size: number, time: number, seed: number) => {
   const flicker = 1 + Math.sin(time * 23 + seed) * 0.12
@@ -51,7 +65,7 @@ const flames = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, z: num
 }
 
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => {
-  if (w.down > 0) lying(m, boxes, Sprite.ped + w.sprite, w, bodyAlpha(w, CORPSE_FADE_S))
+  if (w.down > 0) body(m, boxes, prop("pose-body-man"), w, bodyAlpha(w, CORPSE_FADE_S))
   else {
     const bob = 1 + Math.sin(w.stride) * 0.05
     sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 1.25 * bob, 0.9)
@@ -59,15 +73,26 @@ const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => 
   if (w.vitals.fire > 0) flames(m, boxes, w.x, w.y, PED_Z + 0.1, 1.3, time, w.id)
 }
 
-/** Police on foot in blue, tough guys a little flushed. */
-const COP_TINT: Rgba = [130, 160, 255, 255]
-const THUG_TINT: Rgba = [255, 200, 185, 255]
-
+/** Police on foot aim their pistols standing and run with them drawn; tough guys swing their fists. */
 const fighter = (m: MeshBuilder, boxes: SpriteBoxes, f: Fighter, time: number) => {
-  const tint = f.kind === "cop" ? COP_TINT : THUG_TINT
-  if (f.down > 0 || f.dead) lying(m, boxes, Sprite.ped + f.sprite, f, bodyAlpha(f, CORPSE_FADE_S), tint)
-  else sprite(m, boxes, Sprite.ped + f.sprite, { x: f.x, y: f.y, angle: f.angle + Math.sin(f.stride / 2) * 0.08 }, PED_Z, 1.3 * (1 + Math.sin(f.stride) * 0.05), 0.9, tint)
+  if (f.down > 0 || f.dead) body(m, boxes, prop(f.kind === "cop" ? "pose-body-cop" : "pose-body-man"), f, bodyAlpha(f, CORPSE_FADE_S))
+  else {
+    const layer = f.kind === "thug" ? prop("pose-thug-punch") : prop(f.moving ? "pose-cop-run" : "pose-cop-aim")
+    const sway = f.moving ? Math.sin(f.stride / 2) * 0.08 : 0
+    posed(m, boxes, layer, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, PERSON_W * (1 + Math.sin(f.stride) * 0.04))
+  }
   if (f.vitals.fire > 0) flames(m, boxes, f.x, f.y, PED_Z + 0.1, 1.3, time, f.id)
+}
+
+/** The player's pose for the weapon in hand: fists are the plain walking sprite. */
+const PLAYER_POSE: Readonly<Record<WeaponId, number | null>> = {
+  fists: null,
+  pistol: prop("pose-player-pistol"),
+  shotgun: prop("pose-player-pistol"),
+  smg: prop("pose-player-smg"),
+  flamer: prop("pose-player-smg"),
+  rocket: prop("pose-player-smg"),
+  molotov: prop("pose-player-throw"),
 }
 
 const LAMP: Readonly<Record<Light, Rgba>> = { red: [255, 59, 48, 255], yellow: [255, 204, 0, 255], green: [52, 199, 89, 255] }
@@ -150,7 +175,6 @@ const damaged = (m: MeshBuilder, boxes: SpriteBoxes, c: Placed & { readonly vita
 }
 
 const MARKER: Rgba = [255, 214, 10, 255]
-const PHONE: Rgba = [255, 200, 0, 255]
 
 /** The mission's glowing ground marker (GTA 2's pulsing arrow target), and the payphone. */
 const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
@@ -159,7 +183,12 @@ const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
   const target = missionTarget(job)
   const pulse = 7 + Math.sin(game.time * 4) * 1.5
   spriteQuad(m, { x: target.x, y: target.y, z: 0.15, angle: 0, length: pulse, width: pulse }, Sprite.glow, box(boxes, Sprite.glow), MARKER, Mode.sprite)
-  spriteQuad(m, { x: job.phone.x, y: job.phone.y, z: 2.2, angle: 0, length: 0.8, width: 0.8 }, Sprite.housing, box(boxes, Sprite.housing), PHONE, Mode.sprite)
+  const ringing = job.stage === "offer" && job.armed
+  const layer = prop(ringing ? "prop-phone" : "prop-phone-quiet")
+  const b = box(boxes, layer)
+  // The booth is 1.1 m deep; its rings wobble while it rings.
+  const k = ringing ? 1 + Math.sin(game.time * 18) * 0.04 : 1
+  spriteQuad(m, { x: job.phone.x, y: job.phone.y, z: 2.4, angle: 0, length: (1.1 * k * b[0]) / b[1], width: 1.1 * k }, layer, b, WHITE, Mode.sprite)
 }
 
 /** Pickups turn slowly on their glowing pads, like GTA 2's. */
@@ -250,8 +279,12 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
     if (player.car.model === POLICE_MODEL) lightBar(m, boxes, player.car, time)
     damaged(m, boxes, player.car, time, 0)
   } else if (game.wasted > 0) lying(m, boxes, Sprite.ped, player, 1)
-  // A touch larger than the others, so you find yourself in a crowd.
-  else sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.4, 0.9)
+  else {
+    // A touch larger than the others, so you find yourself in a crowd.
+    const pose = PLAYER_POSE[player.arsenal.current]
+    if (pose === null) sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.4, 0.9)
+    else posed(m, boxes, pose, player, PED_Z + 0.05, PERSON_W * 1.12)
+  }
   if (player.car === null && player.vitals.fire > 0) flames(m, boxes, player.x, player.y, PED_Z + 0.15, 1.4, time, 7)
   for (const p of game.projectiles) projectile(m, boxes, p)
   for (const e of game.effects) effect(m, boxes, e)

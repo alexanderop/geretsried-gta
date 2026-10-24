@@ -1,7 +1,7 @@
 import { Effect, Schema } from "effect"
 import { decodeCrowns, type Crowns } from "#/map/crowns.ts"
 import { PHOTO_OVERVIEW_URL } from "#/map/photo-tiles.ts"
-import { FX_FILES, MATERIAL_FILES, PICKUP_SPRITES } from "./scene/mesh.ts"
+import { FX_FILES, MATERIAL_FILES, PICKUP_SPRITES, PROP_FILES } from "./scene/mesh.ts"
 
 export const CAR_MODELS = 8
 export const PEDS = 4
@@ -27,6 +27,8 @@ export type Assets = {
   readonly fx: ReadonlyArray<HTMLImageElement>
   /** Pickups on their glowing pads, in `PICKUP_SPRITES` order. */
   readonly pickups: ReadonlyArray<HTMLImageElement>
+  /** Traffic signals, petrol station props, markers and people in poses (`PROP_FILES`). */
+  readonly props: ReadonlyArray<HTMLImageElement>
 }
 
 export class AssetLoadError extends Schema.TaggedError<AssetLoadError>()("AssetLoadError", { url: Schema.String }) {}
@@ -59,6 +61,7 @@ export const loadAssets: Effect.Effect<Assets, AssetLoadError> = Effect.all(
     overview: loadImage(PHOTO_OVERVIEW_URL),
     fx: Effect.all(FX_FILES.map(sprite), { concurrency: "unbounded" }),
     pickups: Effect.all(PICKUP_SPRITES.map((name) => sprite(`pickup-${name}`)), { concurrency: "unbounded" }),
+    props: Effect.all(PROP_FILES.map(sprite), { concurrency: "unbounded" }),
   },
   { concurrency: "unbounded" },
 )

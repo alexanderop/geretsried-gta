@@ -23,6 +23,8 @@ export const Mode = {
   color: 5,
 } as const
 export type Mode = (typeof Mode)[keyof typeof Mode]
+/** Added to a mode: the surface fades to see-through over the player (tree crowns, petrol station canopies). */
+export const FADES = 128
 
 export type Rgba = readonly [number, number, number, number]
 
@@ -77,7 +79,7 @@ export class MeshBuilder {
   target: "opaque" | "shadow" = "opaque"
   count = 0
 
-  vertex(x: number, y: number, z: number, u: number, v: number, color: Rgba, mode: Mode, layer: number): number {
+  vertex(x: number, y: number, z: number, u: number, v: number, color: Rgba, mode: number, layer: number): number {
     if ((this.count + 1) * STRIDE > this.bytes.byteLength) this.grow()
     const f = (this.count * STRIDE) / 4
     this.f32[f] = x
@@ -130,8 +132,48 @@ export class MeshBuilder {
 }
 
 /** Sprite texture array layers: cars, people, tree crowns, the traffic light's parts, combat effects, pickups. */
-export const Sprite = { car: 0, ped: 8, tree: 12, housing: 20, lamp: 21, glow: 22, fx: 23, pickup: 31 } as const
-export const SPRITE_LAYERS = 39
+export const Sprite = { car: 0, ped: 8, tree: 12, housing: 20, lamp: 21, glow: 22, fx: 23, pickup: 31, prop: 39 } as const
+
+/** Street furniture, petrol station, GTA 2 markers and people in poses, from `Sprite.prop` on, in this order. */
+export const PROP_FILES = [
+  "signal-mast",
+  "signal-pole",
+  "signal-head",
+  "signal-button",
+  "signal-stopline",
+  "signal-zebra",
+  "signal-bollard",
+  "signal-lamp",
+  "fuel-island",
+  "fuel-pump",
+  "fuel-pylon",
+  "fuel-air",
+  "fuel-barrels",
+  "fuel-wash",
+  "fuel-kiosk",
+  "fuel-drum",
+  "prop-phone",
+  "prop-phone-quiet",
+  "prop-church",
+  "prop-spray",
+  "prop-star",
+  "prop-package",
+  "prop-heart",
+  "prop-shelter",
+  "prop-glass",
+  "pose-cop-aim",
+  "pose-cop-run",
+  "pose-thug-punch",
+  "pose-player-pistol",
+  "pose-player-smg",
+  "pose-player-throw",
+  "pose-body-man",
+  "pose-body-cop",
+] as const
+export type PropName = (typeof PROP_FILES)[number]
+/** The sprite layer of a prop. */
+export const prop = (name: PropName): number => Sprite.prop + PROP_FILES.indexOf(name)
+export const SPRITE_LAYERS = Sprite.prop + PROP_FILES.length
 
 /** The effect sprites from `Sprite.fx` on, in `FX_FILES` order. */
 export const Fx = { muzzle: 0, tracer: 1, blastEarly: 2, blastBig: 3, smoke: 4, fire: 5, wreck: 6, scorch: 7 } as const
@@ -152,7 +194,7 @@ export const spriteQuad = (
   layer: number,
   box: readonly [number, number],
   color: Rgba,
-  mode: Mode,
+  mode: number,
 ): void => {
   const c = Math.cos(q.angle)
   const s = Math.sin(q.angle)

@@ -8,10 +8,10 @@
  * stencil); sprites (cars, people, traffic lights, blended).
  */
 import type { World } from "#/world/world.ts"
-import type { Game } from "#/sim/game.ts"
 import { GROUND_M_PER_PX } from "#/map/types.ts"
 import type { Assets } from "../assets.ts"
-import { groundBox, viewMatrix, type View } from "../camera.ts"
+import { groundBox, project, viewMatrix, type View } from "../camera.ts"
+import { playerPos, type Game } from "#/sim/game.ts"
 import { CHUNK_M, Scene } from "../scene/scene.ts"
 import { MeshBuilder, STRIDE, type Mesh } from "../scene/mesh.ts"
 import { drawEntities } from "../scene/entities.ts"
@@ -45,6 +45,8 @@ uniform sampler2DArray u_mat;
 uniform sampler2DArray u_spr;
 uniform sampler2D u_mask;
 uniform vec2 u_maskScale;
+// Where the player is on screen (device pixels, from the bottom) and how wide the see-through hole is.
+uniform vec3 u_focus;
 in vec2 v_uv;
 in vec2 v_xy;
 in vec4 v_color;
@@ -53,9 +55,10 @@ flat in float v_layer;
 out vec4 o;
 void main() {
   vec4 c;
-  if (v_mode == 0u) {
+  uint mode = v_mode & 127u;
+  if (mode == 0u) {
     c = texture(u_mat, vec3(v_uv, v_layer)) * v_color;
-  } else if (v_mode == 1u) {
+  } else if (mode == 1u) {
     // A hard edge one screen pixel wide wherever the 2 m mask crosses half: crisp at every zoom.
     float m = texture(u_mask, v_xy * u_maskScale).r;
     float w = max(fwidth(m), 1e-3);
@@ -63,22 +66,27 @@ void main() {
     vec3 lawn = texture(u_mat, vec3(v_xy / 6.0, 0.0)).rgb;
     vec3 pave = texture(u_mat, vec3(v_xy / 5.0, 3.0)).rgb * vec3(1.0, 0.98, 0.95);
     c = vec4(mix(lawn, pave, paved), 1.0);
-  } else if (v_mode == 2u) {
+  } else if (mode == 2u) {
     c = vec4(v_color.rgb * texture(u_mat, vec3(v_uv, v_layer)).r * 2.0, 1.0);
-  } else if (v_mode == 3u) {
+  } else if (mode == 3u) {
     vec4 t = texture(u_spr, vec3(v_uv, v_layer));
     if (t.a < 0.08) discard;
     c = vec4(t.rgb / t.a, t.a) * v_color;
-  } else if (v_mode == 4u) {
+  } else if (mode == 4u) {
     if (texture(u_spr, vec3(v_uv, v_layer)).a < 0.5) discard;
     c = v_color;
   } else {
     c = v_color;
   }
+  // Tree crowns and canopies over the player fade to a quarter, with a soft edge (alpha-to-coverage dithers it).
+  if ((v_mode & 128u) != 0u && u_focus.z > 0.0) {
+    float d = length(gl_FragCoord.xy - u_focus.xy);
+    c.a *= mix(0.25, 1.0, smoothstep(u_focus.z * 0.55, u_focus.z, d));
+  }
   o = c;
 }`
 
-type Uniform = "u_view" | "u_mat" | "u_spr" | "u_mask" | "u_maskScale"
+type Uniform = "u_view" | "u_mat" | "u_spr" | "u_mask" | "u_maskScale" | "u_focus"
 
 type GpuChunk = { readonly vao: WebGLVertexArrayObject; readonly opaque: number; readonly shadow: number }
 
@@ -101,7 +109,7 @@ export class Renderer {
     world: World,
     assets: Assets,
   ) {
-    this.prog = program(gl, VS, FS, ["u_view", "u_mat", "u_spr", "u_mask", "u_maskScale"])
+    this.prog = program(gl, VS, FS, ["u_view", "u_mat", "u_spr", "u_mask", "u_maskScale", "u_focus"])
     this.tex = uploadTextures(gl, assets)
     this.scene = new Scene(world, assets.crowns, this.tex.boxes)
     const vbo = gl.createBuffer()
@@ -126,7 +134,10 @@ export class Renderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
     gl.useProgram(this.prog.program)
     const u = this.prog.uniforms
-    gl.uniformMatrix4fv(u.u_view, false, viewMatrix(view))
+    const matrix = viewMatrix(view)
+    gl.uniformMatrix4fv(u.u_view, false, matrix)
+    const focus = game === null ? null : focusOf(matrix, game, gl.drawingBufferWidth, gl.drawingBufferHeight)
+    gl.uniform3f(u.u_focus, focus?.[0] ?? 0, focus?.[1] ?? 0, focus?.[2] ?? 0)
     gl.uniform2f(u.u_maskScale, 1 / (GROUND_M_PER_PX * this.tex.maskSize[0]), 1 / (GROUND_M_PER_PX * this.tex.maskSize[1]))
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex.materials)
@@ -241,6 +252,20 @@ export class Renderer {
     gl.bindVertexArray(null)
     return { vao: this.dynamic.vao, opaque: mesh.opaque, shadow: mesh.shadow }
   }
+}
+
+/** Meters round the player (a car is bigger) that tree crowns and canopies above turn see-through. */
+const FOCUS_M = { foot: 2.6, car: 3.8 } as const
+
+/** The player's spot on screen in gl_FragCoord pixels (y up), and the see-through radius there. */
+const focusOf = (matrix: Float32Array, game: Game, width: number, height: number): readonly [number, number, number] | null => {
+  const p = playerPos(game)
+  const z = game.player.car === null ? 1.75 : 1.5
+  const at = project(matrix, p.x, p.y, z, width, height)
+  const edge = project(matrix, p.x + (game.player.car === null ? FOCUS_M.foot : FOCUS_M.car), p.y, z, width, height)
+  if (at === null || edge === null) return null
+  // Crowns stand higher than the player, so nearer the lens: a little wider there.
+  return [at[0], height - at[1], Math.hypot(edge[0] - at[0], edge[1] - at[1]) * 1.25]
 }
 
 /** The world canvas's WebGL2 context, with the multisampling alpha-to-coverage needs and a stencil for shadows. */

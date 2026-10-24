@@ -137,7 +137,7 @@ const cast = (world: World, game: Game, from: Shooter, ox: number, oy: number, a
 /** A tough guy you hit gets up off the sidewalk and comes for you. */
 const enrage = (game: Game, w: Walker) => {
   game.walkers = game.walkers.filter((o) => o !== w)
-  game.fighters.push({ id: w.id, kind: "thug", x: w.x, y: w.y, angle: w.angle, vitals: w.vitals, sprite: w.sprite, stride: 0, cooldown: 0.6, down: w.down, dead: false, temper: 14 })
+  game.fighters.push({ id: w.id, kind: "thug", x: w.x, y: w.y, angle: w.angle, vitals: w.vitals, sprite: w.sprite, stride: 0, moving: false, cooldown: 0.6, down: w.down, dead: false, temper: 14 })
 }
 
 const killFighter = (game: Game, f: Fighter, from: Shooter) => {
@@ -410,6 +410,7 @@ export const leaveCar = (game: Game, car: Car): void => {
     vitals: vitals(PERSON_HP),
     sprite: 1 + (id % 3),
     stride: 0,
+    moving: false,
     cooldown: 0.8,
     down: 0,
     dead: false,
@@ -485,6 +486,7 @@ const stepFighters = (world: World, game: Game, level: number, dt: number) => {
       continue
     }
     f.cooldown -= dt
+    f.moving = false
     const d = Math.hypot(target.x - f.x, target.y - f.y)
     const aim = Math.atan2(target.y - f.y, target.x - f.x)
     if (f.vitals.fire > 0) {
@@ -492,6 +494,7 @@ const stepFighters = (world: World, game: Game, level: number, dt: number) => {
       f.angle += (game.random() - 0.5) * 0.6
       stepFoot(world, f, f.angle, THUG_SPEED, dt)
       f.stride += dt * 20
+      f.moving = true
       continue
     }
     const chase = f.kind === "cop" ? level > 0 && alive : f.temper > 0 && d < 30 && alive
@@ -505,17 +508,20 @@ const stepFighters = (world: World, game: Game, level: number, dt: number) => {
           fire(world, game, "police", "pistol", f.x, f.y, aim + (game.random() - 0.5) * COP_AIM * 2)
           f.cooldown = 1.1 + game.random() * 0.7
         }
-        if (d < 8) continue
+        // Keeping their distance while you fight back; closing in to arrest you when you do not.
+        if (d < 8 && (game.fighting > 0 || player.car !== null)) continue
       }
       if (d > 1.2) {
         stepFoot(world, f, aim, FOOT_COP_SPEED, dt)
         f.stride += FOOT_COP_SPEED * dt * 4
+        f.moving = true
       }
       continue
     }
     if (d > 1.1) {
       stepFoot(world, f, aim, THUG_SPEED, dt)
       f.stride += THUG_SPEED * dt * 4
+      f.moving = true
     } else if (f.cooldown <= 0 && player.car === null) {
       hurt(player.vitals, 9, "fist")
       sound(game, "punch", f)

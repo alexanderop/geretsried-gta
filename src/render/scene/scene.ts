@@ -19,7 +19,7 @@ import { Grid } from "#/world/grid.ts"
 import { facadeFor, type Facade } from "./facade.ts"
 import { roofTone } from "./roof-tone.ts"
 import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
-import { Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 export const CHUNK_M = 128
 export const STOREY_M = 3
@@ -459,7 +459,7 @@ export class Scene {
     const angle = hash2(seed, 0, 8) * Math.PI * 2
     const tint = TREE_TINTS[Math.floor(hash2(seed, 0, 9) * TREE_TINTS.length)] ?? WHITE
     const width = (size * box[1]) / box[0]
-    spriteQuad(m, { x, y, z, angle, length: size, width }, layer, box, tint, Mode.sprite)
+    spriteQuad(m, { x, y, z, angle, length: size, width }, layer, box, tint, Mode.sprite + FADES)
     m.target = "shadow"
     const off = z * SHADOW_PER_M * 0.5
     spriteQuad(m, { x: x + SHADOW_DIR[0] * off, y: y + SHADOW_DIR[1] * off, z: Z.shadow, angle, length: size, width }, layer, box, SHADOW, Mode.silhouette)
