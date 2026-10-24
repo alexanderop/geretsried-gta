@@ -15,6 +15,12 @@ export const OFFENCE = {
   redLight: 0.5,
   /** Taking a car while a police car is watching. */
   theft: 1.2,
+  /** Killing someone, whoever sees it. */
+  kill: 0.5,
+  /** Killing a police officer: a whole cop head at once. */
+  copKill: 1,
+  /** Shooting or burning while the police watch. */
+  gunfire: 0.3,
 } as const
 export type Offence = keyof typeof OFFENCE
 
@@ -40,3 +46,10 @@ export const coolDown = (w: Wanted, seen: boolean, dt: number): void => {
   w.unseen = seen ? 0 : w.unseen + dt
   if (w.unseen > HIDE_S) w.heat = Math.max(0, w.heat - COOL * dt)
 }
+
+/**
+ * What the police do at a wanted level, as in GTA 2: from two heads they get
+ * out and come after you on foot with pistols; from three they also shoot
+ * from their cars when close.
+ */
+export const tactics = (level: number) => ({ onFoot: level >= 2, shootFromCar: level >= 3 })

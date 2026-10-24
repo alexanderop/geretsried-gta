@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { MAX_WANTED, coolDown, commit, noHeat, wantedLevel } from "./wanted.ts"
+import { MAX_WANTED, coolDown, commit, noHeat, tactics, wantedLevel } from "./wanted.ts"
 
 describe("wanted level", () => {
   it("takes a few offences for the first cop head, theft in front of the police right away", () => {
@@ -28,5 +28,17 @@ describe("wanted level", () => {
     expect(w.heat).toBe(2.5)
     for (let i = 0; i < 60 * 30; i++) coolDown(w, false, 1 / 60)
     expect(wantedLevel(w)).toBe(0)
+  })
+
+  it("escalates: cars at one head, cops on foot with pistols at two, shooting from cars at three", () => {
+    expect(tactics(1)).toEqual({ onFoot: false, shootFromCar: false })
+    expect(tactics(2)).toEqual({ onFoot: true, shootFromCar: false })
+    expect(tactics(3)).toEqual({ onFoot: true, shootFromCar: true })
+  })
+
+  it("puts a whole head on for killing a cop", () => {
+    const w = noHeat()
+    commit(w, "copKill")
+    expect(wantedLevel(w)).toBe(1)
   })
 })

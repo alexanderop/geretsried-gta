@@ -87,14 +87,9 @@ const BUST_S = 3
 /** A car smokes below this many hp. */
 export const SMOKE_HP = 35
 
-/** Small seeded PRNG (mulberry32) so tests are repeatable. */
-export const makeRandom = (seed: number) => () => {
-  seed = (seed + 0x6d2b79f5) | 0
-  let t = seed
-  t = Math.imul(t ^ (t >>> 15), t | 1)
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-}
+import { makeRandom } from "./random.ts"
+
+export { makeRandom }
 
 /** Sudetenstraße 19, Geretsried: where every game starts. */
 export const START = { lat: 47.8582, lon: 11.4836 }
