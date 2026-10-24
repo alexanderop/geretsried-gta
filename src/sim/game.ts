@@ -1,5 +1,4 @@
 import type { World } from "#/world/world.ts"
-import type { Poi } from "#/map/types.ts"
 import { makeProjection } from "#/map/project.ts"
 import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
@@ -10,7 +9,9 @@ import { spawnWalker, stepWalker } from "./pedestrians.ts"
 import { carName, POLICE_MODEL } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
 import { drift, nearMiss, newScore, tickScore } from "./score.ts"
-import { cancelMission, newMission, stepMission, type Mission } from "./mission.ts"
+import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
+import { planJobs } from "./town-jobs.ts"
+import { gangJobDone, newRespect, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
 import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
 import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./weapons.ts"
@@ -79,16 +80,6 @@ const findHospital = (world: World, home: Spawn): Spawn => {
   return home
 }
 
-/** The courier job: Brezn from the Mühlenbäck branch across town (not the one next door) to the Rehmaus Apotheke. */
-const planMission = (world: World, phone: { x: number; y: number }): Mission | null => {
-  const { pois } = world.map
-  const dist = (p: Poi) => Math.hypot(p.x - phone.x, p.y - phone.y)
-  const bakeries = pois.filter((p) => p.name.includes("Mühlenbäck")).toSorted((a, b) => dist(a) - dist(b))
-  const pickup = bakeries.find((p) => dist(p) > 300) ?? bakeries[0]
-  const dropoff = pois.find((p) => p.name === "Rehmaus Apotheke") ?? pois.filter((p) => p.kind === "pharmacy").toSorted((a, b) => dist(a) - dist(b))[0]
-  return pickup === undefined || dropoff === undefined ? null : newMission(phone, pickup, dropoff)
-}
-
 /** Spawn on the street segment closest to START, next to a parked car. `hidden` says where pickups would be out of sight (under trees). */
 export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const random = makeRandom(seed)
@@ -146,7 +137,10 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     lives: LIVES,
     score: newScore(),
     wanted: noHeat(),
-    mission: planMission(world, phone),
+    jobs: planJobs(world, phone),
+    respect: newRespect(),
+    turf: turfs(world.map.districts),
+    ringCooldown: 0,
     bust: 0,
     fighting: 0,
     wasted: 0,
@@ -290,7 +284,7 @@ export const step = (world: World, game: Game, input: Input): void => {
   })
   stepPickups(game.pickups, DT)
   if (game.wasted <= 0 && isDead(player.vitals)) wasted(game)
-  missionStep(game)
+  jobsStep(world, game)
   tickScore(game.score, DT)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
 }
@@ -362,7 +356,7 @@ const callOff = (game: Game) => {
   game.cops = []
   game.fighters = game.fighters.filter((f) => f.kind !== "cop" || f.dead)
   game.bust = 0
-  if (game.mission !== null) cancelMission(game.mission)
+  cancelJob(game.jobs)
 }
 
 const walk = (world: World, game: Game, input: Input) => {
@@ -560,17 +554,62 @@ const busted = (game: Game) => {
   player.angle = home.angle
 }
 
-const missionStep = (game: Game) => {
-  const { mission } = game
-  if (mission === null) return
-  const event = stepMission(mission, playerPos(game), DT)
-  if (event === null) return
-  if (event.kind === "start" || event.kind === "picked") game.messages.push({ kind: "mission", text: event.text })
-  else if (event.kind === "failed") game.messages.push({ kind: "mission", text: "Zu spät! Die Brezn sind hart." })
-  else {
-    game.score.money += event.reward
-    game.messages.push({ kind: "mission", text: `Geschafft! $${event.reward}` }, { kind: "cash", amount: event.reward })
+/** Payphones ring near you; the job in progress moves on; a steal or destroy job parks its car when you take it. */
+const jobsStep = (world: World, game: Game) => {
+  const { jobs } = game
+  const p = playerPos(game)
+  game.ringCooldown -= DT
+  if (game.ringCooldown <= 0) {
+    const ringing = jobs.phones.find((ph, i) => isRinging(jobs, i) && Math.hypot(ph.x - p.x, ph.y - p.y) < RING_HEARD_M)
+    if (ringing !== undefined) game.sounds.push({ id: "ring", x: ringing.x, y: ringing.y })
+    game.ringCooldown = RING_EVERY_S
   }
+  const event = stepJobs(jobs, { player: p, car: game.player.car }, DT)
+  if (event === null) return
+  game.messages.push({ kind: "mission", text: event.text })
+  if (event.kind === "start") {
+    const car = jobCar(world, game, event.job)
+    if (car !== null && jobs.active !== null) jobs.active.target = car
+  } else if (event.kind === "passed") {
+    game.score.money += event.reward
+    game.messages.push({ kind: "cash", amount: event.reward })
+    const g = event.job.gang
+    if (g !== undefined) gangJobDone(game.respect, g.for, g.against)
+  }
+}
+
+/** Meters within which you hear a ringing phone, and seconds between rings. */
+const RING_HEARD_M = 70
+const RING_EVERY_S = 1.4
+
+/** The car a steal or destroy job is about, parked at the kerb by its place. */
+const jobCar = (world: World, game: Game, job: Job): Car | null => {
+  const { goal } = job
+  if (goal.kind === "deliver") return null
+  const at = world.roadAt(goal.at.x, goal.at.y, 80)
+  const pts = at?.road.pts ?? []
+  // The street's nearest vertex pair gives the heading; the car stands at the right-hand kerb.
+  let best = { d: Infinity, x: goal.at.x, y: goal.at.y, angle: 0 }
+  for (let i = 0; i + 3 < pts.length; i += 2) {
+    const ax = pts[i] ?? 0
+    const ay = pts[i + 1] ?? 0
+    const bx = pts[i + 2] ?? 0
+    const by = pts[i + 3] ?? 0
+    const len2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1
+    const t = Math.max(0, Math.min(1, ((goal.at.x - ax) * (bx - ax) + (goal.at.y - ay) * (by - ay)) / len2))
+    const x = ax + (bx - ax) * t
+    const y = ay + (by - ay) * t
+    const d = Math.hypot(x - goal.at.x, y - goal.at.y)
+    if (d < best.d) best = { d, x, y, angle: Math.atan2(by - ay, bx - ax) }
+  }
+  const half = (at?.road.width ?? 6) / 2
+  for (const lane of [half + 1, half - 1, 0, -(half - 1)]) {
+    const car: Car = { x: best.x - Math.sin(best.angle) * lane, y: best.y + Math.cos(best.angle) * lane, angle: best.angle, vx: 0, vy: 0, model: goal.model, vitals: vitals(CAR_HP) }
+    if (carHitsWall(world, car)) continue
+    game.parked.push(car)
+    return car
+  }
+  return null
 }
 
 /** F: get out, or take the nearest parked car or NPC (the driver flees, GTA-style). */

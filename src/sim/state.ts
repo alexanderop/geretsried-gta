@@ -8,7 +8,8 @@ import type { Signals } from "./signals.ts"
 import type { Walker } from "./pedestrians.ts"
 import type { Wanted } from "./wanted.ts"
 import type { Score } from "./score.ts"
-import type { Mission } from "./mission.ts"
+import type { Jobs } from "./mission.ts"
+import type { Respect, Turf } from "./gangs.ts"
 import type { Cop } from "./police.ts"
 import type { Vitals } from "./damage.ts"
 import type { Arsenal } from "./weapons.ts"
@@ -102,7 +103,7 @@ export type Effect = {
 /** A scorch mark left on the ground. */
 export type Decal = { readonly x: number; readonly y: number; readonly angle: number; readonly size: number }
 
-export type SoundId = "pistol" | "smg" | "shotgun" | "rocket" | "explosion" | "flame" | "molotov" | "punch" | "pickup" | "scream" | "copShot"
+export type SoundId = "ring" | "pistol" | "smg" | "shotgun" | "rocket" | "explosion" | "flame" | "molotov" | "punch" | "pickup" | "scream" | "copShot"
 /** A sound and where it happened, so the UI can make far ones quieter. */
 export type Sound = { readonly id: SoundId; readonly x: number; readonly y: number }
 
@@ -130,8 +131,13 @@ export type Game = {
   lives: number
   readonly score: Score
   readonly wanted: Wanted
-  /** The payphone job, or null on a map without its places. */
-  readonly mission: Mission | null
+  /** The payphones and their jobs. */
+  readonly jobs: Jobs
+  /** Each gang's respect for you, and where their turf is. */
+  readonly respect: Respect
+  readonly turf: ReadonlyArray<Turf>
+  /** Seconds until the next ring of a phone near you. */
+  ringCooldown: number
   /** Seconds an officer has had hold of you (see `arrested` in game.ts). */
   bust: number
   /** Seconds you still count as fighting back after your last shot or punch: nobody arrests you then. */

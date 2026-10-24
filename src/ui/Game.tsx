@@ -4,7 +4,7 @@ import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
 import { bakeMinimap, drawMinimap, drawPlaces, drawPlayerMarker, drawTargetArrow, poiIcon } from "#/render/overlay.ts"
-import { missionTarget } from "#/sim/mission.ts"
+import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
 import { wantedLevel } from "#/sim/wanted.ts"
 import { WEAPONS } from "#/sim/weapons.ts"
@@ -40,6 +40,13 @@ const compareSpot = (world: World): { x: number; y: number; half: number } | nul
 const weaponSlot = (game: GameState): HudState["weapon"] => {
   const { current, ammo } = game.player.arsenal
   return { id: current, name: WEAPONS[current].name, ammo: current === "fists" ? null : ammo[current] }
+}
+
+/** The job clock: running from the pickup (or, for a car to wreck, from the call). */
+const jobClock = (game: GameState): number | null => {
+  const a = game.jobs.active
+  if (a === null) return null
+  return a.stage === "deliver" || a.job.goal.kind === "destroy" ? a.timeLeft : null
 }
 
 /** Milliseconds a frame may spend building chunks while you play. */
@@ -118,7 +125,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       ctx.clearRect(0, 0, overlay.width, overlay.height)
       drawPlayerMarker(ctx, matrix, game, devicePixelRatio)
       drawPlaces(ctx, world.map, matrix, devicePixelRatio)
-      if (game.mission !== null) drawTargetArrow(ctx, matrix, missionTarget(game.mission), game.time, devicePixelRatio)
+      const target = jobTarget(game.jobs, playerPos(game))
+      if (target !== null) drawTargetArrow(ctx, matrix, target, game.time, devicePixelRatio)
       drawMinimap(ctx, minimap, world.map, game)
 
       const p = playerPos(game)
@@ -162,7 +170,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           nearCar: game.parked.some((c) => near(c.x, c.y)) || game.npcs.some((n) => near(n.x, n.y)),
           big: game.time < bigUntil ? shown.big : "",
           mission: game.time < missionUntil ? shown.mission : "",
-          timer: game.mission?.stage === "deliver" ? game.mission.timeLeft : null,
+          timer: jobClock(game),
+          ringing: game.jobs.phones.some((ph, i) => isRinging(game.jobs, i) && Math.hypot(ph.x - p.x, ph.y - p.y) < 70),
         }
         setHud(shown)
       }

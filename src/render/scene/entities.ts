@@ -8,7 +8,7 @@ import { CAR_LENGTH } from "#/sim/car.ts"
 import { POLICE_MODEL } from "#/sim/vehicles.ts"
 import { SMOKE_HP, type Game } from "#/sim/game.ts"
 import type { Car } from "#/sim/car.ts"
-import { missionTarget } from "#/sim/mission.ts"
+import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { lightFor, type Light, type StopLine } from "#/sim/signals.ts"
 import { HEAD, LAMP_AT, MAST_Z, signalHead, uprightQuad } from "./street.ts"
 import { CORPSE_FADE_S, type Walker } from "#/sim/pedestrians.ts"
@@ -168,19 +168,27 @@ const damaged = (m: MeshBuilder, boxes: SpriteBoxes, c: Placed & { readonly vita
 
 const MARKER: Rgba = [255, 214, 10, 255]
 
-/** The mission's glowing ground marker (GTA 2's pulsing arrow target), and the payphone. */
+const CAR_MARK: Rgba = [255, 60, 40, 255]
+
+/** The payphones (ringing ones shake, with their rings), and the job's glowing marker: on the ground at a place, under the car it is about. */
 const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
-  const job = game.mission
-  if (job === null) return
-  const target = missionTarget(job)
-  const pulse = 7 + Math.sin(game.time * 4) * 1.5
-  spriteQuad(m, { x: target.x, y: target.y, z: 0.15, angle: 0, length: pulse, width: pulse }, Sprite.glow, box(boxes, Sprite.glow), MARKER, Mode.sprite)
-  const ringing = job.stage === "offer" && job.armed
-  const layer = prop(ringing ? "prop-phone" : "prop-phone-quiet")
-  const b = box(boxes, layer)
-  // The booth is 1.1 m deep; its rings wobble while it rings.
-  const k = ringing ? 1 + Math.sin(game.time * 18) * 0.04 : 1
-  spriteQuad(m, { x: job.phone.x, y: job.phone.y, z: 2.4, angle: 0, length: (1.1 * k * b[0]) / b[1], width: 1.1 * k }, layer, b, WHITE, Mode.sprite)
+  const { jobs, time, player } = game
+  jobs.phones.forEach((phone, i) => {
+    if (Math.abs(phone.x - player.x) > VIEW_M || Math.abs(phone.y - player.y) > VIEW_M) return
+    const ringing = isRinging(jobs, i)
+    const layer = prop(ringing ? "prop-phone" : "prop-phone-quiet")
+    const b = box(boxes, layer)
+    // The booth, drawn 1.6 m deep like GTA 2's chunky props; it shakes while it rings.
+    const k = ringing ? 1 + Math.sin(time * 18) * 0.04 : 1
+    sprite(m, boxes, layer, { x: phone.x, y: phone.y, angle: 0 }, 2.4, (1.6 * k * b[0]) / b[1], 1.6)
+  })
+  const active = jobs.active
+  if (active === null) return
+  const target = jobTarget(jobs, player)
+  if (target === null) return
+  const pulse = 7 + Math.sin(time * 4) * 1.5
+  const onCar = active.target !== null && target === active.target
+  spriteQuad(m, { x: target.x, y: target.y, z: 0.15, angle: 0, length: onCar ? pulse * 0.9 : pulse, width: onCar ? pulse * 0.9 : pulse }, Sprite.glow, box(boxes, Sprite.glow), onCar ? CAR_MARK : MARKER, Mode.sprite)
 }
 
 /** A pump island (two pumps on a kerbed island), at pump height; one about to blow is on fire. */

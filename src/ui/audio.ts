@@ -150,6 +150,19 @@ export class GameAudio {
     } else if (id === "punch") {
       burst("lowpass", 500, 150, 0.45, 0.09)
       tone("sine", 120, 60, 0.3, 0.08)
+    } else if (id === "ring") {
+      // An old German phone bell: a fast warble of two tones.
+      for (let k = 0; k < 6; k++) {
+        const o = ctx.createOscillator()
+        o.type = "square"
+        o.frequency.value = k % 2 === 0 ? 1180 : 1420
+        const g = ctx.createGain()
+        g.gain.setValueAtTime(0.04 * volume, now + k * 0.05)
+        g.gain.setValueAtTime(0, now + k * 0.05 + 0.045)
+        o.connect(g).connect(master)
+        o.start(now + k * 0.05)
+        o.stop(now + k * 0.05 + 0.05)
+      }
     } else if (id === "pickup") {
       tone("square", 660, 990, 0.06, 0.18)
     } else {

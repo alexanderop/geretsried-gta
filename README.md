@@ -126,11 +126,15 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 - **Pickups** (`src/sim/pickups.ts`): 40 spots from the map alone (behind shops, away from the street
   they face; in parks and on pitches; on parking lots), 90 m apart, never under a tree crown, the same
   every game, the nearest one to the start a pistol. Walk over one to take it; it is back after 60 s.
-- **The payphone job** (`src/sim/mission.ts`): the yellow phone on the sidewalk at Sudetenstraße 19:
-  "Hol Brezn bei Bäckerei Mühlenbäck und bring sie zur Rehmaus Apotheke in 150 s". The pickup is the
-  Mühlenbäck branch across town (the one next door would be too easy); the 150 s clock runs from the
-  pickup, 2.4 km by road. A yellow arrow points at the target (at the screen edge while it is off
-  screen) and a glowing marker lies on the ground there. Reward $1500.
+- **Payphone jobs** (`src/sim/mission.ts` the job state machine, `src/sim/town-jobs.ts` Geretsried's phones
+  and jobs): yellow booths at Sudetenstraße 19, at the bus stop by the Rathaus and one on each gang's turf.
+  A phone with work rings (a bell you hear within 70 m, "☎ Telefon klingelt!" in the HUD, the booth
+  shakes) and the arrow points at the nearest ringing one; walk up to it on foot to take the job. Three
+  kinds, all at real places: fetch and deliver against the clock (Brezn from the Mühlenbäck across town to
+  the Rehmaus Apotheke), steal a particular car and drive it somewhere (the Mercedes G in front of the
+  Rathaus to the Werkstatt Wilhelm), and blow one up (the Post-Transporter at Filiale 571). A phone's
+  jobs come one after the other; busted or wasted, the job is off and the phone rings again once you come
+  back. A glowing marker lies at the next stop, a red one under the car the job is about.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

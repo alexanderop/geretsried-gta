@@ -298,13 +298,47 @@ describe("police escalation", () => {
   })
 })
 
-describe("the payphone job", () => {
-  it("sends you from Sudetenstraße 19 to the Mühlenbäck across town and on to the Rehmaus Apotheke", () => {
+describe("the payphone jobs", () => {
+  it("start with the courier job at the phone by Sudetenstraße 19: Mühlenbäck across town to the Rehmaus Apotheke", () => {
     const game = newGame(world, 1)
-    const mission = must(game.mission)
-    expect(Math.hypot(mission.phone.x - game.home.x, mission.phone.y - game.home.y)).toBeLessThan(10)
-    expect(mission.pickup.name).toContain("Mühlenbäck")
-    expect(Math.hypot(mission.pickup.x - mission.phone.x, mission.pickup.y - mission.phone.y)).toBeGreaterThan(300)
-    expect(mission.dropoff.name).toBe("Rehmaus Apotheke")
+    const { jobs } = game
+    const home = must(jobs.phones[0])
+    expect(Math.hypot(home.x - game.home.x, home.y - game.home.y)).toBeLessThan(10)
+    const first = must(jobs.jobs[0])
+    expect(first.goal.kind).toBe("deliver")
+    if (first.goal.kind !== "deliver") return
+    expect(first.goal.pickup.name).toContain("Mühlenbäck")
+    expect(Math.hypot(first.goal.pickup.x - home.x, first.goal.pickup.y - home.y)).toBeGreaterThan(300)
+    expect(first.goal.dropoff.name).toBe("Rehmaus Apotheke")
+  })
+
+  it("have phones round town and jobs of all three kinds, gang jobs among them", () => {
+    const { jobs } = newGame(world, 1)
+    expect(jobs.phones.length).toBeGreaterThanOrEqual(4)
+    expect(new Set(jobs.jobs.map((j) => j.goal.kind))).toEqual(new Set(["deliver", "steal", "destroy"]))
+    expect(jobs.jobs.filter((j) => j.gang !== undefined).length).toBeGreaterThanOrEqual(3)
+    for (const ph of jobs.phones) expect(world.isSolid(ph.x, ph.y)).toBe(false)
+  })
+
+  it("park the Mercedes G at the Rathaus when you take the job, and pay when you drive it to the garage", () => {
+    const game = newGame(world, 1)
+    game.jobs.done.push("brezn")
+    const phone = must(game.jobs.phones[0])
+    Object.assign(game.player, { x: phone.x, y: phone.y })
+    step(world, game, idle)
+    const target = must(game.jobs.active?.target)
+    expect(game.parked.includes(target as Car)).toBe(true)
+    Object.assign(game.player, { x: target.x + 1, y: target.y })
+    step(world, game, { ...idle, use: true })
+    expect(game.player.car).toBe(target)
+    step(world, game, idle)
+    expect(game.jobs.active?.stage).toBe("deliver")
+    const goal = must(game.jobs.active).job.goal
+    if (goal.kind !== "steal") throw new Error("expected the steal job")
+    Object.assign(must(game.player.car), { x: goal.dropoff.x, y: goal.dropoff.y })
+    const money = game.score.money
+    step(world, game, idle)
+    expect(game.score.money).toBe(money + 2500)
+    expect(game.jobs.done).toContain("mercedes")
   })
 })

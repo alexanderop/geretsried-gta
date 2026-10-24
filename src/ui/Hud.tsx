@@ -24,6 +24,8 @@ export type HudState = {
   readonly mission: string
   /** Seconds left on the job, or null when no clock runs. */
   readonly timer: number | null
+  /** A payphone rings near you: GTA 2's ringing phone icon. */
+  readonly ringing: boolean
   /** The weapon slot under the money, GTA 2 style: an icon and the rounds left (null: no ammo, like fists). */
   readonly weapon: { readonly id: WeaponId; readonly name: string; readonly ammo: number | null }
   /** What you just picked up, for the name flash. */
@@ -49,6 +51,7 @@ export const emptyHud: HudState = {
   big: "",
   mission: "",
   timer: null,
+  ringing: false,
   weapon: { id: "fists", name: "Fäuste", ammo: null },
   pickup: null,
   paid: null,
@@ -188,6 +191,11 @@ export function Hud({ hud, help }: { readonly hud: HudState; readonly help: bool
         )}
         {hud.place !== "" && <div data-testid="place" className="text-lg">{hud.place}</div>}
         {!hud.inCar && hud.nearCar && <div className="text-lg text-green-300">F — Auto nehmen</div>}
+        {hud.ringing && (
+          <div data-testid="ringing" className="hud-blink flex items-center gap-2 text-2xl text-yellow-300">
+            <span aria-hidden="true">☎</span> Telefon klingelt!
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-4 left-4 font-mono text-xs font-normal [-webkit-text-stroke:0] [text-shadow:none]">
