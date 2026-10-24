@@ -16,6 +16,10 @@ export const PHOTO_TILE_PX = PHOTO_TILE_M * PHOTO_TILE_PX_PER_M
  */
 export const PHOTO_TILE_PAD = 1
 
+/** The whole tile grid shrunk to OVERVIEW_M_PER_PX, for the minimap. */
+export const PHOTO_OVERVIEW_URL = "/photo/overview.webp"
+export const OVERVIEW_M_PER_PX = 8
+
 export const photoTileUrl = (tx: number, ty: number) => `/photo/${tx}_${ty}.webp`
 
 /** Tiles needed to cover a map of `width` × `height` meters. */
