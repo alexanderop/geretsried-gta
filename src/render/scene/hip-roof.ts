@@ -11,10 +11,16 @@
  * The footprint is cut into convex pieces along every line where two walls
  * are equally far or one is zero away, so a single wall owns each piece and
  * the piece is one flat plane of the roof.
+ *
+ * Walls need not share one eave: `lift` (per wall of the ring, meters of run)
+ * starts a wall's plane that far up its slope, so a wall with lower eaves
+ * lifts by a negative amount and its plane reaches further in. A wall lifted
+ * by Infinity has no plane at all: it is a gable, and its neighbours' planes
+ * run on to it.
  */
 import { clipHalfPlane, signedArea, triangulate } from "./geometry.ts"
 
-/** A plane of the roof: a convex piece of the footprint and each corner's distance from the wall it rises from. */
+/** A plane of the roof: a convex piece of the footprint and each corner's distance from the wall it rises from (plus that wall's lift). */
 export type HipFace = {
   readonly poly: ReadonlyArray<number>
   readonly rise: ReadonlyArray<number>
@@ -26,16 +32,16 @@ const EPS = 1e-6
 /** A corner turning less than this (the sine of its angle) is no corner: the walls either side are one eave. */
 const STRAIGHT = 0.02
 
-/** Whether a point d from a wall is on its side of the bisector with a neighbour `other` away, at a corner turning `t`. */
-const inWedge = (d: number, other: number, t: number) => (t > STRAIGHT ? d <= other + EPS : t < -STRAIGHT ? d >= other - EPS : true)
+/** Whether a point d from a wall is on its side of the bisector with a neighbour `other` away, at a corner turning `t`; a gable (`other` infinite) has no bisector. */
+const inWedge = (d: number, other: number, t: number) => (other === Infinity ? true : t > STRAIGHT ? d <= other + EPS : t < -STRAIGHT ? d >= other - EPS : true)
 
-/** One wall's line: d(x, y) = nx·x + ny·y − c is the distance from it, positive inside. */
-type Line = { readonly nx: number; readonly ny: number; readonly c: number }
+/** One wall's line: d(x, y) = nx·x + ny·y − c is the distance from it, positive inside; `lift` is added to it for its plane. */
+type Line = { readonly nx: number; readonly ny: number; readonly c: number; readonly lift: number }
 
 const area = (poly: ReadonlyArray<number>) => Math.abs(signedArea(poly))
 
 /** The roof planes of an open ring (either winding): pieces that together cover it. */
-export const hipFaces = (ring: ReadonlyArray<number>): Array<HipFace> => {
+export const hipFaces = (ring: ReadonlyArray<number>, lift: ReadonlyArray<number> = []): Array<HipFace> => {
   const sign = signedArea(ring) >= 0 ? 1 : -1
   const count = ring.length / 2
   const walls: Array<Line> = []
@@ -50,7 +56,7 @@ export const hipFaces = (ring: ReadonlyArray<number>): Array<HipFace> => {
     // On a ring of positive shoelace area the inside lies at (−dy, dx) of a→b.
     const nx = (-dy * sign) / len
     const ny = (dx * sign) / len
-    walls.push({ nx, ny, c: nx * ax + ny * ay })
+    walls.push({ nx, ny, c: nx * ax + ny * ay, lift: lift[i] ?? 0 })
   }
   const n = walls.length
   if (n < 3) return []
@@ -63,33 +69,35 @@ export const hipFaces = (ring: ReadonlyArray<number>): Array<HipFace> => {
     const w = walls[k] ?? walls[0]
     return w === undefined ? 0 : w.nx * x + w.ny * y - w.c
   }
-  /** The wall whose plane covers (x, y): the nearest that reaches it. */
+  /** How far up its plane (x, y) is: the distance plus the wall's lift. */
+  const up = (k: number, x: number, y: number) => dist(k, x, y) + (walls[k]?.lift ?? 0)
+  /** The wall whose plane covers (x, y): the lowest that reaches it. */
   const owner = (x: number, y: number) => {
     let best = -1
     let bestD = Infinity
     for (let k = 0; k < n; k++) {
-      const d = dist(k, x, y)
-      if (d < -EPS || d >= bestD) continue
-      if (!inWedge(d, dist((k + n - 1) % n, x, y), turn[k] ?? 0) || !inWedge(d, dist((k + 1) % n, x, y), turn[(k + 1) % n] ?? 0)) continue
+      const d = up(k, x, y)
+      if (dist(k, x, y) < -EPS || d >= bestD) continue
+      if (!inWedge(d, up((k + n - 1) % n, x, y), turn[k] ?? 0) || !inWedge(d, up((k + 1) % n, x, y), turn[(k + 1) % n] ?? 0)) continue
       best = k
       bestD = d
     }
     return best
   }
 
-  // Every line where two walls are equally far (bisectors, ridges, valleys) or a wall's own line.
-  const cuts: Array<Line> = walls.map((w) => w)
+  // Every line where two planes are equally high (bisectors, ridges, valleys) or a wall's own line.
+  const cuts: Array<Omit<Line, "lift">> = walls.map((w) => w)
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       const a = walls[i]
       const b = walls[j]
-      if (a === undefined || b === undefined) continue
+      if (a === undefined || b === undefined || a.lift === Infinity || b.lift === Infinity) continue
       const nx = a.nx - b.nx
       const ny = a.ny - b.ny
       const len = Math.hypot(nx, ny)
       // Two walls on one line are equally far everywhere: no line between them.
       if (len < 1e-6) continue
-      cuts.push({ nx: nx / len, ny: ny / len, c: (a.c - b.c) / len })
+      cuts.push({ nx: nx / len, ny: ny / len, c: (a.c - a.lift - (b.c - b.lift)) / len })
     }
   }
   const tris = triangulate(ring)
@@ -113,7 +121,7 @@ export const hipFaces = (ring: ReadonlyArray<number>): Array<HipFace> => {
     const wall = owner(cx, cy)
     const w = walls[wall]
     if (w === undefined) return []
-    const rise = Array.from({ length: k }, (_, i) => Math.max(0, dist(wall, poly[i * 2] ?? 0, poly[i * 2 + 1] ?? 0)))
+    const rise = Array.from({ length: k }, (_, i) => Math.max(0, dist(wall, poly[i * 2] ?? 0, poly[i * 2 + 1] ?? 0)) + w.lift)
     return [{ poly, rise, out: [-w.nx, -w.ny] as const }]
   })
 }

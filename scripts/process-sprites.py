@@ -378,6 +378,31 @@ if quoins is not None:
     im.convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "rathaus-quoins.webp", "WEBP", quality=90)
     print("rathaus-quoins.webp")
 
+# Maria Hilf: a window-less white render any place can tint (facade "plaster": grey, its mean lifted to 240 like
+# facade-render's plaster, made seamless), the rose window and the main doors (keyed and squared like rehmaus-sign),
+# and the big gridded nave window and the tower's belfry face (opaque, 2:3, stored square).
+plaster = find("facade-plaster")
+if plaster is not None:
+    a = np.asarray(Image.open(plaster).convert("L").resize((512, 512), Image.LANCZOS), np.float32)
+    a = np.clip(240 + (a - a.mean()) * 1.6, 0, 255).astype(np.uint8)
+    make_seamless(Image.fromarray(a).convert("RGB")).save(OUT / "facade-plaster.webp", "WEBP", quality=88)
+    print("facade-plaster.webp")
+for name in ["church-rose", "church-door"]:
+    src = find(name)
+    if src is None:
+        continue
+    im = key_magenta_fast(Image.open(src))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (36, 38, 39, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=90)
+    print(f"{name}.webp")
+for name in ["church-window", "church-belfry"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

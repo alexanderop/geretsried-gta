@@ -111,7 +111,7 @@ describe("the registry on the real map", () => {
       const pts = map.buildings[building]?.pts ?? []
       const place = { dressing, building, frame }
       return dressing.parts.flatMap((part) => {
-        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony") {
+        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony" || part.kind === "canopy") {
           const wall = wallFrame(pts, part.edge)
           const fits = wall !== null && part.u0 >= 0 && part.u0 < part.u1 && part.u1 <= wall.length + 0.01
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
@@ -126,8 +126,13 @@ describe("the registry on the real map", () => {
     expect(wrong).toEqual([])
   })
 
-  it("hangs balconies above head height, so people and cars pass under them", () => {
-    const low = PLACES.flatMap((d) => d.parts.flatMap((part) => (part.kind === "balcony" && Math.min(...part.z) < 2.5 ? [`${d.poi}: balcony at ${Math.min(...part.z)}`] : [])))
+  it("hangs balconies and door canopies above head height, so people and cars pass under them", () => {
+    const low = PLACES.flatMap((d) =>
+      d.parts.flatMap((part) => {
+        const z = part.kind === "balcony" ? Math.min(...part.z) : part.kind === "canopy" ? part.z : Infinity
+        return z < 2.5 ? [`${d.poi}: ${part.kind} at ${z}`] : []
+      }),
+    )
     expect(low).toEqual([])
   })
 

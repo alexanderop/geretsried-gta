@@ -1,6 +1,6 @@
 /**
  * The parts of a dressed place (world/places/dressing.ts) as 3D geometry:
- * signs, arcades and balconies on the footprint's walls, towers with a pyramid roof,
+ * signs, arcades, balconies and door canopies on the footprint's walls, towers with a pyramid roof,
  * prop sprites. Drawn with the building they belong to; its walls, storeys
  * and roof colours are scene.ts's.
  */
@@ -21,6 +21,8 @@ const ARCH_STEPS = 10
 const BALCONY_SLAB = 0.18
 const BALCONY_RAIL = 1
 const RAIL = 0.06
+/** A door canopy's slab. */
+const CANOPY_SLAB = 0.2
 
 /** A tower's quoins (square, standing proud of its walls), the cornice under its roof, the eaves' overhang. */
 const QUOIN = 0.45
@@ -91,6 +93,13 @@ const balcony = (b: Builder, p: Extract<Part, { kind: "balcony" }>) => {
     box(b, [u0, u0 + RAIL, -depth + RAIL, 0], z, top, colour)
     box(b, [u1 - RAIL, u1, -depth + RAIL, 0], z, top, colour)
   }
+}
+
+/** A door canopy: a slab standing out from the wall (n = 0) with its top at z, and its shadow on the ground. */
+const canopy = (b: Builder, p: Extract<Part, { kind: "canopy" }>) => {
+  const rect = [p.u0, p.u1, -p.depth, 0] as const
+  box(b, rect, p.z - CANOPY_SLAB, p.z, p.colour)
+  boxShadow(b, rect, p.z)
 }
 
 /** The corners of a tower's side, left to right seen from outside (see TowerFace). */
@@ -192,6 +201,7 @@ export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts
       const b = { m, f: wall.frame, boxes }
       if (part.kind === "wallSign") panel(b, part.texture, part.u0, part.u1, part.z0, part.z1, -(part.out ?? SIGN_OUT))
       else if (part.kind === "balcony") balcony(b, part)
+      else if (part.kind === "canopy") canopy(b, part)
       else arcade(b, part)
     }
   }
@@ -208,6 +218,7 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
     const wall = wallFrame(pts, part.edge)
     if (wall === null) return []
     if (part.kind === "balcony") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), Math.max(0, ...part.z) + BALCONY_RAIL]]
+    if (part.kind === "canopy") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), part.z]]
     const out = part.kind === "arcade" ? part.depth : (part.out ?? SIGN_OUT)
     return [[rectRing(wall.frame, [part.u0, part.u1, -out, 0]), part.kind === "arcade" ? part.h + ARCADE_BAND : part.z1]]
   })

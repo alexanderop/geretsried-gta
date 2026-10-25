@@ -70,6 +70,42 @@ describe("a hipped roof", () => {
   })
 })
 
+describe("a hipped roof with eaves of their own and gables", () => {
+  const box = [0, 0, 20, 0, 20, 10, 0, 10]
+
+  it("runs the ridge on to a gable wall instead of a hip", () => {
+    // Wall 1 is the east end (x = 20): no plane of its own, the long walls' planes meet over it.
+    const faces = hipFaces(box, [0, Infinity, 0, 0])
+    expect(area(faces)).toBeCloseTo(200)
+    expect(riseAt(faces, 19.5, 5)).toBeCloseTo(5)
+    expect(riseAt(faces, 19.5, 2)).toBeCloseTo(2)
+    // The west end keeps its hip.
+    expect(riseAt(faces, 1, 5)).toBeCloseTo(1)
+    expect(steps(faces)).toBe(0)
+  })
+
+  it("starts a lower wall's plane further down, so the ridge moves away from it", () => {
+    // The north wall (wall 2, y = 10) 2 m of run lower: the ridge where both long planes are equally high, y = 4.
+    const faces = hipFaces(box, [0, 0, -2, 0])
+    expect(riseAt(faces, 10, 9)).toBeCloseTo(-1)
+    expect(riseAt(faces, 10, 4)).toBeCloseTo(4)
+    expect(Math.max(...faces.flatMap((f) => f.rise))).toBeCloseTo(4)
+    expect(steps(faces)).toBe(0)
+  })
+
+  it("gives Maria Hilf its tent roof: the apex 18.5 m up, SE of the middle like the LoD2 model's", () => {
+    const church = [3827.5, 4891, 3840.5, 4891.7, 3847.2, 4898.3, 3843.3, 4913.2, 3847.7, 4916.1, 3841.3, 4924.6, 3836.2, 4921.3, 3814.9, 4921.2, 3816.3, 4900.2]
+    const slope = Math.tan((39.5 * Math.PI) / 180)
+    const low = (4.6 - 9) / slope
+    const faces = hipFaces(church, [low, low, 0, 0, Infinity, 0, 0, low, low])
+    expect(area(faces)).toBeCloseTo(Math.abs(signedArea(church)), 3)
+    // The model's apex: 19.1 m over the ground at (3833.7, 4908.8).
+    expect(9 + Math.max(...faces.flatMap((f) => f.rise)) * slope).toBeCloseTo(18.5, 1)
+    expect(9 + (riseAt(faces, 3833.7, 4908.8) ?? 0) * slope).toBeGreaterThan(17.5)
+    expect(steps(faces, 1e-3)).toBe(0)
+  })
+})
+
 /** Corners of faces that do not lie at the rise of every face round them: steps in the roof. */
 const steps = (faces: ReadonlyArray<HipFace>, tolerance = 1e-4) => {
   let bad = 0

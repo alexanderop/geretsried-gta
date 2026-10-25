@@ -310,7 +310,7 @@ Size: M
   the brick was not on disk), the bay window on the gable block, the 3-storey gable block (the whole outline is 2
   storeys). The 3.8 m annex at the N end (way 1236633759) keeps the engine's look.
 
-### B1-4 · Maria Hilf (#232, church) — Size: S — status: ref-done (partial; tower/entrance side needs reference)
+### B1-4 · Maria Hilf (#232, church) — Size: S — status: implemented (partial: nave window, side door and tower openings placed by guess)
 ```
 Goal: Make the save-point church Maria Hilf (Johann-Sebastian-Bach-Straße) look like a white modern church:
 steep gable front with a big round rose window, flat dark canopy over the door, square white tower with a dark
@@ -327,11 +327,65 @@ Spec (via #0b):
   tower/rose window/canopy as a TODO comment pointing at docs/places/maria-hilf.md.
 - Real-world note: closed since Nov 2024 behind a construction fence (roof failure). Don't add a fence unless asked.
 Acceptance criteria:
-- [ ] From the street, a white church with the dark-framed big window, matching 01.
-- [ ] If the tower is placed: white square tower with a dark pyramid cap, at the corner matching 01/05.
-- [ ] Save pad "Maria Hilf" still reachable on foot and triggers; pnpm test + typecheck green.
+- [x] From the street, a white church with the dark-framed big window, matching 01.
+- [x] If the tower is placed: white square tower with a dark pyramid cap, at the corner matching 01/05.
+- [x] Save pad "Maria Hilf" still reachable on foot and triggers; pnpm test + typecheck green.
 Size: S
 ```
+
+**B1-4 as built** (`src/world/places/maria-hilf.ts`) and gotchas for later places:
+- **The "needs reference" parts were settled by the Bavarian LoD2 building model**, not guessed. It is open data
+  (© Bayerische Vermessungsverwaltung, CC BY 4.0): one CityGML file per 2 km tile, e.g.
+  `https://download1.bayernwolke.de/a/lod2/citygml/684_5302.gml` (38 MB; tile = UTM32 km, even numbers, SW corner).
+  Building `DEBY_LOD2_4602633`, name "Maria Hilf", outline dated 2026-06-30: ground 605.47 m, the **tower in the SW
+  corner** (OSM point 7), 6.1 × 6.3 m, walls to 29.8 m, a 6 m pyramid (35.8 m); the nave under a **tent roof**, every
+  plane at about 39.5° (the model's `Dachneigung` is measured from the vertical: 90° − 50.5°) meeting in one apex
+  19.1 m up, SE of the middle; eaves 9.4 m over the S and E walls, 4.6 m over the W, NW and N walls; and a **gabled
+  porch on OSM wall 4** (SE, 10.6 m), eaves 9.4 m, ridge 12.1 m. That porch is the gable front of the parish photo
+  (`stadtkirche-geretsried.de/MariaHilf/unsere-kirche/`, `bild9_kl-1.jpg`): standing in the forecourt SE of it, the
+  tower is on the left and further back, the S wall recedes towards it. The 20 cm DOP20 WMS
+  (`https://geoservices.bayern.de/od/wms/dop/v1/dop20`, layer `by_dop20c`) confirms it: the tower's slate square at
+  the SW corner, its long shadow across the roof, the tent roof's planes. **Both sources are worth trying for every
+  place**: the LoD2 file gives eaves, ridges, roof planes and tower heights per building; nothing else in `docs/`
+  has them. OSM has no `building:levels` or `roof:*` on way 127604845.
+- **Levels 3, `facade: "plaster"`, `wallColour` [245, 245, 243]:** a new generic facade, `facade-plaster.webp`
+  (Codex, a seamless window-less render, made grey with its mean at 240 like facade-render's plaster, so
+  `wallColour` is the render colour). Checked in the browser against #0b's idea, a plain full-height band: at play
+  zoom both read the same (flat light grey in shade, white in sun), but a band cannot reach above the eaves (places.test
+  keeps bands under `levels × 3 + 0.6`) and the gable rises to 13.4 m, so the gable would show the facade over it.
+- **New generic roof options `roof.eaves` and `roof.gables`** (with `hip`; dressing.ts, scene.ts, hip-roof.ts):
+  `eaves: [{ edges, z }]` gives walls their own eave height, `gables: [edges]` ends the roof in a gable there. In
+  `hipFaces(ring, lift)` a wall's plane starts `lift` meters of run up its slope ((z − levels × 3) / tan pitch; a gable
+  is `Infinity`, no plane, its neighbours run on to it), owners are the *lowest* plane in the wedge and the cut lines
+  are where two planes are equally high. With either option the walls' tops follow the roof (`wallTops`: the roof's
+  height through every roof-piece corner on the wall), each texture or band slab is clipped under that line, and the
+  dark eave line follows it too (sloped on the gable). Here hip 39.5, walls 7, 8, 0, 1 at 4.6 m, gable 4: the engine's
+  apex is 18.5 m at (3832.6, 4908.6), the model's 19.1 m at (3833.7, 4908.8); the porch ridge 13.4 m (model 12.1:
+  one pitch per building). Without the options the old code path runs unchanged: every one of the 2112 chunk meshes
+  of the real map hashed identical at HEAD and with this change minus the church; with the church only chunk 1701
+  (its own) differs. Tests: hip-roof.test.ts (a gable end, a lower wall moving the ridge, the church outline: apex,
+  no steps), scene places.test.ts (a gable wall reaching the ridge, a low wall at its eave, no other chunk).
+- **New generic part `canopy { edge, u0, u1, z, depth, colour }`:** a flat 0.2 m slab on a wall with its top at `z` and
+  its shadow; places.test keeps it at z ≥ 2.5 like balconies. The gable front has the main doors (`church-door`,
+  Codex, keyed and squared like rehmaus-sign; u 4.0–6.6, z 0–3.2) under a canopy (u 3.1–7.5, z 3.6, depth 1.6, #343e39)
+  and the rose window over it (`church-rose`, keyed and squared, Ø 3.4 m, centre 7.3 m up, as in the photo).
+- **Tower:** `edge: 6`, `rect` [0.5, 6.6, 0.05, 6.25] (wall 7 leans 3.8° off square, so u0 under 0.45 puts a corner
+  outside), h 29.8, roofH 6, white, roof [66, 82, 88] (the DOP20's weathered grey-green slate, the photo's
+  near-black lightened so it reads from above), the finial as the cross, no quoins. `church-belfry` (Codex, opaque,
+  2:3 stored square: two louvred round-arched sound openings over a small square window, as the winter photo
+  `bild3_kl-1.jpg` shows) on all four faces at z 20.5–29.5. At 36 m it is two thirds of the camera's height, so it
+  leans far out of the screen; from a car on Johann-Sebastian-Bach-Straße (stand at (3808, 4928)) its W and S faces
+  show with the openings.
+- **Guesses (marked in the file):** the big gridded nave window (`church-window`, Codex, opaque 2:3) at wall 6
+  u 7.5–11.5, z 1.8–7.8, next to the tower where Street View's pano at house no. 5 sees it and clear of the kerb tree
+  in front of the wall's middle; the side door with its canopy at u 12.2–15.2 (02 shows a side entrance "by the
+  tower", maybe on the W wall); four identical tower faces and no clock (the 175 px photo shows a light disc
+  halfway up the tower that might be one). The real church is fenced off since Nov 2024; no fence was added.
+- **Save pad:** unchanged (3820.8, 4926.0) on the sidewalk; walked onto it in the browser: $1000 → $500 and
+  `geretsried-gta.save` written.
+- **Screenshots** (local): the forecourt SE of the porch (3855, 4925) shows the gable front with the rose window and
+  the canopy in the top-left corner; a car at (3828, 4930) shows the S wall with the window and the tower leaning
+  in; `?compare=47.85587,11.48137,28` shows the tent roof, the tower's pyramid and the porch from above.
 
 ### B1-5 · PENNY Am Stern (#66, supermarket) — Size: S — status: ref-done (location corrected in batch 3; build inside B3-0)
 ```
@@ -789,7 +843,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | ref-done (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
+| 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | implemented | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
 | 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
 | 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = free-standing red canopy at the NE end of way 822461881's NW facade, facing the car park (corrected in batch 3; built in B3-0) |

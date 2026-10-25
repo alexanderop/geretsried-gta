@@ -12,7 +12,7 @@
  * Coordinates (world/frame.ts): free-standing parts (tower, sprite) are in
  * the street frame, u along the street, n from its centre line towards the
  * place (the POI, or the footprint's middle when no POI marks it). Wall
- * parts (wallSign, arcade, balcony) sit on one wall of the footprint, `edge` i
+ * parts (wallSign, arcade, balcony, canopy) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
  */
@@ -54,6 +54,12 @@ export type Part =
    */
   | { readonly kind: "balcony"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: ReadonlyArray<number>; readonly depth: number; readonly colour: Rgba; readonly slab?: Rgba }
   /**
+   * A flat slab over a door on wall `edge` from u0 to u1, its top at `z`,
+   * standing `depth` meters out of the wall. Overhead like a balcony
+   * (places.test.ts keeps it above head height).
+   */
+  | { readonly kind: "canopy"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: number; readonly depth: number; readonly colour: Rgba }
+  /**
    * A square tower on `rect` (street frame, inside the footprint): walls up
    * to `h`, a pyramid roof `roofH` high, corner quoins in `trim`, a post with
    * a cross bar on top in `finial`, lettering or a clock on its faces. With
@@ -90,9 +96,17 @@ export type PlaceDressing = {
   /**
    * Both roof planes in one colour (the shaded one darker), and/or pitched or flat with a parapet. `hip` (degrees)
    * raises a pitched roof into a hipped one: a plane rising from every wall at that pitch, ridges along the wings,
-   * valleys in the inner corners (render/scene/hip-roof.ts), instead of the flat roof at the eaves.
+   * valleys in the inner corners (render/scene/hip-roof.ts), instead of the flat roof at the eaves. With `hip`,
+   * `eaves` gives the listed walls (`edges`) their own eave height `z` (meters; the rest keep `levels` × 3), and
+   * `gables` ends the roof in a gable at those walls instead of a hip: there each wall's top follows the roof.
    */
-  readonly roof?: { readonly colour?: Rgba; readonly pitched?: boolean; readonly hip?: number }
+  readonly roof?: {
+    readonly colour?: Rgba
+    readonly pitched?: boolean
+    readonly hip?: number
+    readonly eaves?: ReadonlyArray<{ readonly edges: ReadonlyArray<number>; readonly z: number }>
+    readonly gables?: ReadonlyArray<number>
+  }
   readonly parts: ReadonlyArray<Part>
 }
 

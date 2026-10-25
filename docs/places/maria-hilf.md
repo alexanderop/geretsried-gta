@@ -9,7 +9,7 @@
 | OSM building | way **127604845**: building=church, amenity=place_of_worship, religion=christian, denomination=catholic. 837 m², min-rect 32.8 × 32.4 m, axis −86°, centroid (3835.0, 4908.6), 9 nodes. **No `building:levels`, no `roof:*` tags** → the engine defaults to 2 levels (6 m) |
 | Engine roof colours (DOP40) | from map.json: `#41473e` (dark grey-green) and `#9f9c8f` (light grey) on alternating faces; `pitched: true` |
 | Street frame | **Johann-Sebastian-Bach-Straße** (residential, 6.5 m), nearest kerb point (3819.7, 4929.3), 24.4 m from the POI. Street bearing 118°; n (kerb → POI) bearing 28° (NNE). |
-| Status | **ref-done (partial)**. The building's identity is confirmed. The main-entrance side and the tower position on the footprint **need reference**. |
+| Status | **implemented (partial)** (B1-4, `src/world/places/maria-hilf.ts`). The tower corner (SW, OSM point 7), the gable front (OSM wall 4, SE porch), the tent roof and all heights are settled by the Bavarian LoD2 model and the DOP20 aerial (see BACKLOG.md "B1-4 as built"); the nave window, the side door and the tower's openings are placed by guess. |
 
 ## Identity check
 - Parish website photos (05–07) show a white rendered church with a steep gable front, a large round rose window, a flat dark canopy over the main door, and a square white tower on the left with a dark pyramid roof and a cross.

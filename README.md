@@ -64,10 +64,12 @@ plain, like a timber fascia), the roof colour and pitch, and `roof.hip`: a real 
 rising from every wall with hips, valleys and a ridge per wing (`src/render/scene/hip-roof.ts`), instead of the flat
 roof at the eaves. Parts are drawn on top and never solid
 (`src/render/scene/places.ts`): signs, ground-floor arcades and balcony stacks on a wall of the footprint, square towers
-with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles. Pflegeheim St. Ursula
+with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles, door canopies. With `roof.hip`, `roof.eaves` gives some walls their own eave height and
+`roof.gables` ends the roof in a gable at others; the walls' tops then follow the roof (Maria Hilf). Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
 `facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
-`wallColour` gives a building any render colour instead of darkening the yellow plaster.
+`wallColour` gives a building any render colour instead of darkening the yellow plaster; `facade: "plaster"` is the
+same render without windows.
 
 The photo tiles (`pnpm photo`, `scripts/photo-tiles.ts`, `public/photo/`) are no longer drawn; only their
 overview is, as the minimap.
@@ -204,15 +206,6 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   on its post, and the green H pole with its blue timetable at the kerb where the bus halts. One at each OSM bus
   stop (and each platform of a line that has none), at the back of the sidewalk.
 - **Bottle banks** at OSM's glass recycling points.
-- **Rehmaus Apotheke** (`src/world/places/rehmaus-apotheke.ts`), Sudetenstraße 14, the first courier job's
-  drop-off: three storeys in light grey-blue render, a ground-floor arcade of round arches on white pillars
-  along its front, "REHMAUS APOTHEKE" in red serif capitals over the pharmacy's four arches (readable when
-  the front leans in at the screen edge), and the red pharmacy "A" on its post on the green in front.
-- **Sparkasse** (`src/world/places/sparkasse-stein.ts`), the Stein branch at the corner of Händelstraße and
-  Johann-Sebastian-Bach-Straße: four storeys, the bank's grey ground floor under two white storeys and a grey
-  top storey, tall bank windows with red bands and the red "Sparkasse" with its S logo on the Händelstraße
-  face and the corner face, a stack of grey metal balconies at the N end, solar panels along the ridge, and
-  the red Sparkasse flag on its pole and a yield sign at the corner.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.
@@ -235,11 +228,27 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   it, the price sign at the street, an air and water post, and the kiosk gets a shop front. Pump islands
   explode like GTA 2's: shoot or ram one (over 7 m/s) and it catches, burns for a moment and goes up with
   a car-sized blast and a pool of burning petrol, setting off the next island and the cars beside it.
+- **Rehmaus Apotheke** (`src/world/places/rehmaus-apotheke.ts`), Sudetenstraße 14, the first courier job's
+  drop-off: three storeys in light grey-blue render, a ground-floor arcade of round arches on white pillars
+  along its front, "REHMAUS APOTHEKE" in red serif capitals over the pharmacy's four arches (readable when
+  the front leans in at the screen edge), and the red pharmacy "A" on its post on the green in front.
+- **Sparkasse** (`src/world/places/sparkasse-stein.ts`), the Stein branch at the corner of Händelstraße and
+  Johann-Sebastian-Bach-Straße: four storeys, the bank's grey ground floor under two white storeys and a grey
+  top storey, tall bank windows with red bands and the red "Sparkasse" with its S logo on the Händelstraße
+  face and the corner face, a stack of grey metal balconies at the N end, solar panels along the ridge, and
+  the red Sparkasse flag on its pole and a yield sign at the corner.
 - **Rathaus Geretsried** (`src/world/places/rathaus.ts`), Karl-Lederer-Platz 1, the hub of the Mercedes G and Taxi
   jobs: an L of two storeys in cream render with ochre window surrounds, teal and white striped shutters and ochre
   pilasters at the corners, under a red-brown hipped roof; in the middle of its plaza front the square clock tower
   rises 3 m over the ridges to a dark shingled pyramid, the clock over "RATHAUS" on its face to the plaza and the
   arched door with grey and white chevron leaves at its foot.
+- **Maria Hilf** (`src/world/places/maria-hilf.ts`), the parish church on Johann-Sebastian-Bach-Straße and the "Jesus
+  Saves" save point: white render under a grey tent roof whose planes rise from every wall to one apex 18.5 m up, low
+  eaves (4.6 m) on the west and north, the porch's gable front to the forecourt in the SE with the round rose window
+  over the doors and their flat dark canopy, the big gridded nave window and a side door on the street side, and the
+  square white bell tower in the SW corner, 30 m to its eaves with two louvred sound openings on each face, a dark
+  slate pyramid and the cross. Heights and roof come from the Bavarian LoD2 building model (© Bayerische
+  Vermessungsverwaltung, CC BY 4.0).
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

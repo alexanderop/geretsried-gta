@@ -142,3 +142,30 @@ describe("a hipped roof and a tower on a wall", () => {
     expect(vs.some((v) => near(v.x, 32) && near(v.y, 72) && near(v.z, 20))).toBe(true)
   })
 })
+
+describe("walls under a roof with eaves of their own, a gable and a door canopy", () => {
+  // The shop (30 by 15 m, 6 m eaves) at 45°: its east end (wall 1, x = 50) a gable, its north wall (wall 2, y = 75)
+  // with its eaves at 4 m, so the ridge runs where both long planes are equally high: y = 66.5, 12.5 m up.
+  const shop: PlaceDressing = {
+    poi: "Shop",
+    street: "Main",
+    osmBuildingId: 1,
+    roof: { hip: 45, eaves: [{ edges: [2], z: 4 }], gables: [1] },
+    // Wall 0 runs along y = 60, seen from the north: left end (50, 60), u west, out north (-y).
+    parts: [{ kind: "canopy", edge: 0, u0: 10, u1: 14, z: 3.2, depth: 1.5, colour: [52, 62, 57, 255] }],
+  }
+  const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
+  const vs = vertices(scene.build(0))
+  const walls = vs.filter((v) => v.mode === Mode.material && v.layer !== material("roof-tiles"))
+
+  it("raises the gable wall to the ridge and keeps the low wall at its eave", () => {
+    expect(walls.some((v) => near(v.x, 50) && near(v.y, 66.5) && near(v.z, 12.5))).toBe(true)
+    expect(Math.max(...walls.filter((v) => near(v.y, 75)).map((v) => v.z))).toBeCloseTo(4)
+    expect(Math.max(...walls.filter((v) => near(v.y, 60)).map((v) => v.z))).toBeCloseTo(6)
+  })
+
+  it("hangs the canopy off the wall with its top at 3.2 m, and changes no other chunk", () => {
+    expect(vs.some((v) => near(v.y, 58.5) && near(v.z, 3.2) && near(v.x, 40))).toBe(true)
+    for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
+  })
+})

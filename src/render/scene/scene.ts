@@ -28,7 +28,7 @@ import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps,
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 import type { Place, PlaceDressing } from "#/world/places/dressing.ts"
 import { placeBox, placeParts } from "./places.ts"
-import { hipFaces } from "./hip-roof.ts"
+import { hipFaces, type HipFace } from "./hip-roof.ts"
 
 export const CHUNK_M = 128
 export const STOREY_M = 3
@@ -40,7 +40,7 @@ const Z = { area: 0.02, water: 0.03, track: 0.035, footway: 0.04, sidewalk: 0.05
 /** Meters one texture tile covers: at the close camera a ground meter is about 70 screen pixels, so 512 px tiles must not cover much more than 6 m. */
 const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland: 30, lawn: 6, roof: 5, gravel: 6 } as const
 /** Width of a facade tile in meters, and its height: two storeys. */
-const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8, render: 6.4, rathaus: 6.4 }
+const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8, render: 6.4, rathaus: 6.4, plaster: 6.4 }
 const FACADE_H = 2 * STOREY_M
 const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   block: Material.facadeBlock,
@@ -50,6 +50,7 @@ const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   ursula: Material.facadeUrsula,
   render: Material.facadeRender,
   rathaus: Material.facadeRathaus,
+  plaster: Material.facadePlaster,
 }
 
 const STREETS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
@@ -269,7 +270,10 @@ export class Scene {
       const hip = place?.dressing.roof?.hip
       const bare = boxOf(b.pts)
       // A hipped roof rises at most half the footprint's narrower side over the eaves.
-      const rise = hip === undefined ? 0 : (Math.min(bare.maxX - bare.minX, bare.maxY - bare.minY) / 2) * Math.tan((hip * Math.PI) / 180)
+      const rise =
+        hip === undefined
+          ? 0
+          : (Math.min(bare.maxX - bare.minX, bare.maxY - bare.minY) / 2) * Math.tan((hip * Math.PI) / 180) + Math.max(0, ...(place?.dressing.roof?.eaves ?? []).map((e) => e.z - wallHeight(b.levels)))
       const walls = boxOf(b.pts, (wallHeight(b.levels) + rise) * SHADOW_PER_M)
       const parts = place === undefined ? null : placeBox(place, b.pts)
       const box = parts === null ? walls : { minX: Math.min(walls.minX, parts.minX), minY: Math.min(walls.minY, parts.minY), maxX: Math.max(walls.maxX, parts.maxX), maxY: Math.max(walls.maxY, parts.maxY) }
@@ -529,11 +533,17 @@ export class Scene {
     const { sides, pitched } = dressedRoof(roofColors(b, nx, ny, d), dress)
     // Flat roofs sit inside a parapet: the walls run on past the roof.
     const top = pitched ? h : h + PARAPET_M
+    const hip = dress?.roof?.hip
+    const slope = hip === undefined ? 0 : Math.tan((hip * Math.PI) / 180)
+    const faces = hip === undefined ? [] : hipFaces(ring, hipLift(dress?.roof, n, h, slope))
+    // With eaves of their own or gables, each wall's top follows the roof over it instead of the one eave.
+    const tops = hip === undefined || !unevenEaves(dress?.roof) ? null : wallTops(ring, faces, h, slope)
+    const high = tops === null ? top : Math.max(top, ...tops.flatMap((t) => t.map(([, z]) => z)))
     const tint = 0.9 + hash2(b.id, 0, 1) * 0.15
-    const pieces = wallPieces(facade, top)
+    const pieces = wallPieces(facade, high)
     // Where the wall changes texture or band: the pieces' ends, cut at the bands'.
     const bands = dress?.bands ?? []
-    const cuts = [...new Set([0, ...pieces.map((p) => p.z1), ...bands.flatMap((bd) => [bd.z0, bd.z1]).filter((z) => z > 0 && z < top)])].toSorted((a, z) => a - z)
+    const cuts = [...new Set([0, ...pieces.map((p) => p.z1), ...bands.flatMap((bd) => [bd.z0, bd.z1]).filter((z) => z > 0 && z < high)])].toSorted((a, z) => a - z)
     let u = hash2(b.id, 0, 2) * FACADE_W[facade]
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n
@@ -550,6 +560,7 @@ export class Scene {
       const c = dress?.wallColour === undefined ? scale(WHITE, tint * light) : scale(dress.wallColour, light)
       const u0 = u / FACADE_W[facade]
       const u1 = (u + len) / FACADE_W[facade]
+      const profile = tops?.[i]
       for (let k = 0; k + 1 < cuts.length; k++) {
         const z0 = cuts[k] ?? 0
         const z1 = cuts[k + 1] ?? top
@@ -557,6 +568,26 @@ export class Scene {
         const piece = pieces.find((p) => mid < p.z1) ?? pieces[pieces.length - 1]
         const over = bands.findLast((bd) => mid > bd.z0 && mid < bd.z1)
         if (piece === undefined) continue
+        if (profile !== undefined) {
+          // Under a wall top that follows the roof: the slab cut below each stretch of it, a fan in (along, up).
+          const dx = (bx - ax) / len
+          const dy = (by - ay) / len
+          const plain = over?.plain === true
+          const col = plain ? scale(over.colour, light) : over === undefined ? c : scale(over.colour, light)
+          for (let q = 0; q + 1 < profile.length; q++) {
+            const [ta, za] = profile[q] ?? [0, h]
+            const [tb, zb] = profile[q + 1] ?? [len, h]
+            if (tb - ta < 1e-6) continue
+            const rise = (zb - za) / (tb - ta)
+            const slab = clipHalfPlane([ta, z0, tb, z0, tb, z1, ta, z1], rise, -1, rise * ta - za)
+            fan(m, slab, (t, z) =>
+              plain
+                ? m.vertex(ax + dx * t, ay + dy * t, z, 0, 0, col, Mode.color, 0)
+                : m.vertex(ax + dx * t, ay + dy * t, z, (u + t) / FACADE_W[facade], 1 - (z - piece.base) / piece.span, col, Mode.material, piece.layer),
+            )
+          }
+          continue
+        }
         if (over?.plain === true) {
           const f = scale(over.colour, light)
           m.quad(m.vertex(ax, ay, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z1, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, z1, 0, 0, f, Mode.color, 0))
@@ -575,12 +606,9 @@ export class Scene {
     const tile = pitched ? TILE.roof : TILE.gravel
     const layer = pitched ? Material.roofTiles : Material.roofGravel
     const vertex = (x: number, y: number, z: number, c: Rgba, mode: Mode) => m.vertex(x, y, z, (x * rx + y * ry) / tile, (x * nx + y * ny) / tile, c, mode, layer)
-    const hip = dress?.roof?.hip
     // A hipped roof: a plane rising from every wall, each lit by which way it faces; it casts its shadow from half the ridge's height.
     let shadowH = h
     if (hip !== undefined) {
-      const slope = Math.tan((hip * Math.PI) / 180)
-      const faces = hipFaces(ring)
       for (const f of faces) {
         const c = scale(sides[0], 0.7 + 0.3 * Math.max(0, -(f.out[0] * SHADOW_DIR[0] + f.out[1] * SHADOW_DIR[1])))
         const ids = f.rise.map((r, i) => vertex(f.poly[i * 2] ?? 0, f.poly[i * 2 + 1] ?? 0, h + r * slope, c, Mode.detail))
@@ -601,7 +629,8 @@ export class Scene {
     }
     const closed = [...ring, ring[0] ?? 0, ring[1] ?? 0]
     // GTA 2's crisp roof edges: a dark eave line round a pitched roof, a parapet with a light coping round a flat one.
-    if (pitched) strip(m, closed, 0.14, h + 0.02, scale(sides[0], 0.55))
+    if (tops !== null) eaveLines(m, ring, tops, 0.07, scale(sides[0], 0.55))
+    else if (pitched) strip(m, closed, 0.14, h + 0.02, scale(sides[0], 0.55))
     else {
       parapet(m, closed, orient, h, top)
       vents(m, b, ring, h)
@@ -755,6 +784,67 @@ const polygon = (m: MeshBuilder, ring: ReadonlyArray<number>, z: number, uv: (x:
 }
 
 /** A plain-coloured band along a polyline (lane markings, roof edges). */
+/** Whether a dressed roof gives some walls eaves of their own or gables, so the walls' tops follow the roof. */
+const unevenEaves = (roof: PlaceDressing["roof"]) => (roof?.eaves?.length ?? 0) > 0 || (roof?.gables?.length ?? 0) > 0
+
+/** Each wall's lift for hipFaces: a gable none (Infinity), a wall with its own eave its height over `h` in meters of run. */
+const hipLift = (roof: PlaceDressing["roof"], walls: number, h: number, slope: number): Array<number> => {
+  if (!unevenEaves(roof)) return []
+  const lift = Array.from({ length: walls }, () => 0)
+  for (const e of roof?.eaves ?? []) for (const k of e.edges) if (k >= 0 && k < walls) lift[k] = (e.z - h) / slope
+  for (const k of roof?.gables ?? []) if (k >= 0 && k < walls) lift[k] = Infinity
+  return lift
+}
+
+/**
+ * Each wall's top as (meters along it, height) pairs from end to end: the
+ * roof over its line, through every corner of a roof piece on it (where the
+ * roof turns), at h plus rise × slope.
+ */
+export const wallTops = (ring: ReadonlyArray<number>, faces: ReadonlyArray<HipFace>, h: number, slope: number): Array<Array<readonly [number, number]>> => {
+  const n = ring.length / 2
+  return Array.from({ length: n }, (_, i) => {
+    const j = (i + 1) % n
+    const ax = ring[i * 2] ?? 0
+    const ay = ring[i * 2 + 1] ?? 0
+    const len = Math.hypot((ring[j * 2] ?? 0) - ax, (ring[j * 2 + 1] ?? 0) - ay)
+    if (len < 1e-3) return []
+    const dx = ((ring[j * 2] ?? 0) - ax) / len
+    const dy = ((ring[j * 2 + 1] ?? 0) - ay) / len
+    const on: Array<readonly [number, number]> = []
+    for (const f of faces) {
+      for (let k = 0; k < f.poly.length / 2; k++) {
+        const px = (f.poly[k * 2] ?? 0) - ax
+        const py = (f.poly[k * 2 + 1] ?? 0) - ay
+        const t = px * dx + py * dy
+        if (Math.abs(px * dy - py * dx) < 1e-3 && t > -1e-3 && t < len + 1e-3) on.push([Math.min(len, Math.max(0, t)), h + (f.rise[k] ?? 0) * slope])
+      }
+    }
+    on.sort((a, z) => a[0] - z[0])
+    return on.filter((p, k) => k === 0 || p[0] - (on[k - 1]?.[0] ?? 0) > 1e-3)
+  })
+}
+
+/** The dark eave line along each wall's top (wallTops), `half` meters either side of the wall. */
+const eaveLines = (m: MeshBuilder, ring: ReadonlyArray<number>, tops: ReadonlyArray<ReadonlyArray<readonly [number, number]>>, half: number, color: Rgba) => {
+  const n = ring.length / 2
+  tops.forEach((profile, i) => {
+    const j = (i + 1) % n
+    const ax = ring[i * 2] ?? 0
+    const ay = ring[i * 2 + 1] ?? 0
+    const len = Math.hypot((ring[j * 2] ?? 0) - ax, (ring[j * 2 + 1] ?? 0) - ay)
+    if (len < 1e-3) return
+    const dx = ((ring[j * 2] ?? 0) - ax) / len
+    const dy = ((ring[j * 2 + 1] ?? 0) - ay) / len
+    const v = (t: number, z: number, side: number) => m.vertex(ax + dx * t - dy * half * side, ay + dy * t + dx * half * side, z + 0.02, 0, 0, color, Mode.color, 0)
+    for (let q = 0; q + 1 < profile.length; q++) {
+      const [ta, za] = profile[q] ?? [0, 0]
+      const [tb, zb] = profile[q + 1] ?? [0, 0]
+      m.quad(v(ta, za, -1), v(tb, zb, -1), v(tb, zb, 1), v(ta, za, 1))
+    }
+  })
+}
+
 const strip = (m: MeshBuilder, pts: ReadonlyArray<number>, half: number, z: number, color: Rgba) => {
   const { left, right } = band(pts, half)
   let prev: readonly [number, number] | null = null
