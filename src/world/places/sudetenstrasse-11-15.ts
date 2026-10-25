@@ -106,7 +106,7 @@ const DOLCE_AWNING = 1.4
 const TERRACE = [28.6, 31.6] as const
 const TERRACE_OUT = 1.7
 
-const DOLCE_GELATO: ReadonlyArray<Part> = [
+export const DOLCE_GELATO: ReadonlyArray<Part> = [
   { kind: "wallSign", texture: "dolce-gelato-front", edge: WALL, u0: UNITS.dolceGelato[0], u1: UNITS.dolceGelato[1], z0: 0, z1: FRONT_Z },
   { kind: "canopy", edge: WALL, u0: UNITS.dolceGelato[0] + 0.1, u1: UNITS.dolceGelato[1] - 0.1, z: AWNING_Z, depth: DOLCE_AWNING, colour: RASPBERRY, texture: "awning" },
   {
@@ -124,6 +124,49 @@ const DOLCE_GELATO: ReadonlyArray<Part> = [
   ...TERRACE.map((u): Part => ({ kind: "sprite", name: "gelato-terrace", ...atWall(u, TERRACE_OUT), z: 0.75, angle: WALL_ANGLE, len: 1.9 })),
 ]
 
+/**
+ * Stroblume (B6a-4, reference/stroblume/01 key, 02): a florist under a long red awning (#d25f5e sampled off 01, lifted
+ * like Dolce Gelato's) whose valance carries "Stroblume" in white script with a small flower logo and curly lines.
+ * The awning's sloping face is drawn as a red box over the flat awning, the row's 2.85 m bottom, its front the script
+ * band, so the straight-down play camera sees a red strip over the awning and the lettering reads from across the
+ * street. On the pavement a wooden table full of potted flowers and a red heart sign on a stand, just past the
+ * awning's edge so the play camera sees them (OSM's front stands 3 m out into the pavement: on the real, wider
+ * pavement the table stands about as far from the glass with more room to the kerb). Guesses: the box's depth and
+ * height, the table's size and place, the plain shop glazing behind the plants (01: dark glass, too dark to paint).
+ */
+const STRO_RED: Rgba = [224, 101, 100, 255]
+const STRO_SIGN = { u0: 17.8, u1: 26.5, z1: 3.75, depth: 0.3 } as const
+/** The script band covers the box's front (process-sprites.py pads the lettering with the fabric's red to its 8.7 x 0.9 m). */
+const STRO_SCRIPT = [STRO_SIGN.u0, STRO_SIGN.u1] as const
+const STRO_AWNING = 1.4
+/** The plant tables (u along wall 4, long side along it) and the heart sign, `out` meters from the wall. */
+const PLANT_TABLES = [
+  { u: 20.0, len: 1.6 },
+  { u: 22.8, len: 2.2 },
+] as const
+const PLANTS_OUT = 1.75
+const HEART = { u: 24.6, out: 1.85 } as const
+/** Upright boards turn by minus the Sudetenstraße frame's angle (0.596 rad) to read upright on screen, as Mühlenbäck's board. */
+const UPRIGHT = -0.596
+
+export const STROBLUME: ReadonlyArray<Part> = [
+  { kind: "wallSign", texture: "shop-front", edge: WALL, u0: UNITS.stroblume[0], u1: UNITS.stroblume[1], z0: 0, z1: FRONT_Z },
+  { kind: "canopy", edge: WALL, u0: UNITS.stroblume[0] + 0.1, u1: UNITS.stroblume[1] - 0.1, z: AWNING_Z, depth: STRO_AWNING, colour: STRO_RED, texture: "awning" },
+  {
+    kind: "pylon",
+    ...atWall((STRO_SIGN.u0 + STRO_SIGN.u1) / 2, STRO_SIGN.depth / 2),
+    angle: WALL_ANGLE,
+    w: STRO_SIGN.u1 - STRO_SIGN.u0,
+    d: STRO_SIGN.depth,
+    h: STRO_SIGN.z1,
+    base: FRONT_Z,
+    colour: STRO_RED,
+  },
+  { kind: "wallSign", texture: "stroblume-sign", edge: WALL, u0: STRO_SCRIPT[0], u1: STRO_SCRIPT[1], z0: FRONT_Z, z1: STRO_SIGN.z1, out: STRO_SIGN.depth + 0.02 },
+  ...PLANT_TABLES.map((t): Part => ({ kind: "sprite", name: "stroblume-plants", ...atWall(t.u, PLANTS_OUT), z: 0.8, angle: WALL_ANGLE, len: t.len })),
+  { kind: "sprite", name: "stroblume-heart", ...atWall(HEART.u, HEART.out), z: 1.0, angle: UPRIGHT, len: 0.9 },
+]
+
 /** The open passage at the SE end, the house door at its back (01, right of the awning). */
 const PASSAGE: ReadonlyArray<Part> = [{ kind: "wallSign", texture: "passage-door", edge: WALL, u0: UNITS.passage[0] + 0.1, u1: UNITS.passage[1] - 0.1, z0: 0, z1: FRONT_Z }]
 
@@ -135,5 +178,5 @@ export const SUDETENSTRASSE_11_15: PlaceDressing = {
   facade: "render",
   wallColour: BEIGE,
   masses: MASSES,
-  parts: [...DOLCE_GELATO, ...PASSAGE],
+  parts: [...STROBLUME, ...DOLCE_GELATO, ...PASSAGE],
 }

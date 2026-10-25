@@ -1007,6 +1007,31 @@ if src is not None:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "gelato-terrace.webp", "WEBP", quality=90)
     print("gelato-terrace.webp", im.size)
 
+# Stroblume (Sudetenstraße 15): the red valance with the white "Stroblume" script, cropped to the lettering and its
+# swirls, then padded with the fabric's own red to the sign box's front (8.7 x 0.9 m) so the letters keep their shape
+# (opaque, stored square; the wallSign stretches it back). A plant table from above and the red heart sign on its
+# stand (keyed, cropped).
+src = find("stroblume-sign")
+if src is not None:
+    im = Image.open(src).convert("RGB")
+    w, h = im.size
+    im = im.crop((round(w * 0.02), round(h * 0.25), round(w * 0.98), round(h * 0.73)))
+    red = tuple(int(c) for c in np.median(np.asarray(im).reshape(-1, 3), axis=0))
+    band = Image.new("RGB", (round(im.height * 8.7 / 0.9), im.height), red)
+    band.paste(im, ((band.width - im.width) // 2, 0))
+    band.resize((512, 512), Image.LANCZOS).save(OUT / "stroblume-sign.webp", "WEBP", quality=92)
+    print("stroblume-sign.webp", red)
+for name in ["stroblume-plants", "stroblume-heart"]:
+    src = find(name)
+    if src is not None:
+        im = Image.open(src)
+        # Codex's sprite skill may hand back an already keyed PNG: keep its alpha then.
+        im = im.convert("RGBA") if im.mode == "RGBA" and im.getchannel("A").getextrema()[0] < 255 else key_magenta_fast(im)
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

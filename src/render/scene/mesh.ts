@@ -217,6 +217,7 @@ export const MATERIAL_FILES = [
   "dolce-gelato-sign",
   "dolce-gelato-front",
   "passage-door",
+  "stroblume-sign",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -350,6 +351,8 @@ export const PROP_FILES = [
   "bike-rack",
   "gg-aboard",
   "gelato-terrace",
+  "stroblume-plants",
+  "stroblume-heart",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

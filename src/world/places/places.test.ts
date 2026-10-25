@@ -5,8 +5,9 @@ import { GameMap, type Road } from "#/map/types.ts"
 import { pointInPolygon } from "../geometry.ts"
 import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
-import { dressMap, resolvePlaces, towerFrame, type PlaceDressing } from "./dressing.ts"
+import { dressMap, resolvePlaces, towerFrame, type Part, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
+import { DOLCE_GELATO, STROBLUME, UNITS } from "./sudetenstrasse-11-15.ts"
 
 /** Whether (x, y) lies within 0.3 m of a wall of the ring: the masses' corners are rounded to 0.1 m, so spots there prove nothing. */
 const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
@@ -25,6 +26,8 @@ const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
 
 /** The rise per meter of a roof plane at `deg` degrees. */
 const slope = (deg: number) => Math.tan((deg * Math.PI) / 180)
+/** The parts hung on a wall (signs and awnings). */
+const onWall = (ps: ReadonlyArray<Part>) => ps.flatMap((p) => (p.kind === "wallSign" || p.kind === "canopy" ? [p] : []))
 
 /** The bands that do not lie on a wall `top` meters high. */
 const outside = (bands: ReadonlyArray<{ z0: number; z1: number }>, top: number) => bands.filter((b) => !(b.z0 >= 0 && b.z0 < b.z1 && b.z1 <= top + 1e-9))
@@ -1194,14 +1197,11 @@ describe("the registry on the real map", () => {
     const [poiU] = toLocal(wall.frame, poi?.x ?? 0, poi?.y ?? 0)
     expect(poiU).toBeGreaterThan(27)
     expect(poiU).toBeLessThan(33.5)
-    const onWall = parts.flatMap((p) => (p.kind === "wallSign" || p.kind === "canopy" ? [p] : []))
-    for (const p of onWall) {
-      expect(p.edge).toBe(4)
-      expect(p.u0).toBeGreaterThanOrEqual(27)
-    }
+    for (const p of onWall(parts)) expect(p.edge).toBe(4)
+    for (const p of onWall(DOLCE_GELATO)) expect(p.u0).toBeGreaterThanOrEqual(27)
     // The plate's box: back on the wall, the lettering on its front, the same 2.85 m bottom as the Mühlenbäck row's signs.
     const sign = parts.find((p) => p.kind === "wallSign" && p.texture === "dolce-gelato-sign")
-    const box = parts.find((p) => p.kind === "pylon")
+    const box = DOLCE_GELATO.find((p) => p.kind === "pylon")
     if (sign?.kind !== "wallSign" || box?.kind !== "pylon") throw new Error("no sign box")
     const [u, n] = toLocal(wall.frame, ...toWorld(row.frame, box.u, box.n))
     expect(Math.abs(n + box.d / 2)).toBeLessThan(0.02)
@@ -1219,6 +1219,49 @@ describe("the registry on the real map", () => {
       const [, tn] = toLocal(wall.frame, x, y)
       expect(-tn - 0.35).toBeLessThan(awning?.kind === "canopy" ? awning.depth : 0)
       expect(t.n - 0.35 - 4).toBeGreaterThan(0.9)
+    }
+  })
+
+  it("hangs Stroblume's red awning, script box and plant tables on its stretch of Sudetenstraße 11–15's wall 4", () => {
+    const row = at(127604887)
+    if (row === undefined) throw new Error("no Sudetenstraße 11–15")
+    expect(row.dressing.parts).toEqual(expect.arrayContaining([...STROBLUME]))
+    const pts = map.buildings[row.building]?.pts ?? []
+    const wall = wallFrame(pts, 4)
+    if (wall === null) throw new Error("no wall 4")
+    // The POI stands in front of the unit, and every wall part stays on its stretch, clear of Dolce Gelato's.
+    const poi = map.pois.find((p) => p.name === "Stroblume")
+    const [poiU] = toLocal(wall.frame, poi?.x ?? 0, poi?.y ?? 0)
+    expect(poiU).toBeGreaterThan(UNITS.stroblume[0])
+    expect(poiU).toBeLessThan(UNITS.stroblume[1])
+    for (const p of onWall(STROBLUME)) {
+      expect(p.edge).toBe(4)
+      expect(p.u0).toBeGreaterThanOrEqual(UNITS.stroblume[0])
+      expect(p.u1).toBeLessThanOrEqual(UNITS.stroblume[1])
+    }
+    // The red box: back on the wall, from the row's 2.85 m, the script on its front; the awning at the row's 2.55 m.
+    const sign = STROBLUME.find((p) => p.kind === "wallSign" && p.texture === "stroblume-sign")
+    const box = STROBLUME.find((p) => p.kind === "pylon")
+    const awning = STROBLUME.find((p) => p.kind === "canopy")
+    if (sign?.kind !== "wallSign" || box?.kind !== "pylon" || awning?.kind !== "canopy") throw new Error("no sign box or awning")
+    const [u, n] = toLocal(wall.frame, ...toWorld(row.frame, box.u, box.n))
+    expect(Math.abs(n + box.d / 2)).toBeLessThan(0.02)
+    expect(u - box.w / 2).toBeCloseTo(sign.u0, 1)
+    expect(u + box.w / 2).toBeCloseTo(sign.u1, 1)
+    expect([box.base, box.h, sign.z0, sign.z1]).toEqual([2.85, sign.z1, 2.85, box.h])
+    expect(sign.out).toBeGreaterThan(box.d)
+    expect(awning.z).toBe(2.55)
+    // The plant tables and the heart sign stand past the awning's edge (so the play camera sees them), off the footprint, before the kerb (n 4).
+    const props = STROBLUME.flatMap((p) => (p.kind === "sprite" ? [p] : []))
+    expect(props.map((p) => p.name).toSorted()).toEqual(["stroblume-heart", "stroblume-plants", "stroblume-plants"])
+    for (const t of props) {
+      const [x, y] = toWorld(row.frame, t.u, t.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      const [tu, tn] = toLocal(wall.frame, x, y)
+      expect(-tn).toBeGreaterThan(awning.depth)
+      expect(tu).toBeGreaterThan(UNITS.stroblume[0])
+      expect(tu).toBeLessThan(UNITS.stroblume[1])
+      expect(t.n - 0.45 - 4).toBeGreaterThan(0.5)
     }
   })
 

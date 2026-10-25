@@ -1929,7 +1929,7 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-3/`): `play.png`, `play-crop.png`, `play-across.png` (lettering), `overhead.png`,
   `overhead-close.png`.
 
-### B6a-4 · Stroblume, Sudetenstraße 15 (#155, shop) — Size: S — status: ref-done
+### B6a-4 · Stroblume, Sudetenstraße 15 (#155, shop) — Size: S — status: implemented (partial: sign-box size, table size and place, plain glazing; 0.75 m to the kerb, not 2 m)
 ```
 Goal: Florist with a long red awning and a table of potted flowers on the pavement.
 Reference: docs/places/stroblume.md; reference/stroblume/01-street-front.png (key), 02, 04.
@@ -1940,9 +1940,28 @@ Spec (via #0b):
 - Bodystreet (NW neighbour, not a POI yet, see I-1): black band #181718 "BODY STREET" + maroon awning in 02/05; dress it
   only once its POI exists.
 Acceptance criteria:
-- [ ] Front matches 01 (awning, script, plants). pnpm test + typecheck green.
+- [x] Front matches 01 (awning, script, plants). pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **In the row file** `src/world/places/sudetenstrasse-11-15.ts`: a `STROBLUME` parts list (exported, like `DOLCE_GELATO`)
+  spread into `parts` on wall 4, u 17.3–27.0 (`UNITS.stroblume`). No building or mass changes.
+- **Awning**: `canopy` × `awning` texture in #e06564 (#d25f5e sampled, lifted like Dolce Gelato's), the row's 2.55 m top,
+  1.4 m deep, u 17.4–26.9.
+- **Script box**: the awning's sloping face and valance as a red box (`pylon` base 2.85, top `h` 3.75, 0.3 m deep, u 17.8–26.5,
+  same heights as the Dolce Gelato plate), its front the new `stroblume-sign` (Codex from 01: white "Stroblume" script, flower
+  logo and curly lines on the red fabric; process-sprites.py pads it with the fabric's red to the box's 8.7 × 0.9 m). The play
+  camera sees a red strip over the awning; the lettering reads from across the street (0.6 m tall at first: the awning hid it).
+- **Props**: two `stroblume-plants` sprites (new, Codex: a wooden table full of potted flowers from above, 2.2 and 1.6 m long) at
+  u 20.0 and 22.8, and the `stroblume-heart` sign (new, red heart on a stand, upright on screen like Mühlenbäck's board) at
+  u 24.6, all just past the awning's edge (1.75–1.85 m out) so the play camera sees them.
+- **Clearance**: OSM's front stands ~3 m into the pavement, so only 2.9 m lie between wall and kerb (n 4); past the awning
+  ~0.75 m is left (the props are never solid). The spec's ≥2 m only holds on the real, wider pavement.
+- Guesses: box depth and height, the tables' size and spacing, the heart's place, the glazing (generic `shop-front`; 01 shows
+  dark glass behind the plants). Bodystreet not dressed (no POI).
+- Chunk hashes: before/after only chunk 1616 (the building's) differs. pnpm -s check green (249 tests).
+- Screenshots (local scratchpad `b6a-4/`): `play.png`, `play-crop.png`, `play-across.png` + `play-across-crop.png` (script),
+  `overhead.png`.
 
 ### B6a-5 · VR Bank München Land, Sudetenstraße 11 (#13, bank) — Size: S — status: ref-done
 ```
@@ -2241,7 +2260,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 154 | Angel Nails | shop | 3 | implemented (partial) |
 | 12 | HoangAnh | food | 6 | todo (needs reference; unit shows Deliqos) |
 | 47 | Dolce Gelato | food | 20 | implemented (partial) |
-| 155 | Stroblume | shop | 29 | ref-done |
+| 155 | Stroblume | shop | 29 | implemented (partial) |
 | 13 | VR-Bank | bank | 48 | ref-done |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | ref-done |
 | 120 | Bistro Malor | food | 69 | ref-done (partial) |
@@ -2652,7 +2671,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | implemented (partial) | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
-| 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | ref-done | B6a-4. Sudetenstraße 15 |
+| 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | implemented (partial) | B6a-4. Sudetenstraße 15 |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | ref-done | B6a-6. Sudetenstraße 10, sign "KIND" |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | implemented (partial) | B4-8 |
