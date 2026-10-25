@@ -9,7 +9,7 @@
 | OSM building | way **128266487** (addr Wallensteinstraße 4, building=yes): rectangle **59.7 × 12.8 m**, long axis 52°/232° (NE–SW). The POI sits at its **NE end** |
 | Engine | levels **2** (default); pitched; DOP roof `#c3a689` / `#bfa385` (light brown) |
 | Street frame | **Wallensteinstraße** (residential, 6.5 m), NE of the hall: closest point (4723.7, 4810.8), 21.5 m; street bearing 141°, n bearing 231°. An **unnamed service lane** (4 m) runs along the hall's NW long side, 8.2 m from the POI (bearing 52°), next to an open car park |
-| Status | **ref-done (partial)**: which wall carries the sign is "likely", see below |
+| Status | **implemented (partial)** (B2-3, `src/world/places/werkstatt-wilhelm.ts`): the front is the NW wall (DOP20: customers' cars along it, car park beyond; the POI 3.8 m inside it); one tall storey under a flat light-brown roof, 4.8 m, from the Bavarian LoD2 model (tile 686_5302, `DEBY_LOD2_4667533`). Guesses: the window band's length, where the sign and the "4" sit, the logo's orange, the "4"'s colour |
 
 ## Images
 | File | What | Source |

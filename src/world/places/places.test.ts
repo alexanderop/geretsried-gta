@@ -170,6 +170,18 @@ describe("the registry on the real map", () => {
     for (const n of kerbside) expect(n).toBeGreaterThan(half)
   })
 
+  it("dresses Werkstatt Wilhelm as one tall storey with its sign and windows on the NW wall, towards the car park", () => {
+    const hall = places.find((p) => p.dressing.osmBuildingId === 128266487)
+    // 4.2 m of wall and the 0.6 m parapet: the LoD2 model's 4.8 m.
+    expect(dressed.buildings[hall?.building ?? -1]?.levels).toBe(1.4)
+    const pts = map.buildings[hall?.building ?? -1]?.pts ?? []
+    // Wall 0 faces NW (out of the building towards the service lane, where the spray pad is).
+    const nw = wallFrame(pts, 0)?.frame
+    expect(Math.atan2(-(nw?.nx ?? 0), nw?.ny ?? 0) * (180 / Math.PI) + 360).toBeCloseTo(322, 0)
+    const edges = new Set((hall?.dressing.parts ?? []).flatMap((p) => (p.kind === "wallSign" ? [p.edge] : [])))
+    expect([...edges]).toEqual([0])
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

@@ -465,6 +465,28 @@ for name in ["post-box", "litter-bin"]:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
     print(f"{name}.webp")
 
+# Automobilwerkstatt Wilhelm (Wallensteinstraße 4): the navy "AUTO MOBIL robert wilhelm" board with its orange round
+# logo and the EINGANG box, and the big navy "4" on the glass (both keyed and squared like the Mühlenbäck boards, their
+# own colours kept inside); the hall's frosted window band, white frames and six panes, half a mullion at each end so
+# repeated strips join (opaque, 3:1, stored square).
+for name in ["werkstatt-sign", "werkstatt-4"]:
+    src = find(name)
+    if src is None:
+        continue
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (46, 59, 77, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp")
+band = find("werkstatt-windows")
+if band is not None:
+    Image.open(band).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "werkstatt-windows.webp", "WEBP", quality=90)
+    print("werkstatt-windows.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

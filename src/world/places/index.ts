@@ -10,5 +10,6 @@ import { RATHAUS } from "./rathaus.ts"
 import { REHMAUS_APOTHEKE } from "./rehmaus-apotheke.ts"
 import { SPARKASSE_STEIN } from "./sparkasse-stein.ts"
 import { ST_URSULA } from "./st-ursula.ts"
+import { WERKSTATT_WILHELM } from "./werkstatt-wilhelm.ts"
 
-export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE, SPARKASSE_STEIN, RATHAUS, MARIA_HILF, MUEHLENBAECK, POST_FILIALE_571]
+export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE, SPARKASSE_STEIN, RATHAUS, MARIA_HILF, MUEHLENBAECK, POST_FILIALE_571, WERKSTATT_WILHELM]

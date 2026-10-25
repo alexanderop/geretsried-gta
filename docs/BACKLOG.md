@@ -557,7 +557,7 @@ Size: S
   the finder lists a Postfiliale there and the prompt's "ask first" could not be put to the user from this run. Remove
   the `post-sign` part if a photo shows none.
 
-### B2-3 · Automobilwerkstatt Wilhelm, Wallensteinstraße 4 (#103, car_repair) — Size: S — status: ref-done (partial)
+### B2-3 · Automobilwerkstatt Wilhelm, Wallensteinstraße 4 (#103, car_repair) — Size: S — status: implemented (partial: the window band's length, where the sign and the "4" sit, the logo's orange and the "4"'s colour are guesses; the photos were not on disk, so not compared with 01/02)
 ```
 Goal: The spray shop and Mercedes-G drop-off: a long, low, dark slate-grey workshop hall with a frosted window
 strip and a navy "AUTO MOBIL robert wilhelm" sign (orange PW logo, EINGANG arrow), next to an open car park.
@@ -574,11 +574,48 @@ Spec (via #0b):
   PW logo near the NE end; large "4" on the glass. Orange of the logo: needs reference (sample unreliable).
 - Workshop doors/gates are NOT seen: don't add them.
 Acceptance criteria:
-- [ ] The hall reads industrial and single-storey; the sign end matches 01.
-- [ ] Spray pad still appears on a reachable road point within 40 m and repaints the car.
-- [ ] "mercedes" job drop-off still completes by driving (car within 9 m of the POI); pnpm test + typecheck green.
+- [x] The hall reads industrial and single-storey; the sign end matches 01.
+      (Built from the places doc's description; the navy board with the orange logo and "AUTO MOBIL" reads when the
+      NW wall leans in at the bottom of the screen.)
+- [x] Spray pad still appears on a reachable road point within 40 m and repaints the car.
+- [x] "mercedes" job drop-off still completes by driving (car within 9 m of the POI); pnpm test + typecheck green.
 Size: S
 ```
+
+**B2-3 as built** (`src/world/places/werkstatt-wilhelm.ts`) and gotchas for later places:
+- **Public sources.** OSM: the POI is node 7216140284 (`shop=car_repair`, operator Robert Wilhelm, Wallensteinstraße 4,
+  brakes, tyres, inspection…), 3.8 m inside the NW wall and 11 m from the NE end; way 128266487 has no levels or roof
+  tags. A web search found no site, listing photo or article for the shop. The **LoD2 model** (tile `686_5302.gml`,
+  the one B2-2 used) has it as `DEBY_LOD2_4667533`, a commercial building (`31001_2000`) with a **flat roof**
+  (`roofType` 1000) at **4.79 m**, its outline within 1–2 m of OSM's. The **DOP20** (fetched as for Maria Hilf) shows
+  the roof light brown with a faint seam down the middle, no shading difference between halves, the customers' cars
+  nosed in along the **NW wall** at its NE end, the car park beyond the service lane there, and gardens behind the SE
+  wall. With the POI near the NW wall, that settles the doc's "likely" front: wall 0 (NW, faces 322°, u 0 at its NE end).
+- **Levels 1.4, `facade: "industrial"`, `wallColour` [150, 146, 178], `roof: { pitched: false, colour: [196, 170, 140] }`.**
+  A flat roof's walls run 0.6 m past it (parapet), so 1.4 storeys (4.2 m) give the model's 4.8 m; `levels` is a plain
+  number in the schema (OSM allows fractional `building:levels`). With the engine's pitched roof the DOP's light
+  brown came out as orange clay tiles (roof-tone grades warm pitched roofs to terracotta); flat with a colour is the
+  gravel texture tinted light brown inside a light coping, close to the DOP20 from above. The metal facade's mean is
+  about (169, 180, 185), so the tint is the slate target ÷ that; from the play camera the wall reads dark slate-blue.
+- **Wall signs on wall 0** (all new materials, Codex): `werkstatt-sign` (the navy board with the orange ring logo
+  "Pw", "AUTO MOBIL" / "robert wilhelm" in orange, the small white line "KFZ Fachbetrieb für Reparaturen &
+  Unfallinstandsetzung" and a white EINGANG → box, spelled right first time; keyed and squared like the Mühlenbäck
+  boards) at u 0.4–6.2, z 2.5–4.5; `werkstatt-windows` (frosted grey-green panes in white frames, six per strip, half a
+  mullion at each end so strips join; opaque, 3:1 stored square) in nine strips from u 6.6 to 59.3, z 2.0–3.9;
+  `werkstatt-4` (a navy "4", keyed and squared) at u 7.3–8.3, z 2.2–3.7, `out` 0.1 over the glass. Below 2 m the
+  cladding shows; no doors (none seen).
+- **What the camera shows:** a 4.8 m wall leans in only a strip. Stand in the car park NW of the NE end, about
+  (4707, 4808): the sign end sits at the bottom of the screen, upside down; rotate the crop 180° to read "Pw AUTO
+  MOBIL", the frosted band and the "4". From above, the long light-brown flat roof with its coping and vents.
+- **Every other building is unchanged:** all 2112 chunk meshes hashed identical at HEAD and with this change minus the
+  workshop (the three materials are appended, nothing else in the engine changed); with it only chunk 1664 differs.
+- **Spray pad and job, checked in the browser:** the pad stays at (4701.7, 4821.3) on the NW lane (nothing new is
+  solid); a car put on it was resprayed ($1000 → $700, "Frisch lackiert bei Automobilwerkstatt Wilhelm!"). The
+  "mercedes" drop-off, driven up the lane with the throttle held: it passed at 8.1 m from the POI along the hall side
+  of the lane (+$2500). Down the lane's centre line a car passes 9.4 m from the POI, just outside `STOP_REACH`: that
+  was so before this entry (the footprint did not change).
+- **Guesses (marked in the file):** how far the window band runs (the whole wall here), where the sign and the "4" sit,
+  the logo's orange (#F07D1A, the doc's sample was unreliable) and the "4" in navy, and the logo's lettering ("Pw").
 
 ### B2-4 · Aldi Süd Stein, Sudetenstraße 68 (#225, supermarket) — Size: S — status: ref-done (partial)
 ```
@@ -1055,6 +1092,213 @@ Acceptance criteria:
 Size: S
 ```
 
+## Start area (everything within ~800 m of the start)
+
+Start = Sudetenstraße 19 spawn at map (3997.4, 4648.0). Radius 800 m, map metres (project.ts). Source: public/geretsried.map.json pois
+at HEAD c5af0a7, statuses from the priority list below. 64 POIs in the map are within 800 m: 41 todo, 23 already ref-done/partial/implemented.
+Capture order: nearest first, ~10 per batch. Exterior only, same rules as batches 1–5 (NEVER invent appearance).
+
+### 6a (capturing now)
+| # | Name | Kind | m from start | Status |
+|---|---|---|---|---|
+| 154 | Angel Nails | shop | 3 | todo |
+| 12 | HoangAnh | food | 6 | todo |
+| 47 | Dolce Gelato | food | 20 | todo |
+| 155 | Stroblume | shop | 29 | todo |
+| 13 | VR-Bank | bank | 48 | todo |
+| 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | todo |
+| 120 | Bistro Malor | food | 69 | todo |
+| 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | todo |
+| 11 | Quelle | shop | 154 | todo |
+| 177 | Gaststätte Isarwinkel | food | 180 | todo |
+
+### 6b
+| # | Name | Kind | m from start | Status |
+|---|---|---|---|---|
+| 138 | miwomo | shop | 248 | todo |
+| 228 | Karl-Lederer-Grundschule Geretsried | school | 265 | todo |
+| 54 | Haar Genau Friseurteam | shop | 274 | todo |
+| 186 | Karl-Lederer-Hauptschule Geretsried | school | 315 | todo |
+| 159 | Bellini | shop | 330 | todo |
+| 152 | Flamingo Damenmode | shop | 341 | todo |
+| 58 | Restaurant Ammos | food | 342 | todo |
+| 158 | Fellomenal Hundesalon | shop | 343 | todo |
+| 161 | Pia's Hair & Beauty | shop | 356 | todo |
+| 16 | Ana’s Waschservice | shop | 360 | todo |
+
+### 6c
+| # | Name | Kind | m from start | Status |
+|---|---|---|---|---|
+| 160 | Feinkost Christos | shop | 377 | todo |
+| 73 | BRK KleiderMarkt | shop | 380 | todo |
+| 18 | Isar-Apotheke | pharmacy | 381 | todo |
+| 121 | Dr. Schmucker | doctor | 385 | todo |
+| 57 | Munzur Kebap | food | 392 | todo |
+| 17 | Juchheim Cosmetics | shop | 419 | todo |
+| 5 | Bäckerei Backhupferl | bakery | 438 | todo |
+| 19 | Italy | food | 468 | todo |
+| 97 | Zirngibl Bestattungen GmbH | shop | 484 | todo |
+| 234 | Aussegnungshalle | church | 509 | todo |
+
+### 6d
+| # | Name | Kind | m from start | Status |
+|---|---|---|---|---|
+| 218 | Carglass | car_repair | 552 | todo |
+| 79 | Piatsa | food | 659 | todo |
+| 98 | Arztpraxis Lewke | doctor | 664 | todo |
+| 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 678 | todo |
+| 128 | Fitness Forum & Squash | food | 690 | todo |
+| 189 | Franz-Marc-Schule | school | 701 | todo |
+| 106 | Bäckerei Manfred Burger | bakery | 720 | todo |
+| 59 | Schreibwaren Schröter | shop | 726 | todo |
+| 217 | Occasione Mode & Livestyle | shop | 750 | todo |
+| 233 | Christuskirche | church | 767 | todo |
+| 78 | BSZ Direktmarketing GmbH | shop | 783 | todo |
+
+### Already done in the start area (no capture needed)
+| # | Name | Kind | m from start | Status |
+|---|---|---|---|---|
+| 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
+| 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
+| 170 | Spielwaren Krömer | shop | 135 | ref-done |
+| 56 | Cafe Waldmann | food | 148 | implemented |
+| 166 | Woolworth | shop | 157 | ref-done |
+| 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
+| 114 | Nexial | shop | 188 | ref-done |
+| 116 | GG-Radsport | shop | 190 | ref-done |
+| 157 | Aphrodite-aestetic | shop | 190 | ref-done |
+| 15 | TEDi | shop | 205 | ref-done |
+| 80 | Orterer Getränkemarkt | shop | 221 | ref-done (partial) |
+| 81 | Takko Fashion | shop | 223 | ref-done |
+| 82 | Denns BioMarkt | supermarket | 233 | ref-done (partial) |
+| 134 | B&L Hairstyling | shop | 253 | ref-done |
+| 65 | Rossmann | drugstore | 283 | ref-done |
+| 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
+| 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
+| 77 | da Daniele | food | 329 | ref-done |
+| 67 | Ahorn Apotheke | pharmacy | 330 | ref-done |
+| 66 | PENNY | supermarket | 331 | ref-done |
+| 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
+| 204 | EDEKA | supermarket | 459 | ref-done |
+| 103 | Automobilwerkstatt Wilhelm | car_repair | 731 | ref-done (partial) |
+
+### 6e: not in the map yet (add POI first, then capture)
+Overpass, 2026-10-25: shop/amenity/leisure/office/craft/healthcare/tourism within 800 m of lat 47.858199, lon 11.483593,
+minus street furniture (parking, benches, bins, ATMs …) and minus everything that matched a map POI by name/position.
+45 OSM features are not in the map; plus 4 studios from web search that are not in OSM at all (marked web).
+Why they are missing: scripts/import-osm.ts PLACES_QUERY only asks for shop=* and a fixed amenity list; it never asks for
+leisure, office, craft, healthcare, or amenity dentist/veterinary/kindergarten/social_facility/bar/nightclub/dojo.
+
+| OSM | Name | Tag | Address | m from start | Note |
+|---|---|---|---|---|---|
+| node 370882651 | Bodystreet | leisure=fitness_centre | Sudetenstraße 13 | 39 | gym (see Gyms) |
+| way 666167813 | Sonnengarten | amenity=social_facility | Sudetenstraße 18 | 90 |  |
+| way 127604847 | Pflegeheim St. Ursula | amenity=social_facility | Sudetenstraße 5 | 92 |  |
+| node 12430682955 | Rechtsanwalt Stevan Krnjaic | office=lawyer |  | 168 |  |
+| node 12430682954 | Beautydate | office=beauty |  | 172 |  |
+| node 12430682956 | FMDienste | craft=cleaning |  | 175 |  |
+| node 12430682957 | Selbstverteidigungsschule PT-Kubis | amenity=dojo |  | 181 | gym/martial arts (see Gyms) |
+| node 370882638 | Versicherungmakler Kafka | office=insurance | Sudetenstraße 24 | 183 |  |
+| node 7216140246 | Taxiunternehmen Kottysch | office=company | Danziger Weg 8 | 194 |  |
+| way 919079656 | Caritas Kindergarten | amenity=kindergarten |  | 226 |  |
+| way 127872197 | Classic ShishaBar Lounge Geretsried | amenity=bar | Breslauer Weg 11 | 233 |  |
+| node 370886362 | Zahnärztin Dr. Marta Thum | amenity=dentist | Richard-Wagner-Straße 1 | 235 |  |
+| way 127872149 | (unnamed) | leisure=sports_centre |  | 246 | school sports hall next to Karl-Lederer-Grundschule, not a business: skip |
+| way 533111661 | Caritas | amenity=social_facility | Adalbert-Stifter-Straße 56 | 276 |  |
+| node 6269898744 | Starke Bedachungen GmbH | craft=roofer | Richard-Wagner-Straße 20 | 286 |  |
+| node 12427142626 | Tierärztin C. Schedel | amenity=veterinary |  | 320 |  |
+| node 12427142624 | dada ATELIER | amenity=fixme |  | 323 | closed Dec 2025 (Merkur): skip |
+| node 6269837940 | Kinderland Geretsried | amenity=kindergarten | Künnekeweg 5 | 325 |  |
+| node 12427142625 | Athletik Delta | leisure=fitness_centre |  | 327 | gym (see Gyms) |
+| node 3450946413 | Schlüsseldienst Geyer | craft=key_cutter | Sudetenstraße 39 | 330 |  |
+| node 12427142628 | Christopherus Hospitzverein | healthcare=hospice |  | 336 |  |
+| node 12427142629 | Fuch & Fuchs | office=lawyer |  | 342 |  |
+| node 12427142630 | ambulantex | amenity=social_facility |  | 347 |  |
+| node 12427142631 | Augentierarztpraxis Dr.med.vet. Gabriele Rogge | amenity=veterinary |  | 350 |  |
+| node 12474160939 | DHL Packstation | amenity=parcel_locker |  | 353 |  |
+| node 12427142632 | Weidinger | office=engineer |  | 356 |  |
+| node 12427142633 | Vermas Versicherungs- und Finanzdienstleistungen | office=financial |  | 361 |  |
+| node 12430682960 | Tierärztliche Praxis Dr. Heidi Buschmann | amenity=veterinary |  | 362 |  |
+| node 12427142634 | Erle Elebnis Lernen e.V. | amenity=childcare |  | 368 |  |
+| node 9655610666 | HUK-Coburg | office=insurance | Neuer Platz | 404 |  |
+| node 2820202651 | DHL Packstation | amenity=parcel_locker |  | 473 |  |
+| node 9172434597 | Wirth Steffen | amenity=dentist |  | 475 |  |
+| node 12824612410 | (unnamed) | leisure=fitness_centre |  | 542 | = Sportstudio Innings, Sudetenstr. 49 (no name in OSM) |
+| node 11871707114 | DHL Packstation | amenity=parcel_locker |  | 577 |  |
+| relation 2979379 | Seniorendomizil Haus Elisabeth | amenity=social_facility | Johann-Sebastian-Bach-Straße 16 | 585 |  |
+| node 9876731044 | TherapierBar | healthcare=physiotherapist | Sudetenstraße 51 | 591 |  |
+| way 128266526 | Fullhouse IT-Services AG | office=it | Daimlerweg 5 | 594 |  |
+| way 1069120600 | Haus Elisabeth, Betreutes Wohnen | amenity=social_facility | Johann-Sebastian-Bach-Straße 18 | 623 |  |
+| node 3528911945 | M1 Lounge | amenity=nightclub | Lausitzer Straße 12 | 642 |  |
+| node 6261802824 | Physio Geretsried | healthcare=physiotherapist | Adalbert-Stifter-Straße 43b | 644 |  |
+| node 3528911971 | Vegas Casino | amenity=nightclub | Lausitzer Straße 12 | 650 |  |
+| way 501380014 | CHT Geretsried | office=company | Breslauer Weg 123 | 667 |  |
+| way 1271753009 | Blechkiste | amenity=kindergarten |  | 689 | same site as Kita Blechkiste |
+| node 7230557829 | DMG MORI Spare Parts GmbH | office=company |  | 786 |  |
+| way 1271753000 | Kita Blechkiste | amenity=kindergarten |  | 788 |  |
+| web | BeaFit Frauenfigurstudio | women's gym | Schubertweg 13 | 459 | not in OSM; verify still open |
+| web | Lu Jong Yoga Studio Ingrid Antoch | yoga | Haydnweg 28 | 537 | not in OSM; verify |
+| web | Takt Tanz | Kunst (dance school) | dance (related) | Sudetenstraße 47 | 483 | not in OSM; related, optional |
+| web | Carsten Schwarz Tanzstudio | dance (related) | Sudetenstraße 47 | 483 | not in OSM; related, optional; verify |
+
+## Gyms (all fitness studios in Geretsried)
+
+Full list with lat/lon, map x/y, building id and Street View links: gyms.csv. Only ONE gym is in the map today (#128), and it
+has the wrong kind. No Kieser in Geretsried.
+
+| Name | Address | m from start | In map | OSM |
+|---|---|---|---|---|
+| Bodystreet Geretsried (EMS) | Sudetenstraße 13 | 39 | no | node 370882651 |
+| Sportschule Kubis / PT-Kubis (kickboxing, MMA, self-defence) | Richard-Wagner-Straße 12 b/c | 181 | no | node 12430682957 |
+| Athletik Delta | Neuer Platz 22 | 327 | no | node 12427142625 |
+| BeaFit Frauenfigurstudio | Schubertweg 13 | 459 | no | not in OSM |
+| Takt Tanz | Kunst (dance school) | Sudetenstraße 47 | 483 | no | not in OSM |
+| Carsten Schwarz Tanzstudio | Sudetenstraße 47 | 483 | no | not in OSM |
+| Lu Jong Yoga Studio Ingrid Antoch | Haydnweg 28 | 537 | no | not in OSM |
+| Sportstudio Innings (incl. EMS-Bodytrain, boxing, yoga) | Sudetenstraße 49 | 542 | no | node 12824612410 |
+| Fitness Forum & Squash Point | Breslauer Weg 103 | 665 | #128 (kind food) | way 188648201 |
+| Tina´s Fitnesstreff | Spreestraße 26 | 990 | no | node 371388338 |
+| Club Vital | Sudetenstraße 73 | 1150 | no | node 370873070 |
+| clever fit Geretsried | Jeschkenstraße 29 | 1310 | no | node 2301162996 |
+| Muscle & Mind Bodyforming | Lerchenweg 1 | 1964 | no | not in OSM |
+| BaseFit Gesundheitszentrum (gym + physio) | Banater Straße 14 | 3011 | no | node 14133849218 |
+| Elements Yoga und Pilates Studio | Blumenstraße 19 (EG | 3484 | no | not in OSM |
+| Fitness-Studio imPuls in- + Outdoor | Bürgermeister-Graf-Ring 13 (Gelting) | 4746 | no | not in OSM |
+
+### G-1 · Gyms: add POIs (import change) — Size: M — status: todo
+```
+Goal: Every fitness studio in Geretsried shows up as a POI of its own kind ("gym"), including Innings and clever fit.
+Context (read only, verified at c5af0a7):
+- scripts/import-osm.ts PLACES_QUERY asks for nwr["shop"], a fixed amenity list, and traffic signals. It has no
+  leisure filter, so leisure=fitness_centre / sports_centre are never downloaded. data/places.json is a cache: it is only
+  re-downloaded with the fresh flag or when the file is missing.
+- src/map/build.ts poiKind(): an amenity match wins, else shop → POI_KINDS[shop] ?? "shop". No leisure branch.
+- src/map/types.ts PoiKind (line 62) has no gym kind.
+Change:
+1. PLACES_QUERY: add  nwr["leisure"="fitness_centre"](B);  nwr["leisure"="sports_centre"]["sport"~"fitness"](B);
+   nwr["amenity"="dojo"](B);  (do NOT take every sports_centre: that pulls school halls, the Hallenbad, and tennis).
+2. types.ts: add "gym" to PoiKind. build.ts: POI_KINDS dojo → gym; in poiKind() map leisure fitness_centre, and
+   sports_centre with sport~fitness, to "gym" before the shop fallback. Check every switch/record over PoiKind
+   (renderer colours, overlay.ts labels, typecheck will list them) and give gym a sensible default.
+3. #128 "Fitness Forum & Squash": it exists only because OSM node 9955217554 is tagged amenity=pub (the bar inside),
+   so its kind is food. The building way 188648201 carries leisure=fitness_centre with the same name. Once leisure is
+   imported there will be two POIs with that name ~26 m apart: keep the gym one, and drop the pub duplicate (same name
+   within 50 m → prefer gym).
+4. Innings (node 12824612410, Sudetenstraße 49) has NO name in OSM, and build.ts drops unnamed places. Add a small
+   hand-written list of extra POIs in build.ts (name, kind, lat, lon), projected with the same project.ts formula, for:
+   - Sportstudio Innings, 47.855834, 11.489942
+   - BeaFit Frauenfigurstudio, Schubertweg 13, 47.854458, 11.480992 (not in OSM)
+   - Fitness-Studio imPuls, Bürgermeister-Graf-Ring 13, 47.887968, 11.437992 (not in OSM; verify still open)
+   - Muscle & Mind Bodyforming, Lerchenweg 1, 47.874238, 11.472550 (not in OSM)
+   - Elements Yoga und Pilates, Blumenstraße 19, 47.885691, 11.461178 (approx., street-level geocode)
+   - Lu Jong Yoga Studio, Haydnweg 28, 47.854853, 11.478401 (not in OSM)
+5. Re-run the import with the fresh flag, rebuild the map, and check the new pois: expect Bodystreet, clever fit,
+   Club Vital, Tina´s Fitnesstreff, Athletik Delta, Fitness Forum & Squash (gym), BaseFit, PT-Kubis dojo, plus the
+   manual ones. Diff the poi list before/after: the ids (index+1) of later POIs will shift, so update anything that
+   refers to POIs by index (jobs, BACKLOG ids).
+Done when: typecheck + tests pass, each gym above is in public/geretsried.map.json with kind "gym", #128 is no longer food.
+```
+
 ## Priority list (all 234 POIs)
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
@@ -1073,7 +1317,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 |---|---|---|---|---|---|---|---|
 | 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
-| 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | ref-done (partial) | B2-3. Spray shop (pad on the nearest driveway ≤40 m, likely the NW lane) + "mercedes" drop-off |
+| 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | ref-done (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (pitched) |
 | 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | ref-done (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
@@ -1173,7 +1417,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | todo |  |
 | 79 | Piatsa | food | 4646.3, 4763.3 | 47.857163, 11.492293 | 659 | todo |  |
-| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | todo |  |
+| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | todo | WRONG KIND: is a gym (Breslauer Weg 103); food only because OSM node 9955217554 is amenity=pub. Fix in G-1 |
 | 22 | Pho Viet Restaurant | food | 3358, 5828.9 | 47.847579, 11.475021 | 1343 | todo |  |
 | 213 | Cafeteria | food | 5192.3, 5297.5 | 47.852358, 11.499613 | 1360 | todo |  |
 | 135 | Sempol Imbiss | food | 5005.2, 5567.9 | 47.849927, 11.497105 | 1364 | todo |  |

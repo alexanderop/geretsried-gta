@@ -262,6 +262,11 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   yellow "Deutsche Post" board and the sign band Merkur · LOTTO Bayern · GerLTZ · SZ over AZ, and a yellow letter box and
   a brown bin on the sidewalk by the passage. Storeys and roof follow the Bavarian LoD2 model; the shop widths, the
   canopy's depth and the Post board are guesses.
+- **Automobilwerkstatt Wilhelm** (`src/world/places/werkstatt-wilhelm.ts`), Wallensteinstraße 4, the spray shop and the
+  Mercedes G job's drop-off: a long, low workshop hall of dark slate-blue metal cladding under a flat light-brown roof,
+  4.8 m high as in the Bavarian LoD2 model; on its long NW wall towards the car park the navy "AUTO MOBIL robert
+  wilhelm" board with the orange round logo and the EINGANG arrow at the NE end, then a frosted window band in white
+  frames with a big "4" on the glass. The band's length, where the sign sits and the logo's orange are guesses.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).
