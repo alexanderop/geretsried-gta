@@ -1587,7 +1587,7 @@ As built (places-only batch, src/world/places/gasthof-geiger.ts):
 Size: S
 ```
 
-### B5-2 · Petruskirche, Egerlandstraße 39 (#231, church) — Size: S — status: ref-done (partial)
+### B5-2 · Petruskirche, Egerlandstraße 39 (#231, church) — Size: S — status: implemented (partial: one ridge height, glass strips, NE-wall emblem/window spots, tower louvre/clock/windows/door sizes, cross, colours are guesses)
 ```
 Goal: The 1960 Lichtblau "concrete tent": a huge steep dark roof almost to the ground over peach walls,
   glass strips in the gable, and a tall free-standing peach tower with a red clock. Second "Jesus Saves" point.
@@ -1605,9 +1605,30 @@ In-game: save point (shops.ts SAVE_AT), €500, foot pad 1.8 m, re-arm after 8 m
   road/path spot ≤40 m, not under tree crowns → probably the footway ~14 m from the POI; runtime decides.
   Kind church → no map label.
 Acceptance criteria:
-- [ ] From the camera the church reads as a dark tent roof with a separate tall tower next to it (05/06).
+- [x] From the camera the church reads as a dark tent roof with a separate tall tower next to it (05/06).
 - [ ] The save pad is visible (not under the trees) and still works.
-- [ ] pnpm test + typecheck green.
+- [x] pnpm test + typecheck green.
+As built (places-only batch, src/world/places/petruskirche.ts, two entries: PETRUSKIRCHE + PETRUSKIRCHE_TOWER):
+- Job part out of scope (places-only batch): the save-pad criterion is left unticked. No solid, outline, POI or
+  src/sim change: both footprints keep OSM's outlines (tested); only storeys, roofs and non-solid parts change.
+- LoD2 (tile 684_5304): church DEBY_LOD2_4533422 (function church), eaves 4.1–4.2 m on both long walls, ridge NW–SE
+  rising from 12.52 m (NW gable) to 15.42 m (SE gable, a shallow prow). The engine has one ridge height: built as
+  levels 4.2/3, roof slate #464548 at 53° over OSM's 14.4 m width with gables on walls 0 (NW) and 2 (SE) → ridge
+  13.73 m. Tower DEBY_LOD2_4534328: eaves 27.67 m, gabled cap to 29.36 m, ridge NW–SE → levels 27.67/3, gables on
+  walls 0/2 at 37.5° (ridge 29.4 m over OSM's 4.4 m walls). Peach plaster on both (#ffd4ae / #ffdcbe tint).
+- Church: 7 stepped glass strips (petrus-glass, 1.2 m each, up to 0.5 m under the rake) in both gable ends; on the
+  NE wall to Egerlandstraße the round white emblem with cross (petrus-emblem) under the eaves and a window N of it.
+- Tower: on both gable faces the dark louvre under the cap (petrus-louvre), the clock painted on the wall under it
+  (petrus-clock: red bars and hands, no dial), two small windows; the door at the foot of the NE face and a window
+  halfway up; a dark cross (two non-solid pylons) on the ridge. Textures by Codex, scripts/process-sprites.py.
+- Guesses: glass strips' count/sizes/heights and glazing on both gables (06 shows glass high in the NW gable, 02/05
+  strips at the SE end), the emblem's and window's spots on the NE wall, louvre/clock/window sizes and heights on the
+  tower, the door's face, the cross's size, the colours. One ridge height instead of the model's sloping ridge.
+- Not built: mosaic, bronze portal, entrance front (no reference), the SE prow (OSM's outline runs ~4 m past it).
+- In the play camera the pad at the NW corner path sits right by the church's roof edge (not changed here).
+- Checks: chunk hash differs only in the place's chunk (991); pnpm -s check green; places.test.ts "dresses the
+  Petruskirche…". Screenshots (local scratchpad b5-2/): play.png (tower SE face from between church and tower),
+  play-nw.png (tower NW face), play-w.png (NW gable's glass strips), overhead.png (?compare straight-down).
 Size: S
 ```
 
@@ -2221,7 +2242,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | implemented (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (gable roof with two cross gables, LoD2) |
 | 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | implemented (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | implemented (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
-| 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | ref-done (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
+| 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | implemented (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
 | 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | ref-done | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
 | 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | ref-done | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |

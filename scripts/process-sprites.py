@@ -918,6 +918,20 @@ for name in ["geiger-window", "geiger-door"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Petruskirche (Egerlandstraße 39): the tower clock's red bars and hands and the round emblem with its cross, keyed
+# (loose on the render); the gable's glass strip, the louvre, the small window and the tower door, opaque. All square.
+for name in ["petrus-clock", "petrus-emblem"]:
+    src = find(name)
+    if src is not None:
+        keyed = key_magenta_fast(Image.open(src))
+        keyed.crop(keyed.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox()).resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+        print(f"{name}.webp")
+for name in ["petrus-glass", "petrus-louvre", "petrus-window", "petrus-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

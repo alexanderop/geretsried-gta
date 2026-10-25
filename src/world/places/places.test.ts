@@ -23,6 +23,9 @@ const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
   return false
 }
 
+/** The rise per meter of a roof plane at `deg` degrees. */
+const slope = (deg: number) => Math.tan((deg * Math.PI) / 180)
+
 /** The bands that do not lie on a wall `top` meters high. */
 const outside = (bands: ReadonlyArray<{ z0: number; z1: number }>, top: number) => bands.filter((b) => !(b.z0 >= 0 && b.z0 < b.z1 && b.z1 <= top + 1e-9))
 
@@ -972,6 +975,53 @@ describe("the registry on the real map", () => {
     for (const p of pylons) {
       expect(p.base ?? 0).toBeGreaterThan(2.5)
       expect(pointInPolygon(...toWorld(geiger.frame, p.u, p.n), pts)).toBe(false)
+    }
+  })
+
+  it("dresses the Petruskirche as a steep gabled tent at the LoD2 heights, its free-standing tower to the model's 29 m with louvre and clock", () => {
+    const church = at(121436739)
+    const tower = at(188048958)
+    if (church === undefined || tower === undefined) throw new Error("no Petruskirche or its tower")
+    const world = makeWorld(map)
+    // The outlines stay OSM's (they are the solids); only the storeys change.
+    for (const id of [121436739, 188048958]) expect(world.map.buildings.find((b) => b.id === id)?.pts).toEqual(map.buildings.find((b) => b.id === id)?.pts)
+    // The church: eaves at 4.2 m, the ridge over OSM's 14.4 m width between the model's 12.5 m (NW) and 15.4 m (SE) ends.
+    const cPts = map.buildings[church.building]?.pts ?? []
+    const width = wallFrame(cPts, 0)?.length ?? 0
+    const ridge = (church.dressing.levels ?? 0) * 3 + (width / 2) * slope(church.dressing.roof?.hip ?? 0)
+    expect((church.dressing.levels ?? 0) * 3).toBeCloseTo(4.2, 2)
+    expect(ridge).toBeGreaterThan(12.5)
+    expect(ridge).toBeLessThan(15.4)
+    expect(church.dressing.roof?.gables).toEqual([0, 2])
+    // The glass strips stand in both gable walls under the rake (the walls are square to the eaves walls).
+    const signs = church.dressing.parts.flatMap((p) => (p.kind === "wallSign" ? [p] : []))
+    const glass = signs.filter((s) => s.texture === "petrus-glass")
+    expect(new Set(glass.map((s) => s.edge))).toEqual(new Set([0, 2]))
+    for (const s of glass) {
+      const len = wallFrame(cPts, s.edge)?.length ?? 0
+      expect(s.z1).toBeLessThan(4.2 + Math.min(s.u0, len - s.u1) * slope(church.dressing.roof?.hip ?? 0))
+    }
+    expect(signs.some((s) => s.texture === "petrus-emblem" && s.edge === 1)).toBe(true)
+    // The tower: 21 m N of the church, eaves at the model's 27.67 m, its cap to 29.36 m over OSM's 4.4 m gable walls.
+    const tPts = map.buildings[tower.building]?.pts ?? []
+    const tLevels = tower.dressing.levels ?? 0
+    expect(world.map.buildings.find((b) => b.id === 188048958)?.levels).toBeCloseTo(tLevels, 5)
+    expect(tLevels * 3).toBeCloseTo(27.67, 2)
+    expect(tLevels * 3 + ((wallFrame(tPts, 0)?.length ?? 0) / 2) * slope(tower.dressing.roof?.hip ?? 0)).toBeCloseTo(29.36, 0)
+    const tSigns = tower.dressing.parts.flatMap((p) => (p.kind === "wallSign" ? [p] : []))
+    for (const e of [0, 2]) for (const t of ["petrus-louvre", "petrus-clock"]) expect(tSigns.some((s) => s.edge === e && s.texture === t)).toBe(true)
+    // No two wall signs overlap, and none runs past its wall or over the eaves on a side wall.
+    for (const [pts, list] of [[cPts, signs], [tPts, tSigns]] as const) {
+      for (const [i, a] of list.entries()) {
+        expect(a.u1).toBeLessThanOrEqual(wallFrame(pts, a.edge)?.length ?? 0)
+        for (const b of list.slice(i + 1)) expect(a.edge === b.edge && a.u0 < b.u1 && b.u0 < a.u1 && a.z0 < b.z1 && b.z0 < a.z1).toBe(false)
+      }
+    }
+    expect(tSigns.every((s) => s.z1 <= tLevels * 3)).toBe(true)
+    // The cross stands on the ridge, over the tower's middle.
+    for (const p of tower.dressing.parts.flatMap((q) => (q.kind === "pylon" ? [q] : []))) {
+      expect(pointInPolygon(...toWorld(tower.frame, p.u, p.n), tPts)).toBe(true)
+      expect(p.base ?? 0).toBeGreaterThan(29)
     }
   })
 

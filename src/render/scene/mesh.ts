@@ -196,6 +196,12 @@ export const MATERIAL_FILES = [
   "geiger-board",
   "geiger-window",
   "geiger-door",
+  "petrus-glass",
+  "petrus-louvre",
+  "petrus-clock",
+  "petrus-emblem",
+  "petrus-window",
+  "petrus-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
