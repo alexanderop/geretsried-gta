@@ -499,6 +499,67 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Aphrodite Aesthetic next to GG Radsport under the shared canopy: glazing round the POI, the gold fascia on the canopy's front, hedge off the road", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    const w5 = wallFrame(pts, 5)
+    if (!w5 || west === undefined) throw new Error("no wall 5")
+    const canopy = parts.find((p) => p.kind === "canopy" && p.edge === 5)
+    if (canopy?.kind !== "canopy") throw new Error("no canopy")
+    const signs = (t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 5 && p.texture === t ? [p] : []))
+    const glass = [...signs("aphrodite-glass"), ...signs("aphrodite-door")]
+    const fascia = signs("aphrodite-fascia")
+    expect(glass).toHaveLength(5)
+    expect(fascia).toHaveLength(1)
+    expect(signs("mb-house-door")).toHaveLength(1)
+    const f = fascia[0]
+    if (!f) return
+    const lo = Math.min(...glass.map((g) => g.u0))
+    const hi = Math.max(...glass.map((g) => g.u1))
+    // The POI (u 23.2) lies in the glazing, which starts N of GG's and ends inside the canopy, clear of GG's unit and steps.
+    const [poiU] = toLocal(w5.frame, 4170, 4726.8)
+    expect(poiU).toBeGreaterThan(lo)
+    expect(poiU).toBeLessThan(hi)
+    const gg = [...signs("gg-glass"), ...signs("gg-door"), ...signs("mb-house-door")]
+    expect(lo).toBeGreaterThanOrEqual(Math.max(...gg.map((g) => g.u1)))
+    expect(hi).toBeLessThan(canopy.u1)
+    // The fascia spans the glazing on the canopy's front over head height; the glazing stays under it.
+    expect(f.u0).toBeLessThanOrEqual(lo)
+    expect(f.u1).toBeGreaterThanOrEqual(hi)
+    expect(f.out ?? 0).toBeGreaterThan(canopy.depth)
+    expect(f.z1).toBeLessThanOrEqual(canopy.z)
+    expect(f.z0).toBeGreaterThan(2.5)
+    for (const g of glass) expect(g.z1).toBeLessThanOrEqual(f.z0)
+    // The railing and the hedge run along the unit between the wall and Marienburgweg's carriageway, along wall 5.
+    const lane = map.roads.find((r) => r.name === "Marienburgweg")
+    const half = (lane?.width ?? 0) / 2
+    const boxes = parts.flatMap((p) => (p.kind === "pylon" && p.texture === undefined ? [p] : []))
+    for (const b of boxes) {
+      const [x, y] = toWorld(west.frame, b.u, b.n)
+      const [u, n] = toLocal(w5.frame, x, y)
+      if (u < 17 || u > 29) continue
+      // `h` is the box's top, over `base` when it floats (the rail).
+      expect(b.h).toBeGreaterThan(b.base ?? 0)
+      expect(-n).toBeGreaterThan(1.6)
+      expect(-n + b.d / 2).toBeLessThan(3)
+      // A box runs along (cos, -sin) of its angle in the street frame (places.ts).
+      const [ex, ey] = toWorld(west.frame, b.u + (Math.cos(b.angle) * b.w) / 2, b.n - (Math.sin(b.angle) * b.w) / 2)
+      const [eu, en] = toLocal(w5.frame, ex, ey)
+      expect(Math.abs(eu - u)).toBeCloseTo(b.w / 2, 1)
+      expect(Math.abs(en - n)).toBeLessThan(0.1)
+      const rp = lane?.pts ?? []
+      const gap = Math.min(...rp.flatMap((_, i) => {
+        if (i % 2 !== 0 || i + 3 >= rp.length) return []
+        const [ax, ay, bx, by] = [rp[i] ?? 0, rp[i + 1] ?? 0, rp[i + 2] ?? 0, rp[i + 3] ?? 0]
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1)))
+        return [Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay))]
+      }))
+      expect(gap - b.d).toBeGreaterThan(half + 1)
+    }
+    expect(boxes.filter((b) => b.w > 10)).toHaveLength(2)
+  })
+
   it("dresses the Ahorn Apotheke's W corner: letters on the car-park band, glass on both faces, the red A held out by the corner", () => {
     const penny = at(822461881)
     const pts = map.buildings[penny?.building ?? -1]?.pts ?? []

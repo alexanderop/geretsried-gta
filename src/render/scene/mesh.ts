@@ -173,6 +173,10 @@ export const MATERIAL_FILES = [
   "gg-fascia",
   "gg-glass",
   "gg-door",
+  "aphrodite-fascia",
+  "aphrodite-glass",
+  "aphrodite-door",
+  "mb-house-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

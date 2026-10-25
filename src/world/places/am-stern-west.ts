@@ -62,6 +62,17 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * Guesses (read off the photos against a 2.2 m door, no measure): the floor's 0.6 m over the pavement, every bay's,
  * the box's and the fascia's spot and size, the canopy's height, depth and run (u 7–51.5), the steps' spot, depth and
  * count (one flight, shared with the house door), the bikes' and the board's spots.
+ *
+ * Aphrodite Aesthetic (B4-5), next to GG Radsport in the link (the POI at u 23.2), from Street View
+ * (reference/aphrodite-aestetic/01–03): left to right the house entrance at the top of GG's steps (a glazed door
+ * under a top light, the steel letterbox panel beside it), a stretch of white wall, then the studio's full-height
+ * glazing in slim anthracite #1e2531 frames with two glazed doors, the anthracite #191f27 fascia with the gold script
+ * "Aphrodite Aesthetic" over it; in front a grey railing along the raised floor and a hedge between it and the
+ * pavement. As for GG, the fascia hangs on the canopy's front (z 3.78–4.4), not on the wall under it, where the play
+ * camera cannot see it. Guesses (read off 01 and 03 against a 2.2 m door, no measure): the house door's and letterbox
+ * panel's spot (u 17.4–19.4), the glazing's run (u 20–26.6, five 1.32 m bays) and the doors' bays, its top at 3.7 m,
+ * the fascia's size and the gold (#c9a96a, the photos are too small to sample), the railing's height and line, the
+ * hedge's spot, depth and height. Not built: the small "ACB" sign and the "25" plate S of the glazing (unreadable).
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
@@ -112,6 +123,16 @@ const GG_GLASS_TOP = 3.2
  */
 const GG_FASCIA_H = (GG_DOOR[1] - GG_GLASS[0]) / 7
 const GG_STEPS = [14.6, 17.2] as const
+
+/** Aphrodite: the house entrance at the top of GG's steps, then the studio's glazing in five bays (guesses, see above). */
+const HOUSE_DOOR = [17.4, 19.4] as const
+const APH_GLASS = [20.0, 26.6] as const
+const APH_BAYS = 5
+const APH_GLASS_TOP = 3.7
+/** The fascia (stretched square, 11 times as wide as tall), 0.1 m past the glazing at each end, on the canopy's front. */
+const APH_FASCIA = [APH_GLASS[0] - 0.1, APH_GLASS[1] + 0.1] as const
+const APH_FASCIA_H = (APH_FASCIA[1] - APH_FASCIA[0]) / 11
+const APH_BAY = (APH_GLASS[1] - APH_GLASS[0]) / APH_BAYS
 
 /** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
 const SHOP_OUT = BALCONY_DEPTH
@@ -217,5 +238,24 @@ export const AM_STERN_WEST: PlaceDressing = {
     { kind: "stairs", edge: MARIENBURG, u0: GG_STEPS[0], u1: GG_STEPS[1], depth: 1.6, h: MB_FLOOR, steps: 4, colour: [196, 194, 188, 255] },
     { kind: "sprite", name: "bike-rack", u: -42.95, n: 54.45, z: 0.5, angle: 0.027, len: 1.9 },
     { kind: "sprite", name: "gg-aboard", u: -43.9, n: 56.88, z: 0.6, angle: 1.599, len: 0.9 },
+    // Aphrodite Aesthetic: the house entrance with its letterbox panel, the glazing in five bays (doors in the 2nd and
+    // 4th), the gold-on-anthracite fascia on the canopy's front; the railing along the raised floor (a rail on five posts)
+    // and the hedge in front of it. Rail, posts and hedge are plain boxes in the street frame, along wall 5 (never solid):
+    // the hedge u 17.6–28.4, 2.0–2.9 m out; the rail u 17.4–27.6, 1.8 m out.
+    { kind: "wallSign", texture: "mb-house-door", edge: MARIENBURG, u0: HOUSE_DOOR[0], u1: HOUSE_DOOR[1], z0: MB_FLOOR, z1: 3.2, out: 0.04 },
+    ...Array.from({ length: APH_BAYS }, (_, i): Part => ({
+      kind: "wallSign",
+      texture: i % 2 === 1 ? "aphrodite-door" : "aphrodite-glass",
+      edge: MARIENBURG,
+      u0: APH_GLASS[0] + APH_BAY * i,
+      u1: APH_GLASS[0] + APH_BAY * (i + 1),
+      z0: MB_FLOOR,
+      z1: APH_GLASS_TOP,
+      out: 0.04,
+    })),
+    { kind: "wallSign", texture: "aphrodite-fascia", edge: MARIENBURG, u0: APH_FASCIA[0], u1: APH_FASCIA[1], z0: MB_CANOPY.z - APH_FASCIA_H, z1: MB_CANOPY.z, out: MB_CANOPY.depth + 0.03 },
+    { kind: "pylon", u: -41.47, n: 42.6, angle: 1.599, w: 10.2, d: 0.05, h: 1.6, base: 1.54, colour: [168, 170, 172, 255] },
+    ...[17.45, 19.95, 22.45, 24.95, 27.55].map((u): Part => ({ kind: "pylon", u: -39.55 - 1.8 - 0.028 * (u - 18), n: 64.99 - u, angle: 1.599, w: 0.05, d: 0.05, h: 1.6, colour: [168, 170, 172, 255] })),
+    { kind: "pylon", u: -42.19, n: 42.02, angle: 1.599, w: 10.8, d: 0.9, h: 1.0, colour: [62, 102, 50, 255] },
   ],
 }

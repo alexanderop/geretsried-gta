@@ -804,6 +804,24 @@ for name, main in [("gg-aboard", True), ("bike-rack", False)]:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
     print(f"{name}.webp", im.size)
 
+# Aphrodite Aesthetic (Marienburgweg 25): the anthracite fascia with the gold script, its strokes thickened so the
+# thin script survives the 512 px square and the play camera; one glazed bay, the door bay and the house entrance with
+# its letterbox panel (all opaque, stretched square; the wallSign gives them back their aspect).
+fascia = find("aphrodite-fascia")
+if fascia is not None:
+    from PIL import ImageFilter
+    im = Image.open(fascia).convert("RGB")
+    gold = im.convert("L").point(lambda v: 255 if v > 90 else 0).filter(ImageFilter.MaxFilter(7))
+    board = Image.new("RGB", im.size, (25, 31, 39))
+    board.paste(Image.new("RGB", im.size, (201, 169, 106)), mask=gold)
+    board.resize((512, 512), Image.LANCZOS).save(OUT / "aphrodite-fascia.webp", "WEBP", quality=92)
+    print("aphrodite-fascia.webp")
+for name in ["aphrodite-glass", "aphrodite-door", "mb-house-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

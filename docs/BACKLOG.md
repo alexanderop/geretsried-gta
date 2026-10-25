@@ -1344,7 +1344,7 @@ Size: S
 - **Screenshots** (local scratchpad `b4-4/`): `play.png` (play camera from Marienburgweg), `overhead.png`,
   `overhead-close.png`, `props-test.png`.
 
-### B4-5 · Aphrodite Aesthetic, Marienburgweg 25 (#157, shop) — Size: S — status: ref-done
+### B4-5 · Aphrodite Aesthetic, Marienburgweg 25 (#157, shop) — Size: S — status: implemented (partial: the house door's, the glazing's, the doors' and the fascia's spots and sizes, the gold's hex, the railing's and the hedge's spot and size are guesses; the fascia hangs on the canopy's front, not on the wall)
 ```
 Goal: Beauty studio with a dark fascia and gold script, full-height dark glazing, white wall, steps and hedge.
 Reference: docs/places/aphrodite-aestetic.md; reference/aphrodite-aestetic/01-street-front.png (key), 02, 03.
@@ -1352,9 +1352,37 @@ Spec (via #0b, inside B3-0):
 - POI "Aphrodite-aestetic" (exact; sign says "Aphrodite Aesthetic") at 4170, 4726.8. NW edge of 127872184,
   u ≈ 23 m. Fascia #191f27, gold text (hex needs reference); dark frames #1e2531; dark louvred canopy.
 Acceptance criteria:
-- [ ] From Marienburgweg the unit matches 01. pnpm test + typecheck green.
+- [x] From Marienburgweg the unit matches 01. pnpm test + typecheck green.
+      (Matches 01 in order and colour: house door and letterbox panel, white wall, dark glazing with two doors, railing
+      and hedge; the fascia hangs on the canopy's front, see below. Nothing new is solid.)
 Size: S
 ```
+
+**B4-5 as built** (`src/world/places/am-stern-west.ts`, wall 5 of B3-0's west block next to B4-4, under B4-4's shared canopy; no roof sign):
+- **Sources.** `docs/places/aphrodite-aestetic.md`, `reference/aphrodite-aestetic/01–04` (01 for the order and the
+  front, 03 for the glazing's run and its doors, 02 for the hedge). The POI lies at u 23.2 on wall 5, in the link
+  (u 20.2–37.5). Masses, heights, the canopy (`MB_CANOPY`, z 4.4, 1.6 m deep), the raised floor (`MB_FLOOR`, 0.6 m) and
+  GG's steps (u 14.6–17.2) are reused unchanged; nothing of the building is duplicated.
+- **Front:** the house entrance at the top of GG's steps (`mb-house-door`: glazed door under a top light, steel
+  letterbox panel; u 17.4–19.4, z 0.6–3.2), white wall to u 20, then the studio's glazing u 20–26.6 in five 1.32 m bays
+  (`aphrodite-glass`, `aphrodite-door` in bays 2 and 4) from the raised floor to 3.7 m.
+- **Fascia on the canopy's front**, as B4-4's: anthracite #191f27 with the gold script "Aphrodite Aesthetic"
+  (`aphrodite-fascia`, 6.8 × 0.62 m, z 3.78–4.4, 0.1 m past the glazing at each end). In 01 it is on the wall under the
+  canopy, where the straight-down play camera cannot see it.
+- **Railing and hedge:** a grey rail at 1.54–1.6 m on five thin posts, 1.8 m out, u 17.4–27.6; a hedge box 1.0 m high,
+  2.0–2.9 m out, u 17.6–28.4 (plain `pylon` boxes along wall 5, never solid). Note: a `pylon`'s `h` is its top, not
+  its height over `base`.
+- **Sprites** (Codex, `process-sprites.py`): `aphrodite-fascia` (the gold strokes thickened so the script survives the
+  512 px square), `aphrodite-glass`, `aphrodite-door`, `mb-house-door` (opaque, squared materials).
+- **Guesses:** the house door's and letterbox panel's spot and size; the glazing's run, bay count, which bays are doors
+  and its top; the fascia's size; the gold (#c9a96a, too small in the photos to sample); the railing's height, line and
+  posts; the hedge's spot, depth and height. Not built: the small "ACB" sign and the "25" plate S of the glazing.
+- **What the camera shows:** from the pavement in front, the canopy covers the glazing and the doors (the glass panes
+  show them dimly); the hedge, the rail and the fascia's thin gold-on-dark strip on the canopy's edge read best from the
+  far side of Marienburgweg. From above the canopy and the hedge run along the link's face.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical to HEAD except chunk 1660 (the west block's own).
+- **Screenshots** (local scratchpad `b4-5/`): `play.png` (play camera from Marienburgweg's far side), `play-crop.png`,
+  `overhead.png`.
 
 ### B4-6 · Nexial IT-Services (#114, shop) — Size: S — status: ref-done
 ```
@@ -1872,7 +1900,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
 | 114 | Nexial | shop | 188 | ref-done |
 | 116 | GG-Radsport | shop | 190 | implemented (partial) |
-| 157 | Aphrodite-aestetic | shop | 190 | ref-done |
+| 157 | Aphrodite-aestetic | shop | 190 | implemented (partial) |
 | 15 | TEDi | shop | 205 | implemented (partial) |
 | 80 | Orterer Getränkemarkt | shop | 221 | implemented (partial) |
 | 81 | Takko Fashion | shop | 223 | implemented (partial) |
@@ -2219,7 +2247,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | implemented (partial) | B4-4, inside B3-0 |
-| 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
+| 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | implemented (partial) | B4-5, inside B3-0 |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | implemented (partial) | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | implemented (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | implemented (partial) | B3-4; middle unit of the west block |
