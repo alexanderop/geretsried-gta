@@ -134,6 +134,9 @@ export const nextBusLeg = (trip: BusTrip): { readonly leg: Leg; readonly jumped:
   return { leg: leg ?? { road: 0, from: 0, dir: 1, len: 1 }, jumped }
 }
 
+/** Up to `count` legs after the bus's current one, without moving on; none past its run's end, where `nextBusLeg` jumps. */
+export const legsAfter = (trip: BusTrip, count: number): ReadonlyArray<Leg> => trip.line.runs[trip.run]?.legs.slice(trip.leg + 1, trip.leg + 1 + count) ?? []
+
 /** What the next stop is called, or where the run ends. */
 export const nextStop = (trip: BusTrip): string => {
   const run = trip.line.runs[trip.run]

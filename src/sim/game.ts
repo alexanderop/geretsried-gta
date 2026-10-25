@@ -3,7 +3,7 @@ import { makeProjection } from "#/map/project.ts"
 import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
-import { spawnBus, spawnNpc, stepNpc, type Npc } from "./traffic.ts"
+import { roadAhead, spawnBus, spawnNpc, stepNpc, type Leader, type Npc } from "./traffic.ts"
 import { atTerminus, direction, nextStop, planTransit } from "./transit.ts"
 import { lightFor, makeSignals } from "./signals.ts"
 import { spawnWalker, stepWalker } from "./pedestrians.ts"
@@ -217,29 +217,72 @@ const topUpBuses = (world: World, game: Game, x: number, y: number) => {
 
 export const playerPos = (game: Game) => game.player.car ?? game.player
 
-/** Is anything within a short cone in front of this NPC? */
-const blockedAhead = (game: Game, npc: Npc) => {
-  const fx = Math.cos(npc.angle)
-  const fy = Math.sin(npc.angle)
+/** How far beside a car's path something is in its way: a car, a car coming the other way (in its own lane), a person on the sidewalk next to it. */
+const PATH_HALF = { car: 2.2, oncoming: 1.4, person: 1.8 } as const
+const PERSON_LENGTH = 1
+
+/** How far along `path` (from `roadAhead`, centre to centre) (x, y) is, and the path's direction there; null when it is not on it. */
+const onPath = (path: ReadonlyArray<number>, x: number, y: number, width: number) => {
+  for (let i = 0; i + 5 < path.length; i += 3) {
+    const ax = path[i] ?? 0
+    const ay = path[i + 1] ?? 0
+    const len = (path[i + 5] ?? 0) - (path[i + 2] ?? 0)
+    if (len <= 1e-6) continue
+    const ex = ((path[i + 3] ?? 0) - ax) / len
+    const ey = ((path[i + 4] ?? 0) - ay) / len
+    const along = (x - ax) * ex + (y - ay) * ey
+    if (along < 0 || along > len || Math.abs((x - ax) * -ey + (y - ay) * ex) >= width) continue
+    const d = (path[i + 2] ?? 0) + along
+    return d > 0.5 ? { d, ex, ey } : null
+  }
+  return null
+}
+
+/**
+ * The nearest thing on the road in front of this NPC, along the path it will drive (`paths`, bends and the next
+ * segments included): the bumper-to-bumper gap and its speed along the road, or null if the way is clear. People
+ * and parked cars stand still. Two cars on each other's path (crossing at a junction) do not both wait: the one
+ * with the higher id goes first.
+ */
+const leaderAhead = (game: Game, npc: Npc, paths: ReadonlyMap<Npc, ReadonlyArray<number>>): Leader | null => {
+  const path = paths.get(npc) ?? []
   // A bus looks from its nose, and sees a bus's tail, not its middle.
-  const nose = (vehicleLength(npc.model) - CAR_LENGTH) / 2
-  const check = (x: number, y: number, length = CAR_LENGTH) => {
-    const dx = x - npc.x
-    const dy = y - npc.y
-    const ahead = dx * fx + dy * fy - nose - (length - CAR_LENGTH) / 2
-    const side = Math.abs(dx * -fy + dy * fx)
-    return ahead > 0.5 && ahead < 9 && side < 2.2
+  const half = vehicleLength(npc.model) / 2
+  const reach = (path[path.length - 1] ?? 0) + 10
+  let best: Leader | null = null
+  const check = (x: number, y: number, length: number, width: number, vx = 0, vy = 0) => {
+    if (Math.abs(x - npc.x) > reach || Math.abs(y - npc.y) > reach) return
+    const hit = onPath(path, x, y, width)
+    if (hit === null) return
+    const gap = hit.d - half - length / 2
+    if (best === null || gap < best.gap) best = { gap, speed: Math.max(0, vx * hit.ex + vy * hit.ey) }
+  }
+  const car = (o: Npc) => {
+    if (o === npc || Math.abs(o.x - npc.x) > reach || Math.abs(o.y - npc.y) > reach) return
+    const fx = Math.cos(o.angle)
+    const fy = Math.sin(o.angle)
+    const along = fx * Math.cos(npc.angle) + fy * Math.sin(npc.angle)
+    if (along < 0.5 && o.id < npc.id && onPath(paths.get(o) ?? [], npc.x, npc.y, PATH_HALF.car) !== null) return
+    check(o.x, o.y, vehicleLength(o.model), along < -0.5 ? PATH_HALF.oncoming : PATH_HALF.car, fx * o.speed, fy * o.speed)
   }
   const p = playerPos(game)
   // Out of everyone's reach (a bus across town) only other traffic can be in the way.
-  if (Math.abs(npc.x - p.x) > NPC_FAR + 50 || Math.abs(npc.y - p.y) > NPC_FAR + 50) return game.npcs.some((o) => o !== npc && Math.abs(o.x - npc.x) < 20 && check(o.x, o.y, vehicleLength(o.model)))
+  if (Math.abs(npc.x - p.x) > NPC_FAR + 50 || Math.abs(npc.y - p.y) > NPC_FAR + 50) {
+    for (const o of game.npcs) car(o)
+    return best
+  }
   // A passenger is inside the bus, which the cars see already.
-  if (game.player.ride === null && check(p.x, p.y)) return true
-  if (game.parked.some((c) => check(c.x, c.y))) return true
-  if (game.cops.some((c) => check(c.car.x, c.car.y))) return true
-  if (game.walkers.some((w) => check(w.x, w.y))) return true
-  if (game.fighters.some((f) => check(f.x, f.y))) return true
-  return game.npcs.some((o) => o !== npc && check(o.x, o.y, vehicleLength(o.model)))
+  if (game.player.ride === null) {
+    const c = game.player.car
+    if (c === null) check(p.x, p.y, PERSON_LENGTH, PATH_HALF.person)
+    else check(c.x, c.y, vehicleLength(c.model), PATH_HALF.car, c.vx, c.vy)
+  }
+  for (const c of game.parked) check(c.x, c.y, vehicleLength(c.model), PATH_HALF.car)
+  for (const c of game.cops) check(c.car.x, c.car.y, vehicleLength(c.car.model), PATH_HALF.car, c.car.vx, c.car.vy)
+  for (const w of game.walkers) check(w.x, w.y, PERSON_LENGTH, PATH_HALF.person)
+  for (const f of game.fighters) check(f.x, f.y, PERSON_LENGTH, PATH_HALF.person)
+  for (const o of game.npcs) car(o)
+  return best
 }
 
 /** Push the car out of a circle round (x, y); returns the speed it hit with, or 0 if it did not touch. */
@@ -318,7 +361,9 @@ export const step = (world: World, game: Game, input: Input): void => {
   }
   game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
   stepArrivals(world, game, playerPos(game), DT)
-  for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
+  // Everyone's road ahead as it is at the start of the step, so two cars can tell whether they see each other.
+  const paths = new Map(game.npcs.map((n) => [n, roadAhead(world, n)]))
+  for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, leaderAhead(game, npc, paths), DT, game.random)
   // A passenger moves with the bus, this frame, so the camera and the HUD do not trail it.
   const ride = player.ride?.bus
   if (ride !== undefined) Object.assign(player, { x: ride.x, y: ride.y, angle: ride.angle })
