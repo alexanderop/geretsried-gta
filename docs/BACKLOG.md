@@ -132,7 +132,7 @@ Size: M
 ### #0c: Generic Place registry for walk-in interiors — Size: L — status: todo (only before the first Size-L place)
 Generalise `World.cafe` / `Chunk.cafe` / `roofAt` / `ShopKind "cake"` / `guests.ts` into N places. Not needed for batch 1.
 
-### B1-1 · Rehmaus Apotheke (#168, pharmacy) — Size: S — status: ref-done
+### B1-1 · Rehmaus Apotheke (#168, pharmacy) — Size: S — status: implemented
 ```
 Goal: Make the Rehmaus Apotheke at Sudetenstraße 14 recognisable as the real pharmacy. It is the drop-off
 of the first courier job (Brezn from Mühlenbäck), 50 m from the start, so it is one of the first buildings
@@ -150,12 +150,45 @@ Spec (via the #0b registry):
 - Wall-sign strip above the arches: "REHMAUS APOTHEKE", red serif capitals #e7544a on the render (new painted texture).
 - Red pharmacy "A" sprite: free-standing sign by the car park (seen in 01). The green logo is NOT on the facade: don't use it.
 Acceptance criteria (top-down play camera):
-- [ ] From the car park/Sudetenstraße, the 3-storey block reads grey-blue with a white arcade band on the street side, like 01.
-- [ ] "REHMAUS APOTHEKE" in red serif caps is legible above the arcade when the building is near a screen edge; no "ARKADEN" anywhere.
-- [ ] Red "A" sign visible from above at the car park, matching 01.
-- [ ] Courier job still completes at the pharmacy; car drop-off reachable; pnpm test + typecheck green.
+- [x] From the car park/Sudetenstraße, the 3-storey block reads grey-blue with a white arcade band on the street side, like 01.
+- [x] "REHMAUS APOTHEKE" in red serif caps is legible above the arcade when the building is near a screen edge; no "ARKADEN" anywhere.
+- [x] Red "A" sign visible from above at the car park, matching 01.
+- [x] Courier job still completes at the pharmacy; car drop-off reachable; pnpm test + typecheck green.
 Size: S
 ```
+
+**B1-1 as built** (`src/world/places/rehmaus-apotheke.ts`) and gotchas for B1-2…B1-5:
+- **Levels 3, `facade: "render"`, `wallColour` [180, 190, 208]:** a new generic facade, `facade-render.webp`
+  (`scripts/facade-render.py`): the block texture with its plaster made neutral off-white (240), so
+  `wallColour` *is* the render colour (≈ #a9b3c4 here). With the default facades a cool colour cannot work:
+  `wallColour` only multiplies, and block/house plaster is yellow (median #dabe98), the shop facade dark
+  (#868478). Any place whose render is not yellow-beige (Sparkasse white, Rathaus) should use `"render"`.
+- **Arcade on walls 8 + 9, 6 arches each, h 2.7, depth 0.5.** Walls 8 and 9 are collinear (both 19.07 m);
+  run the arcades to the shared vertex (wall 8 to u 19.05, wall 9 from u 0.02), or a gap and two end faces
+  show at the joint. From the play camera the arcade reads as a cream band with pillar teeth; the glazing
+  in the arches is hardly ever seen.
+- **Which arches are the pharmacy's:** the POI (the frame's u = 0) sits behind the right end of wall 8, so
+  the sign is on wall 8 over its right four arches (u 7.4–17.4); the left two are the other shop's. Wall 9
+  belongs to the units towards the W neighbour.
+- **Sign lettering:** Codex spelled "REHMAUS APOTHEKE" right first time when the prompt spelled it letter by
+  letter, on #FF00FF, 4:1. `process-sprites.py` (`rehmaus-sign`) keys it, crops to the letters and stretches
+  them to 504 × 504 inside a 512 transparent square. Letters 1 m tall (z 3.2–4.2, just above the arcade's
+  band at h + 0.45) are the smallest that read: the front leans in only about 8 px per meter of height
+  even near the screen corner, so 1 m of letters is about 8–10 screen px tall. They read **upside down**
+  on screen (the wall faces the camera from the bottom of the screen); rotate the crop to check spelling.
+  They overlap the bottom of the first-floor windows (3.95 m up) a little; transparent pixels let them show.
+- **Best spot to check a NE-facing front:** stand in Sudetenstraße (street frame n ≈ 2) about 3 m along
+  +u before the sign's middle: the front then sits in the bottom-left corner, where walls lean in most.
+  The bottom-left "H – Hilfe" / "M – Ton an" chips cover that corner; hide their parents with
+  `style.visibility = "hidden"` for the shot. The job's green drop-off label floats over the pharmacy.
+- **Pharmacy "A":** new prop sprite `pharmacy-a` (Codex, top-down, the German Apotheken-A with goblet and
+  snake on a white panel), at z 2.6 on a grey pole, `angle` 2.54 = minus the frame's angle (−2.54 rad), so it
+  reads upright on screen. Sprite `angle` is relative to the street frame: to make a flat sign upright,
+  pass `−atan2(frame.uy, frame.ux)` from `__gta.world.places`. Kerb trees (from the aerial photo) stand
+  at street u −5…0; a sprite under a crown is hidden, so it sits at u 2.5, n 9 on the green.
+- **The ground in front is lawn, not a car park:** the paving comes from the aerial photo mask; between the
+  sidewalk and the arcade there is grass with a few paved patches. The drop-off (STOP_REACH 9 m round the
+  POI, which is 17.7 m from the street's centre line) means standing or parking on that green.
 
 ### B1-2 · Sparkasse, Händelstraße (#20, bank) — Size: S — status: ref-done
 ```
@@ -383,7 +416,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | ref-done (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | ref-done | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
-| 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | ref-done | courier job destination (Brezn); Sudetenstraße 14 |
+| 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
 | 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = W end of the Rossmann block (way 293545707), facing the car park (05/06) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | ref-done | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 

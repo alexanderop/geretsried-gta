@@ -39,7 +39,7 @@ const Z = { area: 0.02, water: 0.03, track: 0.035, footway: 0.04, sidewalk: 0.05
 /** Meters one texture tile covers: at the close camera a ground meter is about 70 screen pixels, so 512 px tiles must not cover much more than 6 m. */
 const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland: 30, lawn: 6, roof: 5, gravel: 6 } as const
 /** Width of a facade tile in meters, and its height: two storeys. */
-const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8 }
+const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8, render: 6.4 }
 const FACADE_H = 2 * STOREY_M
 const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   block: Material.facadeBlock,
@@ -47,6 +47,7 @@ const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   shop: Material.facadeShop,
   industrial: Material.facadeIndustrial,
   ursula: Material.facadeUrsula,
+  render: Material.facadeRender,
 }
 
 const STREETS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])

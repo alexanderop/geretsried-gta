@@ -9,7 +9,7 @@
 | OSM building | way **120402845**, which contains the node: 910 m², min-rect 51.5 × 19.8 m, axis 29°, centroid (4028.3, 4702.3), 10 edges. No levels or roof tags → engine default 2 levels. Neighbour to the W: way 120402836 (594 m²); to the E: Autohaus Billion, way 120402846 |
 | Engine roof colours (DOP40) | `#7c705e` (main faces), `#c4af97` / `#d3c0b4` (light faces), pitched |
 | Street frame | **Sudetenstraße** (tertiary, 8 m). Kerb point (4028.9, 4679.2), 17.7 m. Street bearing 304°; n bearing 214° (SW, from the street into the building). Arcade front = the NE edges of the footprint (4001.4,4681.5 → 4017.7,4691.4 → 4034.0,4701.3; bearing 301°, 2 × 19.1 m), facing the street across the car park. |
-| Status | **ref-done** |
+| Status | **implemented** (B1-1, `src/world/places/rehmaus-apotheke.ts`) |
 
 ## Rehmaus vs Arkaden: one shop, renamed
 - Rehmaus Apotheke has its own website, https://www.rehmausapotheke.de/. The owner is Loreen Hartwig e.K. (HRA 120833, registered 18.03.2025), and the logo says "EST. 2025".

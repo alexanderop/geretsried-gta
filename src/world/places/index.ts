@@ -3,6 +3,7 @@
  * here. A new place is a new file and one line below.
  */
 import type { PlaceDressing } from "./dressing.ts"
+import { REHMAUS_APOTHEKE } from "./rehmaus-apotheke.ts"
 import { ST_URSULA } from "./st-ursula.ts"
 
-export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA]
+export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE]

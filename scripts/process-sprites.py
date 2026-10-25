@@ -307,6 +307,24 @@ if bus is not None:
     im.resize((512, round(im.height * k)), Image.LANCZOS).save(OUT / "bus-rvo.webp", "WEBP", quality=90)
     print("bus-rvo.webp")
 
+# Places (src/world/places): the German pharmacy "A" seen from above, a prop sprite on its post.
+pharmacy = find("apotheke-a")
+if pharmacy is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(pharmacy)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    im.resize((256, round(im.height * 256 / im.width)), Image.LANCZOS).save(OUT / "pharmacy-a.webp", "WEBP", quality=90)
+    print("pharmacy-a.webp")
+# Rehmaus Apotheke's loose red letters: a wall-sign material, square with the lettering stretched to fill it and a
+# few transparent pixels round it (materials wrap), so the render shows between the letters.
+lettering = find("rehmaus-sign")
+if lettering is not None:
+    im = key_magenta_fast(Image.open(lettering))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (231, 84, 74, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "rehmaus-sign.webp", "WEBP", quality=92)
+    print("rehmaus-sign.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

@@ -64,6 +64,8 @@ plain, like a timber fascia), the roof colour and pitch. Parts are drawn on top 
 (`src/render/scene/places.ts`): signs and ground-floor arcades on a wall of the footprint, square towers
 with a pyramid roof (kept inside the footprint by a test), prop sprites on poles. Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
+`facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
+`wallColour` gives a building any render colour instead of darkening the yellow plaster.
 
 The photo tiles (`pnpm photo`, `scripts/photo-tiles.ts`, `public/photo/`) are no longer drawn; only their
 overview is, as the minimap.
@@ -200,6 +202,10 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   on its post, and the green H pole with its blue timetable at the kerb where the bus halts. One at each OSM bus
   stop (and each platform of a line that has none), at the back of the sidewalk.
 - **Bottle banks** at OSM's glass recycling points.
+- **Rehmaus Apotheke** (`src/world/places/rehmaus-apotheke.ts`), Sudetenstraße 14, the first courier job's
+  drop-off: three storeys in light grey-blue render, a ground-floor arcade of round arches on white pillars
+  along its front, "REHMAUS APOTHEKE" in red serif capitals over the pharmacy's four arches (readable when
+  the front leans in at the screen edge), and the red pharmacy "A" on its post on the green in front.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

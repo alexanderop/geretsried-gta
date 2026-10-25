@@ -49,6 +49,8 @@ export const Material = {
   floorWood: 14,
   cafeSign: 15,
   facadeUrsula: 16,
+  facadeRender: 17,
+  rehmausSign: 18,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -70,6 +72,8 @@ export const MATERIAL_FILES = [
   "floor-wood",
   "cafe-sign",
   "facade-ursula",
+  "facade-render",
+  "rehmaus-sign",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -189,6 +193,7 @@ export const PROP_FILES = [
   "cafe-slice",
   "cafe-toilet",
   "bus-rvo",
+  "pharmacy-a",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */
