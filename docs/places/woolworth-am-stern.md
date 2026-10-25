@@ -10,7 +10,7 @@
 | Engine | levels 1, flat, roof `#fefdfe` (satellite: light flat roof, matches) |
 | Street frame | **Sudetenstraße** by address; the store faces the car park between it and Sudetenstraße. Marienburgweg (residential, 6.5 m) is 16.6 m E, kerb point (4151.8, 4726.4) |
 | Position | **SW edge, E end** (Marienburgweg corner), from the node position and 02 (street sign "Marienburgweg") |
-| Status | **ref-done** |
+| Status | **implemented (partial)** (B4-2, `src/world/places/woolworth-am-stern.ts`): flat white store at the LoD2 4.46 m, glazing along the car-park front, red WOOLWORTH letters on the band by the E end, WOOLWORTH on the roof. Guesses: see BACKLOG B4-2 "As built" |
 
 ## Images
 | File | What | Source |

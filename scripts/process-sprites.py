@@ -760,6 +760,23 @@ if rack is not None:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "goods-rack.webp", "WEBP", quality=90)
     print("goods-rack.webp", im.size)
 
+# Woolworth (Sudetenstraße 27): the red WOOLWORTH channel letters keyed off magenta and cropped to the ink, stretched
+# square like denns' (the wallSign gives them back their aspect); one bay of the store's glazing (opaque, square).
+letters = find("woolworth-letters")
+if letters is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(letters))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(letters).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("woolworth-letters aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "woolworth-letters.webp", "WEBP", quality=92)
+    print("woolworth-letters.webp")
+front = find("woolworth-front")
+if front is not None:
+    Image.open(front).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "woolworth-front.webp", "WEBP", quality=90)
+    print("woolworth-front.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

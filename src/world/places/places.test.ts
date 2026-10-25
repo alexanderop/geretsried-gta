@@ -601,6 +601,31 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Woolworth's car-park front: red letters on the white band over the glazing, the LoD2 flat roof", () => {
+    const woolworth = at(1385222318)
+    const pts = map.buildings[woolworth?.building ?? -1]?.pts ?? []
+    const parts = woolworth?.dressing.parts ?? []
+    expect(woolworth).toBeDefined()
+    // Wall 2 faces the car park and Sudetenstraße (SW, bearing about 213°).
+    const w = wallFrame(pts, 2)
+    expect(w).toBeTruthy()
+    if (!w) return
+    expect(Math.abs(((Math.atan2(-w.frame.nx, w.frame.ny) * 180) / Math.PI + 360) % 360 - 213)).toBeLessThan(10)
+    // One storey at the model's 4.46 m (with the parapet).
+    expect((woolworth?.dressing.levels ?? 0) * 3 + 0.6).toBeCloseTo(4.46, 2)
+    // The letters on the band, in its E half, over the glazing and under the roof's edge.
+    const letters = parts.find((p) => p.kind === "wallSign" && p.texture === "woolworth-letters")
+    const glass = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "woolworth-front" ? [p] : []))
+    expect(letters?.kind).toBe("wallSign")
+    if (letters?.kind !== "wallSign") return
+    expect(letters.edge).toBe(2)
+    expect(letters.u0).toBeGreaterThan(w.length / 2)
+    expect(letters.u1).toBeLessThan(w.length)
+    expect(letters.z1).toBeLessThanOrEqual(4.46)
+    expect(glass.length).toBeGreaterThan(5)
+    for (const g of glass) expect(g.z1).toBeLessThanOrEqual(letters.z0)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

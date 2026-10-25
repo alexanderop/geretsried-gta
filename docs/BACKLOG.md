@@ -1227,7 +1227,7 @@ Style / Kafka add their signs to the same file):
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1661
   (the building's).
 
-### B4-2 · Woolworth, Sudetenstraße 27 (#166, shop) — Size: S — status: ref-done
+### B4-2 · Woolworth, Sudetenstraße 27 (#166, shop) — Size: S — status: implemented (partial: the letters' spot and size, the glazing's run to the NW, its bays and the entrance's spot, the roof sign and the brand red are guesses)
 ```
 Goal: Low white store at the Marienburgweg corner with big red WOOLWORTH letters over a glass front.
 Reference: docs/places/woolworth-am-stern.md; reference/woolworth-am-stern/01-street-front.png (key), 02, 04.
@@ -1236,9 +1236,29 @@ Spec (via #0b):
   (4096.1, 4695.4) → (4140.3, 4723.9), E end: white band #fdfdfe, red letters #fe635f (sunlit; exact brand red
   needs reference). Glass strip under it. Car park in front stays drivable.
 Acceptance criteria:
-- [ ] From the car park the band + letters match 01. pnpm test + typecheck green.
+- [x] From the car park the band + letters match 01. pnpm test + typecheck green.
 Size: S
 ```
+
+**B4-2 as built** (`src/world/places/woolworth-am-stern.ts`, a new place for way 1385222318; no other place had it):
+- **Sources.** `reference/woolworth-am-stern/01, 02, 04` + `SOURCES.md` on disk and used (01 for the front, 02 for the
+  corner, 04 for the roof). Height and roof from the Bavarian LoD2 model (tile 684_5302, `DEBY_LOD2_4603010`, flat,
+  4.46 m) and the DOP20 (white flat roof). The spec's "levels 1, keep" is replaced by the model's height: levels
+  (4.46 − 0.6) / 3, so the engine's parapet tops out at 4.46 m.
+- **Front** (wall 2, the SW car-park side, 52.6 m, u 0 at its NW end): white plaster (`facade: "plaster"`, white
+  `wallColour`), the store's glazing (`woolworth-front`) in ~4 m bays from u 1 to the white corner pier (3 m), the entrance
+  (`shop-front`) at u 44.6–47, the red WOOLWORTH channel letters (`woolworth-letters`, 0.92 m high, 6.5 m long,
+  ending 4.2 m from the Marienburgweg corner) on the white band over the glazing (z 3.2–4.1); WOOLWORTH painted on the
+  flat roof by the E end (`roofSign`, u 28–48) for the top-down camera. Nothing outside the footprint: the car park
+  stays drivable.
+- **Sprites:** Codex (two images), processed by `scripts/process-sprites.py` (letters keyed off magenta and cropped,
+  aspect 7.0; glazing opaque and square).
+- **Guesses:** the letters' spot and size along the band, the glazing's run to the NW (01 shows only its E part) and
+  its bays, the entrance's spot, the corner pier's width, the roof sign (no photo of the roof), the brand red (drawn
+  #d8232a-ish; 01's sunlit #fe635f). The play camera shows the 4.46 m front only as a thin strip above the car park (a
+  real kerb tree stands in front of the letters, as in 01); the roof sign carries the place from above.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1616
+  (the building's).
 
 ### B4-3 · B&L Hairstyling, Sudetenstraße 28 (#134, shop) — Size: S — status: ref-done
 ```
@@ -1793,7 +1813,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 168 | Rehmaus Apotheke | pharmacy | 50 | implemented |
 | 170 | Spielwaren Krömer | shop | 135 | ref-done |
 | 56 | Cafe Waldmann | food | 148 | implemented |
-| 166 | Woolworth | shop | 157 | ref-done |
+| 166 | Woolworth | shop | 157 | implemented (partial) |
 | 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
 | 114 | Nexial | shop | 188 | ref-done |
 | 116 | GG-Radsport | shop | 190 | ref-done |
@@ -2140,7 +2160,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | ref-done | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
-| 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | ref-done | B4-2 |
+| 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | ref-done | B4-4, inside B3-0 |
