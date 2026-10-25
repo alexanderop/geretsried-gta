@@ -822,6 +822,25 @@ for name in ["aphrodite-glass", "aphrodite-door", "mb-house-door"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Nexial / the insurance office (Marienburgweg 25): the white nexial IT-SERVICES panel and the slate Württembergische
+# fascia, cut out of their magenta margin (opaque, stretched square; the wallSign gives them back their aspect),
+# and one glazed bay and the door bay with their top lights.
+for name in ["nexial-panel", "wv-fascia"]:
+    src = find(name)
+    if src is not None:
+        im = Image.open(src).convert("RGB")
+        a = np.asarray(im).astype(int)
+        board = ~((a[..., 0] > 200) & (a[..., 1] < 80) & (a[..., 2] > 200))
+        ys, xs = np.nonzero(board)
+        im = im.crop((xs.min() + 2, ys.min() + 2, xs.max() - 1, ys.max() - 1))
+        im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+        print(f"{name}.webp", im.size)
+for name in ["wv-glass", "wv-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

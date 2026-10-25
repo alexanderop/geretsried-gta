@@ -73,6 +73,19 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * panel's spot (u 17.4–19.4), the glazing's run (u 20–26.6, five 1.32 m bays) and the doors' bays, its top at 3.7 m,
  * the fascia's size and the gold (#c9a96a, the photos are too small to sample), the railing's height and line, the
  * hedge's spot, depth and height. Not built: the small "ACB" sign and the "25" plate S of the glazing (unreadable).
+ *
+ * Nexial IT-Services (B4-6), S of Aphrodite at the link's S end (reference/nexial/01–02, aphrodite-aestetic/03): 01 and
+ * 02 look N along the face, Aphrodite's glazing far off, then white wall, then the insurance office's glazing ("Württem-
+ * bergische Versicherungsbüro Stricker & Reichert" on the slate #5b7088 fascia under the canopy; the backlog's "agentur …
+ * Reinhart" misread it) in slim dark frames with top lights and one door, the white "nexial IT-SERVICES" panel high on
+ * the link's wall over the canopy, over the glazing's N half; S of the glazing, under the Sudetenstraße block, a window
+ * in the white wall. The hedge and the grey rail run on along the raised floor. Nexial's own door is not seen (the POI,
+ * u 43, lies in the Sudetenstraße block's end): only its panel is built. The insurance fascia hangs on the canopy's front
+ * like GG's and Aphrodite's; the panel stays on the wall, above the canopy, where the camera sees it. Guesses (read off
+ * 01 and 02 against Aphrodite's 1.32 m bays, no measure): the glazing's run (u 29.6–37.4, six bays, the door the 5th
+ * from N) and top (3.7 m, as Aphrodite's), the fascia's size (the Codex board's 17:1), the panel's spot and size
+ * (3.3 × 0.7 m at z 4.7–5.4, the Codex board's 4.7:1; 01 reads nearer 3.3:1), the window's spot, the rail's and
+ * hedge's run. Not built: the vent grille and the small plates S of the glazing.
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
@@ -133,6 +146,19 @@ const APH_GLASS_TOP = 3.7
 const APH_FASCIA = [APH_GLASS[0] - 0.1, APH_GLASS[1] + 0.1] as const
 const APH_FASCIA_H = (APH_FASCIA[1] - APH_FASCIA[0]) / 11
 const APH_BAY = (APH_GLASS[1] - APH_GLASS[0]) / APH_BAYS
+
+/** Nexial and the insurance office: six glazed bays (the door the 5th from N), the slate fascia on the canopy's front, the panel over the canopy (guesses, see above). */
+const WV_GLASS = [29.6, 37.4] as const
+const WV_BAYS = 6
+const WV_DOOR_BAY = 4
+const WV_BAY = (WV_GLASS[1] - WV_GLASS[0]) / WV_BAYS
+/** The Codex fascia is 17.3 times as wide as tall; it spans the glazing 0.1 m past each end. */
+const WV_FASCIA = [WV_GLASS[0] - 0.1, WV_GLASS[1] + 0.1] as const
+const WV_FASCIA_H = (WV_FASCIA[1] - WV_FASCIA[0]) / 17.3
+/** The white panel (4.7:1) on the link's wall between the canopy (4.4 m) and the flat roof (5.7 m). */
+const NEXIAL_PANEL = [30.9, 34.2] as const
+const NEXIAL_PANEL_Z0 = 4.7
+const NEXIAL_PANEL_H = (NEXIAL_PANEL[1] - NEXIAL_PANEL[0]) / 4.7
 
 /** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
 const SHOP_OUT = BALCONY_DEPTH
@@ -257,5 +283,24 @@ export const AM_STERN_WEST: PlaceDressing = {
     { kind: "pylon", u: -41.47, n: 42.6, angle: 1.599, w: 10.2, d: 0.05, h: 1.6, base: 1.54, colour: [168, 170, 172, 255] },
     ...[17.45, 19.95, 22.45, 24.95, 27.55].map((u): Part => ({ kind: "pylon", u: -39.55 - 1.8 - 0.028 * (u - 18), n: 64.99 - u, angle: 1.599, w: 0.05, d: 0.05, h: 1.6, colour: [168, 170, 172, 255] })),
     { kind: "pylon", u: -42.19, n: 42.02, angle: 1.599, w: 10.8, d: 0.9, h: 1.0, colour: [62, 102, 50, 255] },
+    // Nexial and the insurance office: the glazing in six bays with the door, the slate fascia on the canopy's front,
+    // the white nexial panel on the wall over the canopy, the window under the Sudetenstraße block; the rail (u 27.6–37.6,
+    // 1.8 m out) and the hedge (u 28.4–41 in two boxes, 2.0–2.9 m out) run on from Aphrodite's, plain boxes along wall 5.
+    ...Array.from({ length: WV_BAYS }, (_, i): Part => ({
+      kind: "wallSign",
+      texture: i === WV_DOOR_BAY ? "wv-door" : "wv-glass",
+      edge: MARIENBURG,
+      u0: WV_GLASS[0] + WV_BAY * i,
+      u1: WV_GLASS[0] + WV_BAY * (i + 1),
+      z0: MB_FLOOR,
+      z1: APH_GLASS_TOP,
+      out: 0.04,
+    })),
+    { kind: "wallSign", texture: "wv-fascia", edge: MARIENBURG, u0: WV_FASCIA[0], u1: WV_FASCIA[1], z0: MB_CANOPY.z - WV_FASCIA_H, z1: MB_CANOPY.z, out: MB_CANOPY.depth + 0.03 },
+    { kind: "wallSign", texture: "nexial-panel", edge: MARIENBURG, u0: NEXIAL_PANEL[0], u1: NEXIAL_PANEL[1], z0: NEXIAL_PANEL_Z0, z1: NEXIAL_PANEL_Z0 + NEXIAL_PANEL_H, out: 0.06 },
+    { kind: "wallSign", texture: "wv-glass", edge: MARIENBURG, u0: 39.6, u1: 40.9, z0: 1.5, z1: 2.8, out: 0.04 },
+    { kind: "pylon", u: -41.76, n: 32.39, angle: 1.599, w: 10.0, d: 0.05, h: 1.6, base: 1.54, colour: [168, 170, 172, 255] },
+    ...[30.1, 32.6, 35.1, 37.55].map((u): Part => ({ kind: "pylon", u: -39.55 - 1.8 - 0.028 * (u - 18), n: 64.99 - u, angle: 1.599, w: 0.05, d: 0.05, h: 1.6, colour: [168, 170, 172, 255] })),
+    ...[31.55, 37.85].map((u): Part => ({ kind: "pylon", u: -39.55 - 2.45 - 0.028 * (u - 18), n: 64.99 - u, angle: 1.599, w: 6.3, d: 0.9, h: 1.0, colour: [62, 102, 50, 255] })),
   ],
 }

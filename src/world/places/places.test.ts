@@ -560,6 +560,69 @@ describe("the registry on the real map", () => {
     expect(boxes.filter((b) => b.w > 10)).toHaveLength(2)
   })
 
+  it("dresses Nexial S of Aphrodite: the insurance glazing and its slate fascia on the canopy's front, the nexial panel on the wall over the canopy, hedge off the road", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    const w5 = wallFrame(pts, 5)
+    if (!w5 || west === undefined) throw new Error("no wall 5")
+    const canopy = parts.find((p) => p.kind === "canopy" && p.edge === 5)
+    if (canopy?.kind !== "canopy") throw new Error("no canopy")
+    const signs = (t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 5 && p.texture === t ? [p] : []))
+    const door = signs("wv-door")
+    expect(door).toHaveLength(1)
+    const glass = [...signs("wv-glass").filter((g) => g.z0 < 1), ...door]
+    expect(glass).toHaveLength(6)
+    const [fascia] = signs("wv-fascia")
+    const [panel] = signs("nexial-panel")
+    if (!fascia || !panel) throw new Error("no signs")
+    const lo = Math.min(...glass.map((g) => g.u0))
+    const hi = Math.max(...glass.map((g) => g.u1))
+    // S of Aphrodite's glazing, inside the canopy's run and the wall; the POI lies further S in the same face.
+    const aph = [...signs("aphrodite-glass"), ...signs("aphrodite-door")]
+    expect(lo).toBeGreaterThan(Math.max(...aph.map((g) => g.u1)))
+    expect(hi).toBeLessThan(canopy.u1)
+    const [poiU, poiN] = toLocal(w5.frame, 4159, 4743.5)
+    expect(poiU).toBeGreaterThan(hi)
+    expect(poiU).toBeLessThan(w5.length)
+    expect(Math.abs(poiN)).toBeLessThan(8)
+    // The fascia spans the glazing on the canopy's front over head height; the glazing stays under it.
+    expect(fascia.u0).toBeLessThanOrEqual(lo)
+    expect(fascia.u1).toBeGreaterThanOrEqual(hi)
+    expect(fascia.out ?? 0).toBeGreaterThan(canopy.depth)
+    expect(fascia.z1).toBeLessThanOrEqual(canopy.z)
+    expect(fascia.z0).toBeGreaterThan(2.5)
+    for (const g of glass) expect(g.z1).toBeLessThanOrEqual(fascia.z0)
+    // The panel sits on the wall above the canopy, over the glazing, under the link's 5.7 m roof.
+    expect(panel.z0).toBeGreaterThan(canopy.z)
+    expect(panel.z1).toBeLessThan(5.7)
+    expect(panel.u0).toBeGreaterThanOrEqual(lo)
+    expect(panel.u1).toBeLessThanOrEqual(hi)
+    // The hedge and rail run on along the glazing, off Marienburgweg's carriageway.
+    const lane = map.roads.find((r) => r.name === "Marienburgweg")
+    const half = (lane?.width ?? 0) / 2
+    const rp = lane?.pts ?? []
+    const boxes = parts.flatMap((p) => (p.kind === "pylon" && p.texture === undefined ? [p] : []))
+    let along = 0
+    for (const b of boxes) {
+      const [x, y] = toWorld(west.frame, b.u, b.n)
+      const [u, n] = toLocal(w5.frame, x, y)
+      if (u < 29 || u > 42) continue
+      along++
+      expect(b.h).toBeGreaterThan(b.base ?? 0)
+      expect(-n).toBeGreaterThan(1.6)
+      expect(-n + b.d / 2).toBeLessThan(3)
+      const gap = Math.min(...rp.flatMap((_, i) => {
+        if (i % 2 !== 0 || i + 3 >= rp.length) return []
+        const [ax, ay, bx, by] = [rp[i] ?? 0, rp[i + 1] ?? 0, rp[i + 2] ?? 0, rp[i + 3] ?? 0]
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1)))
+        return [Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay))]
+      }))
+      expect(gap - b.d).toBeGreaterThan(half + 1)
+    }
+    expect(along).toBeGreaterThanOrEqual(5)
+  })
+
   it("dresses the Ahorn Apotheke's W corner: letters on the car-park band, glass on both faces, the red A held out by the corner", () => {
     const penny = at(822461881)
     const pts = map.buildings[penny?.building ?? -1]?.pts ?? []

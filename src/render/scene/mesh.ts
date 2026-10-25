@@ -177,6 +177,10 @@ export const MATERIAL_FILES = [
   "aphrodite-glass",
   "aphrodite-door",
   "mb-house-door",
+  "nexial-panel",
+  "wv-fascia",
+  "wv-glass",
+  "wv-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

@@ -1384,7 +1384,7 @@ Size: S
 - **Screenshots** (local scratchpad `b4-5/`): `play.png` (play camera from Marienburgweg's far side), `play-crop.png`,
   `overhead.png`.
 
-### B4-6 · Nexial IT-Services (#114, shop) — Size: S — status: ref-done
+### B4-6 · Nexial IT-Services (#114, shop) — Size: S — status: implemented (partial: the glazing's run, bays and door, the fascia's and the panel's spots and sizes, the window's spot, the rail's and hedge's run are guesses; the insurance fascia hangs on the canopy's front, not on the wall; Nexial's own door is not seen and not built)
 ```
 Goal: IT service office at the Sudetenstraße end of the Marienburgweg face: white "nexial IT-SERVICES" panel
 high on the wall, dark insurance-agency fascia below, parking in front.
@@ -1394,9 +1394,40 @@ Spec (via #0b, inside B3-0):
   Upper panel #b0bdcd with dark/teal text; lower fascia #5b7088 "Württembergische Versicherungsagentur
   Stricker & Reinhart". OSM says shop=hairdresser: wrong, do not add hairdresser props.
 Acceptance criteria:
-- [ ] Both signs readable as in 01. pnpm test + typecheck green.
+- [x] Both signs readable as in 01. pnpm test + typecheck green.
+      (Both signs are there in 01's order and colours: the white nexial panel on the wall over the canopy, the slate
+      fascia on the canopy's front. From the straight-down play camera both read only as thin strips, as B4-4's and
+      B4-5's do; the textures themselves are legible. Nothing new is solid.)
 Size: S
 ```
+
+**B4-6 as built** (`src/world/places/am-stern-west.ts`, wall 5 of B3-0's west block S of B4-5, under B4-4's shared canopy; no roof sign):
+- **Sources.** `docs/places/nexial.md`, `reference/nexial/01–02` (01 for both signs and the glazing, 02 for the order
+  along the face), `reference/aphrodite-aestetic/03` (the white wall S of Aphrodite). 01 and 02 look N along the face:
+  Aphrodite's glazing far off, white wall, then the insurance office's glazing under the canopy, the nexial panel high
+  on the link's wall over its N half, a window S of it under the Sudetenstraße block. The face is verified: the POI
+  lies at u 43.2 on wall 5, 5.5 m inside, in the Sudetenstraße block's end. Masses, heights, the canopy (`MB_CANOPY`),
+  the raised floor (`MB_FLOOR`) are reused unchanged; nothing of the building is duplicated.
+- **Text.** The fascia in 01 reads "Württembergische … Versicherungsbüro Stricker & Reichert" (the spec's "agentur …
+  Reinhart" was a misread); the panel reads "nexial / IT-SERVICES | LEISTUNG UND VERANTWORTUNG".
+- **Front:** the insurance glazing u 29.6–37.4 in six 1.3 m bays (`wv-glass` with a top light, `wv-door` in the 5th
+  from N) from the raised floor to 3.7 m (as Aphrodite's); one more `wv-glass` as a window at u 39.6–40.9, z 1.5–2.8.
+- **Signs:** the slate #5b7088 fascia with white text (`wv-fascia`, 8.0 × 0.46 m, 17.3:1) on the canopy's front at
+  z 3.94–4.4, 0.1 m past the glazing at each end, as B4-4/B4-5 did; the white panel (`nexial-panel`, 3.3 × 0.7 m,
+  4.7:1) on the wall at u 30.9–34.2, z 4.7–5.4, above the canopy and under the link's 5.7 m roof, as in 01.
+- **Rail and hedge** run on from Aphrodite's: a rail at 1.54–1.6 m, 1.8 m out, u 27.6–37.6 on four more posts; the
+  hedge 1.0 m high, 2.0–2.9 m out, u 28.4–41 in two boxes (plain `pylon`s, never solid).
+- **Sprites** (Codex, `process-sprites.py`, cropped out of their magenta margin): `nexial-panel`, `wv-fascia`,
+  `wv-glass`, `wv-door` (opaque, squared materials).
+- **Guesses:** the glazing's run, bay count, the door's bay and its top; the fascia's size (the Codex board's aspect);
+  the panel's spot and size (4.7:1 from Codex, 01 reads nearer 3.3:1) and height; the window's spot and size; the rail's
+  and hedge's run. Not built: Nexial's own door (not seen), the vent grille and the small plates S of the glazing.
+- **What the camera shows:** from Marienburgweg the canopy covers the glazing (seen dimly through the glass panes);
+  the slate fascia is a thin blue-grey strip on the canopy's edge, the panel a thin white strip with the teal letters
+  just behind the canopy's root; the rail and hedge run on along the face.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical to HEAD except chunk 1660 (the west block's own).
+- **Screenshots** (local scratchpad `b4-6/`): `play.png`, `play-crop.png`, `play-across.png`, `play-across-crop.png`,
+  `overhead.png`.
 
 ### B4-7 · Sun Style Bodystyling Studio, Sudetenstraße 24 (#169, shop) — Size: S — status: ref-done
 ```
@@ -1898,7 +1929,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 56 | Cafe Waldmann | food | 148 | implemented |
 | 166 | Woolworth | shop | 157 | implemented (partial) |
 | 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
-| 114 | Nexial | shop | 188 | ref-done |
+| 114 | Nexial | shop | 188 | implemented (partial) |
 | 116 | GG-Radsport | shop | 190 | implemented (partial) |
 | 157 | Aphrodite-aestetic | shop | 190 | implemented (partial) |
 | 15 | TEDi | shop | 205 | implemented (partial) |
@@ -2245,7 +2276,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
-| 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
+| 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | implemented (partial) | B4-6, inside B3-0; OSM shop tag wrong (IT services) |
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | implemented (partial) | B4-4, inside B3-0 |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | implemented (partial) | B4-5, inside B3-0 |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | implemented (partial) | B4-1 |
