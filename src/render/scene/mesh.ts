@@ -157,6 +157,9 @@ export const MATERIAL_FILES = [
   "ahorn-board",
   "ahorn-front",
   "ahorn-a",
+  "daniele-fascia",
+  "daniele-script",
+  "daniele-parking",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

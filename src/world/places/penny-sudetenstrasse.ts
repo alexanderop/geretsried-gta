@@ -32,6 +32,20 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * the glass sits 0.5 m behind it. Guesses (read off the photos, no measure): where the unit starts on wall 1 (u 2.4),
  * the bays' and piers' widths on wall 0, the letters' and boards' sizes and heights, the pillars' size, the glass'
  * set-back, the "A" box's size, height and reach. Not built: the door (behind the corner pillar, not drawn apart).
+ *
+ * Bar Café da Daniele (B3-7) and Schlüsseldienst Geyer, the units between Penny and the Ahorn Apotheke, from Street View
+ * (reference/da-daniele/01–03): the same white band as Ahorn's, flush with the balconies' fronts on white piers, from
+ * the end of Penny's glass (wall 2, u 18.1) round the slight bend (wall 2's end is wall 1's u 0) to Ahorn's pier. Under
+ * the café's part the crimson "Bar Café da Daniele" board hangs at the band's foot over the glazing, the grey script
+ * "da Daniele Bar·Café" with the cup on the white band above it. Geyer's stretch NE of the café stays plain (its only
+ * sign is the pylon's panel; 01 shows a small grey board there, not drawn). At the SW end of the café's parking bays,
+ * on the kerb by the island before Ahorn, stands the car park's raised barrier: a grey housing, the white boom
+ * standing upright with red bands, and next to it a post with the "Schrankenöffnungszeiten" sign and the blue
+ * "2 Std." parking-disc panel (02, 03). Never solid and off the aisle, so the bays and the aisle stay drivable.
+ * Guesses: the units' split (the pier at u 23.9), the board's and script's sizes and heights (read off 01 against
+ * Ahorn's band), the barrier's spot (off 02/03, 5.5 m out from wall 1 at its u 2.4), the boom's height and bands, the
+ * sign's size. Not built: the second raised boom in 01's foreground (its spot is not clear from the photos), the
+ * café's outdoor seating (the website mentions it, no photo shows it).
  */
 const SLAB_H = 15
 const SLAB_PITCH = 16.5
@@ -54,6 +68,20 @@ const AHORN_BOARD = [4.1, 7.1] as const
 const AHORN_BOARD_Z0 = 3.75
 const SOUTH_GLASS = [9.9, 17.6] as const
 const PIER: Rgba = [236, 236, 233, 255]
+/** Geyer and da Daniele on wall 2 from Penny's glass to the bend, the pier between them; the café runs on to Ahorn's pier. */
+const DANIELE_2 = [18.1, 29.68] as const
+const DANIELE_PIER = (DANIELE_2[0] + DANIELE_2[1]) / 2
+/**
+ * Their band reaches lower than Ahorn's: the crimson board hangs at its foot over the glazing. 01 puts its foot at about
+ * 2.2 m; it stays at 2.5 m, the lowest a canopy's fascia may hang (places.test), the board 0.95 m deep on it.
+ */
+const DANIELE_Z0 = 2.5
+const DANIELE_FASCIA = [25.0, 28.6] as const
+const DANIELE_SCRIPT = [25.3, 28.3, 3.75, 4.55] as const
+/** The raised barrier on the kerb at the bays' SW end (street frame; 5.5 m out from wall 1 at its u 2.4). */
+const BARRIER = [-8.04, 20.44] as const
+const BARRIER_RED: Rgba = [204, 40, 44, 255]
+const BARRIER_GREY: Rgba = [168, 172, 174, 255]
 /** `n` wallSigns of `texture` side by side on wall `edge` from u0 to u1, from the ground up to z1, `out` off the wall. */
 const row = (texture: MaterialName, edge: number, [u0, u1]: readonly [number, number], n: number, z1: number, out = 0.04): ReadonlyArray<Part> =>
   Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out }))
@@ -140,6 +168,32 @@ export const PENNY_SUDETENSTRASSE: PlaceDressing = {
     // The red pharmacy "A" light box held out from the end wall by the corner (wall 0 at u 1.2, 0.3–1.2 m out), its
     // faces looking along Sudetenstraße; in the street frame, which runs 0.6° off wall 0.
     { kind: "pylon", u: -1.15, n: 10.85, angle: -Math.PI / 2, w: 0.9, d: 0.3, h: 5.0, base: 4.1, colour: [238, 238, 236, 255], texture: "ahorn-a", z0: 4.15, z1: 4.95 },
+    // Schlüsseldienst Geyer and Bar Café da Daniele: the white band on piers flush with the balconies, set-back glazing
+    // under it, round the bend to Ahorn's pier (wall 1, after Ahorn's own band so that stays wall 1's first canopy).
+    {
+      kind: "canopy",
+      edge: 2,
+      u0: DANIELE_2[0],
+      u1: DANIELE_2[1],
+      z: BAND_TOP,
+      depth: SHOP_OUT,
+      colour: WHITE_RENDER,
+      fascia: { h: BAND_TOP - DANIELE_Z0, colour: WHITE_RENDER },
+      posts: { every: DANIELE_PIER - DANIELE_2[0], colour: PIER, side: 0.5 },
+    },
+    { kind: "canopy", edge: 1, u0: 0, u1: AHORN_1[0], z: BAND_TOP, depth: SHOP_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - DANIELE_Z0, colour: WHITE_RENDER } },
+    ...row("shop-front", 2, [DANIELE_2[0] + 0.3, DANIELE_PIER - 0.3], 2, DANIELE_Z0, SHOP_OUT - 0.5),
+    ...row("shop-front", 2, [DANIELE_PIER + 0.3, DANIELE_2[1]], 2, DANIELE_Z0, SHOP_OUT - 0.5),
+    ...row("shop-front", 1, [0, AHORN_1[0] - 0.3], 1, DANIELE_Z0, SHOP_OUT - 0.5),
+    { kind: "wallSign", texture: "daniele-fascia", edge: 2, u0: DANIELE_FASCIA[0], u1: DANIELE_FASCIA[1], z0: DANIELE_Z0, z1: DANIELE_Z0 + 0.95, out: SHOP_OUT + 0.03 },
+    { kind: "wallSign", texture: "daniele-script", edge: 2, u0: DANIELE_SCRIPT[0], u1: DANIELE_SCRIPT[1], z0: DANIELE_SCRIPT[2], z1: DANIELE_SCRIPT[3], out: SHOP_OUT + 0.03 },
+    // The raised barrier: grey housing, the upright white boom with red bands, the sign post beside it facing the
+    // aisle's way in (SW), "Schrankenöffnungszeiten" over the blue "2 Std." panel.
+    { kind: "pylon", u: BARRIER[0], n: BARRIER[1], angle: 0, w: 0.4, d: 0.4, h: 1.15, colour: BARRIER_GREY },
+    { kind: "pylon", u: BARRIER[0], n: BARRIER[1], angle: 0, w: 0.1, d: 0.1, h: 6.6, colour: WHITE_RENDER },
+    ...[1.6, 2.8, 4.0, 5.2, 6.2].map((z): Part => ({ kind: "pylon", u: BARRIER[0], n: BARRIER[1], angle: 0, w: 0.12, d: 0.12, h: z + 0.4, base: z, colour: BARRIER_RED })),
+    { kind: "pylon", u: BARRIER[0] + 0.55, n: BARRIER[1] + 0.05, angle: 0, w: 0.07, d: 0.07, h: 2.7, colour: BARRIER_GREY },
+    { kind: "pylon", u: BARRIER[0] + 0.55, n: BARRIER[1], angle: 0, w: 0.74, d: 0.03, h: 2.6, base: 0.9, colour: WHITE_RENDER, texture: "daniele-parking", z0: 0.95, z1: 2.55 },
     // PENNY on the store's own flat roof behind the block, by its NE wall (wall 6), the image's top towards that wall
     // (NNE) so it reads from the top-down camera; on the block's roof the plane up to the ridge is too narrow for it.
     { kind: "roofSign", texture: "penny-sign", edge: 6, u0: 1, u1: 14.2, n0: 2.4, n1: 6.8, z0: HALL_ROOF + 0.05, z1: HALL_ROOF + 0.05, up: "n0" },

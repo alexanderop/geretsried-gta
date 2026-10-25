@@ -717,6 +717,33 @@ if (OUT / "pharmacy-a.webp").exists() and not (OUT / "ahorn-a.webp").exists():
     Image.open(OUT / "pharmacy-a.webp").convert("RGBA").resize((512, 512), Image.LANCZOS).save(OUT / "ahorn-a.webp", "WEBP", quality=92)
     print("ahorn-a.webp")
 
+# Bar Café da Daniele (Sudetenstraße 39): the crimson fascia (opaque, cut above the strip Codex drew under its rim,
+# stretched square); the grey script "da Daniele Bar·Café" with the cup keyed off magenta and cropped to the ink; the
+# car park's barrier sign stack (opaque, square).
+fascia = find("daniele-fascia")
+if fascia is not None:
+    im = Image.open(fascia).convert("RGB")
+    im = im.crop((0, 0, im.width, round(im.height * 0.915)))
+    print("daniele-fascia aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "daniele-fascia.webp", "WEBP", quality=90)
+    print("daniele-fascia.webp")
+script = find("daniele-script")
+if script is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(script))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(script).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("daniele-script aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "daniele-script.webp", "WEBP", quality=92)
+    print("daniele-script.webp")
+parking = find("daniele-parking")
+if parking is not None:
+    im = Image.open(parking).convert("RGB")
+    print("daniele-parking aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "daniele-parking.webp", "WEBP", quality=90)
+    print("daniele-parking.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

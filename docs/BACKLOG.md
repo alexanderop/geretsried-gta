@@ -1127,7 +1127,7 @@ Size: S
 - **Screenshots** (local): on foot at (4262, 4822) and (4268, 4818) the car-park front with the pylon; at (4270, 4834)
   the end wall with the A box, the glazing and PENNY.'s board; `?compare=47.85663,11.48738,22` from above.
 
-### B3-7 · Bar Café da Daniele, Sudetenstraße 39 (#77, food) — Size: S — status: ref-done
+### B3-7 · Bar Café da Daniele, Sudetenstraße 39 (#77, food) — Size: S — status: implemented (partial: the units' split, the board's and script's sizes and heights, the barrier's spot, the boom's height and bands, the sign's size are guesses; the band's foot is 0.3 m higher than in 01)
 ```
 Goal: A crimson "Bar Café da Daniele" fascia with the cup logo, a grey script sign above, parking bays with
 red/white posts right in front.
@@ -1137,9 +1137,45 @@ Spec (via #0b, inside B3-0):
   white text; grey script sign above. Barrier-post sprites along the bays.
 - Terrace: not seen (website mentions an outdoor area): needs reference, add no tables.
 Acceptance criteria:
-- [ ] From the car park the unit matches 01. Bays stay drivable. pnpm test + typecheck green.
+- [x] From the car park the unit matches 01. Bays stay drivable. pnpm test + typecheck green.
+      (Crimson board under the grey script on a white band, set-back glazing; the barrier and its "2 Std." sign at the
+      bays' SW end, never solid and clear of every lane; src/sim and town-jobs.ts untouched.)
 Size: S
 ```
+
+**B3-7 as built** (`src/world/places/penny-sudetenstrasse.ts`, on B3-0's Penny block next to B3-6's Ahorn; no roof sign):
+- **Sources.** `reference/da-daniele/01–04` + `SOURCES.md` on disk and used: 01 for the front (board, script, band, Geyer's
+  window NE of the café), 02 and 03 for the barrier and its sign stack, 04 for the context. Heights from B3-0 / B3-6
+  (balconies from 5.0 m, band top 4.9 m). POI #77, its name and position untouched.
+- **The band** (white, flush with the balconies' fronts via `BALCONY_DEPTH`, like Ahorn's and the west block's) runs on
+  wall 2 from the end of Penny's glass (u 18.1) to the bend (u 29.68) on three white piers (u 18.1, 23.9, 29.68), and
+  on along wall 1 from u 0 to Ahorn's pier at u 2.4 (walls 1 and 2 are collinear within 0.2°). Glazing (`shop-front`)
+  0.5 m behind its face. The pier at u 23.9 splits Geyer (NE, left plain: no facade sign per the brief; 01 shows a
+  small grey board there, not drawn) from the café, which holds the POI (wall 2 u ≈ 26.9).
+- **Signs:** the crimson "Bar Café [cup] da Daniele" board (`daniele-fascia`, 3.6 × 0.95 m, u 25.0–28.6) at the band's
+  foot, the grey script "da Daniele Bar · Café" with the cup (`daniele-script`, keyed, 3 × 0.8 m, z 3.75–4.55) on the
+  band above it. 01 puts the band's foot at about 2.2 m; it stays at 2.5 m, the lowest a canopy fascia may hang
+  (places.test).
+- **"Barrier posts":** the photos show no posts along the bays. The red/white post in 02/03 is the car park's
+  **raised barrier boom** (its sign reads "Schrankenöffnungszeiten 7 bis 20 Uhr"): grey housing, the white boom
+  standing 6.6 m upright with five red bands, and beside it (towards the building) a post with the sign stack
+  (`daniele-parking`: opening times, the blue parking-disc "2 Std." panel, "Hier gilt die StVO"; facing SW, the way
+  in). It stands on the kerb at the bays' SW end, 5.5 m out from wall 1 at its u 2.4 (world ≈ 4270.9, 4816.8),
+  ≥ 1.5 m clear of the aisle's edge. All of it is `pylon` parts, never solid. Not built: the second raised boom in
+  01's foreground (its spot can't be told from the photos), the outdoor seating (no photo).
+- **Generic engine change:** `pylon` without `texture` (then no `z0`/`z1`) is a plain box in its colour, for posts,
+  a barrier housing and the boom's bands. Tested in render/scene/places.test.ts.
+- **Sprites:** Codex (three images) via `scripts/process-sprites.py`: board opaque (cut above a strip under its rim),
+  script keyed and cropped (3.74 : 1), sign stack opaque; all stored square.
+- **Test** (world/places/places.test.ts): board and script on wall 2 past PENNY's canopy and before the bend, script
+  over the board, band reaching the bend and as deep as the balconies; the barrier's parts outside the building and
+  more than half a lane + 0.5 m from every nearby road (car-park lanes and Sudetenstraße).
+- **From the play camera** (straight down) the barrier's bands and shadow read; the board and script show at the
+  screen's edge, as with the other Am Stern units.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1661 (the Penny
+  block's); with the Penny block skipped, all identical.
+- **Screenshots** (local): on foot at (4266.5, 4807.9) the board, script and barrier at the screen's lower right;
+  `?compare=47.85668,11.48739,22` from above.
 
 
 ### Batch 4: Am Stern small shops (decision)
@@ -1743,7 +1779,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 65 | Rossmann | drugstore | 283 | implemented (partial) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
-| 77 | da Daniele | food | 329 | ref-done |
+| 77 | da Daniele | food | 329 | implemented (partial) |
 | 67 | Ahorn Apotheke | pharmacy | 330 | implemented (partial) |
 | 66 | PENNY | supermarket | 331 | implemented (partial) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
@@ -2036,7 +2072,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | ref-done | B6a-3. Sudetenstraße 15 |
 | 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | ref-done (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
 | 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | ref-done (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
-| 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | ref-done | B3-7; crimson fascia; terrace not seen (needs reference) |
+| 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | implemented (partial) | B3-7; crimson fascia; terrace not seen (needs reference) |
 | 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo (needs facade reference) | B6b-6. Neuer Platz 9; roof #858d7e; front needs reference |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | todo |  |

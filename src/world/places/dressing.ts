@@ -97,9 +97,13 @@ export type Part =
    * A free-standing sign post at (u, n) in the street frame, turned `angle` (radians, like a sprite's) from u: a box
    * `w` wide along it, `d` deep, `h` high in `colour`, with the material on both broad faces from `z0` to `z1` (the
    * stacked panels of a shopping-centre pylon). With `base` the box starts that high instead of on the ground and casts
-   * no shadow (a projecting sign held out from a wall). Never solid.
+   * no shadow (a projecting sign held out from a wall). Without a material it is a plain box in `colour` (a post, a
+   * barrier's housing, a stripe round a post). Never solid.
    */
-  | { readonly kind: "pylon"; readonly u: number; readonly n: number; readonly angle: number; readonly w: number; readonly d: number; readonly h: number; readonly colour: Rgba; readonly texture: MaterialName; readonly z0: number; readonly z1: number; readonly base?: number }
+  | ({ readonly kind: "pylon"; readonly u: number; readonly n: number; readonly angle: number; readonly w: number; readonly d: number; readonly h: number; readonly colour: Rgba; readonly base?: number } & (
+      | { readonly texture: MaterialName; readonly z0: number; readonly z1: number }
+      | { readonly texture?: undefined }
+    ))
   /**
    * A cross gable on wall `edge` from u0 to u1: a gabled roof with its eaves at `z` rising at `pitch` degrees to a
    * ridge over the stretch's middle that runs `depth` meters into the building, ending at the wall in a gable

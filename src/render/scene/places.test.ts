@@ -270,6 +270,7 @@ describe("a footprint drawn as masses, a roof sign, a canopy on posts and a pylo
       { kind: "canopy", edge: 0, u0: 2, u1: 8, z: 4, depth: 3, colour: [200, 200, 200, 255], fascia: { h: 1, colour: [216, 50, 60, 255] }, posts: { every: 3, colour: [96, 100, 106, 255] } },
       { kind: "pylon", u: 0, n: 10, angle: 0, w: 2, d: 0.4, h: 5, colour: [184, 50, 58, 255], texture: "am-stern-pylon", z0: 1, z1: 4 },
       { kind: "pylon", u: 10, n: 10, angle: 0, w: 1, d: 0.3, h: 5, base: 4, colour: [238, 238, 236, 255], texture: "ahorn-a", z0: 4.1, z1: 4.9 },
+      { kind: "pylon", u: -10, n: 10, angle: 0, w: 0.2, d: 0.2, h: 6, colour: [200, 40, 40, 255] },
     ],
   }
   const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
@@ -308,5 +309,13 @@ describe("a footprint drawn as masses, a roof sign, a canopy on posts and a pylo
     expect(box.length).toBeGreaterThan(0)
     expect(Math.min(...box.map((v) => v.z))).toBeCloseTo(4)
     expect(Math.max(...box.map((v) => v.z))).toBeCloseTo(5)
+  })
+
+  it("draws a pylon without a material as a plain box in its colour, from the ground to its top", () => {
+    // u -10 is x 45: a 0.2 m post up to 6 m, every vertex of it plain colour.
+    const post = vs.filter((v) => Math.abs(v.x - 45) < 0.15 && Math.abs(v.y - 50) < 0.15 && v.z > 0.01)
+    expect(post.length).toBeGreaterThan(0)
+    expect(post.every((v) => v.mode !== Mode.material)).toBe(true)
+    expect(Math.max(...post.map((v) => v.z))).toBeCloseTo(6)
   })
 })

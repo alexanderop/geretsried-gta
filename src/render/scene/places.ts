@@ -253,7 +253,7 @@ const roofSign = (b: Builder, p: Extract<Part, { kind: "roofSign" }>) => {
   b.m.quad(ids[0] ?? 0, ids[1] ?? 0, ids[2] ?? 0, ids[3] ?? 0)
 }
 
-/** A sign post: a box turned `angle` at (u, n), its texture on both broad faces, and its shadow. */
+/** A sign post: a box turned `angle` at (u, n), its texture (if any) on both broad faces, and its shadow. */
 const pylon = (b: Builder, p: Extract<Part, { kind: "pylon" }>) => {
   const [ox, oy] = toWorld(b.f, p.u, p.n)
   const [ux, uy] = worldDir(b.f, Math.cos(p.angle), -Math.sin(p.angle))
@@ -261,7 +261,7 @@ const pylon = (b: Builder, p: Extract<Part, { kind: "pylon" }>) => {
   const back = { ...b, f: { ox, oy, ux: -ux, uy: -uy, nx: -uy, ny: ux } }
   const rect = [-p.w / 2, p.w / 2, -p.d / 2, p.d / 2] as const
   box(front, rect, p.base ?? 0, p.h, p.colour)
-  for (const side of [front, back]) panel(side, p.texture, -p.w / 2 + PYLON_RIM, p.w / 2 - PYLON_RIM, p.z0, p.z1, -p.d / 2 - SIGN_OUT / 2)
+  if (p.texture !== undefined) for (const side of [front, back]) panel(side, p.texture, -p.w / 2 + PYLON_RIM, p.w / 2 - PYLON_RIM, p.z0, p.z1, -p.d / 2 - SIGN_OUT / 2)
   if (p.base === undefined) boxShadow(front, rect, p.h)
 }
 

@@ -490,6 +490,50 @@ describe("the registry on the real map", () => {
     expect(-n + a.w / 2).toBeLessThan(1.5)
   })
 
+  it("dresses da Daniele between PENNY and Ahorn: the crimson board under the script on the flush band, the barrier off the aisle", () => {
+    const penny = at(822461881)
+    const pts = map.buildings[penny?.building ?? -1]?.pts ?? []
+    const parts = penny?.dressing.parts ?? []
+    const w2 = wallFrame(pts, 2)
+    expect(w2).toBeTruthy()
+    if (!w2 || penny === undefined) return
+    const sign = (t: string) => parts.find((p) => p.kind === "wallSign" && p.edge === 2 && p.texture === t)
+    const board = sign("daniele-fascia")
+    const script = sign("daniele-script")
+    // Wall 2's canopies: PENNY's free-standing one first, then the band from its end to the bend.
+    const [canopy, band] = parts.filter((p) => p.kind === "canopy" && p.edge === 2)
+    expect(board?.kind === "wallSign" && script?.kind === "wallSign" && band?.kind === "canopy" && canopy?.kind === "canopy").toBe(true)
+    if (board?.kind !== "wallSign" || script?.kind !== "wallSign" || band?.kind !== "canopy" || canopy?.kind !== "canopy") return
+    // Past PENNY's canopy, on the stretch up to the bend; the band reaches the bend and stands out as far as the balconies.
+    expect(band.u0).toBeGreaterThan(canopy.u1)
+    expect(band.u1).toBeCloseTo(w2.length, 1)
+    expect(board.u0).toBeGreaterThan(band.u0)
+    expect(board.u1).toBeLessThan(w2.length)
+    const balcony = parts.find((p) => p.kind === "balcony" && p.edge === 2)
+    expect(balcony?.kind === "balcony" && band.depth >= balcony.depth && script.z1 < Math.min(...balcony.z)).toBe(true)
+    // On the band's face: the board at its foot, the script over the board.
+    expect(board.out ?? 0).toBeGreaterThan(band.depth)
+    expect(board.z0).toBeCloseTo(band.z - (band.fascia?.h ?? 0))
+    expect(script.z0).toBeGreaterThan(board.z1)
+    // The barrier and its sign: outside the building, clear of every car-park lane (4 m wide) and of Sudetenstraße.
+    const barrier = parts.flatMap((p) => (p.kind === "pylon" && (p.texture === undefined || p.texture === "daniele-parking") ? [toWorld(penny.frame, p.u, p.n)] : []))
+    expect(barrier.length).toBeGreaterThan(3)
+    const lanes = map.roads.filter((r) => r.pts.some((v, i) => i % 2 === 0 && Math.hypot(v - 4270, (r.pts[i + 1] ?? 0) - 4817) < 40))
+    const dist = (x: number, y: number, r: (typeof lanes)[number]) => {
+      let d = Infinity
+      for (let i = 0; i + 3 < r.pts.length; i += 2) {
+        const [ax, ay, bx, by] = [r.pts[i] ?? 0, r.pts[i + 1] ?? 0, r.pts[i + 2] ?? 0, r.pts[i + 3] ?? 0]
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2)))
+        d = Math.min(d, Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay)))
+      }
+      return d
+    }
+    for (const [x, y] of barrier) {
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      for (const r of lanes) expect(dist(x, y, r)).toBeGreaterThan(r.width / 2 + 0.5)
+    }
+  })
+
   it("dresses Rossmann's car-park front: letters over the glazing by the bend, under the balconies, chimneys on the roof", () => {
     const rossmann = at(293545707)
     const pts = map.buildings[rossmann?.building ?? -1]?.pts ?? []
