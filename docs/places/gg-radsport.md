@@ -10,7 +10,7 @@
 | Engine | levels 2, pitched, DOP roof `#cda887` / `#bd8269` |
 | Street frame | **Marienburgweg** (residential, 6.5 m): kerb point (4164.5, 4708.7), 12.4 m; street bearing 216°, n bearing 126° |
 | Position | **NW edge** of 127872184, u ≈ 12 m from the N corner (4178.8, 4704.7): the northernmost of the three units |
-| Status | **ref-done** |
+| Status | **implemented (partial)**, B4-4 (see BACKLOG "B4-4 as built") |
 
 ## Images
 | File | What | Source |

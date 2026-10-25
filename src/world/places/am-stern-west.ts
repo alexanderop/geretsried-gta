@@ -47,6 +47,21 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * the wall-1 arcade's length (the Sudetenstraße block's 16 m end), pillar size (0.45 m) and spacing, the beam's depth on
  * wall 1, the small board's spot, the crate rows' spots. Not built: the blue "1880" box and the poster column on the
  * verge (street furniture, not the shop's), the door (not seen).
+ *
+ * The Marienburgweg face (wall 5, u 0 at the N corner, 52.4 m to the W corner; B4-4…B4-6), from Street View
+ * (reference/gg-radsport/01–03, aphrodite-aestetic/01, nexial/01): a white ground floor under one dark steel canopy with
+ * glass panes on cantilevered brackets that runs from GG Radsport's glazing past Nexial's, at about 4.4 m. Along the
+ * wall (u) it crosses the masses: the NE strip to u 4.2, the north block's NW end to u 20.2, the link to u 37.5, the
+ * Sudetenstraße block's NW end to the W corner. The shop floor stands a few steps over the pavement (a hedge in front).
+ * Aphrodite (B4-5) and Nexial (B4-6) add only their own fronts and signs under it.
+ *
+ * GG Radsport (B4-4), the N unit in the north block's end (the POI at u 11.6): left to right in 01 a blue wall box, three
+ * dark-framed glazed bays, the door bay with the red "Verkauf & Reparatur" panel and the red "Eingang" sticker, the red
+ * #8c2027 fascia with the white italic "GG Radsport" over them, then the steps up to the door and the house entrance
+ * Aphrodite's 01 shows from the other side. Three bikes in a stand and the green A-board on the pavement in front (02).
+ * Guesses (read off the photos against a 2.2 m door, no measure): the floor's 0.6 m over the pavement, every bay's,
+ * the box's and the fascia's spot and size, the canopy's height, depth and run (u 7–51.5), the steps' spot, depth and
+ * count (one flight, shared with the house door), the bikes' and the board's spots.
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
@@ -80,14 +95,32 @@ const ARCADE_1_OUT = 0.6
 const PILLAR: Rgba = [150, 152, 155, 255]
 const PILLAR_SIDE = 0.45
 
+/** The Marienburgweg face (wall 5): the shared dark steel canopy over the three units (a guess, see above). */
+const MARIENBURG = 5
+const MB_FLOOR = 0.6
+const MB_CANOPY = { u0: 7, u1: 51.5, z: 4.4, depth: 1.6 } as const
+const MB_STEEL: Rgba = [62, 66, 72, 255]
+
+/** GG Radsport: three glazed bays and the door bay, the fascia over them, the blue box left of them (guesses). */
+const GG_GLASS = [8.4, 12.0] as const
+const GG_DOOR = [GG_GLASS[1], 13.3] as const
+const GG_GLASS_TOP = 3.2
+/**
+ * The Codex fascia is 7 times as wide as tall (stretched square, the wallSign gives it back): 4.9 × 0.7 m. In 01 it is
+ * on the wall over the glazing, under the canopy; the play camera looks straight down, so nothing under a canopy 1.6 m
+ * deep shows. It hangs on the canopy's front instead (as PENNY's board does), the glazing and door stay on the wall.
+ */
+const GG_FASCIA_H = (GG_DOOR[1] - GG_GLASS[0]) / 7
+const GG_STEPS = [14.6, 17.2] as const
+
 /** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
 const SHOP_OUT = BALCONY_DEPTH
 const BAND_Z0 = 3.2
 const BAND_TOP = FOUR_BALCONY_STOREYS[0] - 0.1
 
-/** `n` wallSigns of `texture` side by side on wall `edge` from u0 to u1, from the ground up to z1, `out` off the wall (the shop front's line). */
-const row = (texture: MaterialName, [u0, u1]: readonly [number, number], n: number, z1: number, edge = 0, out = SHOP_OUT): ReadonlyArray<Part> =>
-  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out }))
+/** `n` wallSigns of `texture` side by side on wall `edge` from u0 to u1, from z0 (the ground) up to z1, `out` off the wall (the shop front's line). */
+const row = (texture: MaterialName, [u0, u1]: readonly [number, number], n: number, z1: number, edge = 0, out = SHOP_OUT, z0 = 0): ReadonlyArray<Part> =>
+  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0, z1, out }))
 
 export const AM_STERN_WEST: PlaceDressing = {
   poi: "Takko Fashion",
@@ -173,5 +206,16 @@ export const AM_STERN_WEST: PlaceDressing = {
     // Crate rows on pallets in the corner opening, half out from under the beam so the play camera sees them (01, 03).
     { kind: "sprite", name: "crate-stack", u: -2.4, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },
     { kind: "sprite", name: "crate-stack", u: 0.6, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },
+    // The Marienburgweg face (wall 5): the dark steel canopy with its glass panes over all three units (B4-4…B4-6).
+    { kind: "canopy", edge: MARIENBURG, u0: MB_CANOPY.u0, u1: MB_CANOPY.u1, z: MB_CANOPY.z, depth: MB_CANOPY.depth, colour: MB_STEEL, texture: "canopy-glass", fascia: { h: 0.18, colour: MB_STEEL } },
+    // GG Radsport: three glazed bays and the door bay on the raised floor, the red fascia over them on the canopy's front, the blue wall box,
+    // the steps up to the door; the bikes in their stand and the green A-board on the pavement in front.
+    ...row("gg-glass", GG_GLASS, 3, GG_GLASS_TOP, MARIENBURG, 0.04, MB_FLOOR),
+    { kind: "wallSign", texture: "gg-door", edge: MARIENBURG, u0: GG_DOOR[0], u1: GG_DOOR[1], z0: MB_FLOOR, z1: GG_GLASS_TOP, out: 0.04 },
+    { kind: "wallSign", texture: "gg-fascia", edge: MARIENBURG, u0: GG_GLASS[0], u1: GG_DOOR[1], z0: MB_CANOPY.z - GG_FASCIA_H, z1: MB_CANOPY.z, out: MB_CANOPY.depth + 0.03 },
+    { kind: "pylon", u: -39.36, n: 57.35, angle: 1.599, w: 0.55, d: 0.16, h: 1.75, base: 1.05, colour: [38, 92, 168, 255] },
+    { kind: "stairs", edge: MARIENBURG, u0: GG_STEPS[0], u1: GG_STEPS[1], depth: 1.6, h: MB_FLOOR, steps: 4, colour: [196, 194, 188, 255] },
+    { kind: "sprite", name: "bike-rack", u: -42.95, n: 54.45, z: 0.5, angle: 0.027, len: 1.9 },
+    { kind: "sprite", name: "gg-aboard", u: -43.9, n: 56.88, z: 0.6, angle: 1.599, len: 0.9 },
   ],
 }

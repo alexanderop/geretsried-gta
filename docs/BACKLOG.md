@@ -1301,7 +1301,7 @@ Size: S
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1661
   (the building's).
 
-### B4-4 · GG Radsport, Marienburgweg 25 (#116, shop) — Size: S — status: ref-done
+### B4-4 · GG Radsport, Marienburgweg 25 (#116, shop) — Size: S — status: implemented (partial: the floor height, every bay's, the box's and the fascia's spot and size, the canopy's height, depth and run, the steps, and the bikes' and board's spots are guesses; the fascia hangs on the canopy's front, not on the wall)
 ```
 Goal: Bike shop on the Marienburgweg side of the west complex: red fascia "GG Radsport", bikes on a rack,
 green A-board, steps to the door.
@@ -1311,9 +1311,38 @@ Spec (via #0b, inside B3-0):
   (4178.8, 4704.7) → (4149.3, 4748), u ≈ 12 m. Red fascia #8c2027 + white italic text; red window panel;
   dark canopy (shared with B4-5/B4-6). Props: bike rack + bikes, green A-board, blue wall box.
 Acceptance criteria:
-- [ ] From Marienburgweg the unit matches 01. Pavement stays walkable. pnpm test + typecheck green.
+- [x] From Marienburgweg the unit matches 01. Pavement stays walkable. pnpm test + typecheck green.
+      (Matches 01 in order and colour; the fascia hangs on the canopy's front, see below. Nothing new is solid.)
 Size: S
 ```
+
+**B4-4 as built** (`src/world/places/am-stern-west.ts`, wall 5 of B3-0's west block, u 0 at the N corner; no roof sign):
+- **Sources.** `docs/places/gg-radsport.md`, `reference/gg-radsport/01–04` (01 for the front, 02 for the bikes and the
+  A-board, 03 for the blue box), and `reference/aphrodite-aestetic/01`, `reference/nexial/01` for the canopy's run.
+  Masses and heights unchanged from B3-0 (LoD2): along wall 5 the NE strip to u 4.2, the north block's NW end to u 20.2,
+  the link to u 37.5, the Sudetenstraße block's end to u 52.4. GG's POI lies at u 11.6, in the north block's end.
+- **Shared canopy (for B4-5 and B4-6 too):** one dark steel canopy (`canopy-glass` tinted #3e4248, a 0.18 m steel edge,
+  no posts: the photos show cantilevered brackets) on wall 5 from u 7 to 51.5 at z 4.4, 1.6 m deep. Aphrodite and Nexial
+  only add their fronts and signs under it (`MARIENBURG`, `MB_FLOOR`, `MB_CANOPY` in the file).
+- **GG Radsport:** three dark-framed glazed bays (`gg-glass`, u 8.4–12.0) and the door bay (`gg-door`: the red
+  "Verkauf & Reparatur" panel, the red "Eingang" sticker; u 12.0–13.3) from the raised floor (0.6 m) to 3.2 m; the red
+  #8c2027 fascia with the white italic "GG Radsport" (`gg-fascia`, 4.9 × 0.7 m) over them; the blue wall box (a plain
+  box, u 7.6, 1.05–1.75 m); four steps up to the floor at u 14.6–17.2 (one flight, shared with the house door Aphrodite's
+  01 shows); three bikes in a stand (`bike-rack`, top-down, 3.6 m out) and the green A-board (`gg-aboard`, 4.6 m out).
+- **Deviation:** in 01 the fascia sits on the wall under the canopy. The play camera looks almost straight down, so
+  nothing under a 1.6 m canopy at 4.4 m shows from any spot; the fascia hangs on the canopy's front (z 3.7–4.4) instead,
+  as PENNY's board does. The glazing and the door stay on the wall.
+- **Sprites** (Codex, `process-sprites.py`): `gg-fascia`, `gg-glass`, `gg-door` (opaque, squared materials);
+  `bike-rack`, `gg-aboard` (props, keyed off magenta). The row helper got an optional `z0` (the raised floor).
+- **Guesses:** the floor's 0.6 m; every bay's, the box's and the fascia's spot and size (read off 01 against a 2.2 m
+  door); the canopy's height, depth and run; the steps' spot, depth and count; the bikes' and the A-board's spots.
+- **What the camera shows:** two map trees stand in front of the unit (as in 01), so from the play camera and from
+  above the bikes, the board and most of the fascia are under their crowns; the canopy reads as a dark strip along the
+  face and the blue box and the red fascia's edge show beside the trees. With the bikes and board moved into the open for
+  a test they render the right size and way round.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical to HEAD except chunk 1660 (the west block's own).
+- **Screenshots** (local scratchpad `b4-4/`): `play.png` (play camera from Marienburgweg), `overhead.png`,
+  `overhead-close.png`, `props-test.png`.
 
 ### B4-5 · Aphrodite Aesthetic, Marienburgweg 25 (#157, shop) — Size: S — status: ref-done
 ```
@@ -1842,7 +1871,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 166 | Woolworth | shop | 157 | implemented (partial) |
 | 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
 | 114 | Nexial | shop | 188 | ref-done |
-| 116 | GG-Radsport | shop | 190 | ref-done |
+| 116 | GG-Radsport | shop | 190 | implemented (partial) |
 | 157 | Aphrodite-aestetic | shop | 190 | ref-done |
 | 15 | TEDi | shop | 205 | implemented (partial) |
 | 80 | Orterer Getränkemarkt | shop | 221 | implemented (partial) |
@@ -2189,7 +2218,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
-| 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | ref-done | B4-4, inside B3-0 |
+| 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | implemented (partial) | B4-4, inside B3-0 |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | implemented (partial) | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | implemented (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |

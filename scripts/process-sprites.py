@@ -785,6 +785,25 @@ for name in ["bl-board", "bl-window", "bl-glass", "georgiadis-board", "ge-window
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# GG Radsport (Marienburgweg 25): the red fascia, one glazed bay and the door bay with the red panel (opaque,
+# stretched square); the green A-board's face keyed like the bakery board, and the three parked bikes in their stand
+# from above (keyed, cropped; not cut to the main shape, the three bikes are separate blobs).
+for name in ["gg-fascia", "gg-glass", "gg-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+for name, main in [("gg-aboard", True), ("bike-rack", False)]:
+    src = find(name)
+    if src is None:
+        continue
+    im = key_magenta_fast(Image.open(src))
+    im = keep_main_shape(im) if main else im
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+    print(f"{name}.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

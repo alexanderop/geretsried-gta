@@ -170,6 +170,9 @@ export const MATERIAL_FILES = [
   "bl-glass",
   "georgiadis-board",
   "ge-window",
+  "gg-fascia",
+  "gg-glass",
+  "gg-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -300,6 +303,8 @@ export const PROP_FILES = [
   "trolley-row",
   "crate-stack",
   "goods-rack",
+  "bike-rack",
+  "gg-aboard",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

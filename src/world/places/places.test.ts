@@ -445,6 +445,60 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses GG Radsport on the west block's Marienburgweg face: the shared steel canopy, the red fascia on its front, bikes off the road", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    const w5 = wallFrame(pts, 5)
+    expect(w5).toBeTruthy()
+    if (!w5 || west === undefined) return
+    // Wall 5 faces Marienburgweg (NW, bearing about 304°), from the N corner to the W corner.
+    expect(Math.abs(((Math.atan2(-w5.frame.nx, w5.frame.ny) * 180) / Math.PI + 360) % 360 - 304)).toBeLessThan(10)
+    // One steel canopy without posts from GG's glazing over the link to the Sudetenstraße block's end (u 37.5), for B4-5 and B4-6 too.
+    const canopies = parts.flatMap((p) => (p.kind === "canopy" && p.edge === 5 ? [p] : []))
+    expect(canopies).toHaveLength(1)
+    const canopy = canopies[0]
+    if (!canopy) return
+    expect(canopy.posts).toBeUndefined()
+    expect(canopy.u1).toBeGreaterThan(45)
+    const signs = (t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 5 && p.texture === t ? [p] : []))
+    const glass = [...signs("gg-glass"), ...signs("gg-door")]
+    const fascia = signs("gg-fascia")[0]
+    expect(glass).toHaveLength(4)
+    expect(fascia).toBeDefined()
+    if (!fascia) return
+    // The POI (u 11.6) lies in the unit; the fascia spans its glazing and hangs on the canopy's front, over head height.
+    const [poiU] = toLocal(w5.frame, 4174.6, 4715.9)
+    expect(poiU).toBeGreaterThan(Math.min(...glass.map((g) => g.u0)))
+    expect(poiU).toBeLessThan(Math.max(...glass.map((g) => g.u1)))
+    expect(fascia.u0).toBeLessThanOrEqual(Math.min(...glass.map((g) => g.u0)))
+    expect(fascia.u1).toBeGreaterThanOrEqual(Math.max(...glass.map((g) => g.u1)))
+    expect(fascia.out ?? 0).toBeGreaterThan(canopy.depth)
+    expect(fascia.z1).toBeLessThanOrEqual(canopy.z)
+    expect(fascia.z0).toBeGreaterThan(2.5)
+    for (const g of glass) expect(g.z1).toBeLessThanOrEqual(fascia.z0)
+    // The bikes and the A-board stand in front of the unit, between the wall and Marienburgweg's carriageway.
+    const lane = map.roads.find((r) => r.name === "Marienburgweg")
+    const half = (lane?.width ?? 0) / 2
+    const props = parts.flatMap((p) => (p.kind === "sprite" && (p.name === "bike-rack" || p.name === "gg-aboard") ? [p] : []))
+    expect(props).toHaveLength(2)
+    for (const s of props) {
+      const [x, y] = toWorld(west.frame, s.u, s.n)
+      const [u, n] = toLocal(w5.frame, x, y)
+      expect(u).toBeGreaterThan(5)
+      expect(u).toBeLessThan(15)
+      expect(-n).toBeGreaterThan(1)
+      const rp = lane?.pts ?? []
+      const gap = Math.min(...rp.flatMap((_, i) => {
+        if (i % 2 !== 0 || i + 3 >= rp.length) return []
+        const [ax, ay, bx, by] = [rp[i] ?? 0, rp[i + 1] ?? 0, rp[i + 2] ?? 0, rp[i + 3] ?? 0]
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2 || 1)))
+        return [Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay))]
+      }))
+      expect(gap - s.len / 2).toBeGreaterThan(half + 1)
+    }
+  })
+
   it("dresses the Ahorn Apotheke's W corner: letters on the car-park band, glass on both faces, the red A held out by the corner", () => {
     const penny = at(822461881)
     const pts = map.buildings[penny?.building ?? -1]?.pts ?? []
