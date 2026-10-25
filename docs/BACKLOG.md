@@ -1734,7 +1734,7 @@ As built (places-only batch, src/world/places/orterer-nord.ts):
 Size: S
 ```
 
-### B5-6 · Kaufland, Bayerwaldstraße 2 (#180, supermarket) — Size: S — status: ref-done (partial)
+### B5-6 · Kaufland, Bayerwaldstraße 2 (#180, supermarket) — Size: S — status: implemented (partial: which wall 02 shows, band sizes, the car-park band, the roof board, solar extent, one pitch per roof and colours are guesses)
 ```
 Goal: The big Kaufland hall in the north with its solar roof and red K sign over a large car park, where the
   councillor's BMW gets wrecked.
@@ -1749,9 +1749,33 @@ In-game: job "kaufland" (Rathaus phone, after weisswurst): destroy a BMW (model 
   at the right-hand kerb of the nearest road within 80 m → most likely a car-park aisle (POI is 26.5 m inside
   the hall). Kind supermarket → map label "Kaufland".
 Acceptance criteria:
-- [ ] From Blumenstraße the hall matches 02 (sign band with red K, solar roof).
-- [ ] The BMW still spawns on a drivable aisle in view of the sign.
-- [ ] pnpm test + typecheck green.
+- [x] From Blumenstraße the hall matches 02 (sign band with red K, solar roof).
+- [ ] The BMW still spawns on a drivable aisle in view of the sign. Job part out of scope (places-only batch).
+- [x] pnpm test + typecheck green.
+As built (places-only batch, src/world/places/kaufland.ts):
+- Job part out of scope (places-only batch): the BMW spawn is not checked here; that criterion stays unticked. No solid,
+  outline, level, POI or src/sim change: the map keeps levels 1 and OSM's outline; the hall is drawn as 13 masses that
+  tile the outline, the rest are wall signs and roof signs. No pylons, sprites or canopies, nothing on the car park.
+- LoD2 (tile 682_5306, `DEBY_LOD2_4467611` + parts 105019004/105019005/108848885, lines up with OSM within ~1 m). In
+  the hall frame (s SE along the SW wall from the W corner, t NE along Blumenstraße): mall shops s 0–28.2, three gables
+  with ridges along s (eaves 9.2, ridge 11.84); flat link s 28.2–32.5 at 9.2; two gables with ridges along t
+  s 32.5–55.7 (eaves 9.76, ridge 11.66); flat strip s 55.7–59.85 at 8.2; the Kaufland hall s 59.85–106.2, three
+  gables along s (eaves 8.1, ridge 10.83). NE side: Deichmann wing (gable along t, eaves 8.34, ridge 11.07), the
+  saw-tooth part (8.06, drawn flat), the low entrance strip (6.35, flat). One pitch per gable (17.6–18.6°) gives the
+  model's ridges. Roof #c6c8c6, walls "industrial" tinted #e4e0d6 (guesses).
+- Band (new texture kaufland-band, Codex, after 02: white board, red K logo, red "Kaufland", 3:1): on the Kaufland
+  hall's SW wall (OSM wall 7, faces 228°, u 5.95–15.25, z 4.6–7.7) under the eave with the solar plane behind it,
+  which is what 02 shows (the doc says "Blumenstraße side"; the eave and solar roof only fit the hall's SW side seen
+  from the Blumenstraße/Thüringer-Wald-Straße end: guess). A second band faces the car park (OSM wall 12, 48°, guess,
+  no photo) and the same board lies on the entrance strip's roof for the top-down camera (guess).
+- Solar field: solar-field roof signs over the hall's three SW-facing planes (whole planes, the satellite 04 shows
+  patches: guess) and over the SE-facing plane of the second middle gable.
+- Not built: the glass rotunda at the E corner (outside OSM's outline), the mall shop signs (Ihle, Deichmann,
+  Vinzenzmurr, Dönerworks, An Nhien), trolley bays, the charging station, the low wall along the car park (no
+  reference / car park kept clear).
+- Chunk hashes: with vs without the place only chunk 633 (the building's) differs. pnpm -s check green.
+- Screenshots (local scratchpad `b5-6/`): `play.png` (SW band and solar roof), `play-ne.png` (car-park band),
+  `play-carpark.png` (roof board), `overhead.png`.
 Size: S
 ```
 
@@ -2293,7 +2317,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
 | 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | implemented (partial) | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
 | 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | implemented (partial) | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |
-| 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | ref-done (partial) | B5-6. Bayerwaldstraße 2. "kaufland" destroy-BMW (Rathaus job, not a gang job); entrance needs reference |
+| 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | implemented (partial: which wall 02 shows, band sizes, the car-park band, the roof board, solar extent, one pitch per roof and colours are guesses) | B5-6. Bayerwaldstraße 2. "kaufland" destroy-BMW (Rathaus job, not a gang job); entrance needs reference |
 | 220 | Huber GmbH, Karosserie-Lack-Center | car_repair | 2353.1, 1757.6 | 47.884194, 11.461548 | 3326 | todo | spray shop |
 | 89 | Auto Stapf | car_repair | 234.3, 1574.7 | 47.885838, 11.433141 | 4859 | todo | spray shop |
 | 211 | Biometzgerei Pichler Großhandel | shop | 240.9, 1498.7 | 47.886522, 11.43323 | 4902 | todo | gang job drop |

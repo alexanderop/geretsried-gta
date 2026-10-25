@@ -971,6 +971,12 @@ if src is not None:
     Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "orterer-window.webp", "WEBP", quality=90)
     print("orterer-window.webp")
 
+# Kaufland (Bayerwaldstraße 2): the white band with the red K logo and "Kaufland" (opaque, 3:1, stored square).
+src = find("kaufland-band")
+if src is not None:
+    Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "kaufland-band.webp", "WEBP", quality=92)
+    print("kaufland-band.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

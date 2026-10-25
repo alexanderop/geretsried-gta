@@ -1100,6 +1100,51 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Kaufland: the LoD2 gable roofs as masses, the K band on the hall's SW eave and the car park, the solar roofs", () => {
+    const kaufland = at(121822645)
+    if (kaufland === undefined) throw new Error("no Kaufland")
+    const pts = map.buildings[kaufland.building]?.pts ?? []
+    const parts = kaufland.dressing.parts
+    // The BMW job reads the POI and the footprint: both stay as they were (one level, drawn as masses).
+    expect(map.pois.find((p) => p.name === "Kaufland")).toMatchObject({ x: 2244.3, y: 1880.5 })
+    expect(kaufland.dressing.levels).toBeUndefined()
+    expect(makeWorld(map).map.buildings.find((b) => b.id === 121822645)?.levels).toBe(1)
+    // Thirteen volumes; the hall's three gables at the model's 8.1 m eaves, their ridges near its 10.83 m.
+    const masses = kaufland.dressing.masses ?? []
+    expect(masses).toHaveLength(13)
+    const hall = masses.slice(7, 10)
+    for (const m of hall) {
+      expect(m.levels * 3).toBeCloseTo(8.1, 2)
+      expect(m.roof?.gables).toHaveLength(2)
+    }
+    expect(hall[0] === undefined ? 0 : hall[0].levels * 3 + 8.4 * slope(hall[0].roof?.hip ?? 0)).toBeCloseTo(10.83, 1)
+    // The tallest part is the mall shops' ridge, about the model's 11.84 m.
+    const nw = masses[0]
+    expect(nw === undefined ? 0 : nw.levels * 3 + 8.55 * slope(nw.roof?.hip ?? 0)).toBeCloseTo(11.98, 1)
+    // The K band faces SW (wall 7) and NE onto the car park (wall 12), on the wall and under the eaves.
+    const bands = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "kaufland-band" ? [p] : []))
+    expect(bands.map((b) => b.edge)).toEqual([7, 12])
+    for (const b of bands) {
+      const w = wallFrame(pts, b.edge)
+      expect(b.u0).toBeGreaterThan(0)
+      expect(b.u1).toBeLessThan(w?.length ?? 0)
+      expect(b.z1).toBeLessThan(8.1)
+    }
+    const facing = (e: number) => {
+      const w = wallFrame(pts, e)
+      return w === null ? -1 : (((Math.atan2(-w.frame.nx, w.frame.ny) * 180) / Math.PI + 360) % 360)
+    }
+    expect(Math.abs(facing(7) - 228)).toBeLessThan(5)
+    expect(Math.abs(facing(12) - 48)).toBeLessThan(5)
+    // The solar field and the roof board lie on the roofs, not below their eaves.
+    const roof = parts.flatMap((p) => (p.kind === "roofSign" ? [p] : []))
+    expect(roof.filter((p) => p.texture === "solar-field").length).toBeGreaterThan(20)
+    for (const s of roof.filter((p) => p.texture === "solar-field")) expect(Math.min(s.z0, s.z1)).toBeGreaterThan(8.1)
+    expect(roof.filter((p) => p.texture === "kaufland-band")).toHaveLength(1)
+    // No free-standing parts: nothing new stands on the car park.
+    expect(parts.some((p) => p.kind === "pylon" || p.kind === "sprite" || p.kind === "canopy")).toBe(false)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

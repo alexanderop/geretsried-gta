@@ -212,6 +212,7 @@ export const MATERIAL_FILES = [
   "metz-awning",
   "metz-pilaster",
   "orterer-window",
+  "kaufland-band",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
