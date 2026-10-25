@@ -368,6 +368,35 @@ describe("the registry on the real map", () => {
     expect(letters.z1).toBeLessThan(lowest)
   })
 
+  it("dresses Takko between denns and Orterer's corner on the west block's Sudetenstraße front, under the balconies", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    const w0 = wallFrame(pts, 0)
+    expect(w0).toBeDefined()
+    if (w0 === undefined || w0 === null) return
+    const on0 = (t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 0 && p.texture === t ? [p] : []))
+    const sign = on0("takko-sign")[0]
+    const glass = on0("takko-front")
+    expect(sign).toBeDefined()
+    if (sign === undefined) return
+    expect(glass.length).toBeGreaterThan(0)
+    // Its glazing starts where denns' ends and stops short of the S corner (Orterer's pier and arcade, B3-5).
+    const start = Math.min(...glass.map((g) => g.u0))
+    const end = Math.max(...glass.map((g) => g.u1))
+    expect(Math.abs(start - Math.max(...on0("denns-front").map((g) => g.u1)))).toBeLessThan(0.01)
+    expect(end).toBeLessThan(w0.length - 8)
+    // The panel over the glazing, on the white band under the lowest balcony, just proud of the band's face.
+    expect(sign.u0).toBeGreaterThan(start)
+    expect(sign.u1).toBeLessThan(end)
+    expect(sign.z0).toBeGreaterThan(Math.max(...glass.map((g) => g.z1)))
+    const lowest = Math.min(...parts.flatMap((p) => (p.kind === "balcony" && p.edge === 0 ? p.z : [])))
+    expect(sign.z1).toBeLessThan(lowest)
+    const band = parts.find((p) => p.kind === "canopy" && p.edge === 0 && p.fascia !== undefined)
+    expect(band?.kind === "canopy" && band.u1 >= end).toBe(true)
+    expect(sign.out ?? 0).toBeGreaterThan(band?.kind === "canopy" ? band.depth : Infinity)
+  })
+
   it("dresses Rossmann's car-park front: letters over the glazing by the bend, under the balconies, chimneys on the roof", () => {
     const rossmann = at(293545707)
     const pts = map.buildings[rossmann?.building ?? -1]?.pts ?? []

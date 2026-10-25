@@ -1004,7 +1004,7 @@ Size: S
 - **Screenshots** (local): `?compare=47.85705,11.48705,40` from above (ROSSMANN board, chimney pairs); on foot at
   (4247, 4783) the band with the red letters' edge under the balconies.
 
-### B3-4 · Takko Fashion, Sudetenstraße 29b (#81, shop) — Size: S — status: ref-done
+### B3-4 · Takko Fashion, Sudetenstraße 29b (#81, shop) — Size: S — status: implemented (partial: where the glazing ends, the panel's spot and size, the lettering colour and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: The yellow-orange TAKKO panel on the middle unit of the west block's Sudetenstraße front.
 Reference: docs/places/takko-am-stern.md; reference/takko-am-stern/01-street-front.png (key), 02.
@@ -1012,9 +1012,26 @@ Spec (via #0b, inside B3-0):
 - POI #81 at 4195.3, 4751.3. Way 127872184, SW edge, middle unit: panel #e9cb76 with dark "TAKKO" lettering
   (exact lettering colour: needs reference); glass strip under. No map label (kind shop): HUD only.
 Acceptance criteria:
-- [ ] Order denns · TAKKO · Orterer along Sudetenstraße as in takko/02. pnpm test + typecheck green.
+- [x] Order denns · TAKKO · Orterer along Sudetenstraße as in takko/02. pnpm test + typecheck green.
+      (Orterer's own corner is B3-5.)
 Size: S
 ```
+
+**B3-4 as built** (`src/world/places/am-stern-west.ts`, next to denns on B3-0's west block; no roof sign, as B3-0 says):
+- **Sources.** `reference/takko-am-stern/01–04` + `SOURCES.md` on disk and used: 01 for the front, the panel and its
+  size (read against the 3 m glazing), 02 and denns/01 for the order denns · TAKKO · Orterer and the glazing running on
+  from denns' without a break. Heights from B3-0 / B3-2 (balconies from 4.5 m, the white band 3.2–4.4 m).
+- **Wall 0** (u 0 at the NW end): Takko's dark-framed glazing with window displays (`takko-front`, three 3.2 m bays)
+  from denns' end at u 21.6 to u 31.2, where 01's white pier with Orterer's logo starts (B3-5's); the white band
+  (the fascia canopy B3-2 put in) now runs over both units to u 31.2; the yellow TAKKO panel (`takko-sign`,
+  2.4 × 0.9 m, z 3.35–4.25) on the band over the middle bay, 0.03 m proud of it. Like denns, all on the balconies'
+  front line (`BALCONY_DEPTH`), so from the play camera the glazing and the panel's yellow edge show under the balconies.
+- **Sprites:** Codex (two images), processed by `scripts/process-sprites.py` (panel keyed and cropped, 2.67:1, stored
+  square; the glazing opaque).
+- **Guesses:** where the glazing ends (u 31.2) and its bays, the panel's spot and size, the lettering's charcoal
+  (too small in 01 to sample), the shop front's line. Not built: the entrance door (not seen), the poster stands.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
+  block's).
 
 ### B3-5 · Orterer Getränkemarkt, Sudetenstraße 29a (#80, shop) — Size: S — status: ref-done (partial)
 ```
@@ -1655,7 +1672,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 157 | Aphrodite-aestetic | shop | 190 | ref-done |
 | 15 | TEDi | shop | 205 | ref-done |
 | 80 | Orterer Getränkemarkt | shop | 221 | ref-done (partial) |
-| 81 | Takko Fashion | shop | 223 | ref-done |
+| 81 | Takko Fashion | shop | 223 | implemented (partial) |
 | 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
 | 134 | B&L Hairstyling | shop | 253 | ref-done |
 | 65 | Rossmann | drugstore | 283 | implemented (partial) |
@@ -2002,7 +2019,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | ref-done | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | ref-done (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
-| 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | ref-done | B3-4; middle unit of the west block |
+| 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | implemented (partial) | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo (needs facade reference) | B6b-1. Breslauer Weg 9; rental closes end 2026, THOMA Reisemobile stays (ask Alex) |
 | 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | ref-done | B4-3 |
 | 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo (needs facade reference) | B6b-3. C.-M.-v.-Weber-Weg 34; LoD2 16.2 m → levels 5 |

@@ -25,6 +25,12 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * there), the letters' spot and size, the ledge's depth and height, the cladding's windows (three), the shop
  * storey standing flush with the balconies. The entrance door
  * is not seen in the photos, so none is drawn.
+ *
+ * Takko Fashion (B3-4), the middle unit of wall 0, from Street View (reference/takko-am-stern/01–02, denns/01): the
+ * dark-framed glazing runs on from denns' without a break, under the same white band, and the yellow-orange TAKKO panel
+ * with dark letters sits on that band over the unit's middle bay; SE of the glazing a white pier carries Orterer's round
+ * logo before the open arcade (B3-5). Guesses: where the glazing ends (u 31.2, three 3.2 m bays; Orterer's pier takes it
+ * from there), the panel's spot over the middle bay and its size (2.4 × 0.9 m, read off 01 against the 3 m glazing).
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
@@ -36,13 +42,21 @@ const DENNS_GLASS = [9.6, 21.6] as const
 const DENNS_LETTERS_W = 6.6
 const DENNS_LETTERS_Z0 = 3.45
 
+/** Takko's glazing on wall 0, on from denns' (its end a guess), and the TAKKO panel over its middle bay (a guess). */
+const TAKKO_GLASS = [DENNS_GLASS[1], 31.2] as const
+/** The cropped Codex panel is 2.67 times as wide as tall; 0.9 m tall on the 1.2 m band (a guess, read off 01). */
+const TAKKO_SIGN_H = 0.9
+const TAKKO_SIGN_W = TAKKO_SIGN_H * 2.67
+const TAKKO_SIGN_Z0 = 3.35
+const TAKKO_SIGN_MID = (TAKKO_GLASS[0] + TAKKO_GLASS[1]) / 2
+
 /** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
 const SHOP_OUT = BALCONY_DEPTH
 const BAND_Z0 = 3.2
 const BAND_TOP = FOUR_BALCONY_STOREYS[0] - 0.1
 
 /** `n` wallSigns of `texture` side by side on wall 0 from u0 to u1, from the ground up to z1, on the shop front's line. */
-const row = (texture: "denns-front" | "denns-cladding", [u0, u1]: readonly [number, number], n: number, z1: number): ReadonlyArray<Part> =>
+const row = (texture: "denns-front" | "denns-cladding" | "takko-front", [u0, u1]: readonly [number, number], n: number, z1: number): ReadonlyArray<Part> =>
   Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge: 0, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out: SHOP_OUT }))
 
 export const AM_STERN_WEST: PlaceDressing = {
@@ -66,9 +80,10 @@ export const AM_STERN_WEST: PlaceDressing = {
     balconies(0, 0.6, 42.9, FOUR_BALCONY_STOREYS),
     // "denns" in green on the roof over the NW third of the front (the store's unit), for the top-down camera.
     { kind: "roofSign", texture: "roof-denns", edge: 0, u0: 2, u1: 12.5, n0: 1, n1: 4.5, z0: onRoof(SOUTH_H, SOUTH_PITCH, 1), z1: onRoof(SOUTH_H, SOUTH_PITCH, 4.5) },
-    // denns BioMarkt: the white band (a fascia under the lowest balconies), the striped cladding with its poster windows
-    // under a thin grey ledge at the NW end, the glazing in three bays, the green letters on the band over it.
-    { kind: "canopy", edge: 0, u0: DENNS_CLAD[0], u1: DENNS_GLASS[1], z: BAND_TOP, depth: SHOP_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER } },
+    // denns BioMarkt and Takko: the white band (a fascia under the lowest balconies) over both units; denns' striped
+    // cladding with its poster windows under a thin grey ledge at the NW end, its glazing in three bays, the green
+    // letters on the band over it.
+    { kind: "canopy", edge: 0, u0: DENNS_CLAD[0], u1: TAKKO_GLASS[1], z: BAND_TOP, depth: SHOP_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER } },
     ...row("denns-cladding", DENNS_CLAD, 3, BAND_Z0),
     { kind: "canopy", edge: 0, u0: DENNS_CLAD[0], u1: DENNS_CLAD[1], z: BAND_Z0 + 0.15, depth: SHOP_OUT + 0.5, colour: [150, 154, 158, 255] },
     ...row("denns-front", DENNS_GLASS, 3, BAND_Z0),
@@ -80,6 +95,18 @@ export const AM_STERN_WEST: PlaceDressing = {
       u1: DENNS_GLASS[0] + 0.3 + DENNS_LETTERS_W,
       z0: DENNS_LETTERS_Z0,
       z1: DENNS_LETTERS_Z0 + DENNS_LETTERS_W / 8.3,
+      out: SHOP_OUT + 0.03,
+    },
+    // Takko: its glazing on from denns', the yellow-orange TAKKO panel on the band over the middle bay.
+    ...row("takko-front", TAKKO_GLASS, 3, BAND_Z0),
+    {
+      kind: "wallSign",
+      texture: "takko-sign",
+      edge: 0,
+      u0: TAKKO_SIGN_MID - TAKKO_SIGN_W / 2,
+      u1: TAKKO_SIGN_MID + TAKKO_SIGN_W / 2,
+      z0: TAKKO_SIGN_Z0,
+      z1: TAKKO_SIGN_Z0 + TAKKO_SIGN_H,
       out: SHOP_OUT + 0.03,
     },
   ],
