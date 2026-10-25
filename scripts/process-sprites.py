@@ -1082,6 +1082,21 @@ if src is not None:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "kind-aboard.webp", "WEBP", quality=90)
     print("kind-aboard.webp", im.size)
 
+# Bistro Malor (Sudetenstraße 10): the ground floor's glazed doors (opaque, stored square); a terrace table
+# with two rattan chairs and a white planter of laurel from above (keyed, cropped).
+src = find("malor-front")
+if src is not None:
+    Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "malor-front.webp", "WEBP", quality=90)
+    print("malor-front.webp")
+for name in ["malor-terrace", "malor-hedge"]:
+    src = find(name)
+    if src is not None:
+        im = key_magenta_fast(Image.open(src))
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

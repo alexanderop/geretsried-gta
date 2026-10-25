@@ -2032,7 +2032,7 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-6/`): `play.png` + `play-crop.png`, `play-across.png` + `play-across-crop.png`
   (lettering), `overhead.png`.
 
-### B6a-7 · Bistro Malor, Sudetenstraße 10 (#120, food) — Size: S — status: ref-done (partial)
+### B6a-7 · Bistro Malor, Sudetenstraße 10 (#120, food) — Size: S — status: implemented (partial: terrace size/layout, door places, no terrace roof)
 ```
 Goal: Bistro terrace beside the KIND corner: wood tables, rattan chairs, low hedges.
 Reference: docs/places/bistro-malor.md; reference/bistro-malor/05-web-terrace.jpg (key, website), 06-web-logo.png, 07-crop-sv-terrace.png.
@@ -2042,9 +2042,24 @@ Spec (via #0b):
 - Terrace roof: website shows a dark steel frame, Street View a dark-red roof: needs reference → build no roof yet.
 - Restaurant facade sign: needs reference (logo #a82b1c / #464140 exists, but not seen on the building) → no wallSign.
 Acceptance criteria:
-- [ ] Terrace next to the KIND corner, pavement walkable. pnpm test + typecheck green.
+- [x] Terrace next to the KIND corner, pavement walkable. pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **`BISTRO_MALOR` parts list** in `src/world/places/sudetenstrasse-10.ts`, spread into `parts` after `KIND`; building and
+  masses unchanged. All wall parts on wall 1 inside `UNITS.bistroMalor` (u 7.9–16.71); wall 0 left plain.
+- **Ground floor**: `malor-front` (white render, two pairs of tall glazed doors, downpipe; Codex after 05) on wall 1
+  u 7.9–16.71, 0–2.85 m. Door places are a **guess**.
+- **Sign**: none on the building, as the spec says (no photo shows lettering there; the web logo is not used).
+- **Terrace** (wall 1 u 8.6–16.4, 5 m out): six `malor-terrace` sprites (oak table, cream runner, two rattan armchairs
+  with tan cushions; Codex after 05) in two rows of three, white `malor-hedge` planters of laurel along the street side
+  (gap in the middle) and at both ends, all square to the wall; a pale stone slab (`pylon` 0.04 m) under it because the
+  map has a lawn in front of the house. Props are not solid; ≥3 m of pavement stays to the kerb. Size, table count,
+  layout and hedge gap are **guesses**.
+- Not built: the terrace roof (05 dark steel frame vs 07 dark-red roof: needs reference).
+- Chunk hashes: before/after only chunk 1615 (the building's) differs. pnpm -s check green (252 tests).
+- Screenshots (local scratchpad `b6a-7/`): `play.png`, `play-across.png` + `play-across-crop.png` (sign), `overhead.png`
+  + `overhead-crop.png`.
 
 ### B6a-8 · Autohaus Billion, Sudetenstraße 25 (#178 "Audi;Seat;Škoda;Volkswagen", shop) — Size: S — status: ref-done
 ```
@@ -2305,7 +2320,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 155 | Stroblume | shop | 29 | implemented (partial) |
 | 13 | VR-Bank | bank | 48 | implemented (partial) |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | ref-done |
-| 120 | Bistro Malor | food | 69 | ref-done (partial) |
+| 120 | Bistro Malor | food | 69 | implemented (partial) |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | ref-done |
 | 11 | Quelle | shop | 154 | todo (needs reference; probably closed) |
 | 177 | Gaststätte Isarwinkel | food | 180 | ref-done (partial) |
@@ -2675,7 +2690,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 |---|---|---|---|---|---|---|---|
 | 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | todo (needs reference; unit shows Deliqos) | B6a-2. Sudetenstraße 17. SV 2022 shows Deliqos at this unit; listings say HoangAnh open. Ask Alex |
 | 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | implemented (partial) | B6a-3. Sudetenstraße 15 |
-| 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | ref-done (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
+| 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | implemented (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
 | 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | ref-done (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
 | 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | implemented (partial) | B3-7; crimson fascia; terrace not seen (needs reference) |
 | 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo (needs facade reference) | B6b-6. Neuer Platz 9; roof #858d7e; front needs reference |

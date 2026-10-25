@@ -111,6 +111,44 @@ export const KIND: ReadonlyArray<Part> = [
   { kind: "sprite", name: "kind-aboard", ...atWall(1, 5.6, 1.6), z: 0.6, angle: UPRIGHT, len: 0.85 },
 ]
 
+/**
+ * Bistro Malor (B6a-7, reference/bistro-malor/05 key, 06 logo, 07): the restaurant NW of KIND on the street front (wall 1
+ * from KIND's end). 05 shows a paved terrace in front of a white wall with tall glazed double doors: dark oak tables
+ * with a cream runner, brown rattan armchairs with tan cushions, white planters of laurel round it; 07 (Street View)
+ * shows it just past the KIND corner behind low hedges. Built as a terrace about 7.8 x 5 m on the pavement in front of
+ * wall 1 u 8.6–16.4: six tables with two chairs each in two rows, a planter hedge along its street side with a gap in
+ * the middle and one at each end, square to the wall; the pavement past it stays walkable (props are never solid).
+ * No sign on the building: no photo shows lettering there (the spec says to wait for one). Guesses: the doors' places,
+ * the terrace's size, table count and layout, the hedge gap. The map has a lawn in front of the house, so the terrace stands on a stone slab. Not built: the terrace roof (05 shows a dark steel frame, 07 a dark-red roof; which is current
+ * needs reference).
+ */
+/** The terrace's pale stone paving (05), laid over the lawn the map has in front of the house. */
+const PAVING: Rgba = [204, 199, 190, 255]
+/** The terrace's stretch of wall 1 and its depth out from the wall. */
+const TERRACE = { u0: 8.6, u1: 16.4, out: 5 } as const
+const TABLES = [10.0, 12.5, 15.0].flatMap((u) => [1.5, 3.5].map((out) => [u, out] as const))
+/** Planter hedges: [u0, u1] along the street side, and the two ends square to the wall. */
+const HEDGE_FRONT = [[TERRACE.u0, 11.8], [13.2, TERRACE.u1]] as const
+const HEDGE_W = 0.5
+
+export const BISTRO_MALOR: ReadonlyArray<Part> = [
+  { kind: "wallSign", texture: "malor-front", edge: 1, u0: UNITS.bistroMalor[1][0], u1: UNITS.bistroMalor[1][1], z0: 0, z1: FRONT_Z },
+  {
+    kind: "pylon",
+    ...atWall(1, (TERRACE.u0 + TERRACE.u1) / 2, TERRACE.out / 2),
+    w: TERRACE.u1 - TERRACE.u0 + HEDGE_W,
+    d: TERRACE.out,
+    h: 0.04,
+    colour: PAVING,
+  },
+  ...TABLES.map(([u, out]): Part => ({ kind: "sprite", name: "malor-terrace", ...atWall(1, u, out), z: 0.75, len: 2.1 })),
+  ...HEDGE_FRONT.map(([u0, u1]): Part => ({ kind: "sprite", name: "malor-hedge", ...atWall(1, (u0 + u1) / 2, TERRACE.out - HEDGE_W / 2), z: 0.9, len: u1 - u0 })),
+  ...[TERRACE.u0, TERRACE.u1].map((u): Part => {
+    const p = atWall(1, u, (TERRACE.out - HEDGE_W) / 2)
+    return { kind: "sprite", name: "malor-hedge", ...p, z: 0.9, angle: p.angle + Math.PI / 2, len: TERRACE.out - HEDGE_W - 0.3 }
+  }),
+]
+
 export const SUDETENSTRASSE_10: PlaceDressing = {
   poi: "Optik Kind Geretsried-Zentrum II",
   street: "Sudetenstraße",
@@ -119,5 +157,5 @@ export const SUDETENSTRASSE_10: PlaceDressing = {
   facade: "render",
   wallColour: WHITE,
   masses: MASSES,
-  parts: [...KIND],
+  parts: [...KIND, ...BISTRO_MALOR],
 }

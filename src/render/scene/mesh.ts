@@ -225,6 +225,7 @@ export const MATERIAL_FILES = [
   "kind-front",
   "kind-side",
   "kind-sign",
+  "malor-front",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -361,6 +362,8 @@ export const PROP_FILES = [
   "stroblume-plants",
   "stroblume-heart",
   "kind-aboard",
+  "malor-terrace",
+  "malor-hedge",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

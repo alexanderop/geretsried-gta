@@ -7,7 +7,7 @@ import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
 import { dressMap, resolvePlaces, towerFrame, type Part, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
-import { KIND, UNITS as UNITS_10 } from "./sudetenstrasse-10.ts"
+import { BISTRO_MALOR, KIND, UNITS as UNITS_10 } from "./sudetenstrasse-10.ts"
 import { DOLCE_GELATO, STROBLUME, UNITS, VR_BANK } from "./sudetenstrasse-11-15.ts"
 
 /** Whether (x, y) lies within 0.3 m of a wall of the ring: the masses' corners are rounded to 0.1 m, so spots there prove nothing. */
@@ -1359,6 +1359,35 @@ describe("the registry on the real map", () => {
     expect(bu).toBeGreaterThan(UNITS_10.kind[1][0])
     expect(bu).toBeLessThan(UNITS_10.kind[1][1])
     expect(board.n - 4).toBeGreaterThan(1)
+  })
+
+  it("puts no sign on Bistro Malor and its terrace on the pavement NW of the KIND corner", () => {
+    const row = places.find((p) => p.dressing.osmBuildingId === 538512734)
+    if (row === undefined) throw new Error("no Sudetenstraße 10")
+    expect(row.dressing.parts).toEqual(expect.arrayContaining([...KIND, ...BISTRO_MALOR]))
+    const pts = map.buildings[row.building]?.pts ?? []
+    const w1 = wallFrame(pts, 1)
+    if (w1 === null) throw new Error("no wall 1")
+    const [m0, m1] = UNITS_10.bistroMalor[1]
+    // Every wall part on the street front in Bistro Malor's stretch, past KIND's.
+    for (const p of onWall(BISTRO_MALOR)) {
+      expect(p.edge).toBe(1)
+      expect(p.u0).toBeGreaterThanOrEqual(m0)
+      expect(p.u1).toBeLessThanOrEqual(m1)
+    }
+    expect(BISTRO_MALOR.some((p) => p.kind === "wallSign" && p.texture !== "malor-front")).toBe(false)
+    // The terrace: off the footprint, beside the KIND corner, short of the kerb (n 4) with a walkable pavement left.
+    const props = BISTRO_MALOR.flatMap((p) => (p.kind === "sprite" ? [p] : []))
+    expect(props.filter((p) => p.name === "malor-terrace")).toHaveLength(6)
+    for (const p of props) {
+      const [x, y] = toWorld(row.frame, p.u, p.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      const [u, n] = toLocal(w1.frame, x, y)
+      expect(u).toBeGreaterThan(UNITS_10.kind[1][1])
+      expect(u).toBeLessThan(m1)
+      expect(-n).toBeLessThan(5.1)
+      expect(p.n - 4).toBeGreaterThan(3)
+    }
   })
 
   it("gives St. Ursula its four storeys", () => {
