@@ -1481,7 +1481,7 @@ building or mass):
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical to HEAD except chunk 1661 (the building's own).
 - **Screenshots** (local scratchpad `b4-7/`): `play.png`, `play-crop.png`, `play-across.png`, `overhead.png`.
 
-### B4-8 · Spielwaren Krömer, Sudetenstraße 20 (#170, shop) — Size: S — status: ref-done
+### B4-8 · Spielwaren Krömer, Sudetenstraße 20 (#170, shop) — Size: S — status: implemented (partial: the shop's run, the bays', door's and sign's spots and sizes, the canopy's height, depth and run, the stairwell strips' spots, the upper windows' spacing, the racks' spots, the roof sign and the roof colour are guesses; the other units' shop fronts not built)
 ```
 Goal: Toy shop in a white block with blue stripes and yellow window lintels; white "Spielwaren Krömer" sign on a
 glass canopy with blue struts, toys outside.
@@ -1491,9 +1491,38 @@ Spec (via #0b):
   (4117.4, 4755) → (4066.7, 4720.5), u ≈ 26 m. Wall #cdd1d4, stripes ≈ #59779d, lintels ≈ #b5a955 (new facade
   texture: ask first). White sign panel, blue text (hex needs reference). Goods props outside.
 Acceptance criteria:
-- [ ] From Sudetenstraße the front matches 01. pnpm test + typecheck green.
+- [x] From Sudetenstraße the front matches 01. pnpm test + typecheck green.
 Size: S
 ```
+
+**B4-8 as built** (`src/world/places/spielwaren-kroemer.ts`, a new place for way 120402849):
+- **Sources.** `reference/spielwaren-kroemer/01, 02, 04` + `SOURCES.md` and `docs/places/spielwaren-kroemer.md` on disk
+  and used (01 for the shop front, 02 for the sign and the canopy's run). Heights and roofs from the Bavarian LoD2
+  model (tile 684_5302) and the DOP20.
+- **Masses** (cut on the model's seam: wall 3 u 2.77, wall 1 u 58.99): the main block `DEBY_LOD2_4602884` (eaves
+  12.4 m, the mean of the model's 12.8 m front and 12.0 m back; gable roof along the street at 29.5°, which reaches the
+  model's 16.48 m ridge over OSM's 14.7 m depth; gable at the NW end) and the short SE block `DEBY_LOD2_105018827`
+  (eaves 12.2 m, 24.6° to its 15.55 m ridge, gables at both ends). White render, orange-brown tiles.
+- **Front** (OSM splits it into walls 3, 4, 5; u 0 at each one's SE end): a glass canopy (`canopy-glass`, z 3.3, 2 m
+  deep, thin blue edge for the struts) along all of walls 4 and 5; Krömer on wall 4 round the POI (u ≈ 17): a toy
+  window (`kroemer-glass`, u 12.6–16.5), the glazed door (`kroemer-door`, 16.6–19.0), a second toy window (19.1–24.4);
+  the white sign (`kroemer-sign`, blue "Spielwaren", red "Krömer", balloons; 4.4 × 1.22 m) on the canopy's front edge
+  over the door, from 2.95 m up past the canopy; three toy racks (`goods-rack`) on the pavement 2.6 m out, just past
+  the canopy's edge. Three blue stairwell strips (`kroemer-stripe`, wall 4 u 10.6 and 31, wall 5 u 4) from the canopy
+  up under the eaves, each over a glazed entrance (`shop-front`); the upper floors' windows under their yellow lintels
+  (`kroemer-window`, three rows every 3.4 m on walls 3–5, clear of the strips). The sign is also painted on the main
+  block's street-side roof plane over the shop (`roofSign`) for the top-down view.
+- **Sprites:** Codex (five images), processed by `scripts/process-sprites.py` (the sign cut from its magenta margin,
+  the stripe's white margins cropped, all opaque and stretched square).
+- **Guesses:** the shop's run along wall 4 and every bay's, door's and sign's spot and size; the canopy's height,
+  depth and run (not on wall 3, where the model's front steps 2.6 m out); the stairwell strips' spots (one SE of the
+  shop as in 01, two spaced along the front as in 02); the upper windows' spacing; the racks' spots (the map has grass
+  where the photo shows pavement); the roof sign (no photo of the roof); the roof colour (between the DOP20's
+  #cc9373 and #675243). The sign's hex is read off the photo, not sampled (too small). Not built: the other units'
+  shop fronts (Arztpraxis, SC Smart Connect), the model's step out at the SE end of the front, the roof's dormers.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except one chunk
+  (the building's).
+- **Screenshots** (local scratchpad `b4-8/`): `play.png`, `overhead.png`.
 
 ### B4-9 · Bäckerei Backhupferl (#5, bakery) — Size: S — status: todo (needs reference)
 ```
@@ -2308,7 +2337,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | ref-done | B6a-4. Sudetenstraße 15 |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | ref-done | B6a-6. Sudetenstraße 10, sign "KIND" |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
-| 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | ref-done | B4-8 |
+| 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | implemented (partial) | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | implemented (partial) | B4-7 |

@@ -890,6 +890,50 @@ describe("the registry on the real map", () => {
     expect(dressing.parts.filter((p) => p.kind === "wallSign" && p.texture === "bl-window")).toHaveLength(2)
   })
 
+  it("dresses Spielwaren Krömer: the sign on the glass canopy's front edge over the door by the POI, toys out past the canopy", () => {
+    const kroemer = at(120402849)
+    const pts = map.buildings[kroemer?.building ?? -1]?.pts ?? []
+    const parts = kroemer?.dressing.parts ?? []
+    const w4 = wallFrame(pts, 4)
+    if (!w4 || kroemer === undefined) throw new Error("no wall 4")
+    // Wall 4 faces Sudetenstraße (NE).
+    expect(Math.abs(((Math.atan2(-w4.frame.nx, w4.frame.ny) * 180) / Math.PI + 360) % 360 - 34)).toBeLessThan(10)
+    // Two masses at the LoD2 eaves: the main block and the short SE block.
+    expect(kroemer.dressing.masses?.map((m) => Math.round(m.levels * 30) / 10)).toEqual([12.4, 12.2])
+    const sign = parts.find((p) => p.kind === "wallSign" && p.texture === "kroemer-sign")
+    const door = parts.find((p) => p.kind === "wallSign" && p.texture === "kroemer-door")
+    const canopy = parts.find((p) => p.kind === "canopy" && p.edge === 4)
+    if (sign?.kind !== "wallSign" || door?.kind !== "wallSign" || canopy?.kind !== "canopy") throw new Error("missing parts")
+    // The sign hangs on the canopy's front edge, over head height, across the door; the POI stands by the door.
+    expect(sign.edge).toBe(4)
+    expect(sign.out ?? 0).toBeGreaterThan(canopy.depth)
+    expect(sign.z0).toBeGreaterThanOrEqual(2.5)
+    expect(sign.z0).toBeLessThan(canopy.z)
+    expect(sign.z1).toBeGreaterThan(canopy.z)
+    expect(sign.u0).toBeLessThan(door.u0)
+    expect(sign.u1).toBeGreaterThan(door.u1)
+    const poi = map.pois.find((p) => p.name === "Spielwaren Krömer")
+    if (!poi) throw new Error("no POI")
+    const [pu] = toLocal(w4.frame, poi.x, poi.y)
+    expect(Math.abs(pu - (door.u0 + door.u1) / 2)).toBeLessThan(3)
+    // The shop's glazing stays under the canopy; the upper windows stay off the stairwell strips.
+    const glazing = parts.flatMap((p) => (p.kind === "wallSign" && (p.texture === "kroemer-glass" || p.texture === "kroemer-door") ? [p.z1] : []))
+    expect(Math.max(...glazing)).toBeLessThan(canopy.z)
+    const strips = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "kroemer-stripe" ? [p] : []))
+    const windows = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "kroemer-window" ? [p] : []))
+    expect(strips.length).toBeGreaterThan(0)
+    expect(windows.length).toBeGreaterThan(30)
+    expect(strips.flatMap((s) => windows.filter((w) => w.edge === s.edge && w.u1 > s.u0 && w.u0 < s.u1))).toEqual([])
+    // The toy racks stand on the pavement outside the footprint, past the canopy's front edge.
+    const racks = parts.flatMap((p) => (p.kind === "sprite" && p.name === "goods-rack" ? [p] : []))
+    expect(racks.length).toBeGreaterThan(0)
+    for (const r of racks) {
+      const [x, y] = toWorld(kroemer.frame, r.u, r.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      expect(-toLocal(w4.frame, x, y)[1]).toBeGreaterThan(canopy.depth + 0.3)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

@@ -187,6 +187,11 @@ export const MATERIAL_FILES = [
   "sunstyle-glass",
   "sunstyle-door",
   "sunstyle-bay",
+  "kroemer-sign",
+  "kroemer-glass",
+  "kroemer-door",
+  "kroemer-window",
+  "kroemer-stripe",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

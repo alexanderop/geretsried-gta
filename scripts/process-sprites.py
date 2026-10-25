@@ -860,6 +860,33 @@ for name in ["sunstyle-glass", "sunstyle-door", "sunstyle-bay"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Spielwaren Krömer (Sudetenstraße 20): the white sign with blue "Spielwaren" and red "Krömer", cut out of its magenta
+# margin (opaque, stretched square; the wallSign gives it back its aspect), the blue-framed shop window and door, the
+# upper floors' window with its yellow lintel, and the blue stairwell strip (its white wall margins cropped off).
+for name in ["kroemer-sign"]:
+    src = find(name)
+    if src is not None:
+        im = Image.open(src).convert("RGB")
+        a = np.asarray(im).astype(int)
+        board = ~((a[..., 0] > 200) & (a[..., 1] < 80) & (a[..., 2] > 200))
+        ys, xs = np.nonzero(board)
+        im = im.crop((xs.min() + 2, ys.min() + 2, xs.max() - 1, ys.max() - 1))
+        im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+        print(f"{name}.webp", im.size)
+for name in ["kroemer-glass", "kroemer-door", "kroemer-window"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+stripe = find("kroemer-stripe")
+if stripe is not None:
+    im = Image.open(stripe).convert("RGB")
+    a = np.asarray(im).astype(int)
+    blue = (a[..., 2] > 120) & (a[..., 0] < 90) & (a[..., 1] < 120)
+    xs = np.nonzero(blue.mean(axis=0) > 0.5)[0]
+    im.crop((xs.min(), 0, xs.max() + 1, im.height)).resize((256, 512), Image.LANCZOS).save(OUT / "kroemer-stripe.webp", "WEBP", quality=90)
+    print("kroemer-stripe.webp", xs.min(), xs.max())
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
