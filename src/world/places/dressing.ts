@@ -60,7 +60,8 @@ export type Part =
    * that material times `colour` (an awning's fabric), repeated every
    * `depth` meters along the wall, the image's top at the wall. `fascia` hangs a board `h` meters deep round its
    * three outer sides (a free-standing shop canopy's; a wallSign with `out` = depth puts lettering on its front);
-   * `posts` stand under its outer corners and about every `every` meters along its front, never solid.
+   * `posts` stand under its outer corners and about every `every` meters along its front, `side` meters square (thin
+   * steel posts without it), never solid.
    */
   | {
       readonly kind: "canopy"
@@ -72,7 +73,7 @@ export type Part =
       readonly colour: Rgba
       readonly texture?: MaterialName
       readonly fascia?: { readonly h: number; readonly colour: Rgba }
-      readonly posts?: { readonly every: number; readonly colour: Rgba }
+      readonly posts?: { readonly every: number; readonly colour: Rgba; readonly side?: number }
     }
   /**
    * A sign painted on the roof, for the top-down camera to tell shops apart: the material over the rectangle u0..u1

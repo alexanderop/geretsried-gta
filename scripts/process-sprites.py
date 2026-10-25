@@ -665,6 +665,35 @@ if front is not None:
     Image.open(front).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "takko-front.webp", "WEBP", quality=90)
     print("takko-front.webp")
 
+# Orterer Getränkemarkt (Sudetenstraße 29a): the round-topped Orterer board keyed off magenta and cropped, stretched
+# square like the Takko panel; one bay of the shaded arcade with crates in front of the glazing (opaque); a row of crates
+# on a pallet seen from above (a prop, keyed and cropped like the trolleys). The white pier under the board is a
+# window-free patch of the white render facade, so it matches the band over it.
+sign = find("orterer-logo")
+if sign is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(sign))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(sign).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("orterer-logo aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "orterer-logo.webp", "WEBP", quality=92)
+    print("orterer-logo.webp")
+arcade = find("orterer-arcade")
+if arcade is not None:
+    Image.open(arcade).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "orterer-arcade.webp", "WEBP", quality=90)
+    print("orterer-arcade.webp")
+crates = find("crate-stack")
+if crates is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(crates)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "crate-stack.webp", "WEBP", quality=90)
+    print("crate-stack.webp", im.size)
+if (OUT / "facade-render.webp").exists() and not (OUT / "orterer-pier.webp").exists():
+    Image.open(OUT / "facade-render.webp").convert("RGB").crop((200, 50, 310, 230)).resize((512, 512), Image.LANCZOS).save(OUT / "orterer-pier.webp", "WEBP", quality=88)
+    print("orterer-pier.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

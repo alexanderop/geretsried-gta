@@ -1,4 +1,5 @@
 import { BALCONY_DEPTH, FOUR_BALCONY_STOREYS, WHITE_RENDER, balconies, onRoof } from "./am-stern.ts"
+import type { MaterialName, Rgba } from "#/render/scene/mesh.ts"
 import type { Part, PlaceDressing } from "./dressing.ts"
 
 /**
@@ -31,6 +32,21 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * with dark letters sits on that band over the unit's middle bay; SE of the glazing a white pier carries Orterer's round
  * logo before the open arcade (B3-5). Guesses: where the glazing ends (u 31.2, three 3.2 m bays; Orterer's pier takes it
  * from there), the panel's spot over the middle bay and its size (2.4 × 0.9 m, read off 01 against the 3 m glazing).
+ *
+ * Orterer Getränkemarkt (B3-5), the S corner, from Street View (reference/orterer-am-stern/01–03, takko/01): SE of
+ * Takko's glazing a plain white pier carries the round-topped Orterer board (red rays over a half sun, blue "Orterer",
+ * "Getränke-Märkte") at the height of the TAKKO panel; then the corner is open, an arcade under the upper storeys with
+ * a grey square pillar at the corner, drink crates stacked inside. The arcade turns the corner and runs along the SE
+ * end (wall 1, u 0 at the S corner, the passage to the car park): grey square pillars about 4 m apart under a white
+ * beam with a small Orterer board, the shop's glazing set back behind them with crates in front (03). Drawn on the same
+ * line as denns and Takko on wall 0 (BALCONY_DEPTH out); the solid stays OSM's outline, so the arcade is relief: the
+ * pillars are canopy posts (never solid) and the recess behind them a texture on the wall. On wall 1 the beam stands
+ * only 0.6 m out: the synthetic building -156 (a 3.9 × 12.6 m flat box the map puts 0.7–1.2 m off wall 1, where 03
+ * shows open pavement) is left as it is (B3-0: "don't dress it"), and the posts stay clear of it. Guesses: the pier's
+ * width (u 31.2–35.4) and so the corner opening's (to the corner, 8.1 m), the board's size (1.27 × 1.3 m) and height,
+ * the wall-1 arcade's length (the Sudetenstraße block's 16 m end), pillar size (0.45 m) and spacing, the beam's depth on
+ * wall 1, the small board's spot, the crate rows' spots. Not built: the blue "1880" box and the poster column on the
+ * verge (street furniture, not the shop's), the door (not seen).
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
@@ -50,14 +66,28 @@ const TAKKO_SIGN_W = TAKKO_SIGN_H * 2.67
 const TAKKO_SIGN_Z0 = 3.35
 const TAKKO_SIGN_MID = (TAKKO_GLASS[0] + TAKKO_GLASS[1]) / 2
 
+/** Orterer: the white pier SE of Takko's glazing, then the open corner of the arcade to the S corner (both guesses). */
+const ORTERER_PIER = [TAKKO_GLASS[1], 35.4] as const
+const ORTERER_CORNER = [ORTERER_PIER[1], 43.5] as const
+/** The round-topped board on the pier, 0.98 times as wide as tall (the cropped Codex board), at the TAKKO panel's height. */
+const ORTERER_LOGO_H = 1.3
+const ORTERER_LOGO_W = ORTERER_LOGO_H * 0.98
+const ORTERER_LOGO_Z0 = 2.95
+const ORTERER_LOGO_MID = (ORTERER_PIER[0] + ORTERER_PIER[1]) / 2
+/** The arcade along wall 1: the Sudetenstraße block's SE end, its beam 0.6 m out (clear of building -156), grey pillars. */
+const ARCADE_1 = [0, 15.9] as const
+const ARCADE_1_OUT = 0.6
+const PILLAR: Rgba = [150, 152, 155, 255]
+const PILLAR_SIDE = 0.45
+
 /** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
 const SHOP_OUT = BALCONY_DEPTH
 const BAND_Z0 = 3.2
 const BAND_TOP = FOUR_BALCONY_STOREYS[0] - 0.1
 
-/** `n` wallSigns of `texture` side by side on wall 0 from u0 to u1, from the ground up to z1, on the shop front's line. */
-const row = (texture: "denns-front" | "denns-cladding" | "takko-front", [u0, u1]: readonly [number, number], n: number, z1: number): ReadonlyArray<Part> =>
-  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge: 0, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out: SHOP_OUT }))
+/** `n` wallSigns of `texture` side by side on wall `edge` from u0 to u1, from the ground up to z1, `out` off the wall (the shop front's line). */
+const row = (texture: MaterialName, [u0, u1]: readonly [number, number], n: number, z1: number, edge = 0, out = SHOP_OUT): ReadonlyArray<Part> =>
+  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out }))
 
 export const AM_STERN_WEST: PlaceDressing = {
   poi: "Takko Fashion",
@@ -109,5 +139,39 @@ export const AM_STERN_WEST: PlaceDressing = {
       z1: TAKKO_SIGN_Z0 + TAKKO_SIGN_H,
       out: SHOP_OUT + 0.03,
     },
+    // Orterer: the white pier under the band with the round-topped board on it, then the open corner: the band runs on
+    // as the beam over the opening on a grey pillar at the corner, the shaded arcade with its crates behind.
+    { kind: "canopy", edge: 0, u0: ORTERER_PIER[0], u1: ORTERER_PIER[1], z: BAND_TOP, depth: SHOP_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER } },
+    { kind: "wallSign", texture: "orterer-pier", edge: 0, u0: ORTERER_PIER[0], u1: ORTERER_PIER[1], z0: 0, z1: BAND_Z0, out: SHOP_OUT },
+    {
+      kind: "wallSign",
+      texture: "orterer-logo",
+      edge: 0,
+      u0: ORTERER_LOGO_MID - ORTERER_LOGO_W / 2,
+      u1: ORTERER_LOGO_MID + ORTERER_LOGO_W / 2,
+      z0: ORTERER_LOGO_Z0,
+      z1: ORTERER_LOGO_Z0 + ORTERER_LOGO_H,
+      out: SHOP_OUT + 0.05,
+    },
+    {
+      kind: "canopy",
+      edge: 0,
+      u0: ORTERER_CORNER[0],
+      u1: ORTERER_CORNER[1],
+      z: BAND_TOP,
+      depth: SHOP_OUT,
+      colour: WHITE_RENDER,
+      fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER },
+      posts: { every: ORTERER_CORNER[1] - ORTERER_CORNER[0], colour: PILLAR, side: PILLAR_SIDE },
+    },
+    ...row("orterer-arcade", ORTERER_CORNER, 2, BAND_Z0 + 0.4, 0, 0.04),
+    // Round the corner along the passage (wall 1): the beam on grey pillars about 4 m apart, the small board on it, the
+    // set-back glazing with crates in four bays.
+    { kind: "canopy", edge: 1, u0: ARCADE_1[0], u1: ARCADE_1[1], z: BAND_TOP, depth: ARCADE_1_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER }, posts: { every: 4, colour: PILLAR, side: PILLAR_SIDE } },
+    ...row("orterer-arcade", ARCADE_1, 4, BAND_Z0 + 0.4, 1, 0.04),
+    { kind: "wallSign", texture: "orterer-logo", edge: 1, u0: 9.6, u1: 9.6 + 0.85 * 0.98, z0: 3.3, z1: 4.15, out: ARCADE_1_OUT + 0.03 },
+    // Crate rows on pallets in the corner opening, half out from under the beam so the play camera sees them (01, 03).
+    { kind: "sprite", name: "crate-stack", u: -2.4, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },
+    { kind: "sprite", name: "crate-stack", u: 0.6, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },
   ],
 }

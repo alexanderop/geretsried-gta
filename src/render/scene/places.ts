@@ -127,11 +127,12 @@ const canopy = (b: Builder, p: Extract<Part, { kind: "canopy" }>) => {
   }
   if (posts !== undefined) {
     const top = p.z - (fascia?.h ?? CANOPY_SLAB)
-    const n = -p.depth + FASCIA + POST
+    const half = posts.side === undefined ? POST : posts.side / 2
+    const n = -p.depth + FASCIA + half
     const count = Math.max(1, Math.round((p.u1 - p.u0) / posts.every))
     for (let k = 0; k <= count; k++) {
-      const u = p.u0 + FASCIA + POST + ((p.u1 - p.u0 - 2 * (FASCIA + POST)) * k) / count
-      box(b, square(u, n, POST), 0, top, posts.colour)
+      const u = p.u0 + FASCIA + half + ((p.u1 - p.u0 - 2 * (FASCIA + half)) * k) / count
+      box(b, square(u, n, half), 0, top, posts.colour)
     }
   }
   const rect = [p.u0, p.u1, -p.depth, 0] as const

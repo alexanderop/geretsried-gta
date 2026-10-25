@@ -397,6 +397,54 @@ describe("the registry on the real map", () => {
     expect(sign.out ?? 0).toBeGreaterThan(band?.kind === "canopy" ? band.depth : Infinity)
   })
 
+  it("dresses Orterer's S corner: the board on the pier after Takko, the open arcade round the corner, the passage left clear", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    const w0 = wallFrame(pts, 0)
+    const w1 = wallFrame(pts, 1)
+    expect(w0 && w1).toBeTruthy()
+    if (!w0 || !w1 || west === undefined) return
+    const signs = (edge: number, t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === edge && p.texture === t ? [p] : []))
+    // The pier starts where Takko's glazing ends; the board sits on it, over the glazing's height and under the balconies.
+    const pier = signs(0, "orterer-pier")[0]
+    const logo = signs(0, "orterer-logo")[0]
+    expect(pier && logo).toBeTruthy()
+    if (!pier || !logo) return
+    expect(Math.abs(pier.u0 - Math.max(...signs(0, "takko-front").map((g) => g.u1)))).toBeLessThan(0.01)
+    expect(logo.u0).toBeGreaterThan(pier.u0)
+    expect(logo.u1).toBeLessThan(pier.u1)
+    const lowest = Math.min(...parts.flatMap((p) => (p.kind === "balcony" && p.edge === 0 ? p.z : [])))
+    expect(logo.z1).toBeLessThan(lowest)
+    // The open corner runs from the pier to the S corner, on grey pillars; the arcade turns it onto wall 1.
+    const arcade0 = signs(0, "orterer-arcade")
+    expect(Math.min(...arcade0.map((a) => a.u0))).toBeCloseTo(pier.u1, 2)
+    expect(Math.max(...arcade0.map((a) => a.u1))).toBeGreaterThan(w0.length - 0.2)
+    const canopies = (edge: number) => parts.flatMap((p) => (p.kind === "canopy" && p.edge === edge && p.posts !== undefined ? [p] : []))
+    expect(canopies(0).length).toBe(1)
+    const beam = canopies(1)[0]
+    expect(beam?.u0).toBe(0)
+    expect(signs(1, "orterer-arcade").length).toBeGreaterThan(2)
+    // The passage stays as it was: the beam's pillars stay off the synthetic building -156 beside wall 1, and nothing new is solid
+    // (posts and sprites never are), so building -156 and the pavement round it are untouched.
+    const box = map.buildings.find((b) => b.id === -156)?.pts ?? []
+    expect(box.length).toBeGreaterThan(0)
+    const nearest = Math.min(...box.flatMap((_, i) => (i % 2 === 0 ? [-toLocal(w1.frame, box[i] ?? 0, box[i + 1] ?? 0)[1]] : [])))
+    expect(beam?.depth ?? Infinity).toBeLessThan(nearest)
+    // The crate rows stand in the corner opening, off Sudetenstraße's carriageway and sidewalk.
+    const half = (map.roads.find((r) => r.name === "Sudetenstraße" && r.kind === "tertiary")?.width ?? 0) / 2
+    const crates = parts.flatMap((p) => (p.kind === "sprite" && p.name === "crate-stack" ? [p] : []))
+    expect(crates.length).toBe(2)
+    for (const c of crates) {
+      expect(c.n - c.len / 2).toBeGreaterThan(half + 2.6)
+      const [x, y] = toWorld(west.frame, c.u, c.n)
+      const [u, out] = toLocal(w0.frame, x, y)
+      expect(u).toBeGreaterThan(pier.u1)
+      expect(u).toBeLessThan(w0.length)
+      expect(-out).toBeLessThan(2.5)
+    }
+  })
+
   it("dresses Rossmann's car-park front: letters over the glazing by the bend, under the balconies, chimneys on the roof", () => {
     const rossmann = at(293545707)
     const pts = map.buildings[rossmann?.building ?? -1]?.pts ?? []

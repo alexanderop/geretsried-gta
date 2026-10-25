@@ -815,7 +815,7 @@ Acceptance criteria:
 - [x] Driving into the car park from Sudetenstraße: pylon at the Ahorn corner, Penny canopy far left, Rossmann
       ahead across the car park, as in penny/06 and rossmann/03. (Layout from the docs and the LoD2 model; not
       compared with the photos.)
-- [ ] Along Sudetenstraße NW of the car park: denns · TAKKO · Orterer corner in that order, as in denns/01, takko/02.
+- [x] Along Sudetenstraße NW of the car park: denns · TAKKO · Orterer corner in that order, as in denns/01, takko/02.
       (The west block, its balconies and denns' roof sign stand; the three unit signs are B3-2, B3-4, B3-5.)
 - [x] From the top-down camera, EDEKA / PENNY / ROSSMANN / denns can be told apart by roof signs.
 - [x] Car park drivable, pickups on it still reachable; Post van job and the #195 Orterer job unaffected;
@@ -1033,7 +1033,7 @@ Size: S
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
   block's).
 
-### B3-5 · Orterer Getränkemarkt, Sudetenstraße 29a (#80, shop) — Size: S — status: ref-done (partial)
+### B3-5 · Orterer Getränkemarkt, Sudetenstraße 29a (#80, shop) — Size: S — status: implemented (partial: the pier's and corner opening's widths, the board's size and height, the wall-1 arcade's length, pillar size and spacing and the beam's depth, the small board's and the crate rows' spots, and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: The drinks market at the west block's S corner: round red Orterer logo on the corner pier, an open arcade
 with grey pillars and stacked crates, and the passage through to the car park.
@@ -1045,9 +1045,42 @@ Spec (via #0b, inside B3-0):
   solid pillar posts; crate sprites. Keep the passage along the SE edge open. Synthetic building -156 (49 m²
   in the passage): what it is needs reference; don't dress it. Poster text: needs reference.
 Acceptance criteria:
-- [ ] Corner matches 01/03; player can walk through the passage. Orterer job (#195) unchanged; tests green.
+- [x] Corner matches 01/03; player can walk through the passage. Orterer job (#195) unchanged; tests green.
+      (Corner and arcade drawn as relief on the solid outline, so the passage is exactly as walkable as before.)
 Size: S
 ```
+
+**B3-5 as built** (`src/world/places/am-stern-west.ts`, after Takko on B3-0's west block; no roof sign, as B3-0 says):
+- **Sources.** `reference/orterer-am-stern/01–04` + `SOURCES.md` on disk and used: 01 for the pier, the board and the
+  open corner, 03 for the arcade along the SE end (grey square pillars, white beam with a small board, glazing set back,
+  crates), 02 (= takko/01) for the order. Heights from B3-0 / B3-2 (balconies from 4.5 m, the white band 3.2–4.4 m).
+  POI #80, its name and position untouched; town-jobs.ts / #195 not touched.
+- **Wall 0** (u 0 at the NW end): a plain white pier (`orterer-pier`, a window-free patch of the white render facade)
+  from Takko's end at u 31.2 to u 35.4 under the band, which now runs on over it; the round-topped Orterer board
+  (`orterer-logo`, 1.27 × 1.3 m, z 2.95–4.25) on it, at the TAKKO panel's height. Then the open corner to the S corner
+  (u 35.4–43.5): the band as the beam over it on a grey square pillar (0.45 m) at the corner, the shaded arcade
+  (`orterer-arcade`: glazing with crates in front, two bays) on OSM's wall 1.4 m behind, so the opening has real depth.
+  Pier, band and beam stand on the balconies' front line (`BALCONY_DEPTH`) like denns and Takko.
+- **Wall 1** (the passage, u 0 at the S corner): the beam 0.6 m out from u 0 to 15.9 (the Sudetenstraße block's end) on
+  five grey square pillars about 4 m apart, a small Orterer board on it at u 9.6, four arcade bays on the wall behind.
+- **Crates:** two rows of crates on pallets (`crate-stack` prop, top-down, 2.2 m) in the corner opening, half out from
+  under the beam so the play camera sees them.
+- **Generic engine change:** canopy `posts` got an optional `side` (meters square; without it the old thin steel posts),
+  so the arcade's pillars are square and chunky. Never solid, like every post.
+- **Passage untouched.** Nothing new is solid (posts and sprites never are), the footprint and building -156 are as they
+  were; places.test keeps wall 1's pillars clear of -156 and the crates off Sudetenstraße's carriageway and sidewalk.
+  Note: -156 (a 3.9 × 12.6 m flat box 0.7–1.2 m off wall 1, u 0.4–13) stands where 03 shows open pavement in front of
+  the arcade, and from the play camera it hides most of wall 1's arcade; left as it is (B3-0: "don't dress it").
+- **Sprites:** Codex (three images), processed by `scripts/process-sprites.py` (board keyed and cropped, 0.98:1, stored
+  square; the arcade bay opaque; the crate row keyed and cropped like the trolleys).
+- **Guesses:** the pier's width (u 31.2–35.4) and so the corner opening's, the board's size and height, the wall-1
+  arcade's length, the pillars' size and spacing, the beam's depth on wall 1 (kept clear of -156), the small board's
+  spot, the crate rows' spots, the shop front's line. Not built: the blue "1880" box and the poster column on the verge
+  (street furniture), the poster text (unreadable), the door (not seen).
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
+  block's); with the west block skipped, all identical.
+- **Screenshots** (local): on foot at (4193, 4779) the crate rows at the corner; at (4200, 4772) the wall-1 beam with
+  the small board beside -156; `?compare=47.85712,11.48605,28` from above.
 
 ### B3-6 · Ahorn Apotheke, Sudetenstraße 41 (#67, pharmacy) — Size: S — status: ref-done
 ```
@@ -1671,7 +1704,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 116 | GG-Radsport | shop | 190 | ref-done |
 | 157 | Aphrodite-aestetic | shop | 190 | ref-done |
 | 15 | TEDi | shop | 205 | ref-done |
-| 80 | Orterer Getränkemarkt | shop | 221 | ref-done (partial) |
+| 80 | Orterer Getränkemarkt | shop | 221 | implemented (partial) |
 | 81 | Takko Fashion | shop | 223 | implemented (partial) |
 | 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
 | 134 | B&L Hairstyling | shop | 253 | ref-done |
@@ -2018,7 +2051,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | ref-done | B4-4, inside B3-0 |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | ref-done | B4-1 |
-| 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | ref-done (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
+| 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | implemented (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | implemented (partial) | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo (needs facade reference) | B6b-1. Breslauer Weg 9; rental closes end 2026, THOMA Reisemobile stays (ask Alex) |
 | 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | ref-done | B4-3 |

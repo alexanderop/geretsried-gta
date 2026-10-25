@@ -150,6 +150,9 @@ export const MATERIAL_FILES = [
   "rossmann-front",
   "takko-sign",
   "takko-front",
+  "orterer-logo",
+  "orterer-pier",
+  "orterer-arcade",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -278,6 +281,7 @@ export const PROP_FILES = [
   "litter-bin",
   "disabled-bay",
   "trolley-row",
+  "crate-stack",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */
