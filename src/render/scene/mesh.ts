@@ -53,6 +53,10 @@ export const Material = {
   rehmausSign: 18,
   sparkasseSign: 19,
   sparkasseWindows: 20,
+  facadeRathaus: 21,
+  rathausTower: 22,
+  rathausDoor: 23,
+  rathausQuoins: 24,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -78,6 +82,10 @@ export const MATERIAL_FILES = [
   "rehmaus-sign",
   "sparkasse-sign",
   "sparkasse-windows",
+  "facade-rathaus",
+  "rathaus-tower",
+  "rathaus-door",
+  "rathaus-quoins",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

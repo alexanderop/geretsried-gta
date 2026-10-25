@@ -5,7 +5,7 @@ import { GameMap, type Road } from "#/map/types.ts"
 import { pointInPolygon } from "../geometry.ts"
 import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
-import { dressMap, resolvePlaces, type PlaceDressing } from "./dressing.ts"
+import { dressMap, resolvePlaces, towerFrame, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
 
 const road = (name: string, pts: Array<number>): Road => ({ kind: "residential", name, width: 6, oneway: false, pts, nodes: pts.filter((_, i) => i % 2 === 0).map((_, i) => i + 1) })
@@ -109,6 +109,7 @@ describe("the registry on the real map", () => {
   it("puts wall parts on walls the footprint has, towers inside it (the footprint is the solid)", () => {
     const wrong = places.flatMap(({ dressing, building, frame }) => {
       const pts = map.buildings[building]?.pts ?? []
+      const place = { dressing, building, frame }
       return dressing.parts.flatMap((part) => {
         if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony") {
           const wall = wallFrame(pts, part.edge)
@@ -116,7 +117,9 @@ describe("the registry on the real map", () => {
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
         }
         if (part.kind !== "tower") return []
-        const ring = rectRing(frame, part.rect)
+        const f = towerFrame(place, pts, part)
+        if (f === null) return [`${dressing.poi}: tower on wall ${part.edge}`]
+        const ring = rectRing(f, part.rect)
         return [0, 1, 2, 3].filter((k) => !pointInPolygon(ring[k * 2] ?? 0, ring[k * 2 + 1] ?? 0, pts)).map((k) => `${dressing.poi}: tower corner ${k} outside`)
       })
     })

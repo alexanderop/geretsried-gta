@@ -9,7 +9,7 @@
 | OSM building | way **92735882**: amenity=townhall, building=yes. 1066 m², bbox 36.8 × 48.6 m, main axis 122°, centroid (2608.7, 2841.0). Outline is an L / T shape with edges of 34.0, 21.3, 30.4+6.4, 33.1+15.4 and 15.6 m. **No levels or roof tags** → engine default 2 levels |
 | Engine roof colours (DOP40) | `#a68670`, `#997d6c`, `#e2c9bb` (brown/terracotta), pitched |
 | Street frame | **Karl-Lederer-Platz** (residential, 6.5 m), kerb point (2633.9, 2867.3), 36.2 m. Street bearing 217°; n bearing 307° (toward NW). Graslitzer Straße lies 32.7 m away on the other side. |
-| Status | **ref-done** |
+| Status | **implemented** (B1-3, `src/world/places/rathaus.ts`) |
 
 ## Images
 | File | What | Source |

@@ -28,6 +28,7 @@ import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps,
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 import type { Place, PlaceDressing } from "#/world/places/dressing.ts"
 import { placeBox, placeParts } from "./places.ts"
+import { hipFaces } from "./hip-roof.ts"
 
 export const CHUNK_M = 128
 export const STOREY_M = 3
@@ -39,7 +40,7 @@ const Z = { area: 0.02, water: 0.03, track: 0.035, footway: 0.04, sidewalk: 0.05
 /** Meters one texture tile covers: at the close camera a ground meter is about 70 screen pixels, so 512 px tiles must not cover much more than 6 m. */
 const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland: 30, lawn: 6, roof: 5, gravel: 6 } as const
 /** Width of a facade tile in meters, and its height: two storeys. */
-const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8, render: 6.4 }
+const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8, render: 6.4, rathaus: 6.4 }
 const FACADE_H = 2 * STOREY_M
 const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   block: Material.facadeBlock,
@@ -48,6 +49,7 @@ const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   industrial: Material.facadeIndustrial,
   ursula: Material.facadeUrsula,
   render: Material.facadeRender,
+  rathaus: Material.facadeRathaus,
 }
 
 const STREETS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
@@ -170,11 +172,11 @@ export const roofColors = (b: Building, nx: number, ny: number, d: number): { re
   return { sides: [best[0] ?? best[1] ?? base, best[1] ?? best[0] ?? base], pitched: true }
 }
 
-/** A place dressing's roof: one colour on both planes (the second in shade), pitched or flat as it says. */
+/** A place dressing's roof: one colour on both planes (the second in shade), pitched or flat as it says; a hipped roof is pitched. */
 const dressedRoof = (roof: { readonly sides: readonly [Rgba, Rgba]; readonly pitched: boolean }, dress: PlaceDressing | undefined) => {
   const over = dress?.roof
   if (over === undefined) return roof
-  const pitched = over.pitched ?? roof.pitched
+  const pitched = over.hip !== undefined || (over.pitched ?? roof.pitched)
   const c = over.colour
   return { sides: c === undefined ? roof.sides : ([c, pitched ? scale(c, 0.8) : c] as const), pitched }
 }
@@ -263,8 +265,12 @@ export class Scene {
     }
     map.buildings.forEach((b, i) => {
       if (b.canopy === true) return
-      const walls = boxOf(b.pts, wallHeight(b.levels) * SHADOW_PER_M)
       const place = this.places.get(i)
+      const hip = place?.dressing.roof?.hip
+      const bare = boxOf(b.pts)
+      // A hipped roof rises at most half the footprint's narrower side over the eaves.
+      const rise = hip === undefined ? 0 : (Math.min(bare.maxX - bare.minX, bare.maxY - bare.minY) / 2) * Math.tan((hip * Math.PI) / 180)
+      const walls = boxOf(b.pts, (wallHeight(b.levels) + rise) * SHADOW_PER_M)
       const parts = place === undefined ? null : placeBox(place, b.pts)
       const box = parts === null ? walls : { minX: Math.min(walls.minX, parts.minX), minY: Math.min(walls.minY, parts.minY), maxX: Math.max(walls.maxX, parts.maxX), maxY: Math.max(walls.maxY, parts.maxY) }
       // Owned by the chunk of the walls' middle, as without parts.
@@ -569,8 +575,23 @@ export class Scene {
     const tile = pitched ? TILE.roof : TILE.gravel
     const layer = pitched ? Material.roofTiles : Material.roofGravel
     const vertex = (x: number, y: number, z: number, c: Rgba, mode: Mode) => m.vertex(x, y, z, (x * rx + y * ry) / tile, (x * nx + y * ny) / tile, c, mode, layer)
-    for (let t = 0; t + 2 < tris.length; t += 3) {
-      const tri = [tris[t], tris[t + 1], tris[t + 2]].flatMap((i) => [ring[(i ?? 0) * 2] ?? 0, ring[(i ?? 0) * 2 + 1] ?? 0])
+    const hip = dress?.roof?.hip
+    // A hipped roof: a plane rising from every wall, each lit by which way it faces; it casts its shadow from half the ridge's height.
+    let shadowH = h
+    if (hip !== undefined) {
+      const slope = Math.tan((hip * Math.PI) / 180)
+      const faces = hipFaces(ring)
+      for (const f of faces) {
+        const c = scale(sides[0], 0.7 + 0.3 * Math.max(0, -(f.out[0] * SHADOW_DIR[0] + f.out[1] * SHADOW_DIR[1])))
+        const ids = f.rise.map((r, i) => vertex(f.poly[i * 2] ?? 0, f.poly[i * 2 + 1] ?? 0, h + r * slope, c, Mode.detail))
+        for (let i = 1; i + 1 < ids.length; i++) m.tri(ids[0] ?? 0, ids[i] ?? 0, ids[i + 1] ?? 0)
+      }
+      shadowH = h + (Math.max(0, ...faces.flatMap((f) => f.rise)) * slope) / 2
+    }
+    // Otherwise the roof at the eaves, split along the ridge.
+    const flatTris = hip === undefined ? tris : []
+    for (let t = 0; t + 2 < flatTris.length; t += 3) {
+      const tri = [flatTris[t], flatTris[t + 1], flatTris[t + 2]].flatMap((i) => [ring[(i ?? 0) * 2] ?? 0, ring[(i ?? 0) * 2 + 1] ?? 0])
       if (sides[0] === sides[1]) {
         fan(m, tri, (x, y) => vertex(x, y, h, sides[0], Mode.detail))
         continue
@@ -587,8 +608,8 @@ export class Scene {
     }
 
     m.target = "shadow"
-    const ox = SHADOW_DIR[0] * h * SHADOW_PER_M
-    const oy = SHADOW_DIR[1] * h * SHADOW_PER_M
+    const ox = SHADOW_DIR[0] * shadowH * SHADOW_PER_M
+    const oy = SHADOW_DIR[1] * shadowH * SHADOW_PER_M
     const s = (x: number, y: number) => m.vertex(x, y, Z.shadow, 0, 0, SHADOW, Mode.color, 0)
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n

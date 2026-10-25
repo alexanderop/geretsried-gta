@@ -60,9 +60,11 @@ Storeys come from OSM where it has them; otherwise from the building type (`buil
 place listed in `index.ts`, keyed by the exact POI name and the street it faces. The OSM footprint
 (`osmBuildingId`) stays the building and the solid and takes the overrides: storeys (applied when the
 map loads, and baked by `pnpm map`), a facade texture, a wall colour, horizontal wall bands (textured or
-plain, like a timber fascia), the roof colour and pitch. Parts are drawn on top and never solid
+plain, like a timber fascia), the roof colour and pitch, and `roof.hip`: a real hipped roof at that pitch, a plane
+rising from every wall with hips, valleys and a ridge per wing (`src/render/scene/hip-roof.ts`), instead of the flat
+roof at the eaves. Parts are drawn on top and never solid
 (`src/render/scene/places.ts`): signs, ground-floor arcades and balcony stacks on a wall of the footprint, square towers
-with a pyramid roof (kept inside the footprint by a test), prop sprites on poles. Pflegeheim St. Ursula
+with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles. Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
 `facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
 `wallColour` gives a building any render colour instead of darkening the yellow plaster.
@@ -233,6 +235,11 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   it, the price sign at the street, an air and water post, and the kiosk gets a shop front. Pump islands
   explode like GTA 2's: shoot or ram one (over 7 m/s) and it catches, burns for a moment and goes up with
   a car-sized blast and a pool of burning petrol, setting off the next island and the cars beside it.
+- **Rathaus Geretsried** (`src/world/places/rathaus.ts`), Karl-Lederer-Platz 1, the hub of the Mercedes G and Taxi
+  jobs: an L of two storeys in cream render with ochre window surrounds, teal and white striped shutters and ochre
+  pilasters at the corners, under a red-brown hipped roof; in the middle of its plaza front the square clock tower
+  rises 3 m over the ridges to a dark shingled pyramid, the clock over "RATHAUS" on its face to the plaza and the
+  arched door with grey and white chevron leaves at its foot.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

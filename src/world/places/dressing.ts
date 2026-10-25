@@ -19,7 +19,7 @@
 import type { GameMap } from "#/map/types.ts"
 import type { Facade } from "#/render/scene/facade.ts"
 import type { MaterialName, PropName, Rgba } from "#/render/scene/mesh.ts"
-import { streetFrame, type Frame, type Rect } from "../frame.ts"
+import { streetFrame, wallFrame, type Frame, type Rect } from "../frame.ts"
 
 /**
  * A horizontal band of the walls, z0..z1 meters above the ground, in its own
@@ -56,11 +56,15 @@ export type Part =
   /**
    * A square tower on `rect` (street frame, inside the footprint): walls up
    * to `h`, a pyramid roof `roofH` high, corner quoins in `trim`, a post with
-   * a cross bar on top in `finial`, lettering or a clock on its faces.
+   * a cross bar on top in `finial`, lettering or a clock on its faces. With
+   * `edge`, `rect` is in that wall's frame instead (u from its left end, n
+   * into the building), so the tower stands square to a wall the street
+   * does not run along; side 0 then faces out of that wall.
    */
   | {
       readonly kind: "tower"
       readonly rect: Rect
+      readonly edge?: number
       readonly h: number
       readonly roofH: number
       readonly colours: { readonly wall: Rgba; readonly roof: Rgba; readonly trim?: Rgba; readonly finial?: Rgba }
@@ -83,13 +87,21 @@ export type PlaceDressing = {
   /** Multiplies the facade texture on every wall (without the random tint other buildings get). */
   readonly wallColour?: Rgba
   readonly bands?: ReadonlyArray<WallBand>
-  /** Both roof planes in one colour (the shaded one darker), and/or pitched or flat with a parapet. */
-  readonly roof?: { readonly colour?: Rgba; readonly pitched?: boolean }
+  /**
+   * Both roof planes in one colour (the shaded one darker), and/or pitched or flat with a parapet. `hip` (degrees)
+   * raises a pitched roof into a hipped one: a plane rising from every wall at that pitch, ridges along the wings,
+   * valleys in the inner corners (render/scene/hip-roof.ts), instead of the flat roof at the eaves.
+   */
+  readonly roof?: { readonly colour?: Rgba; readonly pitched?: boolean; readonly hip?: number }
   readonly parts: ReadonlyArray<Part>
 }
 
 /** A dressing found on the map: the index of its footprint in `map.buildings` and its street frame. */
 export type Place = { readonly dressing: PlaceDressing; readonly building: number; readonly frame: Frame }
+
+/** The frame a tower's `rect` is in: its wall's with `edge`, else the place's street frame; null for a wall the footprint lacks. */
+export const towerFrame = (place: Place, pts: ReadonlyArray<number>, tower: Extract<Part, { kind: "tower" }>): Frame | null =>
+  tower.edge === undefined ? place.frame : (wallFrame(pts, tower.edge)?.frame ?? null)
 
 /** How far from the footprint's middle the named POI may be and still be this place's. */
 const POI_REACH_M = 80

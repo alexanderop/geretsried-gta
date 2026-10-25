@@ -3,7 +3,7 @@ import { polygonArea } from "#/map/build.ts"
 import { distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
 
 /** Wall textures: the four facadeFor picks, and the ones only a place dressing (world/places) asks for. */
-export type Facade = "block" | "house" | "shop" | "industrial" | "ursula" | "render"
+export type Facade = "block" | "house" | "shop" | "industrial" | "ursula" | "render" | "rathaus"
 
 /** Places with a shop front; police, schools, doctors and town halls look like any other block. */
 const SHOP_FRONTS: ReadonlySet<PoiKind> = new Set(["supermarket", "drugstore", "bakery", "pharmacy", "bank", "food", "post", "shop", "fuel"])

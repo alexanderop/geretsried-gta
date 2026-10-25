@@ -111,3 +111,34 @@ describe("a dressed place", () => {
     }
   })
 })
+
+describe("a hipped roof and a tower on a wall", () => {
+  // The shop (30 by 15 m, chunk 0) hipped at 45°: its ridge 7.5 m over the 6 m eaves. A tower stands square to its
+  // wall 2 (along y = 75, seen from the south: left end (20, 75), u east, n north into the building).
+  const shop: PlaceDressing = {
+    poi: "Shop",
+    street: "Main",
+    osmBuildingId: 1,
+    roof: { hip: 45 },
+    parts: [{ kind: "tower", edge: 2, rect: [10, 14, 1, 5], h: 16, roofH: 4, colours: { wall: [233, 222, 205, 255], roof: [90, 80, 65, 255] } }],
+  }
+  const hipped = new Scene(makeWorld(map, [shop]), noCrowns, [])
+  const vs = vertices(hipped.build(0))
+  const roof = vs.filter((v) => v.mode === Mode.detail)
+
+  it("raises the roof from the eaves to the ridge over the footprint, and changes no other chunk", () => {
+    expect(Math.min(...roof.map((v) => v.z))).toBeCloseTo(6)
+    expect(Math.max(...roof.map((v) => v.z))).toBeCloseTo(13.5)
+    for (const v of roof) expect(v.x >= 20 - 1e-3 && v.x <= 50 + 1e-3 && v.y >= 60 - 1e-3 && v.y <= 75 + 1e-3).toBe(true)
+    // The ridge runs along the middle, y = 67.5, between the hips 7.5 m in from the ends.
+    for (const v of roof.filter((r) => near(r.z, 13.5))) {
+      expect(near(v.y, 67.5)).toBe(true)
+      expect(v.x >= 27.5 - 1e-3 && v.x <= 42.5 + 1e-3).toBe(true)
+    }
+    for (const key of [1, 2, 3]) expect(bytes(hipped.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
+  })
+
+  it("stands the tower in its wall's frame: its tip over (32, 72)", () => {
+    expect(vs.some((v) => near(v.x, 32) && near(v.y, 72) && near(v.z, 20))).toBe(true)
+  })
+})

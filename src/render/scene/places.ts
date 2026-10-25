@@ -7,7 +7,7 @@
 import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
 import { boxOf, type Box } from "#/world/geometry.ts"
 import { rectRing, square, toWorld, wallFrame } from "#/world/frame.ts"
-import type { Part, Place, TowerFace } from "#/world/places/dressing.ts"
+import { towerFrame, type Part, type Place, type TowerFace } from "#/world/places/dressing.ts"
 import { SHADOW, WHITE, Z_SHADOW, box, boxShadow, face, flat, light, shade, sprite, vertex, worldDir, type Builder } from "./frame-mesh.ts"
 import { Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type SpriteBoxes } from "./mesh.ts"
 
@@ -181,7 +181,10 @@ const propSprite = (b: Builder, p: Extract<Part, { kind: "sprite" }>) => {
 /** Every part of a place; `pts` is its footprint's outline. */
 export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts: ReadonlyArray<number>) => {
   for (const part of place.dressing.parts) {
-    if (part.kind === "tower") tower({ m, f: place.frame, boxes }, part)
+    if (part.kind === "tower") {
+      const f = towerFrame(place, pts, part)
+      if (f !== null) tower({ m, f, boxes }, part)
+    }
     else if (part.kind === "sprite") propSprite({ m, f: place.frame, boxes }, part)
     else {
       const wall = wallFrame(pts, part.edge)
@@ -197,7 +200,10 @@ export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts
 /** Where a place's parts and their shadows reach on the map; null without parts. */
 export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null => {
   const rings = place.dressing.parts.flatMap((part): Array<readonly [ReadonlyArray<number>, number]> => {
-    if (part.kind === "tower") return [[rectRing(place.frame, [part.rect[0] - EAVES, part.rect[1] + EAVES, part.rect[2] - EAVES, part.rect[3] + EAVES]), part.h + part.roofH + 1.4]]
+    if (part.kind === "tower") {
+      const f = towerFrame(place, pts, part)
+      return f === null ? [] : [[rectRing(f, [part.rect[0] - EAVES, part.rect[1] + EAVES, part.rect[2] - EAVES, part.rect[3] + EAVES]), part.h + part.roofH + 1.4]]
+    }
     if (part.kind === "sprite") return [[rectRing(place.frame, square(part.u, part.n, part.len)), part.z]]
     const wall = wallFrame(pts, part.edge)
     if (wall === null) return []

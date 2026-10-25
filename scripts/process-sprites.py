@@ -350,6 +350,34 @@ if windows is not None:
     Image.open(windows).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "sparkasse-windows.webp", "WEBP", quality=90)
     print("sparkasse-windows.webp")
 
+# Rathaus Geretsried: its facade (cream render, ochre window surrounds, teal and white striped shutters; two bays by two
+# storeys like facade-house, painted seamless, so only resized), the tower's clock over "RATHAUS" (opaque, 4:5, stored
+# square), the arched door with its chevron leaves (keyed and squared like rehmaus-sign), and an ochre corner
+# pilaster: the quoin sheet keyed, cut to the short blocks' width so both walls at a corner can use it, stored square.
+facade = find("facade-rathaus")
+if facade is not None:
+    Image.open(facade).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "facade-rathaus.webp", "WEBP", quality=88)
+    print("facade-rathaus.webp")
+tower = find("rathaus-tower")
+if tower is not None:
+    Image.open(tower).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "rathaus-tower.webp", "WEBP", quality=90)
+    print("rathaus-tower.webp")
+door = find("rathaus-door")
+if door is not None:
+    im = key_magenta_fast(Image.open(door))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (219, 178, 103, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "rathaus-door.webp", "WEBP", quality=90)
+    print("rathaus-door.webp")
+quoins = find("rathaus-quoins")
+if quoins is not None:
+    im = key_magenta_fast(Image.open(quoins))
+    left, top, right, bottom = im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox()
+    im = im.crop((left + 4, top, left + round((right - left) * 0.58), bottom))
+    im.convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "rathaus-quoins.webp", "WEBP", quality=90)
+    print("rathaus-quoins.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

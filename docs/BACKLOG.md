@@ -250,7 +250,7 @@ Size: S
   leaning less than the lighter N part, so the S half may be lower (the single-storey podium, or a lower wing).
   Not modelled: the whole footprint is 4 storeys, as the prompt says.
 
-### B1-3 · Rathaus Geretsried (#174, civic) — Size: M — status: ref-done
+### B1-3 · Rathaus Geretsried (#174, civic) — Size: M — status: implemented
 ```
 Goal: Turn the Rathaus at Karl-Lederer-Platz 1 into the town's landmark: cream two-storey wings with ochre
 quoins, striped shutters, red-brown hip roof and the square clock tower with "RATHAUS" under the clock.
@@ -267,11 +267,48 @@ Spec (via #0b):
   verify against the aerial (04) and Commons 05/08 before placing; the likely position is mid-facade on the plaza (ESE) side.
 - Plaza in front: red-brick pavers with grey cobble edging (ground material), only where the photosphere shows it.
 Acceptance criteria:
-- [ ] From above, the brown hip roof plus a distinctly darker pyramid tower roof is recognisable as the Commons photos.
-- [ ] Driving past, the cream/ochre walls with striped shutters and the tower's clock + "RATHAUS" read like 09.
-- [ ] Payphone + Mercedes G + Taxi job pickups still work and are reachable; pnpm test + typecheck green.
+- [x] From above, the brown hip roof plus a distinctly darker pyramid tower roof is recognisable as the Commons photos.
+- [x] Driving past, the cream/ochre walls with striped shutters and the tower's clock + "RATHAUS" read like 09.
+- [x] Payphone + Mercedes G + Taxi job pickups still work and are reachable; pnpm test + typecheck green.
 Size: M
 ```
+
+**B1-3 as built** (`src/world/places/rathaus.ts`) and gotchas for B1-4…:
+- **Levels 2, `facade: "rathaus"`, `wallColour` white:** a new facade texture, `facade-rathaus` (Codex, `facade-house` as
+  the layout reference: two bays by two storeys, cream render, ochre window surrounds with segmental hoods, teal and
+  white diagonal striped shutters). Without a facade the engine made the Rathaus corrugated metal (over 800 m², two
+  storeys → `industrial`). The painted render is the cream, so `wallColour` is white, not a tint.
+- **New generic roof option `roof.hip` (degrees)**, `src/render/scene/hip-roof.ts`: a real hipped roof over any
+  footprint, a plane rising from every wall (straight-skeleton style: hips at outer corners, a valley at the inner
+  one, a ridge per wing), cut into convex pieces along every line where two walls are equally far, so each piece is
+  one flat plane; each plane is lit by the way it faces (×0.7…1), the building's shadow is cast from half the ridge,
+  and the chunk box grows by the rise. A wall owns a point when it is the nearest wall whose wedge holds it: at an
+  outer corner the points nearer to it than the neighbour, at an inner corner the points *farther* (that bisector is
+  the valley). Tests: `hip-roof.test.ts` (box, both windings, L valley, U and the real Rathaus outline with no step;
+  its walls 3 and 4 are parallel but 4 cm apart, a 4 cm step) and `places.test.ts` (ridge height, no other chunk).
+  **Every other building is unchanged:** all 2112 chunk meshes of the real map hashed with the previous registry,
+  at HEAD and with this change: identical; with the Rathaus added, only chunk 988 (its own) differs. Here 42°:
+  ridges about 7 m over the 6 m eaves, about 323 roof pieces.
+- **New tower option `edge`:** `rect` in that wall's frame (u from its left end, n into the building) instead of the
+  street frame (`towerFrame` in dressing.ts; places.test checks it inside the footprint the same way). The street
+  frame here runs about 5.5° off wall 5, so a street-frame tower would stand askew to the front.
+- **Tower:** on wall 5, `rect` [9.5, 14.5, 0.35, 5.35] (centred on the plaza front: walls 6 + 5 are 36.8 m from the
+  S corner, and wall 6 is the first 6.4 m), h 16 (3 m over the ridges), pyramid 4.5 m #5a5041, ochre quoins, a
+  finial. Its face 0 carries `rathaus-tower` (Codex: ornamental clock over "RATHAUS", opaque, 4:5 stored square) at
+  z 10.4–15.3. The tower stands *inside* wall 5 (the footprint is the solid), so the building's wall hides its lower
+  front: the door and quoins at its foot are wall signs on wall 5 instead (`rathaus-door` keyed like
+  `rehmaus-sign`, u 10.7–13.3, z 0–3.25; two `rathaus-quoins` strips at u 9.5–10.1 and 13.9–14.5).
+- **Pilasters:** `rathaus-quoins` (the Codex quoin sheet keyed and cut to the short blocks' width, so the same strip
+  works on both walls of a corner), 0.6 m × 6 m wall signs at both walls of each outer corner (points 0, 1, 3, 5,
+  7). Wall i's u = 0 is point i + 1 (the left end seen from outside), so the corner at point i is at u = its length.
+- **What the camera shows:** from Karl-Lederer-Platz (stand about (2638, 2849)) the tower's plaza face leans into
+  the left of the screen with the clock and "RATHAUS" readable (sideways); from above the hip roof's planes and the
+  dark pyramid read. The south wing faces SSW and only shows at the top screen edge.
+- **Where the tower stands is still a guess:** the DOP40 shows no clear tower square; a light notch at wall 5's S
+  part and a dark spot at the inner corner are the only hints. The doc's "mid-facade on the plaza side" was kept.
+- **Not built:** the red-brick plaza (the aerial shows light paving in front of wall 5 and the photosphere that shows
+  the brick was not on disk), the bay window on the gable block, the 3-storey gable block (the whole outline is 2
+  storeys). The 3.8 m annex at the N end (way 1236633759) keeps the engine's look.
 
 ### B1-4 · Maria Hilf (#232, church) — Size: S — status: ref-done (partial; tower/entrance side needs reference)
 ```
@@ -469,6 +506,8 @@ Spec (via #0b):
   (4185.3, 4772.5). Units NW → SE: Denns (B3-2) · Takko (B3-4) · Orterer (B3-5, S corner + open arcade with
   grey pillars, passage to the car park). Photos: ground + 4 balcony storeys (engine 2). The outline also holds
   a north block and a single-storey link with skylights (satellite): split or per-part height, ask first.
+  Marienburgweg face = NW edge (4178.8, 4704.7) → (4149.3, 4748), units N → S: GG Radsport (B4-4) · Aphrodite
+  (B4-5) · Nexial (B4-6); white wall, dark steel canopy.
 - Rossmann block, way 293545707 (Sudetenstr. 33): SW facade on the car park; ground + 2 balcony storeys = 3
   (engine 4), terracotta roof with chimneys (B3-3).
 - Penny block, way 822461881 (Sudetenstr. 39–43): NW facade on the car park, units NE → SW: PENNY canopy
@@ -603,15 +642,155 @@ Size: S
 ```
 
 
+### Batch 4: Am Stern small shops (decision)
+Same rules: **exterior only** via **#0b** (unit wall-signs on a shared facade). Eight shops have photos and get a
+dressing spec; three have none and stay **needs reference** with no look spec. Shops in the west complex
+(127872184) are dressed **inside B3-0**; the others sit on their own buildings along Sudetenstraße, SW side
+(Krömer, Sun Style + TEDi, B&L) or NE side (Woolworth), and can go in one PR "Sudetenstraße shop row, Stein".
+Flamingo and Fellomenal are in the Post block 119921780 (B2-2). Backhupferl is a counter inside EDEKA (B3-1).
+
+### B4-1 · TEDi, Sudetenstraße 26 (#15, shop) — Size: S — status: ref-done
+```
+Goal: Discount store under a grey canopy: two blue TEDi boxes over the door, goods racks on the pavement.
+Reference: docs/places/tedi-am-stern.md; reference/tedi-am-stern/01-street-front.png (key), 02, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "TEDi" (#15 at 4151.2, 4783.6). Way 120402837 (shared with Sun Style B4-7),
+  NE frontage (bearing 303°), SE part. Wall peach #afa187; grey canopy #575f62 along the frontage.
+- Two blue sign boxes #2955a1 with white "TEDi" over the entrance; goods-rack props in front.
+- Photos: ≥4 storeys (engine 2): keep levels unless #0b changes heights. Orange lower wall: needs reference.
+Acceptance criteria:
+- [ ] From Sudetenstraße the front matches 01 (canopy, two blue boxes, racks). Pavement stays walkable.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B4-2 · Woolworth, Sudetenstraße 27 (#166, shop) — Size: S — status: ref-done
+```
+Goal: Low white store at the Marienburgweg corner with big red WOOLWORTH letters over a glass front.
+Reference: docs/places/woolworth-am-stern.md; reference/woolworth-am-stern/01-street-front.png (key), 02, 04.
+Spec (via #0b):
+- POI "Woolworth" (#166 at 4138.3, 4716.7). Way 1385222318 (levels 1, flat, keep). Sign on the SW edge
+  (4096.1, 4695.4) → (4140.3, 4723.9), E end: white band #fdfdfe, red letters #fe635f (sunlit; exact brand red
+  needs reference). Glass strip under it. Car park in front stays drivable.
+Acceptance criteria:
+- [ ] From the car park the band + letters match 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-3 · B&L Hairstyling, Sudetenstraße 28 (#134, shop) — Size: S — status: ref-done
+```
+Goal: Hair salon opposite the Am Stern car park: black board with white "B&L HAIRSTYLING", logo panels in the
+windows, next to an insurance broker with blue "GE" window graphics.
+Reference: docs/places/bl-hairstyling.md; reference/bl-hairstyling/01-street-front.png (key), 03, 04 (02 = context).
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "B&L Hairstyling" (#134 at 4196.7, 4804.3). Way 119921782, NE edge
+  (4182, 4792.3) → (4228.1, 4822.2). Board #212529, white text; cream wall #9e937f, white window frames.
+- Optional neighbour sign "Versicherungsmakler Dimitrios Georgiadis". White vs cream wall parts inside one
+  outline: ask first. Photos: 4 storeys (engine 3).
+Acceptance criteria:
+- [ ] From the street the board + window panels match 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-4 · GG Radsport, Marienburgweg 25 (#116, shop) — Size: S — status: ref-done
+```
+Goal: Bike shop on the Marienburgweg side of the west complex: red fascia "GG Radsport", bikes on a rack,
+green A-board, steps to the door.
+Reference: docs/places/gg-radsport.md; reference/gg-radsport/01-street-front.png (key), 02, 03.
+Spec (via #0b, inside B3-0):
+- Street frame "Marienburgweg", POI "GG-Radsport" (#116 at 4174.6, 4715.9). Way 127872184, NW edge
+  (4178.8, 4704.7) → (4149.3, 4748), u ≈ 12 m. Red fascia #8c2027 + white italic text; red window panel;
+  dark canopy (shared with B4-5/B4-6). Props: bike rack + bikes, green A-board, blue wall box.
+Acceptance criteria:
+- [ ] From Marienburgweg the unit matches 01. Pavement stays walkable. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-5 · Aphrodite Aesthetic, Marienburgweg 25 (#157, shop) — Size: S — status: ref-done
+```
+Goal: Beauty studio with a dark fascia and gold script, full-height dark glazing, white wall, steps and hedge.
+Reference: docs/places/aphrodite-aestetic.md; reference/aphrodite-aestetic/01-street-front.png (key), 02, 03.
+Spec (via #0b, inside B3-0):
+- POI "Aphrodite-aestetic" (exact; sign says "Aphrodite Aesthetic") at 4170, 4726.8. NW edge of 127872184,
+  u ≈ 23 m. Fascia #191f27, gold text (hex needs reference); dark frames #1e2531; dark louvred canopy.
+Acceptance criteria:
+- [ ] From Marienburgweg the unit matches 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-6 · Nexial IT-Services (#114, shop) — Size: S — status: ref-done
+```
+Goal: IT service office at the Sudetenstraße end of the Marienburgweg face: white "nexial IT-SERVICES" panel
+high on the wall, dark insurance-agency fascia below, parking in front.
+Reference: docs/places/nexial.md; reference/nexial/01-street-front.png (key), 02.
+Spec (via #0b, inside B3-0):
+- POI "Nexial" at 4159, 4743.5. NW edge of 127872184, u ≈ 43 m (near the W corner): verify the face.
+  Upper panel #b0bdcd with dark/teal text; lower fascia #5b7088 "Württembergische Versicherungsagentur
+  Stricker & Reinhart". OSM says shop=hairdresser: wrong, do not add hairdresser props.
+Acceptance criteria:
+- [ ] Both signs readable as in 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-7 · Sun Style Bodystyling Studio, Sudetenstraße 24 (#169, shop) — Size: S — status: ref-done
+```
+Goal: Tanning studio with a black-and-gold "Sun Style" fascia on a glass canopy, white building with brown bay
+windows, insurance broker Kafka next door.
+Reference: docs/places/sun-style.md; reference/sun-style/01-street-front.png (key, Sep 2023), 02, 04.
+Spec (via #0b):
+- POI "Sun Style Bodystyling Studio" (#169 at 4125.7, 4764.7). Way 120402837 (shared with TEDi B4-1), NW end
+  of the NE frontage. Fascia #363540, gold text + sun logo (gold needs reference); white wall, bay cladding
+  #4b3f4a; glass canopy. Optional Kafka sign "Versicherungen · Finanzierungen · Kredite".
+- Unit order vs Kafka needs verification (OSM node order and photo disagree). White/peach parts in one outline:
+  per-part colour, ask first. Do not model the election poster in 01.
+Acceptance criteria:
+- [ ] From Sudetenstraße the fascia + canopy match 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-8 · Spielwaren Krömer, Sudetenstraße 20 (#170, shop) — Size: S — status: ref-done
+```
+Goal: Toy shop in a white block with blue stripes and yellow window lintels; white "Spielwaren Krömer" sign on a
+glass canopy with blue struts, toys outside.
+Reference: docs/places/spielwaren-kroemer.md; reference/spielwaren-kroemer/01-street-front.png (key, Sep 2023), 02, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Spielwaren Krömer" (#170 at 4094.6, 4741.4). Way 120402849, NE edge
+  (4117.4, 4755) → (4066.7, 4720.5), u ≈ 26 m. Wall #cdd1d4, stripes ≈ #59779d, lintels ≈ #b5a955 (new facade
+  texture: ask first). White sign panel, blue text (hex needs reference). Goods props outside.
+Acceptance criteria:
+- [ ] From Sudetenstraße the front matches 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B4-9 · Bäckerei Backhupferl (#5, bakery) — Size: S — status: todo (needs reference)
+```
+In-store bakery counter inside EDEKA Heininger & Dietz, Breslauer Weg 113 (way 189042651). No photo; batch 3
+EDEKA photos show no outside sign. Nothing to build until a photo shows one. See docs/places/backhupferl-sudetenstrasse.md.
+```
+
+### B4-10 · Flamingo Damenmode, Altvaterstraße 61 (#152, shop) — Size: S — status: todo (needs reference)
+```
+Clothes shop on the SE arm of the Post block 119921780 (B2-2), near the round plaza; Google satellite pin
+confirms the spot (post-filiale-571/04). No photo of the front: no look spec. See docs/places/flamingo-damenmode.md.
+```
+
+### B4-11 · Fellomenal Hundesalon, Altvaterstraße 61 (#158, shop) — Size: S — status: todo (needs reference, probably moved)
+```
+Dog groomer listed in OSM at the Post block (start_date 2024-09-16). Same business (same phone/e-mail) now
+lists Bahnhofstraße 27, Oberhaching-Deisenhofen. No photo. Ask whether to keep the POI before any work.
+See docs/places/fellomenal-hundesalon.md.
+```
+
+
 ## Priority list (all 234 POIs)
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | ref-done (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
-| 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | ref-done | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
+| 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | implemented | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
 | 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
 | 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = free-standing red canopy at the NE end of way 822461881's NW facade, facing the car park (corrected in batch 3; built in B3-0) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
@@ -686,7 +865,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | ref-done | B3-6; W corner of the Penny block, red A, pylon |
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | todo |  |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo |  |
-| 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo |  |
+| 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo | needs reference: counter inside EDEKA, no photo (B4-9) |
 | 98 | Arztpraxis Lewke | doctor | 3695.3, 4056.5 | 47.863519, 11.479543 | 664 | todo |  |
 | 106 | Bäckerei Manfred Burger | bakery | 4384.4, 5254.9 | 47.852742, 11.488782 | 720 | todo |  |
 | 23 | Bäckerei Lidl | bakery | 3376, 5874.7 | 47.847168, 11.475262 | 1375 | todo |  |
@@ -755,22 +934,22 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | todo |  |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | todo |  |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | todo |  |
-| 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | todo |  |
+| 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | ref-done | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo |  |
-| 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | todo |  |
-| 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | todo |  |
-| 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | todo |  |
-| 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | todo |  |
-| 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | todo |  |
-| 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | todo |  |
+| 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | ref-done | B4-2 |
+| 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
+| 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
+| 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | ref-done | B4-4, inside B3-0 |
+| 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
+| 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | ref-done | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | ref-done (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | ref-done | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo |  |
-| 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | todo |  |
+| 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | ref-done | B4-3 |
 | 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo |  |
 | 159 | Bellini | shop | 3668.4, 4674.7 | 47.857959, 11.479182 | 331 | todo |  |
-| 152 | Flamingo Damenmode | shop | 4258.4, 4867.9 | 47.856222, 11.487093 | 341 | todo |  |
-| 158 | Fellomenal Hundesalon | shop | 4252.8, 4876.4 | 47.856145, 11.487017 | 342 | todo |  |
+| 152 | Flamingo Damenmode | shop | 4258.4, 4867.9 | 47.856222, 11.487093 | 341 | todo | needs reference: no photo (B4-10) |
+| 158 | Fellomenal Hundesalon | shop | 4252.8, 4876.4 | 47.856145, 11.487017 | 342 | todo | needs reference; probably moved to Deisenhofen (B4-11) |
 | 161 | Pia's Hair & Beauty | shop | 3756.8, 4910.1 | 47.855842, 11.480368 | 356 | todo |  |
 | 16 | Ana’s Waschservice | shop | 3638.9, 4610.8 | 47.858534, 11.478787 | 361 | todo |  |
 | 160 | Feinkost Christos | shop | 3621, 4676.6 | 47.857942, 11.478547 | 378 | todo |  |
