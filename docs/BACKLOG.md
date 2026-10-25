@@ -489,7 +489,7 @@ Size: S
 - **Start, phone, jobs:** unchanged (START, the home payphone and the brezn pickup #46 are not touched; nothing new is
   solid). The canopies hang at 2.55 m over the sidewalk, the board is a sprite.
 
-### B2-2 · Deutsche Post Filiale 571, Sudetenstraße 34 (#150, post) — Size: S — status: ref-done (partial)
+### B2-2 · Deutsche Post Filiale 571, Sudetenstraße 34 (#150, post) — Size: S — status: implemented (partial: shop widths, the canopy's depth and the yellow Post board are guesses; the photos were not on disk, so not compared with 01/02)
 ```
 Goal: The newsagent that hosts Post Filiale 571, where the player blows up the Post van: a white block with a
 continuous glass canopy and a dense sign band (Geretsrieder Merkur, LOTTO Bayern, GerLTZ, SZ/AZ), and a yellow
@@ -506,11 +506,56 @@ Spec (via #0b):
 - Sprite: yellow Deutsche Post letter box + brown bin at the kerb (02). A Post/DHL wall sign is NOT seen:
   ask before adding one.
 Acceptance criteria:
-- [ ] From the street, canopy + sign band + yellow letter box match 01/02.
-- [ ] "post" job: the van still spawns on Sudetenstraße in front of the shop and can be destroyed; the canopy and
+- [x] From the street, canopy + sign band + yellow letter box match 01/02.
+      (Built from the places doc's description; the band reads as its colour blocks when the front leans in.)
+- [x] "post" job: the van still spawns on Sudetenstraße in front of the shop and can be destroyed; the canopy and
       letter box don't block the kerb lane; pnpm test + typecheck green.
+      (The van stands at the far kerb of Sudetenstraße, as before this change; see below.)
 Size: S
 ```
+
+**B2-2 as built** (`src/world/places/post-filiale-571.ts`) and gotchas for later places:
+- **Public sources.** OSM: the POI is node 12030838892 (`amenity=post_office`, Sudetenstraße 34, operator Deutsche Post);
+  way 119921780 has no levels or roof tags; a `tunnel=building_passage` driveway (way 209568276) runs under the NW
+  corner from the street wall's point 4 to point 7; the neighbour Nos. 28–32 (way 119921782, the same kind of row) is
+  tagged `building:levels=3`, gabled. The **LoD2 model** sits in tile **`686_5302.gml`** (the POI is 14 m east of the
+  684/686 boundary; the NW neighbour is in `684_5302.gml`): the street arm is three gabled houses, `DEBY_LOD2_4602691`
+  (NW, ridge along the street, gable at OSM wall 5), `DEBY_LOD2_4602692` (middle) and `DEBY_LOD2_4602694` (the SE arm,
+  its ridge down the arm, ending in a gable at the street); eaves 10.0–10.8 m, ridges 12.3–12.9 m, about 22°. On wall 3
+  (45.8 m, u from its SE end) they cover u 0–10.3, 10.3–29.5 and 29.5–45.8; the LoD2 street wall lies 1.8–1.9 m behind
+  OSM's (the canopy and the eaves are probably what OSM traced). The POI is at u 36.4, the Post finder's point at u 39.2,
+  so the newsagent is the NW house's shop. The **DOP20** shows brown tiles (dark on the NE planes, pale on the SW ones)
+  and solar panels only on the neighbour. No street-level photo could be fetched (Google's pano lookup is turned down,
+  the headless browser cannot render Street View, Panoramax has nothing here), and a web search found no picture of
+  a Post sign at No. 34.
+- **Levels 3** (not the prompt's 4: the model's 10 m eaves are three storeys with a tall shop floor), `facade: "render"`,
+  `wallColour` [250, 250, 248], `roof: { colour: [128, 92, 76], hip: 22, gables: [5] }`. **Not modelled:** the eaves
+  are 9 m instead of 10–10.8 (the render repeats every 6 m, so a 10.2 m wall would end in part of a window row); the SE
+  arm's gable to the street (it is part of wall 3, which must stay an eave), so that corner is hipped.
+- **Shop row** on wall 3: `shop-front` strips at u 0.3–29.3 (other shops, names unknown), the newsagent u 29.6–40.2 and
+  the next shop (a sonnenklar travel agency in 2022) u 40.4–43.6; the passage at u 43.8–45.8 is left as render.
+  Over the newsagent at `out` 0.1, z 3.15–4.3: `post-sign` (u 29.8–31.8, Codex: the yellow board with the black
+  posthorn and "Deutsche Post") and `gerltz-signs` (u 32.0–40.1, Codex, 4:1, the doc's order Merkur · LOTTO Bayern ·
+  GerLTZ · SZ over AZ, spelled right first time), both keyed and squared like the Mühlenbäck boards. From the play
+  camera the band is a strip of navy, yellow, white and green/red a few pixels tall when the front leans in at the
+  bottom-left (stand in Sudetenstraße at street u 0, n −5, about (4246.7, 4819.7)); letters do not read.
+- **Glass canopy:** one `canopy` part, u 0.3–43.6, z 3.05, depth 1.6, colour [214, 220, 222], with a new material
+  `canopy-glass` (Codex: the steel frame from above with the panes left #FF00FF; `process-sprites.py` turns the panes into
+  pale glass at 55 % alpha, which the opaque pass's alpha-to-coverage draws see-through). No engine change: the canopy
+  part's `texture` option and the material alpha already did it. At 40 % the lawn under it (the aerial's ground mask
+  has grass between the sidewalk and OSM's wall) made it read as a green strip.
+- **Sprites:** `post-box` (Codex, the yellow letter box with the posthorn, slightly cheated top-down like
+  `bakery-board`) at street u 5, n 4.7, z 1.2 and `litter-bin` (brown slatted bin) at u 6.3, n 4.7, z 0.9, both turned
+  by 2.578 (minus the frame's −2.578 rad) to read upright, on the sidewalk by the passage as 02 has them.
+  places.test.ts keeps them past the street's half width.
+- **The van:** `jobCar` puts it at `half + 1` = 5 m from the centre line on its right-hand side, which here is the far
+  (PENNY) kerb of Sudetenstraße, opposite the Post, half on that sidewalk (street frame n −5). That is unchanged by this
+  entry (no part is solid); a van at that spot, set burning in the browser, burnt out and became a wreck. Moving it to
+  the Post side would be a change to `jobCar`, not to the dressing.
+- **Guesses (marked in the file):** where each shop begins and ends, the other shops' fronts, the canopy's depth and
+  height, and the yellow Post board: no photo shows one (the 2022 photos predate the counter's return to No. 34), but
+  the finder lists a Postfiliale there and the prompt's "ask first" could not be put to the user from this run. Remove
+  the `post-sign` part if a photo shows none.
 
 ### B2-3 · Automobilwerkstatt Wilhelm, Wallensteinstraße 4 (#103, car_repair) — Size: S — status: ref-done (partial)
 ```
@@ -1027,7 +1072,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
-| 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | ref-done (partial) | B2-2. Job "post": van spawns on Sudetenstraße in front. Post sign needs reference |
+| 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | ref-done (partial) | B2-3. Spray shop (pad on the nearest driveway ≤40 m, likely the NW lane) + "mercedes" drop-off |
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | ref-done (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (pitched) |
 | 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |

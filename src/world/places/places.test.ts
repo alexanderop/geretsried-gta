@@ -159,6 +159,17 @@ describe("the registry on the real map", () => {
     expect(dressed.buildings[bakery?.building ?? -1]?.levels).toBe(3)
   })
 
+  it("dresses the Post block with three storeys and keeps its letter box and bin on the sidewalk, off the street the van parks on", () => {
+    const post = places.find((p) => p.dressing.osmBuildingId === 119921780)
+    // The frame's foot on Sudetenstraße lies 10 m from the POI at (4238.7, 4832.4), which the "post" job finds by name.
+    expect(Math.hypot((post?.frame.ox ?? 0) - 4238.7, (post?.frame.oy ?? 0) - 4832.4)).toBeLessThan(12)
+    expect(dressed.buildings[post?.building ?? -1]?.levels).toBe(3)
+    const half = (map.roads.find((r) => r.name === "Sudetenstraße")?.width ?? 0) / 2
+    const kerbside = (post?.dressing.parts ?? []).flatMap((p) => (p.kind === "sprite" ? [p.n] : []))
+    expect(kerbside.length).toBeGreaterThan(0)
+    for (const n of kerbside) expect(n).toBeGreaterThan(half)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

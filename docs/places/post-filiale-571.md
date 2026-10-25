@@ -11,7 +11,7 @@
 | OSM building | way **119921780** (building=apartments, no level/roof tags): L-shape, 959 m², bbox 51.5 × 37.2 m, long arm along Sudetenstraße |
 | Engine | levels **4** (apartments default); pitched; DOP roof `#897a6a` / `#ccb9af` |
 | Street frame | **Sudetenstraße** (tertiary, 8 m). Closest centreline point (4244.1, 4823.9), 10.0 m; street bearing 302°, n bearing 212° (shop is SW of the street). An unnamed service lane (4 m) runs SW through the building passage seen in 02 |
-| Status | **ref-done (partial)**: Post signage needs reference |
+| Status | **implemented (partial)** (B2-2, `src/world/places/post-filiale-571.ts`): 3 storeys and the roof from the Bavarian LoD2 model (tile 686_5302: three gabled houses, eaves 10.0–10.8 m, about 22°). Guesses: shop widths, canopy depth, and the yellow Post board (still no photo of one) |
 
 ## Images
 | File | What | Source |

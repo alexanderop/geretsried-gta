@@ -429,6 +429,42 @@ for name in ["bakery-front", "shop-front", "awning"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Post Filiale 571 (Sudetenstraße 34): the newsagent's sign band (Merkur, LOTTO, GerLTZ, SZ over AZ) and a yellow
+# Deutsche Post board, keyed and squared like the Mühlenbäck boards (their own colours kept inside); the top of a glass
+# canopy (a canopy part's texture): its steel opaque, the panes Codex left magenta turned into pale glass at 55 % alpha,
+# which alpha-to-coverage draws see-through; the yellow letter box and a brown bin, prop sprites seen from above.
+for name in ["gerltz-signs", "post-sign"]:
+    src = find(name)
+    if src is None:
+        continue
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (200, 200, 200, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp")
+glass = find("canopy-glass")
+if glass is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(glass).convert("RGB").resize((512, 512), Image.LANCZOS)), np.float32)
+    a = keyed[..., 3:4] / 255
+    pane = np.array([222, 232, 236], np.float32)
+    rgb = keyed[..., :3] * a + pane * (1 - a)
+    alpha = (a + (1 - a) * 0.55) * 255
+    Image.fromarray(np.concatenate([rgb, alpha], axis=2).round().astype(np.uint8), "RGBA").save(OUT / "canopy-glass.webp", "WEBP", quality=92, exact=True)
+    print("canopy-glass.webp")
+for name in ["post-box", "litter-bin"]:
+    path = find(name)
+    if path is None:
+        continue
+    im = keep_main_shape(key_magenta_fast(Image.open(path)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+    print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

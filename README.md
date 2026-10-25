@@ -256,6 +256,12 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   board and red round logo over a cream awning and its sidewalk board, a shop with a plain red board and one under a
   long red awning. The three houses and their roofs follow the Bavarian LoD2 model; the shop widths and sign artwork are
   guesses.
+- **Deutsche Post Filiale 571** (`src/world/places/post-filiale-571.ts`), Sudetenstraße 34, the place of the job that
+  blows up the Post van: an L of white render, three storeys under a brown hipped roof that ends in a gable at the NW,
+  with a glass canopy on steel along its shop row on Sudetenstraße; over the newsagent that hosts the Post counter a
+  yellow "Deutsche Post" board and the sign band Merkur · LOTTO Bayern · GerLTZ · SZ over AZ, and a yellow letter box and
+  a brown bin on the sidewalk by the passage. Storeys and roof follow the Bavarian LoD2 model; the shop widths, the
+  canopy's depth and the Post board are guesses.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).
