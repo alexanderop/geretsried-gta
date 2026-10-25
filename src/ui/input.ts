@@ -18,8 +18,8 @@ const KEYS: Readonly<Record<string, Held>> = {
   ControlRight: "attack",
 }
 
-/** UI keys outside the game step: G horn (held), H help (toggle), and any key (audio may start). */
-export type UiKeys = { readonly onHelp: () => void; readonly onAnyKey: () => void }
+/** UI keys outside the game step: G horn (held), H help (toggle), M sound (toggle), and any key (audio may start). */
+export type UiKeys = { readonly onHelp: () => void; readonly onMute: () => void; readonly onAnyKey: () => void }
 
 /** Tracks held keys; `take()` returns this step's input and clears the one-shot presses (F, weapon cycling). */
 export const listenKeyboard = (target: Window, ui: UiKeys) => {
@@ -31,6 +31,7 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
     ui.onAnyKey()
     if (e.code === "KeyG") horn = true
     if (e.code === "KeyH" && !e.repeat) ui.onHelp()
+    if (e.code === "KeyM" && !e.repeat) ui.onMute()
     const key = KEYS[e.code]
     if (key !== undefined) {
       held.add(key)

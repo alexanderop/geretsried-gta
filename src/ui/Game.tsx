@@ -68,6 +68,23 @@ const readSave = (): SaveData | null => {
   }
 }
 
+/** Sound on or off, remembered in this browser; on when storage is blocked. */
+const MUTED_KEY = "geretsried-gta:muted"
+const readMuted = (): boolean => {
+  try {
+    return localStorage.getItem(MUTED_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+const writeMuted = (muted: boolean) => {
+  try {
+    localStorage.setItem(MUTED_KEY, muted ? "1" : "0")
+  } catch {
+    // Not remembered: it still applies until the page reloads.
+  }
+}
+
 const writeSave = (data: SaveData): boolean => {
   try {
     localStorage.setItem(SAVE_KEY, encodeSave(data))
@@ -82,6 +99,15 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const [hud, setHud] = useState<HudState>(emptyHud)
   const [help, setHelp] = useState(false)
+  const [muted, setMuted] = useState(readMuted)
+  const mutedRef = useRef(muted)
+  const audioRef = useRef<GameAudio | null>(null)
+
+  useEffect(() => {
+    mutedRef.current = muted
+    audioRef.current?.setMuted(muted)
+    writeMuted(muted)
+  }, [muted])
   const [failure, setFailure] = useState("")
 
   useEffect(() => {
@@ -107,7 +133,9 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     const compare = compareSpot(world)
     if (compare !== null) Object.assign(camera, { x: compare.x, y: compare.y, height: 100 })
     const audio = new GameAudio()
-    const keyboard = listenKeyboard(window, { onHelp: () => setHelp((h) => !h), onAnyKey: () => audio.start() })
+    audio.setMuted(mutedRef.current)
+    audioRef.current = audio
+    const keyboard = listenKeyboard(window, { onHelp: () => setHelp((h) => !h), onMute: () => setMuted((m) => !m), onAnyKey: () => audio.start() })
 
     const resize = () => {
       for (const c of [canvas, overlay]) {
@@ -226,7 +254,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     <div className="relative h-dvh w-dvw overflow-hidden bg-black text-white select-none">
       <canvas ref={glRef} className="block h-full w-full" />
       <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-      <Hud hud={hud} help={help} />
+      <Hud hud={hud} help={help} muted={muted} onMute={() => setMuted((m) => !m)} />
       <div className="absolute right-2 bottom-1 text-[10px] text-white/70">
         Karte ©{" "}
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">

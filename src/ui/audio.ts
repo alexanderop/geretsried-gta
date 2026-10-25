@@ -25,6 +25,8 @@ const HEARING_M = 90
 const IDLE_HZ = 38
 const HZ_PER_MS = 3.2
 
+const VOLUME = 0.5
+
 export class GameAudio {
   private ctx: AudioContext | null = null
   private engine: (Voice & { readonly filter: BiquadFilterNode }) | null = null
@@ -32,6 +34,14 @@ export class GameAudio {
   private siren: Voice | null = null
   private master: GainNode | null = null
   private noise: AudioBuffer | null = null
+  private muted = false
+
+  /** Sound off (M or the speaker button): the master volume goes to zero, everything else keeps running. */
+  setMuted(muted: boolean): void {
+    this.muted = muted
+    const { ctx, master } = this
+    if (ctx !== null && master !== null) master.gain.setTargetAtTime(muted ? 0 : VOLUME, ctx.currentTime, 0.02)
+  }
 
   /** Call from a key press: creates the audio graph the first time. */
   start(): void {
@@ -42,7 +52,7 @@ export class GameAudio {
     const ctx = new AudioContext()
     this.ctx = ctx
     const master = ctx.createGain()
-    master.gain.value = 0.5
+    master.gain.value = this.muted ? 0 : VOLUME
     master.connect(ctx.destination)
     this.master = master
     // One second of white noise, the raw stuff of every bang.
