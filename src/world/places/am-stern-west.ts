@@ -1,5 +1,5 @@
-import { FOUR_BALCONY_STOREYS, WHITE_RENDER, balconies, onRoof } from "./am-stern.ts"
-import type { PlaceDressing } from "./dressing.ts"
+import { BALCONY_DEPTH, FOUR_BALCONY_STOREYS, WHITE_RENDER, balconies, onRoof } from "./am-stern.ts"
+import type { Part, PlaceDressing } from "./dressing.ts"
 
 /**
  * The west block of Am Stern, Sudetenstraße 29a–c: denns BioMarkt, Takko and the Orterer drinks market along
@@ -13,9 +13,37 @@ import type { PlaceDressing } from "./dressing.ts"
  * ends at a pitch that reaches the model's ridge. The aerial (DOP20) shows the terracotta planes, the grey-green link
  * and the dark strip. Guesses: the balconies' depth and storeys (the photos say four balcony storeys over the shops;
  * reference/ was not on disk), where denns' roof sign sits, and the link's and strip's roof colours.
+ *
+ * denns BioMarkt (B3-2), the NW unit of wall 0, from Street View (reference/denns-biomarkt/01–03): at the NW end a
+ * stretch of white cladding with grey vertical grooves and narrow poster windows under a thin grey ledge, then the
+ * store's dark-framed glazing with posters, the green "denns BioMarkt" letters straight on the white wall over it and
+ * under the first balconies; TAKKO follows SE. 01 shows no soffit between the white band and the first balconies, so
+ * the shop storey's front is drawn flush with the balconies' fronts (BALCONY_DEPTH out of OSM's wall): the white band
+ * is a canopy's fascia under the lowest balconies, the glazing and the cladding stand on that line. That also keeps
+ * them in sight: straight down from the play camera's 54 m, anything under a balcony 1.4 m deep is hidden. Guesses (read off the photos, no measure): where the cladding ends and
+ * the glazing starts (u 9.4) and how far denns' glazing runs (to u 21.6, three 4 m bays; Takko's B3-4 takes it from
+ * there), the letters' spot and size, the ledge's depth and height, the cladding's windows (three), the shop
+ * storey standing flush with the balconies. The entrance door
+ * is not seen in the photos, so none is drawn.
  */
 const SOUTH_H = 16
 const SOUTH_PITCH = 22
+
+/** denns' unit on wall 0: the striped cladding from the NW end, then the glazing (both guesses, see above). */
+const DENNS_CLAD = [0.6, 9.4] as const
+const DENNS_GLASS = [9.6, 21.6] as const
+/** "denns BioMarkt" is 8.3 times as wide as tall (the cropped Codex lettering); 6.6 m long like the photo's. */
+const DENNS_LETTERS_W = 6.6
+const DENNS_LETTERS_Z0 = 3.45
+
+/** The shop storey's front: flush with the balconies' fronts. The white band over it, up under the lowest balcony. */
+const SHOP_OUT = BALCONY_DEPTH
+const BAND_Z0 = 3.2
+const BAND_TOP = FOUR_BALCONY_STOREYS[0] - 0.1
+
+/** `n` wallSigns of `texture` side by side on wall 0 from u0 to u1, from the ground up to z1, on the shop front's line. */
+const row = (texture: "denns-front" | "denns-cladding", [u0, u1]: readonly [number, number], n: number, z1: number): ReadonlyArray<Part> =>
+  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge: 0, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out: SHOP_OUT }))
 
 export const AM_STERN_WEST: PlaceDressing = {
   poi: "Takko Fashion",
@@ -38,5 +66,21 @@ export const AM_STERN_WEST: PlaceDressing = {
     balconies(0, 0.6, 42.9, FOUR_BALCONY_STOREYS),
     // "denns" in green on the roof over the NW third of the front (the store's unit), for the top-down camera.
     { kind: "roofSign", texture: "roof-denns", edge: 0, u0: 2, u1: 12.5, n0: 1, n1: 4.5, z0: onRoof(SOUTH_H, SOUTH_PITCH, 1), z1: onRoof(SOUTH_H, SOUTH_PITCH, 4.5) },
+    // denns BioMarkt: the white band (a fascia under the lowest balconies), the striped cladding with its poster windows
+    // under a thin grey ledge at the NW end, the glazing in three bays, the green letters on the band over it.
+    { kind: "canopy", edge: 0, u0: DENNS_CLAD[0], u1: DENNS_GLASS[1], z: BAND_TOP, depth: SHOP_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER } },
+    ...row("denns-cladding", DENNS_CLAD, 3, BAND_Z0),
+    { kind: "canopy", edge: 0, u0: DENNS_CLAD[0], u1: DENNS_CLAD[1], z: BAND_Z0 + 0.15, depth: SHOP_OUT + 0.5, colour: [150, 154, 158, 255] },
+    ...row("denns-front", DENNS_GLASS, 3, BAND_Z0),
+    {
+      kind: "wallSign",
+      texture: "denns-letters",
+      edge: 0,
+      u0: DENNS_GLASS[0] + 0.3,
+      u1: DENNS_GLASS[0] + 0.3 + DENNS_LETTERS_W,
+      z0: DENNS_LETTERS_Z0,
+      z1: DENNS_LETTERS_Z0 + DENNS_LETTERS_W / 8.3,
+      out: SHOP_OUT + 0.03,
+    },
   ],
 }

@@ -143,6 +143,9 @@ export const MATERIAL_FILES = [
   "edeka-boards",
   "edeka-panels",
   "edeka-pylon",
+  "denns-letters",
+  "denns-front",
+  "denns-cladding",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

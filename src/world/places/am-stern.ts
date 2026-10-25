@@ -21,7 +21,10 @@ const BALCONY_RAIL: Rgba = [112, 116, 122, 255]
  * A stack of continuous balconies on wall `edge` from u0 to u1, one per upper storey, their floors at `z`. Where they
  * start and how deep they are is a guess: the places docs only say "continuous balconies with grey steel railings".
  */
-export const balconies = (edge: number, u0: number, u1: number, z: ReadonlyArray<number>): Part => ({ kind: "balcony", edge, u0, u1, z, depth: 1.4, colour: BALCONY_RAIL, slab: BALCONY_SLAB })
+export const balconies = (edge: number, u0: number, u1: number, z: ReadonlyArray<number>): Part => ({ kind: "balcony", edge, u0, u1, z, depth: BALCONY_DEPTH, colour: BALCONY_RAIL, slab: BALCONY_SLAB })
+
+/** How far the balconies stand out of the wall (a guess). */
+export const BALCONY_DEPTH = 1.4
 
 /** Balcony floors over a tall shop storey: a ground floor and four balcony storeys, as the photos show the blocks. */
 export const FOUR_BALCONY_STOREYS = [4.5, 7.5, 10.5, 13.5] as const

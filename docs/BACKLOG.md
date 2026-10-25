@@ -930,7 +930,7 @@ Size: S
   cabinet in 03 (not identified), the seasonal pallets.
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1662 (EDEKA's).
 
-### B3-2 · denns BioMarkt, Sudetenstraße 29 C (#82, supermarket) — Size: S — status: ref-done (partial)
+### B3-2 · denns BioMarkt, Sudetenstraße 29 C (#82, supermarket) — Size: S — status: implemented (partial: where the cladding ends and the glazing starts, how far the glazing runs, the letters' spot and size, the ledge, the cladding's windows and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: Green "denns BioMarkt" letters on a white band over a glazed front, NW unit of the west block.
 Reference: docs/places/denns-biomarkt.md; reference/denns-biomarkt/01-street-front.png (key), 02 (height,
@@ -940,9 +940,30 @@ Spec (via #0b, inside B3-0):
 - Way 127872184, SW edge, NW third: band #d9dedf, letters #8bd448; glass strip under; thin grey striped canopy
   at the NW end. Roof decal "denns" (green). Door position: needs reference.
 Acceptance criteria:
-- [ ] From Sudetenstraße, denns sits NW of TAKKO as in 01. pnpm test + typecheck green.
+- [x] From Sudetenstraße, denns sits NW of TAKKO as in 01. pnpm test + typecheck green. (TAKKO's own sign is B3-4.)
 Size: S
 ```
+
+**B3-2 as built** (`src/world/places/am-stern-west.ts`, on B3-0's west block; roof sign `roof-denns` from B3-0):
+- **Sources.** `reference/denns-biomarkt/01–04` + `SOURCES.md` on disk and used: 01 and 02 for the front, 03 for the
+  context. Heights from B3-0's masses (the block's 16 m, balconies from 4.5 m). No door is seen in the photos.
+- **Wall 0** (Sudetenstraße, u 0 at the NW end): at u 0.6–9.4 white cladding with grey vertical grooves and three
+  narrow poster windows (`denns-cladding`) under a thin grey ledge 1.9 m out at 3.35 m; at u 9.6–21.6 the dark-framed
+  glazing with posters (`denns-front`, three 4 m bays) to 3.2 m; over both a white band to 4.4 m (a canopy's fascia
+  under the lowest balcony) with the green "denns BioMarkt" letters (`denns-letters`, 6.6 × 0.8 m, z 3.45) at its NW
+  end of the glazing.
+- **Shop front flush with the balconies.** 01 shows no soffit between the white band and the first balconies, so the
+  shop storey's front (glazing, cladding, band) stands on the balconies' front line, 1.4 m out of OSM's wall
+  (`BALCONY_DEPTH`, now exported from `am-stern.ts`). It also keeps it in sight: from the play camera's 54 m straight
+  down, a wall under 1.4 m balconies is hidden at every on-screen distance. Takko (B3-4) and Orterer (B3-5) will want
+  the same line.
+- **Sprites:** Codex (three images), processed by `scripts/process-sprites.py` (letters keyed and cropped, 8.3:1,
+  stored square; front and cladding opaque).
+- **Guesses:** the cladding's end and the glazing's start (u 9.4–9.6), the glazing's end at u 21.6 (Takko's start),
+  the letters' spot and size, the ledge's depth and height, three cladding windows (02 shows three and a grey door;
+  the door is left out), the shop front's line (above). Not built: the entrance door (not seen), the bike stands.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
+  block's).
 
 ### B3-3 · Rossmann, Sudetenstraße 33 (#65, drugstore) — Size: S — status: ref-done
 ```
@@ -1609,7 +1630,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 15 | TEDi | shop | 205 | ref-done |
 | 80 | Orterer Getränkemarkt | shop | 221 | ref-done (partial) |
 | 81 | Takko Fashion | shop | 223 | ref-done |
-| 82 | Denns BioMarkt | supermarket | 233 | ref-done (partial) |
+| 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
 | 134 | B&L Hairstyling | shop | 253 | ref-done |
 | 65 | Rossmann | drugstore | 283 | ref-done |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
@@ -1829,7 +1850,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | ref-done | B6a-5. Sudetenstraße 11, sign "VR Bank München Land" |
-| 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | ref-done (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
+| 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | implemented (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
 | 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo (needs facade reference) | B6b-2. Relation building missing in-game (import); LoD2 ~10 m |
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | todo (needs facade reference) | B6b-4. Now Karl-Lederer-Mittelschule; merger by 2029–2031 (ask Alex); LoD2 ~13 m |
 | 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | implemented (partial) | B3-1; EDEKA Heininger & Dietz, Breslauer Weg 113; flat hall, yellow band, porthole upper wall |

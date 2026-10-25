@@ -345,6 +345,29 @@ describe("the registry on the real map", () => {
     expect(pointInPolygon(x, y, park)).toBe(false)
   })
 
+  it("dresses denns BioMarkt at the NW end of the west block's Sudetenstraße front, under the balconies", () => {
+    const west = at(127872184)
+    const pts = map.buildings[west?.building ?? -1]?.pts ?? []
+    const parts = west?.dressing.parts ?? []
+    // Wall 0 is the Sudetenstraße front, facing SW (bearing about 213°), u 0 at its NW end.
+    const w0 = wallFrame(pts, 0)
+    expect(w0).toBeDefined()
+    if (w0 === undefined || w0 === null) return
+    expect(Math.abs(((Math.atan2(-w0.frame.nx, w0.frame.ny) * 180) / Math.PI + 360) % 360 - 213)).toBeLessThan(10)
+    const on0 = (t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 0 && p.texture === t ? [p] : []))
+    const letters = on0("denns-letters")[0]
+    expect(letters).toBeDefined()
+    if (letters === undefined) return
+    // The letters over the glazing, in the NW half of the front (Takko and Orterer follow SE), under the lowest balcony.
+    const glass = on0("denns-front")
+    expect(glass.length).toBeGreaterThan(0)
+    expect(Math.max(...glass.map((g) => g.z1))).toBeLessThan(letters.z0)
+    expect(letters.u1).toBeLessThan(w0.length / 2)
+    expect(Math.min(...glass.map((g) => g.u0))).toBeGreaterThan(Math.max(...on0("denns-cladding").map((c) => c.u1)) - 0.01)
+    const lowest = Math.min(...parts.flatMap((p) => (p.kind === "balcony" && p.edge === 0 ? p.z : [])))
+    expect(letters.z1).toBeLessThan(lowest)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

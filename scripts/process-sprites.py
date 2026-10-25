@@ -612,6 +612,25 @@ if band is not None:
     out.resize((512, 512), Image.LANCZOS).save(OUT / "edeka-band.webp", "WEBP", quality=92)
     print("edeka-band.webp")
 
+# denns BioMarkt (Sudetenstraße 29 C): the green "denns BioMarkt" letters keyed and cropped tight to the ink, then
+# stretched square (the wallSign's rectangle gives them back their aspect); one 4 x 3 m bay of the dark-framed shop
+# front with posters and one 4 x 3 m piece of the striped cladding at the NW end with its window (opaque, square).
+letters = find("denns-letters")
+if letters is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(letters))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(letters).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("denns-letters aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "denns-letters.webp", "WEBP", quality=92)
+    print("denns-letters.webp")
+for name in ["denns-front", "denns-cladding"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
