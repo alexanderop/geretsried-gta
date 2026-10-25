@@ -168,4 +168,13 @@ describe("walls under a roof with eaves of their own, a gable and a door canopy"
     expect(vs.some((v) => near(v.y, 58.5) && near(v.z, 3.2) && near(v.x, 40))).toBe(true)
     for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
   })
+
+  it("lays an awning's fabric over the canopy's top only, in the same slab", () => {
+    const awning: PlaceDressing = { ...shop, parts: [{ kind: "canopy", edge: 0, u0: 10, u1: 14, z: 3.2, depth: 1.5, colour: [52, 62, 57, 255], texture: "awning" }] }
+    const tvs = vertices(new Scene(makeWorld(map, [awning]), noCrowns, []).build(0))
+    const top = tvs.filter((v) => v.mode === Mode.material && v.layer === material("awning"))
+    expect(top).toHaveLength(4)
+    expect(top.every((v) => near(v.z, 3.2) && v.x >= 36 - 1e-3 && v.x <= 40 + 1e-3)).toBe(true)
+    expect(tvs).toHaveLength(vs.length)
+  })
 })

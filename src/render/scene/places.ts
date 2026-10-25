@@ -95,10 +95,18 @@ const balcony = (b: Builder, p: Extract<Part, { kind: "balcony" }>) => {
   }
 }
 
-/** A door canopy: a slab standing out from the wall (n = 0) with its top at z, and its shadow on the ground. */
+/** A door canopy: a slab standing out from the wall (n = 0) with its top at z (in its texture, if any), and its shadow on the ground. */
 const canopy = (b: Builder, p: Extract<Part, { kind: "canopy" }>) => {
   const rect = [p.u0, p.u1, -p.depth, 0] as const
-  box(b, rect, p.z - CANOPY_SLAB, p.z, p.colour)
+  if (p.texture === undefined) box(b, rect, p.z - CANOPY_SLAB, p.z, p.colour)
+  else {
+    const z0 = p.z - CANOPY_SLAB
+    face(b, p.u0, 0, p.u0, -p.depth, z0, p.z, p.colour)
+    face(b, p.u0, -p.depth, p.u1, -p.depth, z0, p.z, p.colour)
+    face(b, p.u1, -p.depth, p.u1, 0, z0, p.z, p.colour)
+    face(b, p.u1, 0, p.u0, 0, z0, p.z, p.colour)
+    flat(b, rect, p.z, p.colour, Mode.material, material(p.texture), (u, n) => [(u - p.u0) / p.depth, -n / p.depth])
+  }
   boxShadow(b, rect, p.z)
 }
 

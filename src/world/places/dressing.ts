@@ -56,9 +56,11 @@ export type Part =
   /**
    * A flat slab over a door on wall `edge` from u0 to u1, its top at `z`,
    * standing `depth` meters out of the wall. Overhead like a balcony
-   * (places.test.ts keeps it above head height).
+   * (places.test.ts keeps it above head height). With `texture` its top is
+   * that material times `colour` (an awning's fabric), repeated every
+   * `depth` meters along the wall, the image's top at the wall.
    */
-  | { readonly kind: "canopy"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: number; readonly depth: number; readonly colour: Rgba }
+  | { readonly kind: "canopy"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: number; readonly depth: number; readonly colour: Rgba; readonly texture?: MaterialName }
   /**
    * A square tower on `rect` (street frame, inside the footprint): walls up
    * to `h`, a pyramid roof `roofH` high, corner quoins in `trim`, a post with

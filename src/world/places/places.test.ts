@@ -152,6 +152,13 @@ describe("the registry on the real map", () => {
     expect(dressed.buildings[sparkasse?.building ?? -1]?.levels).toBe(4)
   })
 
+  it("dresses the Mühlenbäck at the start with three storeys, not the branch across town", () => {
+    const bakery = places.find((p) => p.dressing.osmBuildingId === 127604891)
+    // Its frame's foot on Sudetenstraße lies by the POI at (4005.5, 4651.6); "Bäckerei Mühlenbäck" is 2 km away.
+    expect(Math.hypot((bakery?.frame.ox ?? 0) - 4005.5, (bakery?.frame.oy ?? 0) - 4651.6)).toBeLessThan(12)
+    expect(dressed.buildings[bakery?.building ?? -1]?.levels).toBe(3)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

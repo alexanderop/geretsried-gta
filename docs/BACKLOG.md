@@ -421,7 +421,7 @@ Batch 2 needs three things #0b's batch-1 part list doesn't cover. Add them to #0
 - roof override `{pitched, colour}` per building (already in the #0b schema): Aldi (OSM says flat), Polizei (solar panels).
 Every prompt below must keep the job/spray/save hooks working (names are matched exactly in code).
 
-### B2-1 · Mühlenbäck, Sudetenstraße 19 (#48, bakery) — Size: S — status: ref-done
+### B2-1 · Mühlenbäck, Sudetenstraße 19 (#48, bakery) — Size: S — status: implemented (partial: shop widths, sign artwork and No. 17's front are guesses; the photos were not on disk, so not compared with 01)
 ```
 Goal: The bakery right next to the start: a cream 3-storey block on Sudetenstraße whose ground floor reads
 Angel Nails · Mühlenbäck (white sign, red round logo, cream awning) · red-sign shop · red-awning shop. It is the
@@ -437,12 +437,57 @@ Spec (via #0b):
   (no text: name unreadable); then the red awning #e06f6d. Cream awning #fdf8ee as a thin flat over the bakery window.
 - Do not invent names for the two SE shops (needs reference). Pavement stays open; no parking bay.
 Acceptance criteria:
-- [ ] At the start, the shop row matches 01 left to right; the Mühlenbäck sign + awning are readable.
-- [ ] Building is visibly 3 storeys; nothing blocks the start, the payphone or the pavement.
-- [ ] game.test.ts still finds "Mühlenbäck"; brezn courier job unchanged (pickup is #46, not this one);
+- [x] At the start, the shop row matches 01 left to right; the Mühlenbäck sign + awning are readable.
+      (Order from the places doc; the awning and the sidewalk board read at the start, the wall sign only near a screen edge.)
+- [x] Building is visibly 3 storeys; nothing blocks the start, the payphone or the pavement.
+- [x] game.test.ts still finds "Mühlenbäck"; brezn courier job unchanged (pickup is #46, not this one);
       pnpm test + typecheck green.
 Size: S
 ```
+
+**B2-1 as built** (`src/world/places/muehlenbaeck.ts`) and gotchas for later places:
+- **Public sources.** OSM gives only the nodes: Mühlenbäck and Angel Nails (both No. 19) and HoangAnh (`amenity=restaurant`,
+  No. 17) inside way 127604891, no levels or roof tags, nothing for the two SE shops. The bakery has no website of its own
+  (muehlenbaeck.de does not resolve; the town's tourism page lists it with no address or photo). The **LoD2 model**
+  (tile `684_5302.gml`, the same file as Maria Hilf) splits the footprint into three houses along the street:
+  `DEBY_LOD2_4602989` in the NW (No. 17: gable roof, eaves 11.4 m at the street, ridge 16 m), `DEBY_LOD2_4602923` in the
+  middle (No. 19: gable roof along the street, eaves 8.6–9.0 m, ridge 11.5 m) and `DEBY_LOD2_4602924` in the SE (hip roof,
+  eaves 9.4 m, ridge 12.1 m), all at about 28°. On wall 0 (37.8 m, u from the NW end) they cover u 0–13, 13–25 and
+  25–37.8; the OSM nodes put HoangAnh at u 7, Angel Nails at u 16 and the bakery at u 22. So the doc's row (Angel Nails ·
+  Mühlenbäck · red sign · red awning) is the middle and SE houses, and HoangAnh is NW of it, off 01's left edge. The
+  **DOP20** shows the three roofs: grey over No. 17, brown over the middle, terracotta over the SE house. The LoD2
+  outline sits 2–4 m behind OSM's street wall (the sidewalk is wider in reality); the OSM footprint stays the solid.
+- **Levels 3, `facade: "render"`, `wallColour` [252, 249, 237]** (#edeadf ÷ 0.94). `roof: { colour: [152, 98, 72], hip: 28,
+  gables: [5] }`: one hipped roof, ending in a gable at the NW wall like the model's NW house; the SE end is hipped.
+  **Not modelled:** No. 17 is taller in the model (4 storeys at the street); a registry entry has one level count per
+  footprint, and the front wall spans all three houses, so `roof.eaves` cannot raise one third of it.
+- **Shop row** on wall 0, each unit an opaque `shop-front` strip (z 0–2.85: glazing and a door in aluminium frames under
+  the grey #d4d4d9 fascia, Codex, 2:1 stored square) with its sign at `out` 0.1: No. 17 u 0.3–12.9 (two strips, no sign:
+  unknown); Angel Nails u 13.0–18.6 (`angel-nails-sign`, pink board, white script); the bakery u 18.6–25.0 (`bakery-front`,
+  the same front with bread on the counter; `muehlenbaeck-sign` z 2.85–4.2, white board, red disc with a wheat ear,
+  "Mühlenbäck" in dark red, "BÄCKEREI · KONDITOREI" small); the red-sign shop u 25.1–30.8 (`shop-board-red`, no text);
+  the red-awning shop u 30.8–37.5. **Guesses:** where one unit ends and the next begins (from the LoD2 house walls and
+  the OSM nodes), the sign lettering and the logo (a "red round logo" is all the doc saw), No. 17's front.
+- **Awnings:** `canopy` parts at z 2.55, 1.4 m deep, cream [253, 248, 238] over the bakery (u 18.8–24.8) and red
+  [224, 111, 109] over the last shop (u 31.0–37.3). **New generic option `canopy.texture`** (dressing.ts, places.ts): the
+  slab's top in that material times `colour`, repeated every `depth` meters along the wall, the image's top at the wall.
+  `awning` (Codex, neutral grey fabric: the cassette at the wall, two panels, a darker valance) makes a plain slab read
+  as an awning from above; without `texture` the old code runs unchanged. Every one of the 2112 chunk meshes hashed
+  identical at HEAD and with this change minus the bakery; with the bakery only chunk 1615 (its own) differs.
+  Test: scene places.test.ts (the fabric is the top's four vertices only).
+- **What the camera shows at the start:** the player spawns in Sudetenstraße about 4.7 m from the front, so the front
+  leans in only a few pixels (a wall's visible depth depends on its distance from the camera's foot, not on where along
+  the screen it is): the roof, the cream awning and the sidewalk are what read. The wall signs show above the awnings
+  when the front is near the top screen edge (stand in the middle of the street, about (3998, 4659)); the awning
+  hides most of the bakery's glazing, as a real one would. Hence the **`bakery-board`** prop: the bakery's white
+  sidewalk board (the doc's 02 shows sign boards on the pavement) with the red logo and "Mühlenbäck", lying flat at
+  street u 0, n 5, z 0.7, turned −0.596 rad to read upright; at the start it sits next to the cream awning, right of the
+  payphone. The minimap covers the bottom-right corner, where the red awning is at the start.
+- **process-sprites.py:** the three boards are keyed like rehmaus-sign but keep their own colours inside (alpha over 160):
+  the spill pull turned Angel Nails' pink (#ed779b is near the magenta key) a dusty red. `cp` is aliased to interactive
+  here; copy Codex output with `command cp -f`, or the old file silently stays.
+- **Start, phone, jobs:** unchanged (START, the home payphone and the brezn pickup #46 are not touched; nothing new is
+  solid). The canopies hang at 2.55 m over the sidewalk, the board is a sprite.
 
 ### B2-2 · Deutsche Post Filiale 571, Sudetenstraße 34 (#150, post) — Size: S — status: ref-done (partial)
 ```
@@ -836,11 +881,140 @@ See docs/places/fellomenal-hundesalon.md.
 ```
 
 
+### Batch 5: job places (decision)
+Same rules: **exterior only** via **#0b**. These six are where jobs and the second save point happen, so each item
+also lists what the code does there (read from `src/sim/town-jobs.ts`, `mission.ts` STOP_REACH = 9 m,
+`shops.ts`, `game.ts` jobCar). Pickups/dropoffs are the raw POI points; three of them sit inside buildings.
+⚠ Orterer Nord (#195) is 14 m inside its hall, so the "gelting-1" pickup looks unreachable: verify in game first.
+
+### B5-1 · Gasthof Geiger, Tattenkofener Straße 1 (#181, food) — Size: S — status: ref-done (partial)
+```
+Goal: Old Bavarian inn by the B11 behind the Nikolauskapelle: white two-storey house, red-brown tiled roof,
+  "Gasthof Geiger" painted in black script over the door. The mayor's Weißwürste end up here.
+Reference: docs/places/gasthof-geiger.md; reference/gasthof-geiger/05-web-commons-nikolauskapelle.jpg (key,
+  Commons CC BY-SA 3.0, 2012), 06-crop-sign.png, 04-satellite.png. No Street View coverage.
+Spec (via #0b):
+- Street frame "Bundesstraße" (B11), POI "Gasthof Geiger" (#181 at 2844.9, 4388). Way 122032724 (414 m²),
+  lettered facade = W side (faces the B11 / chapel meadow).
+- Roof colour → red-brown tile (engine DOP gives grey #44473f / beige #bca68e). White walls.
+- W facade: black script "Gasthof Geiger" + dark beam above it, centred over a dark door with a wall lamp;
+  grey-green curved window surrounds #414a49 on both floors; small bracket sign with a white/red blade.
+- Gravel parking N of the house along the B11 (satellite). Beer garden / other sides: needs reference.
+In-game: dropoff of job "weisswurst" (Rathaus phone; pickup Metzgerei Länger #219; 170 s, €2000).
+  STOP_REACH 9 m: the point is inside the house, 6.3 m from the nearest wall → reachable when you come up
+  to the house; the B11 kerb (14.4 m) alone is too far. Kind food → no map label.
+Acceptance criteria:
+- [ ] From the B11 the W facade matches 05 (white house, red roof, black script name, window surrounds).
+- [ ] The weisswurst dropoff still triggers when the player stops at the house.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B5-2 · Petruskirche, Egerlandstraße 39 (#231, church) — Size: S — status: ref-done (partial)
+```
+Goal: The 1960 Lichtblau "concrete tent": a huge steep dark roof almost to the ground over peach walls,
+  glass strips in the gable, and a tall free-standing peach tower with a red clock. Second "Jesus Saves" point.
+Reference: docs/places/petruskirche.md; reference/petruskirche/05-web-dekanat.jpg (key), 08-crop-tower.png,
+  06-web-parish-winter.jpg, 07-web-parish-drawing.png, 02-street-side.png, 04-satellite.png.
+Spec (via #0b):
+- POI "Petruskirche" (#231 at 2883.8, 2925.2), church way 121436739 (333 m²), Egerlandstraße 25 m E.
+- Roof: steep pitched, dark grey shingle #403f40 (engine #717066 ok), eaves low. Walls peach #b69c85.
+- Gable end: tall vertical glass strips #222223 between narrow pale pillars; round white cross emblem on the side wall.
+- Bell tower = way 188048958 ("Kirchturm Petruskirche", 20 m², ~21 m N): engine has it at 2 levels → needs a
+  height override (slim prism, many times the church eave); peach render, dark louvre near the top, clock with
+  red hands + red marks painted on the wall (no dial), small windows, cross on top. Exact height: needs reference.
+- Mosaic "Petruskirche" + St Peter, bronze portal, front of the entrance gable: needs reference (text sources only).
+In-game: save point (shops.ts SAVE_AT), €500, foot pad 1.8 m, re-arm after 8 m. Pad = spotNear: first free
+  road/path spot ≤40 m, not under tree crowns → probably the footway ~14 m from the POI; runtime decides.
+  Kind church → no map label.
+Acceptance criteria:
+- [ ] From the camera the church reads as a dark tent roof with a separate tall tower next to it (05/06).
+- [ ] The save pad is visible (not under the trees) and still works.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B5-3 · Bäckerei Mühlenbäck, Fasanenweg / Egerlandstraße 54 (#46, bakery) — Size: S — status: todo (needs reference)
+```
+Bakery in the Fasanenweg shop row (way 1466483403, 3245 m², flat), Fasanenweg kerb 11.1 m. Satellite only:
+no shop front, no sign → no look spec (do not copy the Stein branch). See docs/places/muehlenbaeck-zentrum.md.
+In-game: pickup of the first job "brezn" (home phone; → Rehmaus Apotheke #168; 150 s, €1500), chosen by
+across(): nearest Mühlenbäck > 300 m from home. STOP_REACH 9 m: point 0.4 m inside the wall → reachable.
+Need: a Street View/photo of the front on Fasanenweg or Egerlandstraße 54.
+```
+
+### B5-4 · Metzgerei Länger, Amselweg 9 (#219, shop) — Size: S — status: ref-done
+```
+Goal: Family butcher on Amselweg: white house with red-brown pilasters, a big black cow painted on the wall,
+  an old crest sign with ram, cow and pig heads, a red/white awning. Where the mayor's Weißwürste come from.
+Reference: docs/places/metzgerei-laenger.md; reference/metzgerei-laenger/01-street-front.png (key), 02, 03, 04,
+  05-web-crest.png (crest artwork), 06-web-logo.png.
+Spec (via #0b):
+- Street frame "Amselweg" (kerb 17 m NE, bearing 135°), POI "Metzgerei Länger" (#219 at 2659, 2499.5),
+  way 858188287 (660 m², pitched, red-brown tiles). White walls, red-brown pilaster strips #7c5e68.
+- Ground-floor shop front, dark green fascia #2d3537; black cow silhouette #242b37 upper left; crest
+  (05: "Aus Liebe zum Handwerk / Metzgerei Länger") centre-right + one at the corner; red/white striped awning
+  over the left window; pig picture board over the door; dark menu boards with round food photos.
+- Light paved forecourt #ded5c3 with benches and planters; garages beside.
+In-game: pickup of job "weisswurst" (Rathaus phone; → Gasthof Geiger #181). STOP_REACH 9 m: point 5.8 m
+  inside the wall → reachable at the shop front, not from Amselweg (17 m). Kind shop → no map label.
+Acceptance criteria:
+- [ ] From the forecourt the front matches 01 (cow, crest, awning, green fascia). Forecourt walkable.
+- [ ] The weisswurst pickup still triggers at the shop front.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B5-5 · Orterer Getränkemarkt, Banater Straße 3 (#195, shop) — Size: S — status: ref-done
+```
+Goal: Drinks market hall with a solar roof and the red-striped Orterer arch by the car park. The Bauernmafia's
+  Weißbier run starts here.
+Reference: docs/places/orterer-nord.md; reference/orterer-nord/01-street-front.png (key), 02, 03, 04,
+  05-web-logo.png.
+Spec (via #0b):
+- POI "Orterer Getränkemarkt" with y < 3000 (#195 at 2306.5, 2063.1), way 187819175 (903 m²). Banater Straße
+  kerb 42.3 m (bearing 223°); car-park service roads 19 / 32 m.
+- Fix the shape: **one storey, pitched red-tile roof #cc8467 covered with solar panels #909bb7** (engine:
+  2 levels, flat #a49e8e — wrong). White walls #fdfdfb, wide blue-framed windows with posters.
+- Glass canopy over the entrance with the round blue/white Orterer logo above it.
+- Prop: free-standing arched pylon (red/white striped half-sun #e51e23, blue "Orterer" #1470b7,
+  "Getränke-Märkte") at the car-park entrance; red/white barrier posts; light paving.
+In-game: pickup of job "gelting-1" (Gelting gang phone; → Biometzgerei Pichler Großhandel #211; 150 s, €2000).
+  ⚠ STOP_REACH 9 m but the point is 14.0 m inside the hall → probably unreachable. Verify; the fix (move the
+  pickup to the entrance, or snap job places to a reachable spot) is a code decision for the dev.
+Acceptance criteria:
+- [ ] From the car park the hall matches 01 (one storey, solar roof, canopy logo, arch pylon).
+- [ ] The gelting-1 pickup can be reached and triggers.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B5-6 · Kaufland, Bayerwaldstraße 2 (#180, supermarket) — Size: S — status: ref-done (partial)
+```
+Goal: The big Kaufland hall in the north with its solar roof and red K sign over a large car park, where the
+  councillor's BMW gets wrecked.
+Reference: docs/places/kaufland.md; reference/kaufland/02-street-side.png (key, from Blumenstraße), 04-satellite.png.
+Spec (via #0b):
+- POI "Kaufland" (#180 at 2244.3, 1880.5), way 121822645 (6373 m², 1 level, flat). Car-park service roads
+  ~31 m; Thüringer-Wald-Straße 41 m; Blumenstraße on the W/SW side.
+- White sign band #d7dee0 with red square K logo + red "Kaufland" #cc4644 on the Blumenstraße side; solar
+  panels on the roof #616f86 (roof shape: needs reference). Low wall along Blumenstraße.
+- Entrance, trolley bays, mall signs (Ihle, Deichmann, Vinzenzmurr, Dönerworks …), charging station: needs reference.
+In-game: job "kaufland" (Rathaus phone, after weisswurst): destroy a BMW (model 1), 120 s, €3500. jobCar parks it
+  at the right-hand kerb of the nearest road within 80 m → most likely a car-park aisle (POI is 26.5 m inside
+  the hall). Kind supermarket → map label "Kaufland".
+Acceptance criteria:
+- [ ] From Blumenstraße the hall matches 02 (sign band with red K, solar roof).
+- [ ] The BMW still spawns on a drivable aisle in view of the sign.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
 ## Priority list (all 234 POIs)
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11)
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
@@ -852,17 +1026,17 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P2 — gameplay places (jobs, save, spray, police, start)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | ref-done | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
+| 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | ref-done (partial) | B2-2. Job "post": van spawns on Sudetenstraße in front. Post sign needs reference |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | ref-done (partial) | B2-3. Spray shop (pad on the nearest driveway ≤40 m, likely the NW lane) + "mercedes" drop-off |
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | ref-done (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (pitched) |
-| 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | todo | gang job drop |
+| 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | ref-done (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
-| 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | todo | second save point |
-| 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | courier job pickup |
-| 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | todo | gang job pickup |
-| 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | todo | gang job pickup |
-| 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | todo | gang job (BMW) |
+| 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | ref-done (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
+| 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
+| 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | ref-done | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
+| 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | ref-done | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |
+| 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | ref-done (partial) | B5-6. Bayerwaldstraße 2. "kaufland" destroy-BMW (Rathaus job, not a gang job); entrance needs reference |
 | 220 | Huber GmbH, Karosserie-Lack-Center | car_repair | 2353.1, 1757.6 | 47.884194, 11.461548 | 3326 | todo | spray shop |
 | 89 | Auto Stapf | car_repair | 234.3, 1574.7 | 47.885838, 11.433141 | 4859 | todo | spray shop |
 | 211 | Biometzgerei Pichler Großhandel | shop | 240.9, 1498.7 | 47.886522, 11.43323 | 4902 | todo | gang job drop |

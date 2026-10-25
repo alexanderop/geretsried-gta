@@ -64,7 +64,8 @@ plain, like a timber fascia), the roof colour and pitch, and `roof.hip`: a real 
 rising from every wall with hips, valleys and a ridge per wing (`src/render/scene/hip-roof.ts`), instead of the flat
 roof at the eaves. Parts are drawn on top and never solid
 (`src/render/scene/places.ts`): signs, ground-floor arcades and balcony stacks on a wall of the footprint, square towers
-with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles, door canopies. With `roof.hip`, `roof.eaves` gives some walls their own eave height and
+with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles, door canopies
+(plain, or with an awning's fabric on top). With `roof.hip`, `roof.eaves` gives some walls their own eave height and
 `roof.gables` ends the roof in a gable at others; the walls' tops then follow the roof (Maria Hilf). Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
 `facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
@@ -249,6 +250,12 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   square white bell tower in the SW corner, 30 m to its eaves with two louvred sound openings on each face, a dark
   slate pyramid and the cross. Heights and roof come from the Bavarian LoD2 building model (© Bayerische
   Vermessungsverwaltung, CC BY 4.0).
+- **Mühlenbäck** (`src/world/places/muehlenbaeck.ts`), Sudetenstraße 19, where the game starts: a cream block of three
+  storeys under a red-brown hipped roof that ends in a gable at the NW, with its row of shop fronts under a grey fascia
+  along the street: HoangAnh's glazing at No. 17, the pink "Angel Nails" board, the bakery with its white "Mühlenbäck"
+  board and red round logo over a cream awning and its sidewalk board, a shop with a plain red board and one under a
+  long red awning. The three houses and their roofs follow the Bavarian LoD2 model; the shop widths and sign artwork are
+  guesses.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

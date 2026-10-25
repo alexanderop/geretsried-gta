@@ -9,7 +9,7 @@
 | OSM building | way **127604891** (building=yes, no level/roof tags): 37.8 × 18.7 m, 7 nodes, long axis 124°/304° (parallel to Sudetenstraße). The same footprint holds the OSM nodes Angel Nails (4000.2, 4648.4) and HoangAnh (3992.7, 4644.1) |
 | Engine | levels **2** (default for building=yes); pitched; DOP roof faces `#cab4a3` / `#84735e` / `#897b6c` |
 | Street frame | **Sudetenstraße** (tertiary, 8 m). Closest centreline point (4000.0, 4659.7), 9.8 m from the node; street bearing 304°, n bearing (kerb → shop) 34° |
-| Status | **ref-done** (exterior). Levels mismatch noted below |
+| Status | **implemented (partial)**: B2-1, `src/world/places/muehlenbaeck.ts` (3 storeys, shop row, awnings, sidewalk board). Shop widths, sign artwork and No. 17's front are guesses; see "B2-1 as built" in BACKLOG.md |
 
 ## Images
 | File | What | Source |
@@ -40,3 +40,12 @@
 ## In-game
 - This is the bakery **next to the start** (Sudetenstraße 19, payphone + start). It is **not** the courier pickup: `town-jobs.ts` `across()` picks the Mühlenbäck branch more than 300 m away = #46 "Bäckerei Mühlenbäck" (2849.3, 2775.7). Do not rename either POI (game.test.ts checks `toContain("Mühlenbäck")`).
 - Waldmann is 148 m NW; Rehmaus Apotheke (courier drop) is 45 m SE on the same street side.
+
+## Public sources (B2-1)
+- **LoD2** (Bayerische Vermessungsverwaltung, CC BY 4.0, tile `684_5302.gml`): three houses in this footprint. NW
+  `DEBY_LOD2_4602989` (No. 17, HoangAnh): gable roof, eaves 11.4 m at the street, ridge 16 m. Middle `DEBY_LOD2_4602923`
+  (No. 19, Angel Nails + Mühlenbäck): gable roof along the street, eaves 8.6–9.0 m, ridge 11.5 m. SE `DEBY_LOD2_4602924`:
+  hip roof, eaves 9.4 m, ridge 12.1 m. Along the OSM street wall (37.8 m from the NW corner): u 0–13, 13–25, 25–37.8.
+- **DOP20** (20 cm): roofs grey (NW), brown (middle), terracotta (SE).
+- **OSM:** HoangAnh is `amenity=restaurant`, `cuisine=asian`, Sudetenstraße 17, at u ≈ 7; nothing mapped for the two SE shops.
+- **Bakery website:** none found (muehlenbaeck.de does not resolve; tourismus.geretsried.de lists the bakery without address or photo).

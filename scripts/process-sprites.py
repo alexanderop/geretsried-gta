@@ -325,8 +325,9 @@ if lettering is not None:
     square_.save(OUT / "rehmaus-sign.webp", "WEBP", quality=92)
     print("rehmaus-sign.webp")
 
-# Sparkasse Händelstraße: the red flag, the yield sign at its corner and the roof's solar array, prop sprites seen from above.
-for name in ["sparkasse-flag", "yield-sign", "solar-panels"]:
+# Sparkasse Händelstraße: the red flag, the yield sign at its corner and the roof's solar array, prop sprites seen from above;
+# and the Mühlenbäck's sidewalk board with its logo.
+for name in ["sparkasse-flag", "yield-sign", "solar-panels", "bakery-board"]:
     path = find(name)
     if path is None:
         continue
@@ -398,6 +399,31 @@ for name in ["church-rose", "church-door"]:
     square_.save(OUT / f"{name}.webp", "WEBP", quality=90)
     print(f"{name}.webp")
 for name in ["church-window", "church-belfry"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
+# Mühlenbäck's shop row (Sudetenstraße 19): the bakery's white board with "Mühlenbäck" and its red round logo, Angel
+# Nails' pink board and a plain red board with no text (each keyed and squared like rehmaus-sign), and a shop's ground
+# floor under a grey fascia, glazing and a door in aluminium frames (opaque, 2:1, stored square), as a bakery and as
+# any shop. The boards keep their own colours inside: the spill pull would turn Angel Nails' pink a dusty red.
+for name in ["muehlenbaeck-sign", "angel-nails-sign", "shop-board-red"]:
+    src = find(name)
+    if src is None:
+        continue
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (200, 200, 200, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp")
+# An awning's fabric seen from above in neutral greys (a canopy part's texture, times its colour): the wall at the
+# top, two panels, the valance at the bottom; painted seamless left to right, so only resized.
+for name in ["bakery-front", "shop-front", "awning"]:
     src = find(name)
     if src is not None:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)

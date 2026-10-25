@@ -62,6 +62,12 @@ export const Material = {
   churchDoor: 27,
   churchWindow: 28,
   churchBelfry: 29,
+  muehlenbaeckSign: 30,
+  angelNailsSign: 31,
+  shopBoardRed: 32,
+  bakeryFront: 33,
+  shopFront: 34,
+  awning: 35,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -96,6 +102,12 @@ export const MATERIAL_FILES = [
   "church-door",
   "church-window",
   "church-belfry",
+  "muehlenbaeck-sign",
+  "angel-nails-sign",
+  "shop-board-red",
+  "bakery-front",
+  "shop-front",
+  "awning",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -219,6 +231,7 @@ export const PROP_FILES = [
   "sparkasse-flag",
   "yield-sign",
   "solar-panels",
+  "bakery-board",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */
