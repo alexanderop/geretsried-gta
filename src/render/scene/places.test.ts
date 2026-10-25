@@ -269,6 +269,7 @@ describe("a footprint drawn as masses, a roof sign, a canopy on posts and a pylo
       { kind: "roofSign", texture: "roof-edeka", edge: 0, u0: 20, u1: 28, n0: 2, n1: 6, z0: 12.05, z1: 12.05 },
       { kind: "canopy", edge: 0, u0: 2, u1: 8, z: 4, depth: 3, colour: [200, 200, 200, 255], fascia: { h: 1, colour: [216, 50, 60, 255] }, posts: { every: 3, colour: [96, 100, 106, 255] } },
       { kind: "pylon", u: 0, n: 10, angle: 0, w: 2, d: 0.4, h: 5, colour: [184, 50, 58, 255], texture: "am-stern-pylon", z0: 1, z1: 4 },
+      { kind: "pylon", u: 10, n: 10, angle: 0, w: 1, d: 0.3, h: 5, base: 4, colour: [238, 238, 236, 255], texture: "ahorn-a", z0: 4.1, z1: 4.9 },
     ],
   }
   const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
@@ -299,5 +300,13 @@ describe("a footprint drawn as masses, a roof sign, a canopy on posts and a pylo
     expect(panels).toHaveLength(8)
     expect(panels.every((v) => Math.abs(v.y - 50) < 0.3 && v.x > 33.9 && v.x < 36.1 && (near(v.z, 1) || near(v.z, 4)))).toBe(true)
     expect(vs.some((v) => near(v.z, 5) && near(v.x, 36) && near(v.y, 50.2))).toBe(true)
+  })
+
+  it("holds a pylon with a base up off the ground, its box from the base to its top", () => {
+    // u 10 is x 25 (u runs west); the raised box spans x 24.5..25.5 and nothing of it reaches below z 4.
+    const box = vs.filter((v) => v.x > 24.4 && v.x < 25.6 && Math.abs(v.y - 50) < 0.3)
+    expect(box.length).toBeGreaterThan(0)
+    expect(Math.min(...box.map((v) => v.z))).toBeCloseTo(4)
+    expect(Math.max(...box.map((v) => v.z))).toBeCloseTo(5)
   })
 })

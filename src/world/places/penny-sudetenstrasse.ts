@@ -1,5 +1,6 @@
-import { WHITE_RENDER, balconies } from "./am-stern.ts"
-import type { PlaceDressing } from "./dressing.ts"
+import { BALCONY_DEPTH, WHITE_RENDER, balconies } from "./am-stern.ts"
+import type { MaterialName, Rgba } from "#/render/scene/mesh.ts"
+import type { Part, PlaceDressing } from "./dressing.ts"
 
 /**
  * PENNY Am Stern, Sudetenstraße 39–43: the balcony block on the SE side of the Am Stern car park. Its NW front on the
@@ -17,6 +18,20 @@ import type { PlaceDressing } from "./dressing.ts"
  * fronts' extent, where the trolleys stand, the board on the end wall (its height, its spot over the corner), the
  * balconies, the pylon's size and spot (by the corner, between the car-park entrance and the building, as the
  * backlog places it from the photos), the hall's green, the PENNY board painted on the hall's roof (no photo of it).
+ *
+ * Ahorn Apotheke (B3-6), the W corner unit, from Street View (reference/ahorn-apotheke/01–03, penny/01): on the car-park
+ * front (wall 1, u 0 at its NE end, the corner at u 11.4) the light-green "Ahorn-Apotheke" letters with a maple leaf
+ * straight on the white band under the first balconies, over a glazed shop front set back behind a white pier (by da
+ * Daniele) and a square white pillar at the corner; window film with the green name along the glass' foot and red
+ * pharmacy "A"s at its top. On the end wall to Sudetenstraße (wall 0, u 0 at that corner, no balconies): a glazed bay
+ * behind the corner pillar, a white pier, a second bay under the framed white "Ahorn Apotheke" light box, a plain
+ * stretch with the downpipes, then the long glazing with the green film under the PENNY. board (01 and penny/01 both
+ * put the board there, at the S end, not over the corner as B3-0 guessed). The red-and-white "A" light box sticks out
+ * of the end wall by the corner, above the band. As on the west block the shop storey on wall 1 stands flush with the
+ * balconies' fronts (BALCONY_DEPTH out), so the play camera, looking straight down, sees the band and the letters;
+ * the glass sits 0.5 m behind it. Guesses (read off the photos, no measure): where the unit starts on wall 1 (u 2.4),
+ * the bays' and piers' widths on wall 0, the letters' and boards' sizes and heights, the pillars' size, the glass'
+ * set-back, the "A" box's size, height and reach. Not built: the door (behind the corner pillar, not drawn apart).
  */
 const SLAB_H = 15
 const SLAB_PITCH = 16.5
@@ -25,6 +40,24 @@ const HALL_ROOF = 6.3
 /** The balcony floors over the tall shop storey, the lowest clear of the canopy's top. */
 const STOREYS = [5.0, 7.8, 10.6, 13.4] as const
 const PENNY_RED = [216, 50, 60, 255] as const
+/** The Ahorn Apotheke's unit on wall 1, from the pier by da Daniele to the W corner (its start a guess). */
+const AHORN_1 = [2.4, 11.37] as const
+/** The shop storey on wall 1 flush with the balconies' fronts, the white band over it up under the lowest balcony. */
+const SHOP_OUT = BALCONY_DEPTH
+const BAND_Z0 = 3.2
+const BAND_TOP = STOREYS[0] - 0.1
+/** "Ahorn-Apotheke" is 8.15 times as wide as tall (the cropped Codex lettering), 6.4 m long. */
+const AHORN_LETTERS_W = 6.4
+const AHORN_LETTERS_Z0 = 3.65
+/** The framed light box on the end wall (the Codex board is 4 : 1), and the long glazing at the S end under PENNY.'s board. */
+const AHORN_BOARD = [4.1, 7.1] as const
+const AHORN_BOARD_Z0 = 3.75
+const SOUTH_GLASS = [9.9, 17.6] as const
+const PIER: Rgba = [236, 236, 233, 255]
+/** `n` wallSigns of `texture` side by side on wall `edge` from u0 to u1, from the ground up to z1, `out` off the wall. */
+const row = (texture: MaterialName, edge: number, [u0, u1]: readonly [number, number], n: number, z1: number, out = 0.04): ReadonlyArray<Part> =>
+  Array.from({ length: n }, (_, i) => ({ kind: "wallSign", texture, edge, u0: u0 + ((u1 - u0) * i) / n, u1: u0 + ((u1 - u0) * (i + 1)) / n, z0: 0, z1, out }))
+
 const front = (edge: number, u0: number, u1: number) => ({ kind: "wallSign", texture: "shop-front", edge, u0, u1, z0: 0, z1: 3.2 }) as const
 
 export const PENNY_SUDETENSTRASSE: PlaceDressing = {
@@ -72,8 +105,41 @@ export const PENNY_SUDETENSTRASSE: PlaceDressing = {
     // Trolleys under the canopy, along the glass (street frame: the wall runs along n at u −1.4).
     { kind: "sprite", name: "trolley-row", u: -2.9, n: 39.5, z: 1, angle: -Math.PI / 2, len: 5 },
     { kind: "sprite", name: "trolley-row", u: -3.9, n: 41, z: 1, angle: -Math.PI / 2, len: 5 },
-    // The PENNY. board on the end wall to Sudetenstraße, over the pharmacy's glass corner.
-    { kind: "wallSign", texture: "penny-sign", edge: 0, u0: 1.0, u1: 5.2, z0: 3.6, z1: 5.0, out: 0.06 },
+    // The PENNY. board on the end wall to Sudetenstraße, over the long glazing at its S end (01, penny/01).
+    { kind: "wallSign", texture: "penny-sign", edge: 0, u0: SOUTH_GLASS[0] + 0.5, u1: SOUTH_GLASS[0] + 4.7, z0: 3.6, z1: 5.0, out: 0.06 },
+    // Ahorn Apotheke on the car-park front: the white band on a pier by da Daniele and a pillar at the corner, the green
+    // letters on it, the glazing with its window film set back 0.5 m behind.
+    {
+      kind: "canopy",
+      edge: 1,
+      u0: AHORN_1[0],
+      u1: AHORN_1[1],
+      z: BAND_TOP,
+      depth: SHOP_OUT,
+      colour: WHITE_RENDER,
+      fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER },
+      posts: { every: AHORN_1[1] - AHORN_1[0], colour: PIER, side: 0.5 },
+    },
+    ...row("ahorn-front", 1, [AHORN_1[0] + 0.3, AHORN_1[1] - 0.3], 3, BAND_Z0, SHOP_OUT - 0.5),
+    {
+      kind: "wallSign",
+      texture: "ahorn-letters",
+      edge: 1,
+      u0: AHORN_1[0] + 1.2,
+      u1: AHORN_1[0] + 1.2 + AHORN_LETTERS_W,
+      z0: AHORN_LETTERS_Z0,
+      z1: AHORN_LETTERS_Z0 + AHORN_LETTERS_W / 8.15,
+      out: SHOP_OUT + 0.03,
+    },
+    // Round the corner on the end wall: the bay behind the corner pillar, the pier, the bay under the light box, the
+    // plain stretch with the downpipes, the long glazing with the green film.
+    ...row("ahorn-front", 0, [0.3, 3.4], 1, 3.0),
+    ...row("ahorn-front", 0, AHORN_BOARD, 1, 3.0),
+    ...row("ahorn-front", 0, SOUTH_GLASS, 2, 3.0),
+    { kind: "wallSign", texture: "ahorn-board", edge: 0, u0: AHORN_BOARD[0], u1: AHORN_BOARD[1], z0: AHORN_BOARD_Z0, z1: AHORN_BOARD_Z0 + (AHORN_BOARD[1] - AHORN_BOARD[0]) / 4, out: 0.1 },
+    // The red pharmacy "A" light box held out from the end wall by the corner (wall 0 at u 1.2, 0.3–1.2 m out), its
+    // faces looking along Sudetenstraße; in the street frame, which runs 0.6° off wall 0.
+    { kind: "pylon", u: -1.15, n: 10.85, angle: -Math.PI / 2, w: 0.9, d: 0.3, h: 5.0, base: 4.1, colour: [238, 238, 236, 255], texture: "ahorn-a", z0: 4.15, z1: 4.95 },
     // PENNY on the store's own flat roof behind the block, by its NE wall (wall 6), the image's top towards that wall
     // (NNE) so it reads from the top-down camera; on the block's roof the plane up to the ridge is too narrow for it.
     { kind: "roofSign", texture: "penny-sign", edge: 6, u0: 1, u1: 14.2, n0: 2.4, n1: 6.8, z0: HALL_ROOF + 0.05, z1: HALL_ROOF + 0.05, up: "n0" },

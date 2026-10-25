@@ -1082,7 +1082,7 @@ Size: S
 - **Screenshots** (local): on foot at (4193, 4779) the crate rows at the corner; at (4200, 4772) the wall-1 beam with
   the small board beside -156; `?compare=47.85712,11.48605,28` from above.
 
-### B3-6 · Ahorn Apotheke, Sudetenstraße 41 (#67, pharmacy) — Size: S — status: ref-done
+### B3-6 · Ahorn Apotheke, Sudetenstraße 41 (#67, pharmacy) — Size: S — status: implemented (partial: the unit's start on wall 1, the end wall's bays and piers, the letters', boards' and A box's sizes and heights, the pillars and the glass' set-back are guesses)
 ```
 Goal: The glass corner pharmacy at the car-park entrance: light-green "Ahorn Apotheke" lettering, a red
 pharmacy "A" sticking out at the corner.
@@ -1091,9 +1091,41 @@ Spec (via #0b, inside B3-0):
 - POI #67 at 4276.7, 4823.1. Way 822461881, W corner (4270.7, 4827.3): glass on both faces; green lettering
   (#609c2b / #669c36) on the NW facade and the Sudetenstraße end face; projecting red "A" sign at the corner.
 Acceptance criteria:
-- [ ] From Sudetenstraße the corner + pylon match 01. Post van job unaffected; tests green.
+- [x] From Sudetenstraße the corner + pylon match 01. Post van job unaffected; tests green.
+      (Pylon untouched as B3-0 set it; nothing new is solid or on the carriageway; src/sim and town-jobs.ts untouched.)
 Size: S
 ```
+
+**B3-6 as built** (`src/world/places/penny-sudetenstrasse.ts`, on B3-0's Penny block; no roof sign, as B3-0 says):
+- **Sources.** `reference/ahorn-apotheke/01–04` + `SOURCES.md` on disk and used: 01 for the corner, the end wall and the
+  "A" box, 02 for the car-park front (letters, set-back glass, window film), 03 for the context, and
+  `reference/penny-sudetenstrasse/01` for the end wall's S part. Heights from B3-0 (balconies from 5.0 m on Penny's block).
+  POI #67, its name and position untouched.
+- **Wall 1** (the car-park front, u 0 at its NE end, the W corner at u 11.4): from u 2.4 (the white pier by da Daniele)
+  to the corner the white band from 3.2 m up under the lowest balcony, standing on the balconies' front line
+  (`BALCONY_DEPTH`) like denns / Takko / Orterer, on a white pier and a square white pillar at the corner (canopy posts,
+  0.5 m); the light-green "Ahorn-Apotheke" letters with the maple leaf (`ahorn-letters`, 6.4 × 0.79 m, z 3.65) on it;
+  three bays of glazing with the green window film and red "A"s (`ahorn-front`) 0.5 m behind the band's face.
+- **Wall 0** (the end wall to Sudetenstraße, u 0 at the corner, no balconies): a bay behind the corner pillar (u 0.3–3.4),
+  a white pier, a bay (u 4.1–7.1) under the framed white light box "Ahorn Apotheke" (`ahorn-board`, 3 × 0.75 m,
+  z 3.75), the plain stretch with the downpipes, then two bays of film glazing (u 9.9–17.6).
+- **PENNY.'s end-wall board moved** from over the corner (u 1–5.2, B3-0's guess) to over the S glazing (u 10.4–14.6,
+  same height and size): 01 and penny/01 both show it there, and the light box takes the corner bay.
+- **The red "A"**: a white light box 0.9 × 0.3 m, 4.1–5.0 m up, held out 0.3–1.2 m from the end wall 1.2 m from the
+  corner, the pharmacy "A" (`ahorn-a`, the existing `pharmacy-a` prop stretched to a material layer) on both faces,
+  looking along Sudetenstraße.
+- **Generic engine change:** `pylon` got an optional `base` (the box starts that high, no ground shadow), for a sign
+  held out from a wall. Tested in render/scene/places.test.ts.
+- **Sprites:** Codex (three images), processed by `scripts/process-sprites.py` (letters keyed and cropped, 8.15:1,
+  stored square; board and glazing opaque; `ahorn-a` made from `pharmacy-a`).
+- **Guesses:** where the unit starts on wall 1 (u 2.4), the end wall's bay and pier widths, the letters', light box's and
+  A box's sizes and heights, the A box's reach, the pillars' size, the glass' 0.5 m set-back. Not drawn apart: the door.
+- **From the play camera** (straight down) the band, the corner pillar and the A box read; the letters on the band's
+  face and the end wall's glazing only show at the screen's edge, as with the other Am Stern units.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1661 (the Penny
+  block's); with the Penny block skipped, all identical.
+- **Screenshots** (local): on foot at (4262, 4822) and (4268, 4818) the car-park front with the pylon; at (4270, 4834)
+  the end wall with the A box, the glazing and PENNY.'s board; `?compare=47.85663,11.48738,22` from above.
 
 ### B3-7 · Bar Café da Daniele, Sudetenstraße 39 (#77, food) — Size: S — status: ref-done
 ```
@@ -1712,7 +1744,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 77 | da Daniele | food | 329 | ref-done |
-| 67 | Ahorn Apotheke | pharmacy | 330 | ref-done |
+| 67 | Ahorn Apotheke | pharmacy | 330 | implemented (partial) |
 | 66 | PENNY | supermarket | 331 | implemented (partial) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 | 204 | EDEKA | supermarket | 459 | implemented (partial) |
@@ -1971,7 +2003,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 65 | Rossmann | drugstore | 4251.4, 4773.7 | 47.857069, 11.486999 | 283 | implemented (partial) | B3-3; Rossmann block 293545707, 3 storeys (engine 4) |
-| 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | ref-done | B3-6; W corner of the Penny block, red A, pylon |
+| 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | implemented (partial) | B3-6; W corner of the Penny block, red A, pylon |
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | todo |  |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo |  |
 | 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo | needs reference: counter inside EDEKA, no photo (B4-9) |

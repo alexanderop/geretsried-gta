@@ -694,6 +694,29 @@ if (OUT / "facade-render.webp").exists() and not (OUT / "orterer-pier.webp").exi
     Image.open(OUT / "facade-render.webp").convert("RGB").crop((200, 50, 310, 230)).resize((512, 512), Image.LANCZOS).save(OUT / "orterer-pier.webp", "WEBP", quality=88)
     print("orterer-pier.webp")
 
+# Ahorn Apotheke (Sudetenstraße 41): the light-green "Ahorn-Apotheke" letters with the maple leaf keyed off magenta and
+# cropped to the ink, stretched square like denns'; the white light-box board on the end wall and one bay of the
+# glazing with the green window film (opaque, square); the projecting sign's face is the pharmacy "A" prop stretched
+# to a square material layer (the box's panel gives it back its aspect).
+letters = find("ahorn-letters")
+if letters is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(letters))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(letters).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("ahorn-letters aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "ahorn-letters.webp", "WEBP", quality=92)
+    print("ahorn-letters.webp")
+for name in ["ahorn-board", "ahorn-front"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+if (OUT / "pharmacy-a.webp").exists() and not (OUT / "ahorn-a.webp").exists():
+    Image.open(OUT / "pharmacy-a.webp").convert("RGBA").resize((512, 512), Image.LANCZOS).save(OUT / "ahorn-a.webp", "WEBP", quality=92)
+    print("ahorn-a.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

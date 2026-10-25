@@ -153,6 +153,10 @@ export const MATERIAL_FILES = [
   "orterer-logo",
   "orterer-pier",
   "orterer-arcade",
+  "ahorn-letters",
+  "ahorn-board",
+  "ahorn-front",
+  "ahorn-a",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

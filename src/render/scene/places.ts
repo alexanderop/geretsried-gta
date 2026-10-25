@@ -260,9 +260,9 @@ const pylon = (b: Builder, p: Extract<Part, { kind: "pylon" }>) => {
   const front = { ...b, f: { ox, oy, ux, uy, nx: uy, ny: -ux } }
   const back = { ...b, f: { ox, oy, ux: -ux, uy: -uy, nx: -uy, ny: ux } }
   const rect = [-p.w / 2, p.w / 2, -p.d / 2, p.d / 2] as const
-  box(front, rect, 0, p.h, p.colour)
+  box(front, rect, p.base ?? 0, p.h, p.colour)
   for (const side of [front, back]) panel(side, p.texture, -p.w / 2 + PYLON_RIM, p.w / 2 - PYLON_RIM, p.z0, p.z1, -p.d / 2 - SIGN_OUT / 2)
-  boxShadow(front, rect, p.h)
+  if (p.base === undefined) boxShadow(front, rect, p.h)
 }
 
 /** A flight of steps standing out from the wall (n = 0), each a box one riser higher than the one in front of it. */

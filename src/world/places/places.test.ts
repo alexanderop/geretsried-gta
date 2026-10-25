@@ -445,6 +445,51 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses the Ahorn Apotheke's W corner: letters on the car-park band, glass on both faces, the red A held out by the corner", () => {
+    const penny = at(822461881)
+    const pts = map.buildings[penny?.building ?? -1]?.pts ?? []
+    const parts = penny?.dressing.parts ?? []
+    const w0 = wallFrame(pts, 0)
+    const w1 = wallFrame(pts, 1)
+    expect(w0 && w1).toBeTruthy()
+    if (!w0 || !w1 || penny === undefined) return
+    // Wall 0 is the end wall facing Sudetenstraße (bearing about 213°), wall 1 the car-park front (about 303°); they meet
+    // at the W corner, u 0 of wall 0 and the far end of wall 1.
+    const bearing = (f: typeof w0.frame) => ((Math.atan2(-f.nx, f.ny) * 180) / Math.PI + 360) % 360
+    expect(Math.abs(bearing(w0.frame) - 213)).toBeLessThan(10)
+    expect(Math.abs(bearing(w1.frame) - 303)).toBeLessThan(10)
+    const signs = (edge: number, t: string) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === edge && p.texture === t ? [p] : []))
+    // Glass on both faces: wall 1 up to the corner, wall 0 from it.
+    expect(Math.max(...signs(1, "ahorn-front").map((g) => g.u1))).toBeGreaterThan(w1.length - 1)
+    expect(Math.min(...signs(0, "ahorn-front").map((g) => g.u0))).toBeLessThan(1)
+    // The letters on the white band over the glass, flush with the balconies' fronts and under the lowest balcony.
+    const letters = signs(1, "ahorn-letters")[0]
+    const band = parts.find((p) => p.kind === "canopy" && p.edge === 1)
+    expect(letters && band?.kind === "canopy").toBeTruthy()
+    if (!letters || band?.kind !== "canopy") return
+    const balcony = parts.find((p) => p.kind === "balcony" && p.edge === 1)
+    expect(balcony?.kind === "balcony" && band.depth >= balcony.depth && letters.z1 < Math.min(...balcony.z)).toBe(true)
+    expect(letters.out ?? 0).toBeGreaterThan(band.depth)
+    expect(letters.z0).toBeGreaterThan(Math.max(...signs(1, "ahorn-front").map((g) => g.z1)))
+    expect(band.u1).toBeCloseTo(w1.length, 1)
+    // The end wall's light box and PENNY.'s board stand apart, the light box nearer the corner.
+    const board = signs(0, "ahorn-board")[0]
+    const penny0 = signs(0, "penny-sign")[0]
+    expect(board && penny0).toBeTruthy()
+    if (!board || !penny0) return
+    expect(board.u1).toBeLessThan(penny0.u0)
+    // The red A: a raised box (not on the ground) just out from the end wall within 2 m of the corner, off Sudetenstraße.
+    const a = parts.find((p) => p.kind === "pylon" && p.texture === "ahorn-a")
+    expect(a?.kind).toBe("pylon")
+    if (a?.kind !== "pylon") return
+    expect(a.base ?? 0).toBeGreaterThan(3.5)
+    const [u, n] = toLocal(w0.frame, ...toWorld(penny.frame, a.u, a.n))
+    expect(u).toBeGreaterThan(0)
+    expect(u).toBeLessThan(2)
+    expect(-n - a.w / 2).toBeGreaterThan(0)
+    expect(-n + a.w / 2).toBeLessThan(1.5)
+  })
+
   it("dresses Rossmann's car-park front: letters over the glazing by the bend, under the balconies, chimneys on the roof", () => {
     const rossmann = at(293545707)
     const pts = map.buildings[rossmann?.building ?? -1]?.pts ?? []
