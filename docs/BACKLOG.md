@@ -2104,7 +2104,7 @@ OSM node 370882637 (shop=electronics, no address) sits in a small house on Beeth
 no sign. Nothing to build. Ask Alex whether to drop the POI. See docs/places/quelle-sudetenstrasse.md.
 ```
 
-### B6a-10 · Gaststätte Isarwinkel, Richard-Wagner-Straße 14 (#177, food) — Size: S — status: ref-done (partial)
+### B6a-10 · Gaststätte Isarwinkel, Richard-Wagner-Straße 14 (#177, food) — Size: S — status: implemented (partial: lettering/mural size and place, name box, awning/lean-to split, garden and pole places, terrace over synthetic building -159)
 ```
 Goal: Old-style Gaststätte with its name painted on the wall, a landscape mural, a tiled porch roof and red awnings.
 Reference: docs/places/gaststaette-isarwinkel.md; reference/gaststaette-isarwinkel/01-street-front.png (key), 02, 04, 05.
@@ -2115,9 +2115,31 @@ Spec (via #0b):
 - Props: hedge strip + planters in front; pole sign by the car park with a plain white "Restaurant Isarwinkel" board
   (brewery roundel unreadable → leave it out).
 Acceptance criteria:
-- [ ] Front matches 01/02. pnpm test + typecheck green.
+- [x] Front matches 01/02. pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **New file** `src/world/places/gaststaette-isarwinkel.ts` (`GASTSTAETTE_ISARWINKEL`, way 119894071, street front = wall 5,
+  17.19 m, u 0 at the N end; plus `GASTSTAETTE_ISARWINKEL_TERRACE`, see below); two entries in `index.ts`.
+- **Masses** from the Bavarian LoD2 model (tile 684_5302, `DEBY_LOD2_4602821`, within ~1 m of OSM here): the house
+  (t 0–11 from the front) gable along the street, eaves 10.8 m, ridge 12.71 m (19.15°), grey (DOP20 #a3a7a4); the flat
+  part behind its N half at 4.81 m; the SE wing gable along the street, eaves 7.8 m, ridge 8.96 m (13.25°), the model's
+  8.6 m lean-to bits between wing and house folded into it. Walls pale yellow render (photos; the doc's #b89a86 is in shade).
+- **Front**: terracotta tile lean-to (`roof-tiles`, u 0.3–6.0, top 3.7 m) over a red awning, a long red awning u 6.0–16.9
+  (top 3.5 m, 2.7 m deep); "GASTSTÄTTE ISARWINKEL" (`isarwinkel-sign`, Codex, 11:1) on a 0.3 m yellow box over it at
+  u 6.1–14.9, 3.9–4.7 m (painted flat in 01: the box is a **guess** for the play camera), and again on the W roof plane
+  (**guess**, no roof photo); the Alpine mural (`isarwinkel-mural`, Codex) at u 10.3–15.5, 5.0–7.6 m. Sizes, heights and
+  depths read off 02 at an angle: **guesses**.
+- **Building -159**: the map's photo pass (photo.ts `findMissingBuildings`) took the awnings' red in the DOP20 for a shed
+  and made a solid 3 m box over the whole front garden (street u -9…8.5, n 4.4–9.9, its W side on the back ~2 m of the
+  pavement). Left solid with its outline; dressed only as a low walled terrace (0.15 m + 0.6 m parapet, paving roof) so
+  the hedge (`malor-hedge`) and three grey shrub pots (`isarwinkel-planter`, Codex) stand on it. Dropping that false
+  shed (and freeing the pavement) is an import change, outside this item: needs Alex / I-1.
+- **Pole sign**: grey post with the white "Restaurant Isarwinkel" board (`isarwinkel-pole`, Codex, 2.1 × 0.7 m, 2.6–3.3 m)
+  at the car park S of the house, behind the pavement; place and size **guesses**; brewery roundel left out (spec).
+- Not built: lanterns, trellis screens, the N/E facades, the 2027 hotel wing.
+- Chunk hashes (with vs `HASH_SKIP=119894071,-159`): only chunk 1658 differs. pnpm -s check green (254 tests).
+- Screenshots (local scratchpad `b6a-10/`): `play.png`, `play-pots.png` (S end, pots), `overhead.png`.
 
 ### Batch 6b: start area, next 8 (decision)
 Same rules as 6a: **exterior only** (Size S), everything through **#0b**, no interiors, no new ShopKind. Flamingo (#152) and
@@ -2344,7 +2366,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 120 | Bistro Malor | food | 69 | implemented (partial) |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | implemented (partial) |
 | 11 | Quelle | shop | 154 | todo (needs reference; probably closed) |
-| 177 | Gaststätte Isarwinkel | food | 180 | ref-done (partial) |
+| 177 | Gaststätte Isarwinkel | food | 180 | implemented (partial) |
 
 ### 6b (researched 2026-10-25 from DOP20/LoD2/web: B6b-1…B6b-8; no shop fronts seen)
 | # | Name | Kind | m from start | Status |
@@ -2712,7 +2734,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | todo (needs reference; unit shows Deliqos) | B6a-2. Sudetenstraße 17. SV 2022 shows Deliqos at this unit; listings say HoangAnh open. Ask Alex |
 | 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | implemented (partial) | B6a-3. Sudetenstraße 15 |
 | 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | implemented (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
-| 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | ref-done (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
+| 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | implemented (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
 | 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | implemented (partial) | B3-7; crimson fascia; terrace not seen (needs reference) |
 | 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo (needs facade reference) | B6b-6. Neuer Platz 9; roof #858d7e; front needs reference |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | ref-done (partial) | B6c-1. Munzur Kebap & Imbiss, Neuer Platz 3; same footprint as #160 |

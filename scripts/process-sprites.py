@@ -1137,6 +1137,35 @@ if src is not None:
         im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"billion-car-{i}.webp", "WEBP", quality=90)
         print(f"billion-car-{i}.webp", im.size)
 
+# Gaststätte Isarwinkel (Richard-Wagner-Straße 14): the dark "GASTSTÄTTE ISARWINKEL" capitals cropped to the lettering
+# and padded with the wall's own yellow to the sign box's 11:1 (opaque, stored square); the mural and the pole's white
+# board as they are; a grey pot with a round shrub from above (keyed, cropped).
+src = find("isarwinkel-sign")
+if src is not None:
+    im = Image.open(src).convert("RGB")
+    a = np.asarray(im).astype(int)
+    wall = tuple(int(c) for c in np.median(a.reshape(-1, 3), axis=0))
+    ys, xs = np.nonzero(a.max(axis=2) < 120)
+    pad = round((ys.max() - ys.min()) * 0.25)
+    im = im.crop((xs.min() - pad, ys.min() - pad, xs.max() + pad, ys.max() + pad))
+    w = max(im.width, im.height * 11)
+    band = Image.new("RGB", (w, round(w / 11)), wall)
+    band.paste(im, ((band.width - im.width) // 2, (band.height - im.height) // 2))
+    band.resize((512, 512), Image.LANCZOS).save(OUT / "isarwinkel-sign.webp", "WEBP", quality=92)
+    print("isarwinkel-sign.webp", wall, im.size)
+for name in ["isarwinkel-mural", "isarwinkel-pole"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+src = find("isarwinkel-planter")
+if src is not None:
+    im = key_magenta_fast(Image.open(src))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "isarwinkel-planter.webp", "WEBP", quality=90)
+    print("isarwinkel-planter.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

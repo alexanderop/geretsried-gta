@@ -1418,6 +1418,61 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("fronts the Gaststätte Isarwinkel on Richard-Wagner-Straße: LoD2 gable, name box over the awnings, garden and pole off the pavement", () => {
+    const inn = places.find((p) => p.dressing.osmBuildingId === 119894071)
+    if (inn === undefined) throw new Error("no Gaststätte Isarwinkel")
+    expect(inn.dressing.street).toBe("Richard-Wagner-Straße")
+    const pts = map.buildings[inn.building]?.pts ?? []
+    // Wall 5 is the W front on the street, 17.2 m, u 0 at its N end.
+    const front = wallFrame(pts, 5)
+    expect(front?.length).toBeCloseTo(17.19, 1)
+    expect(front?.frame.ny).toBeLessThan(-0.3)
+    expect(front?.frame.uy).toBeGreaterThan(0.9)
+    // The house's eaves (10.8 m) and ridge (12.71 m) from the LoD2 model, over OSM's 11 m depth.
+    const house = inn.dressing.masses?.[0]
+    expect((house?.levels ?? 0) * 3).toBeCloseTo(10.8)
+    expect(10.8 + 5.5 * slope(house?.roof?.hip ?? 0)).toBeCloseTo(12.71, 1)
+    const parts = inn.dressing.parts
+    const name = parts.find((p) => p.kind === "wallSign" && p.texture === "isarwinkel-sign")
+    const box = parts.find((p) => p.kind === "pylon" && p.base !== undefined && p.texture === undefined)
+    if (name?.kind !== "wallSign" || box?.kind !== "pylon") throw new Error("no name box")
+    // The letters stand at least 5 cm in front of the box, and the box sits on the awnings' tops.
+    expect(name.out ?? 0).toBeGreaterThanOrEqual(box.d + 0.05)
+    const awnings = parts.flatMap((p) => (p.kind === "canopy" ? [p] : []))
+    expect(awnings).toHaveLength(3)
+    for (const a of awnings) {
+      expect(a.edge).toBe(5)
+      expect(a.z - (a.fascia?.h ?? 0)).toBeGreaterThan(2.5)
+    }
+    expect(name.z0).toBeGreaterThanOrEqual(Math.max(...awnings.map((a) => a.z)))
+    expect(parts.some((p) => p.kind === "roofSign" && p.texture === "isarwinkel-sign")).toBe(true)
+    // Awnings, hedge, pots and the pole stay off the footprint and behind the pavement's back (kerb n 4 + 2.6 m).
+    for (const a of awnings) {
+      for (const u of [a.u0, a.u1]) {
+        const [x, y] = toWorld(front?.frame ?? inn.frame, u, -a.depth)
+        expect(toLocal(inn.frame, x, y)[1]).toBeGreaterThan(6.6)
+      }
+    }
+    for (const p of parts) {
+      if (p.kind !== "sprite" && !(p.kind === "pylon" && p.base === undefined)) continue
+      const [x, y] = toWorld(inn.frame, p.u, p.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      const half = p.kind === "sprite" ? (p.name === "malor-hedge" ? 0.3 : p.len / 2) : p.d / 2
+      expect(p.n - half).toBeGreaterThan(6.6)
+    }
+    // The synthetic building -159 over the front garden keeps its outline (the solid) and becomes a low walled terrace;
+    // the hedge and pots stand on it, above its wall.
+    const terrace = places.find((p) => p.dressing.osmBuildingId === -159)
+    if (terrace === undefined) throw new Error("no terrace")
+    const slab = dressed.buildings[terrace.building]
+    expect(slab?.pts).toEqual(map.buildings[terrace.building]?.pts)
+    expect((slab?.levels ?? 1) * 3 + 0.6).toBeLessThan(1)
+    for (const p of parts.flatMap((q) => (q.kind === "sprite" ? [q] : []))) {
+      expect(pointInPolygon(...toWorld(inn.frame, p.u, p.n), slab?.pts ?? [])).toBe(true)
+      expect(p.z).toBeGreaterThan((slab?.levels ?? 1) * 3 + 0.6)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })
