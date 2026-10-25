@@ -934,6 +934,47 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Gasthof Geiger: a hipped roof at the LoD2 heights, the name over the door on the W front, the bracket sign out of the wall", () => {
+    const geiger = at(122032724)
+    if (geiger === undefined) throw new Error("no Gasthof Geiger")
+    const pts = map.buildings[geiger.building]?.pts ?? []
+    const parts = geiger.dressing.parts
+    // Walls 3 and 4 are the W front on the B11, on one line, u 0 at their N end.
+    for (const e of [3, 4]) {
+      const w = wallFrame(pts, e)?.frame
+      if (!w) throw new Error(`no wall ${e}`)
+      expect(Math.abs(((Math.atan2(-w.nx, w.ny) * 180) / Math.PI + 360) % 360 - 254)).toBeLessThan(10)
+      expect(w.uy).toBeGreaterThan(0.9)
+    }
+    expect((geiger.dressing.levels ?? 0) * 3).toBeCloseTo(7.13, 2)
+    expect(makeWorld(map).map.buildings.find((b) => b.id === 122032724)?.levels).toBeCloseTo(7.13 / 3, 5)
+    expect(geiger.dressing.roof?.hip).toBeGreaterThan(40)
+    const signs = parts.flatMap((p) => (p.kind === "wallSign" ? [p] : []))
+    const door = signs.find((p) => p.texture === "geiger-door")
+    const name = signs.find((p) => p.texture === "geiger-sign")
+    if (door === undefined || name === undefined) throw new Error("missing door or name")
+    // The name hangs over the door, centred on it, under the upper floor's windows.
+    expect(name.edge).toBe(door.edge)
+    expect(name.z0).toBeGreaterThan(door.z1)
+    expect(Math.abs((name.u0 + name.u1) / 2 - (door.u0 + door.u1) / 2)).toBeLessThan(0.01)
+    const windows = signs.filter((p) => p.texture === "geiger-window")
+    expect(windows.length).toBeGreaterThanOrEqual(14)
+    expect(new Set(signs.map((s) => s.edge))).toEqual(new Set([3, 4]))
+    // No two wall signs overlap (they would flicker), and none runs past its wall.
+    for (const [i, a] of signs.entries()) {
+      expect(a.u0).toBeGreaterThanOrEqual(0)
+      expect(a.u1).toBeLessThanOrEqual(wallFrame(pts, a.edge)?.length ?? 0)
+      for (const b of signs.slice(i + 1)) expect(a.edge === b.edge && a.u0 < b.u1 && b.u0 < a.u1 && a.z0 < b.z1 && b.z0 < a.z1).toBe(false)
+    }
+    // The bracket sign stands out of the wall, over head height.
+    const pylons = parts.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    expect(pylons).toHaveLength(3)
+    for (const p of pylons) {
+      expect(p.base ?? 0).toBeGreaterThan(2.5)
+      expect(pointInPolygon(...toWorld(geiger.frame, p.u, p.n), pts)).toBe(false)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

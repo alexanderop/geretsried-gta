@@ -1550,7 +1550,7 @@ also lists what the code does there (read from `src/sim/town-jobs.ts`, `mission.
 `shops.ts`, `game.ts` jobCar). Pickups/dropoffs are the raw POI points; three of them sit inside buildings.
 ⚠ Orterer Nord (#195) is 14 m inside its hall, so the "gelting-1" pickup looks unreachable: verify in game first.
 
-### B5-1 · Gasthof Geiger, Tattenkofener Straße 1 (#181, food) — Size: S — status: ref-done (partial)
+### B5-1 · Gasthof Geiger, Tattenkofener Straße 1 (#181, food) — Size: S — status: implemented (partial: door spot, window columns, bracket sign, roof colour and roof board are guesses)
 ```
 Goal: Old Bavarian inn by the B11 behind the Nikolauskapelle: white two-storey house, red-brown tiled roof,
   "Gasthof Geiger" painted in black script over the door. The mayor's Weißwürste end up here.
@@ -1567,9 +1567,23 @@ In-game: dropoff of job "weisswurst" (Rathaus phone; pickup Metzgerei Länger #2
   STOP_REACH 9 m: the point is inside the house, 6.3 m from the nearest wall → reachable when you come up
   to the house; the B11 kerb (14.4 m) alone is too far. Kind food → no map label.
 Acceptance criteria:
-- [ ] From the B11 the W facade matches 05 (white house, red roof, black script name, window surrounds).
+- [x] From the B11 the W facade matches 05 (white house, red roof, black script name, window surrounds).
 - [ ] The weisswurst dropoff still triggers when the player stops at the house.
-- [ ] pnpm test + typecheck green.
+- [x] pnpm test + typecheck green.
+As built (places-only batch, src/world/places/gasthof-geiger.ts):
+- Job part out of scope (places-only batch): the weisswurst criterion is left unticked. No solid, outline, POI or
+  src/sim change; the dressing is wall signs, a roof sign and three non-solid pylons.
+- LoD2 DEBY_LOD2_4531992 (tile 684_5302): hipped roof, eaves 7.13 m, ridge 12.67 m (43.5° over its 11.5 m depth).
+  Built as levels 7.13/3 with a hip at 41.3° over OSM's 12.6 m depth, which gives the model's ridge. Roof red-brown
+  #b2785e (DOP20 sunlit W plane #c6b099; 2012 photo red-brown). White render.
+- W front (walls 3 + 4, one line): 9 window columns on both floors in grey-green baroque surrounds (geiger-window), the
+  black door with lantern and menu board (geiger-door) 22 m from the N end, over it the dark beam with "Gasthof Geiger"
+  (geiger-sign, Codex lettering in Fraktur-like script), the wrought-iron bracket with a white/red blade out of the wall.
+- "Gasthof Geiger" on a cream board on the W roof plane, reading W to E for the top-down camera (geiger-board).
+- Guesses: door spot, window columns/sizes/heights, beam and lettering size, bracket sign, roof colour, roof board.
+- Not built: the model's 3.8 m porch at the NW corner (outside OSM), chimneys, aerial, gravel car park N, beer garden,
+  N/E/S facades (no reference).
+- Checks: chunk hash differs only in the place's chunk (1518); pnpm -s check green; places.test.ts "dresses Gasthof Geiger".
 Size: S
 ```
 
@@ -1990,7 +2004,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 |---|---|---|---|---|
 | 48 | Mühlenbäck | bakery | 8 | implemented (partial) |
 | 168 | Rehmaus Apotheke | pharmacy | 50 | implemented |
-| 170 | Spielwaren Krömer | shop | 135 | ref-done |
+| 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | implemented (partial) | B4-8 |
 | 56 | Cafe Waldmann | food | 148 | implemented |
 | 166 | Woolworth | shop | 157 | implemented (partial) |
 | 169 | Sun Style Bodystyling Studio | shop | 173 | implemented (partial) |
@@ -2205,7 +2219,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | implemented (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (gable roof with two cross gables, LoD2) |
-| 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
+| 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | implemented (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | implemented (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
 | 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | ref-done (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |

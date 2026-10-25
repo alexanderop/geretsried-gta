@@ -192,6 +192,10 @@ export const MATERIAL_FILES = [
   "kroemer-door",
   "kroemer-window",
   "kroemer-stripe",
+  "geiger-sign",
+  "geiger-board",
+  "geiger-window",
+  "geiger-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

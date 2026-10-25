@@ -887,6 +887,37 @@ if stripe is not None:
     im.crop((xs.min(), 0, xs.max() + 1, im.height)).resize((256, 512), Image.LANCZOS).save(OUT / "kroemer-stripe.webp", "WEBP", quality=90)
     print("kroemer-stripe.webp", xs.min(), xs.max())
 
+# Gasthof Geiger (Tattenkofener Straße 1): the dark beam over the black script "Gasthof Geiger", keyed and cropped to the
+# ink, stretched square (loose letters on the render); the same letters without the beam on a cream board with a brown
+# rim for the roof (2.45:1, opaque); the window in its grey-green baroque surround and the door with its lamp (opaque).
+sign = find("geiger-sign")
+if sign is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(sign))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(sign).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("geiger-sign aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "geiger-sign.webp", "WEBP", quality=92)
+    # The letters: the rows under the first fully transparent gap below the beam.
+    a = np.asarray(im.getchannel("A")) > 24
+    rows = a.any(axis=1)
+    gap = int(np.argmax(~rows[np.argmax(rows):])) + int(np.argmax(rows))
+    letters = im.crop((0, gap, im.width, im.height))
+    letters = letters.crop(letters.getchannel("A").point(lambda v: 255 if v > 24 else 0).getbbox())
+    board = Image.new("RGBA", (980, 400), (92, 62, 40, 255))
+    board.alpha_composite(Image.new("RGBA", (944, 364), (238, 228, 204, 255)), (18, 18))
+    k = min(820 / letters.width, 260 / letters.height)
+    lw, lh = round(letters.width * k), round(letters.height * k)
+    board.alpha_composite(letters.resize((lw, lh), Image.LANCZOS), ((980 - lw) // 2, (400 - lh) // 2))
+    board.convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "geiger-board.webp", "WEBP", quality=92)
+    print("geiger-sign.webp geiger-board.webp")
+for name in ["geiger-window", "geiger-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
