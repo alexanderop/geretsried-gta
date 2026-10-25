@@ -1390,6 +1390,34 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("fronts Autohaus Billion with its plate, VW pylon, flags and forecourt cars clear of the pavement", () => {
+    const billion = places.find((p) => p.dressing.osmBuildingId === 120402846)
+    if (billion === undefined) throw new Error("no Autohaus Billion")
+    // The POI keeps OSM's brand list; the name goes on the plate.
+    expect(billion.dressing.poi).toBe("Audi;Seat;Škoda;Volkswagen")
+    const parts = billion.dressing.parts
+    const plate = parts.find((p) => p.kind === "wallSign" && p.texture === "billion-plate")
+    if (plate?.kind !== "wallSign") throw new Error("no plate")
+    expect(plate.edge).toBe(12)
+    // The block's eaves (8.1 m) and ridge (10.2 m) from the LoD2 model, over OSM's 15.35 m depth.
+    const block = billion.dressing.masses?.[0]
+    expect((block?.levels ?? 0) * 3).toBeCloseTo(8.1)
+    expect(8.1 + (15.35 / 2) * slope(block?.roof?.hip ?? 0)).toBeCloseTo(10.2, 1)
+    const pts = map.buildings[billion.building]?.pts ?? []
+    const free = parts.flatMap((p) => (p.kind === "sprite" || p.kind === "pylon" ? [p] : []))
+    expect(free.filter((p) => p.kind === "sprite" && p.name.startsWith("billion-car-"))).toHaveLength(5)
+    expect(free.filter((p) => p.kind === "sprite" && p.name === "vw-flag")).toHaveLength(3)
+    expect(free.some((p) => p.kind === "pylon" && p.texture === "vw-pylon")).toBe(true)
+    // Off the footprint (the plate's box only just), and short of the pavement's back (kerb n 4 + 2.6 m): a car's half width is 1.25 m.
+    for (const p of free) {
+      const [x, y] = toWorld(billion.frame, p.u, p.n)
+      if (p.kind === "pylon" && p.base !== undefined) continue
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      const half = p.kind === "sprite" && p.name.startsWith("billion-car-") ? 1.25 : p.kind === "pylon" ? p.d / 2 : 0.1
+      expect(p.n - half).toBeGreaterThan(6.6)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

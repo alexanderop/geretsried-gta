@@ -1097,6 +1097,46 @@ for name in ["malor-terrace", "malor-hedge"]:
         im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp", im.size)
 
+# Autohaus Billion (Sudetenstraße 25): one showroom bay and the VW pylon's face (opaque, stored square); the white
+# "Autohaus Billion" plate cropped to its lettering and padded with its own white to 6:1; the VW flag (keyed, cropped);
+# the four forecourt cars, one sheet split at the background gaps into billion-car-0 … 3 (keyed, cropped).
+for name in ["billion-showroom", "vw-pylon"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+src = find("billion-plate")
+if src is not None:
+    im = Image.open(src).convert("RGB")
+    a = np.asarray(im).astype(int)
+    ys, xs = np.nonzero(a.max(axis=2) < 140)
+    pad = round((ys.max() - ys.min()) * 0.35)
+    im = im.crop((xs.min() - pad, ys.min() - pad, xs.max() + pad, ys.max() + pad))
+    white = (252, 252, 251)
+    band = Image.new("RGB", (max(im.width, im.height * 6), round(max(im.width, im.height * 6) / 6)), white)
+    band.paste(im, ((band.width - im.width) // 2, (band.height - im.height) // 2))
+    band.resize((512, 512), Image.LANCZOS).save(OUT / "billion-plate.webp", "WEBP", quality=92)
+    print("billion-plate.webp", im.size)
+src = find("vw-flag")
+if src is not None:
+    im = key_magenta_fast(Image.open(src))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "vw-flag.webp", "WEBP", quality=90)
+    print("vw-flag.webp", im.size)
+src = find("billion-cars")
+if src is not None:
+    sheet = key_magenta_fast(Image.open(src))
+    filled = (np.asarray(sheet.getchannel("A")) > 24).any(axis=0)
+    edges = np.flatnonzero(np.diff(np.concatenate([[0], filled.astype(int), [0]])))
+    runs = [(int(a), int(b)) for a, b in zip(edges[0::2], edges[1::2]) if b - a > 40]
+    for i, (x0, x1) in enumerate(runs[:4]):
+        im = sheet.crop((x0, 0, x1, sheet.height))
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"billion-car-{i}.webp", "WEBP", quality=90)
+        print(f"billion-car-{i}.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

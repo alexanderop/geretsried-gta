@@ -226,6 +226,9 @@ export const MATERIAL_FILES = [
   "kind-side",
   "kind-sign",
   "malor-front",
+  "billion-showroom",
+  "billion-plate",
+  "vw-pylon",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -364,6 +367,11 @@ export const PROP_FILES = [
   "kind-aboard",
   "malor-terrace",
   "malor-hedge",
+  "vw-flag",
+  "billion-car-0",
+  "billion-car-1",
+  "billion-car-2",
+  "billion-car-3",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

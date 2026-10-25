@@ -2061,7 +2061,7 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-7/`): `play.png`, `play-across.png` + `play-across-crop.png` (sign), `overhead.png`
   + `overhead-crop.png`.
 
-### B6a-8 · Autohaus Billion, Sudetenstraße 25 (#178 "Audi;Seat;Škoda;Volkswagen", shop) — Size: S — status: ref-done
+### B6a-8 · Autohaus Billion, Sudetenstraße 25 (#178 "Audi;Seat;Škoda;Volkswagen", shop) — Size: S — status: implemented (partial: plate size/place, awning split, pylon/flag/car places, parallel parking)
 ```
 Goal: VW dealer SE of the start: white block, terracotta awnings, VW pylon + flags, cars on a paved forecourt.
 Reference: docs/places/autohaus-billion.md; reference/autohaus-billion/01-street-front.png (key), 02, 03, 05-crop-side-sign.png, 04.
@@ -2072,9 +2072,30 @@ Spec (via #0b):
 - Props at the NW end of the forecourt: VW pylon #d7d7d6 + 3 flags; 4–6 static parked cars on the forecourt.
 - Naming: the POI name is the OSM brand list (build.ts `brand ?? name`). Do NOT rename here; Alex decides (see doc).
 Acceptance criteria:
-- [ ] From Sudetenstraße the front matches 01/02; forecourt cars do not block the road. pnpm test + typecheck green.
+- [x] From Sudetenstraße the front matches 01/02; forecourt cars do not block the road. pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **New file** `src/world/places/autohaus-billion.ts` (`AUTOHAUS_BILLION`, way 120402846, street front = wall 12, u 0 at
+  the NW corner); one line in `index.ts`. POI name kept as "Audi;Seat;Škoda;Volkswagen". The name on the building is
+  "Autohaus Billion" (OSM name, website, side sign in 05): not a guess; the POI rename stays Alex's call.
+- **Masses** from the Bavarian LoD2 model (tile 684_5302), carried onto OSM's outline (the model sits ~2.5 m behind
+  OSM's front): showroom block (`DEBY_LOD2_4602925`, s 27.8–56.6) gable along the street, eaves 8.1 m, ridge 10.2 m
+  (15.4°), brown tiles; low NW showroom (`23835687` + `105019359`) gable eaves 4.25 m, ridge 6.0 m (12.8°), light grey
+  with three solar strips on its SW plane (DOP20); its flat back part 4.1 m; workshop halls (`4603394` / `4603396`) flat
+  5.25 m grey and 5.0 m white, cut at OSM's step (s 47.86, the model cuts at 45.4).
+- **Front**: `billion-showroom` bays (glass between grey pillars, Codex after 01) 6 on the block (0–3.4 m), 5 on the NW
+  showroom (0–3.0 m, a **guess**: 01 shows it only behind the pylon); three terracotta awnings (canopy + valance, top
+  3.75 m, 1.3 m deep; split and depth **guesses**); white `billion-plate` "Autohaus Billion" on a 0.3 m white box at
+  u 44.2–49.0, 4.4–5.2 m (size/place **guess**); the same plate on the block's SW roof plane for the top-down camera
+  (**guess**, no roof photo).
+- **Forecourt**: VW pylon (`vw-pylon`: roundel + "Service", 1.2 × 0.4 × 3.8 m) and three `vw-flag` flags on poles at the
+  NW end (places **guesses**); five parked VW SUVs (`billion-car-0…3`: silver, navy, teal T-Roc, white; Codex) parallel to
+  the front past the awnings. OSM's front is only 2.5–4.5 m from the pavement's back, so nose-in parking (01) does not
+  fit: parallel is a **guess**. Props are never solid; all stay off the pavement (test).
+- Not built: the blue-grey side sign (03, place on the front unclear), the small VW roundel at the SE end (02), the van.
+- Chunk hashes (with vs `HASH_SKIP=120402846`): only chunk 1615 differs. pnpm -s check green (253 tests).
+- Screenshots (local scratchpad `b6a-8/`): `play.png`, `play-nw.png` (pylon + flags), `overhead.png`.
 
 ### B6a-9 · Quelle (#11, shop) — Size: S — status: todo (needs reference; probably closed)
 ```
@@ -2319,9 +2340,9 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 47 | Dolce Gelato | food | 20 | implemented (partial) |
 | 155 | Stroblume | shop | 29 | implemented (partial) |
 | 13 | VR-Bank | bank | 48 | implemented (partial) |
-| 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | ref-done |
+| 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | implemented (partial) | B6a-6. Sudetenstraße 10, sign "KIND" |
 | 120 | Bistro Malor | food | 69 | implemented (partial) |
-| 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | ref-done |
+| 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | implemented (partial) |
 | 11 | Quelle | shop | 154 | todo (needs reference; probably closed) |
 | 177 | Gaststätte Isarwinkel | food | 180 | ref-done (partial) |
 
@@ -2730,7 +2751,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | implemented (partial) | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
 | 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | implemented (partial) | B6a-4. Sudetenstraße 15 |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | implemented (partial) | B6a-6. Sudetenstraße 10, sign "KIND" |
-| 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
+| 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | implemented (partial) | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | implemented (partial) | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
