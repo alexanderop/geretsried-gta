@@ -9,10 +9,10 @@
  * drawn on top and are never solid: towers stay inside the footprint
  * (places.test.ts checks), signs and arcades on its walls.
  *
- * Coordinates (world/frame.ts): free-standing parts (tower, sprite) are in
+ * Coordinates (world/frame.ts): free-standing parts (tower, pylon, sprite) are in
  * the street frame, u along the street, n from its centre line towards the
  * place (the POI, or the footprint's middle when no POI marks it). Wall
- * parts (wallSign, arcade, balcony, canopy, gable, stairs, ramp) sit on one wall of the footprint, `edge` i
+ * parts (wallSign, arcade, balcony, canopy, gable, stairs, ramp, roofSign) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
  */
@@ -56,11 +56,48 @@ export type Part =
   /**
    * A flat slab over a door on wall `edge` from u0 to u1, its top at `z`,
    * standing `depth` meters out of the wall. Overhead like a balcony
-   * (places.test.ts keeps it above head height). With `texture` its top is
+   * (places.test.ts keeps it, and the bottom of its fascia, above head height). With `texture` its top is
    * that material times `colour` (an awning's fabric), repeated every
-   * `depth` meters along the wall, the image's top at the wall.
+   * `depth` meters along the wall, the image's top at the wall. `fascia` hangs a board `h` meters deep round its
+   * three outer sides (a free-standing shop canopy's; a wallSign with `out` = depth puts lettering on its front);
+   * `posts` stand under its outer corners and about every `every` meters along its front, never solid.
    */
-  | { readonly kind: "canopy"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: number; readonly depth: number; readonly colour: Rgba; readonly texture?: MaterialName }
+  | {
+      readonly kind: "canopy"
+      readonly edge: number
+      readonly u0: number
+      readonly u1: number
+      readonly z: number
+      readonly depth: number
+      readonly colour: Rgba
+      readonly texture?: MaterialName
+      readonly fascia?: { readonly h: number; readonly colour: Rgba }
+      readonly posts?: { readonly every: number; readonly colour: Rgba }
+    }
+  /**
+   * A sign painted on the roof, for the top-down camera to tell shops apart: the material over the rectangle u0..u1
+   * by n0..n1 in wall `edge`'s frame (n into the building), at height z0 along its n0 side and z1 along its n1 side
+   * (so it can lie on a roof plane rising from that wall), the image's top towards `up` (default "n1": letters read
+   * from outside that wall). It must lie over the footprint (places.test.ts checks); a few centimetres over the roof.
+   */
+  | {
+      readonly kind: "roofSign"
+      readonly texture: MaterialName
+      readonly edge: number
+      readonly u0: number
+      readonly u1: number
+      readonly n0: number
+      readonly n1: number
+      readonly z0: number
+      readonly z1: number
+      readonly up?: "n0" | "n1" | "u0" | "u1"
+    }
+  /**
+   * A free-standing sign post at (u, n) in the street frame, turned `angle` (radians, like a sprite's) from u: a box
+   * `w` wide along it, `d` deep, `h` high in `colour`, with the material on both broad faces from `z0` to `z1` (the
+   * stacked panels of a shopping-centre pylon). Never solid.
+   */
+  | { readonly kind: "pylon"; readonly u: number; readonly n: number; readonly angle: number; readonly w: number; readonly d: number; readonly h: number; readonly colour: Rgba; readonly texture: MaterialName; readonly z0: number; readonly z1: number }
   /**
    * A cross gable on wall `edge` from u0 to u1: a gabled roof with its eaves at `z` rising at `pitch` degrees to a
    * ridge over the stretch's middle that runs `depth` meters into the building, ending at the wall in a gable
@@ -127,6 +164,20 @@ export type Part =
   /** A prop sprite lying flat at (u, n) and height z, its long side `len` meters along frame angle `angle` (radians, 0 = +u), on a pole from the ground when `pole` gives its colour. */
   | { readonly kind: "sprite"; readonly name: PropName; readonly u: number; readonly n: number; readonly z: number; readonly angle: number; readonly len: number; readonly pole?: Rgba }
 
+/**
+ * One volume of a footprint OSM maps as one outline over several buildings (two blocks and the low link between
+ * them): a ring of map points (x, y, …, open) with its own storeys and roof, and optionally its own wall colour and
+ * bands (else the place's). A place with `masses` is drawn as them instead of as its footprint; they must tile the
+ * footprint (places.test.ts checks), whose outline stays the solid and carries the wall parts.
+ */
+export type Mass = {
+  readonly pts: ReadonlyArray<number>
+  readonly levels: number
+  readonly roof?: PlaceDressing["roof"]
+  readonly wallColour?: Rgba
+  readonly bands?: ReadonlyArray<WallBand>
+}
+
 export type PlaceDressing = {
   /** The POI's exact name, or the building's OSM name when no POI marks it. With several POIs of that name, the one nearest the footprint. */
   readonly poi: string
@@ -155,6 +206,8 @@ export type PlaceDressing = {
     readonly eaves?: ReadonlyArray<{ readonly edges: ReadonlyArray<number>; readonly z: number }>
     readonly gables?: ReadonlyArray<number>
   }
+  /** The footprint as several volumes with their own heights and roofs (see Mass), instead of one. */
+  readonly masses?: ReadonlyArray<Mass>
   readonly parts: ReadonlyArray<Part>
 }
 

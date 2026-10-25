@@ -528,6 +528,35 @@ if sign is not None:
     square_.save(OUT / "polizei-sign.webp", "WEBP", quality=92)
     print("polizei-sign.webp")
 
+# The Am Stern block (Sudetenstraße 29–43): the red "PENNY. Am Stern" board and the boards painted on the roofs for the
+# top-down camera (ROSSMANN, EDEKA, denns), keyed and squared like the Post board (their own colours kept inside); the
+# face of the red Am Stern pylon with its four stacked panels (opaque, 1:3, stored square); a row of nested shopping
+# trolleys seen from above, a prop sprite like the letter box.
+for name in ["penny-sign", "roof-rossmann", "roof-edeka", "roof-denns"]:
+    src = find(name)
+    if src is None:
+        continue
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (200, 200, 200, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp")
+pylon = find("am-stern-pylon")
+if pylon is not None:
+    Image.open(pylon).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "am-stern-pylon.webp", "WEBP", quality=92)
+    print("am-stern-pylon.webp")
+trolleys = find("trolley-row")
+if trolleys is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(trolleys)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "trolley-row.webp", "WEBP", quality=90)
+    print("trolley-row.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

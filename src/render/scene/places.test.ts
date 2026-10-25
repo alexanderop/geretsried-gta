@@ -252,3 +252,52 @@ describe("a roof deck on posts, stairs and a ramp", () => {
     for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
   })
 })
+
+describe("a footprint drawn as masses, a roof sign, a canopy on posts and a pylon", () => {
+  // The shop (x 20..50, y 60..75) as a 12 m block in its west half and a 3 m link in its east half. Wall 0 runs along
+  // y = 60, seen from the north: left end (50, 60), u west, n into the shop (+y). No POI: the frame hangs on the
+  // footprint's middle, origin (35, 40) on Main, n south (+y), u west (-x).
+  const shop: PlaceDressing = {
+    poi: "Shop",
+    street: "Main",
+    osmBuildingId: 1,
+    masses: [
+      { pts: [20, 60, 35, 60, 35, 75, 20, 75], levels: 4, roof: { pitched: false } },
+      { pts: [35, 60, 50, 60, 50, 75, 35, 75], levels: 1, roof: { pitched: false } },
+    ],
+    parts: [
+      { kind: "roofSign", texture: "roof-edeka", edge: 0, u0: 20, u1: 28, n0: 2, n1: 6, z0: 12.05, z1: 12.05 },
+      { kind: "canopy", edge: 0, u0: 2, u1: 8, z: 4, depth: 3, colour: [200, 200, 200, 255], fascia: { h: 1, colour: [216, 50, 60, 255] }, posts: { every: 3, colour: [96, 100, 106, 255] } },
+      { kind: "pylon", u: 0, n: 10, angle: 0, w: 2, d: 0.4, h: 5, colour: [184, 50, 58, 255], texture: "am-stern-pylon", z0: 1, z1: 4 },
+    ],
+  }
+  const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
+  const vs = vertices(scene.build(0))
+
+  it("raises each mass to its own height: the block's walls to 12 m in the west half, the link's to 3 m in the east", () => {
+    const walls = vs.filter((v) => v.mode === Mode.material && v.layer !== material("roof-edeka") && v.layer !== material("am-stern-pylon") && v.y > 59.9)
+    expect(Math.max(...walls.filter((v) => v.x < 34.99).map((v) => v.z))).toBeCloseTo(12.6)
+    expect(Math.max(...walls.filter((v) => v.x > 35.01).map((v) => v.z))).toBeCloseTo(3.6)
+    for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
+  })
+
+  it("lays the roof sign over its rectangle on the block's roof", () => {
+    const sign = vs.filter((v) => v.mode === Mode.material && v.layer === material("roof-edeka"))
+    expect(sign).toHaveLength(4)
+    expect(sign.every((v) => near(v.z, 12.05) && v.x > 21.99 && v.x < 30.01 && v.y > 61.99 && v.y < 66.01)).toBe(true)
+  })
+
+  it("hangs the canopy's fascia from its outer edge and stands its posts under it", () => {
+    // The fascia's front 3 m out (y 57) from 3 m to just over the slab; the posts' tops at the fascia's bottom.
+    expect(vs.some((v) => near(v.y, 57) && near(v.z, 3))).toBe(true)
+    expect(vs.some((v) => near(v.y, 57) && near(v.z, 4.1))).toBe(true)
+    expect(vs.some((v) => Math.abs(v.y - 57.2) < 0.1 && near(v.z, 3) && v.x > 41.9 && v.x < 48.1)).toBe(true)
+  })
+
+  it("stands the pylon at its spot with its panels on both broad faces", () => {
+    const panels = vs.filter((v) => v.mode === Mode.material && v.layer === material("am-stern-pylon"))
+    expect(panels).toHaveLength(8)
+    expect(panels.every((v) => Math.abs(v.y - 50) < 0.3 && v.x > 33.9 && v.x < 36.1 && (near(v.z, 1) || near(v.z, 4)))).toBe(true)
+    expect(vs.some((v) => near(v.z, 5) && near(v.x, 36) && near(v.y, 50.2))).toBe(true)
+  })
+})

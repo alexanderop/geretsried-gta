@@ -8,6 +8,21 @@ import { makeWorld } from "../world.ts"
 import { dressMap, resolvePlaces, towerFrame, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
 
+/** Whether (x, y) lies within 0.3 m of a wall of the ring: the masses' corners are rounded to 0.1 m, so spots there prove nothing. */
+const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
+  const n = ring.length / 2
+  for (let i = 0; i < n; i++) {
+    const ax = ring[i * 2] ?? 0
+    const ay = ring[i * 2 + 1] ?? 0
+    const bx = ring[((i + 1) % n) * 2] ?? 0
+    const by = ring[((i + 1) % n) * 2 + 1] ?? 0
+    const len2 = (bx - ax) ** 2 + (by - ay) ** 2
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / len2))
+    if (Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay)) < 0.3) return true
+  }
+  return false
+}
+
 const road = (name: string, pts: Array<number>): Road => ({ kind: "residential", name, width: 6, oneway: false, pts, nodes: pts.filter((_, i) => i % 2 === 0).map((_, i) => i + 1) })
 const tiny: GameMap = {
   width: 256,
@@ -117,6 +132,12 @@ describe("the registry on the real map", () => {
           const fits = wall !== null && part.u0 >= 0 && part.u0 < part.u1 && part.u1 <= wall.length + 0.01
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
         }
+        if (part.kind === "roofSign") {
+          const wall = wallFrame(pts, part.edge)
+          if (wall === null) return [`${dressing.poi}: roofSign on wall ${part.edge}`]
+          const ring = rectRing(wall.frame, [part.u0, part.u1, part.n0, part.n1])
+          return [0, 1, 2, 3].filter((k) => !pointInPolygon(ring[k * 2] ?? 0, ring[k * 2 + 1] ?? 0, pts)).map((k) => `${dressing.poi}: roofSign corner ${k} outside`)
+        }
         if (part.kind !== "tower") return []
         const f = towerFrame(place, pts, part)
         if (f === null) return [`${dressing.poi}: tower on wall ${part.edge}`]
@@ -130,11 +151,32 @@ describe("the registry on the real map", () => {
   it("hangs balconies and door canopies above head height, so people and cars pass under them", () => {
     const low = PLACES.flatMap((d) =>
       d.parts.flatMap((part) => {
-        const z = part.kind === "balcony" ? Math.min(...part.z) : part.kind === "canopy" ? part.z : part.kind === "deck" ? part.z - part.thickness : Infinity
+        const z = part.kind === "balcony" ? Math.min(...part.z) : part.kind === "canopy" ? part.z - (part.fascia?.h ?? 0) : part.kind === "deck" ? part.z - part.thickness : Infinity
         return z < 2.5 ? [`${d.poi}: ${part.kind} at ${z}`] : []
       }),
     )
     expect(low).toEqual([])
+  })
+
+  it("tiles the footprint with its masses: every spot inside it (away from its walls) lies in exactly one, none outside it", () => {
+    const wrong = places.flatMap(({ dressing, building }) => {
+      const masses = dressing.masses
+      if (masses === undefined) return []
+      const pts = map.buildings[building]?.pts ?? []
+      const xs = pts.filter((_, i) => i % 2 === 0)
+      const ys = pts.filter((_, i) => i % 2 === 1)
+      const out: Array<string> = []
+      for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.7) {
+        for (let y = Math.min(...ys); y <= Math.max(...ys); y += 0.7) {
+          if (nearWall(x, y, pts) || masses.some((v) => nearWall(x, y, v.pts))) continue
+          const inside = pointInPolygon(x, y, pts) ? 1 : 0
+          const hits = masses.filter((v) => pointInPolygon(x, y, v.pts)).length
+          if (hits !== inside) out.push(`${dressing.poi}: (${x.toFixed(1)}, ${y.toFixed(1)}) in ${hits} masses, footprint ${inside}`)
+        }
+      }
+      return out.slice(0, 5)
+    })
+    expect(wrong).toEqual([])
   })
 
   it("keeps bands within the walls", () => {
@@ -230,6 +272,37 @@ describe("the registry on the real map", () => {
     expect(out(4)).toBeCloseTo(269, 0)
     expect(parts.some((p) => p.kind === "wallSign" && p.texture === "polizei-sign" && p.edge === 0)).toBe(true)
     expect(new Set(parts.flatMap((p) => (p.kind === "stairs" || p.kind === "ramp" ? [p.edge] : [])))).toEqual(new Set([4]))
+  })
+
+  const at = (id: number) => places.find((p) => p.dressing.osmBuildingId === id)
+
+  it("builds Am Stern from the LoD2 model: tall blocks over low links, PENNY's canopy clear of the aisle, the pylon off Sudetenstraße", () => {
+    const west = at(127872184)
+    const rossmann = at(293545707)
+    const penny = at(822461881)
+    const edeka = at(189042651)
+    // Rossmann #65 and EDEKA #204, not the namesakes across town: the frames' feet lie by them.
+    expect(Math.hypot((rossmann?.frame.ox ?? 0) - 4251.4, (rossmann?.frame.oy ?? 0) - 4773.7)).toBeLessThan(50)
+    expect(Math.hypot((edeka?.frame.ox ?? 0) - 4429.1, (edeka?.frame.oy ?? 0) - 4804.1)).toBeLessThan(40)
+    expect(Math.hypot((penny?.frame.ox ?? 0) - 4288.8, (penny?.frame.oy ?? 0) - 4804.3)).toBeLessThan(42)
+    // Each balcony block over the low part beside it: the west block's Sudetenstraße block 16 m, the link 5.1 m.
+    const heights = (p: typeof west) => (p?.dressing.masses ?? []).map((v) => v.levels * 3)
+    expect(heights(west)[0]).toBeCloseTo(16)
+    expect(heights(west)[1]).toBeLessThan(6)
+    expect(Math.max(...heights(penny))).toBeGreaterThan(15)
+    expect(Math.min(...heights(penny))).toBeLessThan(7)
+    expect(heights(edeka)[0]).toBeCloseTo(8.84)
+    // The roof signs: denns, ROSSMANN, PENNY, EDEKA, one each.
+    const signs = [west, rossmann, penny, edeka].flatMap((p) => (p?.dressing.parts ?? []).flatMap((x) => (x.kind === "roofSign" ? [x.texture] : [])))
+    expect(signs.toSorted()).toEqual(["penny-sign", "roof-denns", "roof-edeka", "roof-rossmann"])
+    // The canopy stands on the car-park front and stops short of the aisle 8.5 m out (4 m wide).
+    const canopy = (penny?.dressing.parts ?? []).find((x) => x.kind === "canopy")
+    expect(canopy?.kind === "canopy" && canopy.edge === 2 && canopy.depth < 6.5).toBe(true)
+    // The pylon and the trolleys stand off Sudetenstraße's carriageway and sidewalk, where the Post van parks.
+    const half = (map.roads.find((r) => r.name === "Sudetenstraße" && r.kind === "tertiary")?.width ?? 0) / 2
+    const free = (penny?.dressing.parts ?? []).flatMap((x) => (x.kind === "pylon" ? [x.n - x.w / 2] : x.kind === "sprite" ? [x.n - x.len / 2] : []))
+    expect(free.length).toBeGreaterThan(2)
+    for (const n of free) expect(n).toBeGreaterThan(half + 2.6)
   })
 
   it("gives St. Ursula its four storeys", () => {

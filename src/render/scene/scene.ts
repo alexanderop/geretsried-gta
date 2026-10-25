@@ -26,7 +26,7 @@ import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
 import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, zebra, type StreetLamp, type StreetProp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
-import type { Place, PlaceDressing } from "#/world/places/dressing.ts"
+import type { Mass, Place, PlaceDressing } from "#/world/places/dressing.ts"
 import { placeBox, placeParts } from "./places.ts"
 import { hipFaces, type HipFace } from "./hip-roof.ts"
 
@@ -268,14 +268,9 @@ export class Scene {
     map.buildings.forEach((b, i) => {
       if (b.canopy === true) return
       const place = this.places.get(i)
-      const hip = place?.dressing.roof?.hip
-      const bare = boxOf(b.pts)
-      // A hipped roof rises at most half the footprint's narrower side over the eaves.
-      const rise =
-        hip === undefined
-          ? 0
-          : (Math.min(bare.maxX - bare.minX, bare.maxY - bare.minY) / 2) * Math.tan((hip * Math.PI) / 180) + Math.max(0, ...(place?.dressing.roof?.eaves ?? []).map((e) => e.z - wallHeight(b.levels)))
-      const walls = boxOf(b.pts, (wallHeight(b.levels) + rise) * SHADOW_PER_M)
+      const masses = place?.dressing.masses
+      const high = masses === undefined ? volumeHeight(b.pts, b.levels, place?.dressing.roof) : Math.max(...masses.map((v) => volumeHeight(v.pts, v.levels, v.roof ?? place?.dressing.roof) + PARAPET_M))
+      const walls = boxOf(b.pts, high * SHADOW_PER_M)
       const parts = place === undefined ? null : placeBox(place, b.pts)
       const box = parts === null ? walls : { minX: Math.min(walls.minX, parts.minX), minY: Math.min(walls.minY, parts.minY), maxX: Math.max(walls.maxX, parts.maxX), maxY: Math.max(walls.maxY, parts.maxY) }
       // Owned by the chunk of the walls' middle, as without parts.
@@ -400,7 +395,10 @@ export class Scene {
       const b = map.buildings[i]
       if (b === undefined) continue
       const place = this.places.get(i)
-      this.building(m, b, this.facades[i] ?? "house", place?.dressing)
+      const facade = this.facades[i] ?? "house"
+      const masses = place?.dressing.masses
+      if (place === undefined || masses === undefined) this.building(m, b, facade, place?.dressing)
+      else for (const v of masses) this.building(m, massBuilding(b, v), facade, { ...place.dressing, roof: v.roof ?? place.dressing.roof, wallColour: v.wallColour ?? place.dressing.wallColour, bands: v.bands ?? place.dressing.bands })
       if (place !== undefined) placeParts(m, this.sprites, place, b.pts)
     }
     for (const i of chunk.canopies) {
@@ -688,6 +686,20 @@ export class Scene {
       }
     }
   }
+}
+
+/** How high a volume's walls and hipped roof reach: a hipped roof rises at most half the outline's narrower side over the eaves. */
+const volumeHeight = (pts: ReadonlyArray<number>, levels: number, roof: PlaceDressing["roof"]) => {
+  const hip = roof?.hip
+  if (hip === undefined) return wallHeight(levels)
+  const bare = boxOf(pts)
+  return wallHeight(levels) + ((Math.min(bare.maxX - bare.minX, bare.maxY - bare.minY) / 2) * Math.tan((hip * Math.PI) / 180) + Math.max(0, ...(roof?.eaves ?? []).map((e) => e.z - wallHeight(levels))))
+}
+
+/** One volume of a footprint as a building of its own: its outline closed, its storeys, the footprint's roof colour on every plane. */
+const massBuilding = (b: Building, v: Mass): Building => {
+  const first = b.roof?.colors.find((c) => c !== null)
+  return { id: b.id, levels: v.levels, pts: [...v.pts, v.pts[0] ?? 0, v.pts[1] ?? 0], ...(b.roof === undefined ? {} : { roof: { ...b.roof, colors: [first ?? null] } }) }
 }
 
 /** Height of the low wall round a flat roof, and its thickness. */

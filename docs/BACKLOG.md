@@ -387,7 +387,7 @@ Size: S
   the canopy in the top-left corner; a car at (3828, 4930) shows the S wall with the window and the tower leaning
   in; `?compare=47.85587,11.48137,28` shows the tent roof, the tower's pyramid and the porch from above.
 
-### B1-5 · PENNY Am Stern (#66, supermarket) — Size: S — status: ref-done (location corrected in batch 3; build inside B3-0)
+### B1-5 · PENNY Am Stern (#66, supermarket) — Size: S — status: implemented (partial: the canopy's posts and fascia, the shop fronts' extent, the trolleys' spot, the end-wall board and the pylon's size and spot are guesses; built inside B3-0; reference/ was not on disk, so not compared with the photos)
 ```
 Goal: Make Stein's PENNY readable: a free-standing red canopy "PENNY. Am Stern" on posts, trolleys under it, in
 front of a glass shop front at the NE end of the white balcony block's NW facade (way 822461881), facing the
@@ -406,12 +406,17 @@ Spec (via #0b, built as part of B3-0):
 - Board "PENNY." on the SW (Sudetenstraße) end wall above the Ahorn corner (01).
 - Red pylon at the car-park entrance: see B3-0 (panels PENNY / ROSSMANN / Ahorn Apotheke / Schlüsseldienst GEYER).
 Acceptance criteria:
-- [ ] From the car park, the red canopy with trolleys at the NE end of the Penny block matches da-daniele/02 + 05.
-- [ ] Driving past on Sudetenstraße, the PENNY board and the pylon match 01/02.
-- [ ] Car park stays drivable; Post Filiale 571 job (van on Sudetenstraße across the road) unaffected;
+- [x] From the car park, the red canopy with trolleys at the NE end of the Penny block matches da-daniele/02 + 05.
+      (Canopy where the LoD2 model has it, red fascia with PENNY on its front; the trolleys stand under it, so they
+      only show at its edges. Not compared with the photos: reference/ was not on disk.)
+- [x] Driving past on Sudetenstraße, the PENNY board and the pylon match 01/02. (Board and pylon from the docs' look
+      spec, not the photos.)
+- [x] Car park stays drivable; Post Filiale 571 job (van on Sudetenstraße across the road) unaffected;
       pnpm test + typecheck green.
 Size: S
 ```
+
+**B1-5 as built:** inside B3-0, `src/world/places/penny-sudetenstrasse.ts` (way 822461881); see **B3-0 as built**.
 
 ### Batch 2: exterior only (decision)
 Same rules as batch 1: **exterior only** (Size S/M) via **#0b**; #0c is still required before any interior.
@@ -771,7 +776,7 @@ right after). New things #0b must support for this batch:
 - **Roof-readable signs**: a flat decal on the roof near the store's facade, so the top-down camera can tell the units apart.
 - **Footprint split or per-part height**: OSM puts two balcony blocks + a single-storey link in one outline (127872184, 822461881).
 
-### B3-0 · Am Stern block (umbrella: buildings, car park, pylon) — Size: M — status: ref-done (partial)
+### B3-0 · Am Stern block (umbrella: buildings, car park, pylon) — Size: M — status: implemented (partial: the unit signs along the fronts are B3-1…B3-7's; the balconies, the roof signs' spots, the flat roofs' colours, the pylon's size and spot are guesses; reference/ was not on disk, so nothing was compared with the photos)
 ```
 Goal: Stein's shopping hub, built once: three white balcony blocks with terracotta roofs around one car park off
 Sudetenstraße, plus EDEKA as a separate flat hall across Breslauer Weg. Each shop unit gets its own sign, the
@@ -807,14 +812,79 @@ Spec (via #0b):
 - Post Filiale 571 (#150, 4238.7, 4832.4) is across Sudetenstraße; its van spawns on the Sudetenstraße kerb.
   Nothing from this item may sit on Sudetenstraße's carriageway.
 Acceptance criteria:
-- [ ] Driving into the car park from Sudetenstraße: pylon at the Ahorn corner, Penny canopy far left, Rossmann
-      ahead across the car park, as in penny/06 and rossmann/03.
+- [x] Driving into the car park from Sudetenstraße: pylon at the Ahorn corner, Penny canopy far left, Rossmann
+      ahead across the car park, as in penny/06 and rossmann/03. (Layout from the docs and the LoD2 model; not
+      compared with the photos.)
 - [ ] Along Sudetenstraße NW of the car park: denns · TAKKO · Orterer corner in that order, as in denns/01, takko/02.
-- [ ] From the top-down camera, EDEKA / PENNY / ROSSMANN / denns can be told apart by roof signs.
-- [ ] Car park drivable, pickups on it still reachable; Post van job and the #195 Orterer job unaffected;
+      (The west block, its balconies and denns' roof sign stand; the three unit signs are B3-2, B3-4, B3-5.)
+- [x] From the top-down camera, EDEKA / PENNY / ROSSMANN / denns can be told apart by roof signs.
+- [x] Car park drivable, pickups on it still reachable; Post van job and the #195 Orterer job unaffected;
       pnpm test + typecheck green.
 Size: M
 ```
+
+**B3-0 as built** (`src/world/places/am-stern.ts` shared, `am-stern-west.ts`, `rossmann-am-stern.ts`,
+`penny-sudetenstrasse.ts`, `edeka-am-stern.ts`) and notes for B3-1…B3-7, B4-4…B4-6:
+- **Sources.** `reference/` does not exist on disk, so no photo was used; everything comes from `docs/places/*.md`,
+  the Bavarian **LoD2 model** (tiles `684_5302.gml` for the west block, `686_5302.gml` for the rest; the B1-4 / B2-2
+  downloads) and the **DOP20** (fetched as for Maria Hilf). The model splits every OSM outline here into the real
+  buildings, each with its own eaves and ridge, which settles the "split or ask first" question without asking.
+- **Decision: one place per footprint, the footprint split into `masses`.** The registry pins one dressing per OSM way
+  (places.test checks), so there are four place files, one per block, named by the slug of their main shop; the
+  shared colours and the balcony helper are in `am-stern.ts`. Each later unit (denns, Takko, Orterer, the
+  Marienburgweg shops in `am-stern-west.ts`; da Daniele, Ahorn in `penny-sudetenstrasse.ts`; Rossmann's chimneys in
+  `rossmann-am-stern.ts`; EDEKA's front and pylon in `edeka-am-stern.ts`) adds its wall signs to the `parts` of its
+  block. There is no per-building sign list type: a list of `wallSign`s on one footprint already is that.
+- **New generic option `masses`** (dressing.ts, scene.ts): a place's footprint drawn as several volumes, each a ring
+  of map points with its own `levels`, `roof` (hip / gables / flat, colour), and optionally wall colour and bands.
+  scene.ts draws each as a building of its own (the footprint's roof colour, id and facade) instead of the footprint;
+  the OSM outline stays the solid and keeps carrying the wall parts (a mass's outer walls lie on the footprint's
+  walls). Rings are the OSM outline cut along the LoD2 walls (Sutherland–Hodgman in the scratchpad, rounded to
+  0.1 m); places.test checks that they tile the footprint (every sampled spot more than 0.3 m from a wall lies in
+  exactly one mass). Masses per block, heights from the model:
+  - West block 127872184: Sudetenstraße block 16 m eaves, hip 22° to the model's 19.3 m ridge, gables at the ends;
+    the link 5.7 m flat (grey-green, the skylight roof); the north block 12.6 m, hip 19° (ridge 15.3 m); the NE strip
+    6.8 m flat. The model's low shed roofs stepped at the ridge are drawn as gabled roofs that reach its ridge.
+  - Rossmann 293545707: 12.3 m eaves (OSM's 4 storeys are right; "ground + 2 balcony storeys" is a tall shop floor),
+    hip 18° to 15 m, gables at the ends; the 3.4 m strip along the NE side 5.2 m flat.
+  - Penny 822461881: the block along the car park 15 m, hip 16.5° to 17.5 m, gables at the SW and NE ends; the
+    store's hall behind it 6.9 m flat under a green roof (the DOP20's green: the hall is Penny's sales floor); the E
+    block round the plaza 16.2 m, hip 26° to 19.4 m. The model's 7 m strip on the plaza side is left in the E block.
+  - EDEKA 189042651: the hall flat at the shop front's 9.4 m (the model's roof falls 5.5° to 6.2 m at the NE wall;
+    flattened), the entrance corner at the W end of the shop front (15.9 × 3.4 m) 5.9 m. OSM's 3.6 m box was 6 m low.
+- **New generic parts** (dressing.ts, places.ts, tested in scene places.test): `roofSign { texture, edge, u0, u1, n0,
+  n1, z0, z1, up? }`, a material lying over a rectangle in a wall's frame, z0 along n0 and z1 along n1 so it lies on
+  a roof plane, the image's top towards `up`; `pylon { u, n, angle, w, d, h, colour, texture, z0, z1 }`, a box in
+  the street frame with the texture on both broad faces; `canopy` got `fascia { h, colour }` (a board round its
+  three outer sides; lettering goes on it as a wallSign with `out` = depth + 0.03) and `posts { every, colour }`
+  (under its front, never solid). places.test keeps a canopy's fascia bottom above 2.5 m and a roof sign's corners
+  inside the footprint.
+- **Roof signs** (Codex boards, keyed and squared; `roof-denns`, `roof-rossmann`, `roof-edeka`, and `penny-sign`
+  reused): denns over the NW third of the west block's Sudetenstraße roof plane, ROSSMANN on the car-park plane by
+  the POI, EDEKA on the hall roof near the shop front past the entrance corner, PENNY on the hall's flat green roof
+  by its NE wall, image top to the NNE: on the block's roof the plane up to the ridge (8.5 m) is too narrow for a sign
+  that reads upright from the top-down camera. From `?compare=47.85685,11.4876,90` all four read.
+- **PENNY (B1-5):** the LoD2 model has the free-standing canopy (`105019147`, function "Überdachung"): 12.2 × 5.4 m,
+  4.6 m high, in front of wall 2 at u 5.5–17.7 (wall 2 runs from the NE end), 3.9 m out from OSM's wall (OSM's wall
+  lies 1.5 m in front of the model's). So the canopy is on wall 2, not on wall 3 as the spec's area guessed; the
+  aisle runs 8.5 m out, so canopy and posts stay clear of it. Light top (DOP20 #bbae9f), red fascia 1.1 m, grey posts
+  every ~6 m, `penny-sign` 3.4 × 1.1 m on its front; `shop-front` glazing on wall 3 and wall 2 up to u 18; two
+  `trolley-row` sprites (Codex, top-down) under the canopy; the PENNY. board 4.2 × 1.4 m on the end wall (wall 0)
+  over the Ahorn corner at z 3.6–5.0.
+- **Pylon:** in Penny's street frame at u −6, n 9.5 (world ≈ 4266.5, 4827): 5 m from the Ahorn corner, 5.5 m from
+  the car-park entrance lane's centre, 4.5 m off Sudetenstraße's carriageway; 7.6 m high, 2 m wide, its four panels
+  (`am-stern-pylon`, Codex: PENNY Am Stern, ROSSMANN, Ahorn Apotheke with the red A, Schlüsseldienst GEYER) facing
+  both ways along Sudetenstraße. places.test keeps it and the trolleys off the carriageway and the sidewalk.
+- **Balconies** (a guess in count, floors and depth): four storeys (z 4.5–13.5) along the west block's Sudetenstraße
+  front, four (z 5.0–13.4, the lowest clear of the canopy) along Penny's car-park front, two (z 4.8, 8.2) along
+  Rossmann's; white slabs, grey rails. Walls are `facade: "render"` in white (#f8f8f6).
+- **Every other building is unchanged:** all 2111 chunk meshes hash identical at HEAD and with this change minus the
+  four places; with them only chunks 1660–1662 (their own) differ.
+- **Not done here / still open:** the unit signs (B3-1…B3-7, B4-4…B4-6); Rossmann's chimneys; the "2 Std." sign and
+  the barrier posts in front of da Daniele (B3-7); EDEKA's front, fascia and yellow pylon (B3-1). Map labels: not
+  touched (overlay.ts); Rossmann, PENNY, Ahorn, Denns and EDEKA still crowd within 250 m.
+- **Screenshots** (local): `?compare=47.85685,11.4876,90` from above; on foot at (4260, 4822) the pylon at the
+  corner; at (4276, 4794) the canopy's red fascia with PENNY at the bottom right.
 
 ### B3-1 · EDEKA Heininger & Dietz, Breslauer Weg 113 (#204, supermarket) — Size: S — status: ref-done
 ```
@@ -1240,7 +1310,7 @@ Spec (via #0b):
 - Street frame "Sudetenstraße", POI "Stroblume" (#155 at 3973.7, 4631.2). Way 127604887, NE frontage, between Bodystreet (NW)
   and Dolce Gelato (SE). Red awning #d25f5e (~10 m) with white script "Stroblume"; wall #c4bba2.
 - Props: plant table + pots + a red heart sign on a stand (keep ≥2 m clear).
-- Bodystreet (NW neighbour, not a POI yet, see G-1): black band #181718 "BODY STREET" + maroon awning in 02/05; dress it
+- Bodystreet (NW neighbour, not a POI yet, see I-1): black band #181718 "BODY STREET" + maroon awning in 02/05; dress it
   only once its POI exists.
 Acceptance criteria:
 - [ ] Front matches 01 (awning, script, plants). pnpm test + typecheck green.
@@ -1329,7 +1399,8 @@ Size: S
 
 Start = Sudetenstraße 19 spawn at map (3997.4, 4648.0). Radius 800 m, map metres (project.ts). Source: public/geretsried.map.json pois
 at HEAD c5af0a7, statuses from the priority list below. 64 POIs in the map are within 800 m: 41 todo, 23 already ref-done/partial/implemented (before 6a; after 6a: 33 todo, 31 done/partial/implemented).
-Capture order: nearest first, ~10 per batch. Exterior only, same rules as batches 1–5 (NEVER invent appearance).
+Capture order: nearest first, ~10 per batch: 6a (done) → 6b → 6c → 6d → then 6e + all gyms, once I-1 has made them POIs.
+Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 
 ### 6a (captured 2026-10-25: B6a-1…B6a-10)
 | # | Name | Kind | m from start | Status |
@@ -1410,12 +1481,14 @@ Capture order: nearest first, ~10 per batch. Exterior only, same rules as batche
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 77 | da Daniele | food | 329 | ref-done |
 | 67 | Ahorn Apotheke | pharmacy | 330 | ref-done |
-| 66 | PENNY | supermarket | 331 | ref-done |
+| 66 | PENNY | supermarket | 331 | implemented (partial) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 | 204 | EDEKA | supermarket | 459 | ref-done |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 
-### 6e: not in the map yet (add POI first, then capture)
+### 6e: not in the map yet: pending I-1 (import), capture after 6b–6d together with the gyms
+Status: every row below is todo until I-1 lands; I-1 uses this table as its check list. Capture (exterior) only after the
+POI exists, then add the new #id from docs/poi-id-map.csv.
 Overpass, 2026-10-25: shop/amenity/leisure/office/craft/healthcare/tourism within 800 m of lat 47.858199, lon 11.483593,
 minus street furniture (parking, benches, bins, ATMs …) and minus everything that matched a map POI by name/position.
 45 OSM features are not in the map; plus 4 studios from web search that are not in OSM at all (marked web).
@@ -1471,10 +1544,12 @@ leisure, office, craft, healthcare, or amenity dentist/veterinary/kindergarten/s
 | way 1271753000 | Kita Blechkiste | amenity=kindergarten |  | 788 |  |
 | web | BeaFit Frauenfigurstudio | women's gym | Schubertweg 13 | 459 | not in OSM; verify still open |
 | web | Lu Jong Yoga Studio Ingrid Antoch | yoga | Haydnweg 28 | 537 | not in OSM; verify |
-| web | Takt Tanz | Kunst (dance school) | dance (related) | Sudetenstraße 47 | 483 | not in OSM; related, optional |
+| web | Takt Tanz – Kunst (dance school) | dance (related) | Sudetenstraße 47 | 483 | not in OSM; related, optional |
 | web | Carsten Schwarz Tanzstudio | dance (related) | Sudetenstraße 47 | 483 | not in OSM; related, optional; verify |
 
 ## Gyms (all fitness studios in Geretsried)
+
+Pending I-1 (import, whole town). Capture all gyms after 6b–6d, together with 6e.
 
 Full list with lat/lon, map x/y, building id and Street View links: gyms.csv. Only ONE gym is in the map today (#128), and it
 has the wrong kind. No Kieser in Geretsried.
@@ -1485,7 +1560,7 @@ has the wrong kind. No Kieser in Geretsried.
 | Sportschule Kubis / PT-Kubis (kickboxing, MMA, self-defence) | Richard-Wagner-Straße 12 b/c | 181 | no | node 12430682957 |
 | Athletik Delta | Neuer Platz 22 | 327 | no | node 12427142625 |
 | BeaFit Frauenfigurstudio | Schubertweg 13 | 459 | no | not in OSM |
-| Takt Tanz | Kunst (dance school) | Sudetenstraße 47 | 483 | no | not in OSM |
+| Takt Tanz – Kunst (dance school) | Sudetenstraße 47 | 483 | no | not in OSM |
 | Carsten Schwarz Tanzstudio | Sudetenstraße 47 | 483 | no | not in OSM |
 | Lu Jong Yoga Studio Ingrid Antoch | Haydnweg 28 | 537 | no | not in OSM |
 | Sportstudio Innings (incl. EMS-Bodytrain, boxing, yoga) | Sudetenstraße 49 | 542 | no | node 12824612410 |
@@ -1498,39 +1573,91 @@ has the wrong kind. No Kieser in Geretsried.
 | Elements Yoga und Pilates Studio | Blumenstraße 19 (EG | 3484 | no | not in OSM |
 | Fitness-Studio imPuls in- + Outdoor | Bürgermeister-Graf-Ring 13 (Gelting) | 4746 | no | not in OSM |
 
-### G-1 · Gyms: add POIs (import change) — Size: M — status: todo
+### I-1 · Import all missing places: start area 6e + every gym (whole town) — Size: L — status: todo
+Supersedes G-1: G-1's gym kind, the #128 fix and the hand-added studios are folded in below (step 3, 4, 5), so do NOT run G-1 separately.
+Alex: "füg mal alle hinzu". This is a whole-town import (the query runs over the full map bbox), not only the start area;
+the 6e table (Start area section) and gyms.csv are the CHECK LIST it must satisfy.
 ```
-Goal: Every fitness studio in Geretsried shows up as a POI of its own kind ("gym"), including Innings and clever fit.
-Context (read only, verified at c5af0a7):
-- scripts/import-osm.ts PLACES_QUERY asks for nwr["shop"], a fixed amenity list, and traffic signals. It has no
-  leisure filter, so leisure=fitness_centre / sports_centre are never downloaded. data/places.json is a cache: it is only
-  re-downloaded with the fresh flag or when the file is missing.
-- src/map/build.ts poiKind(): an amenity match wins, else shop → POI_KINDS[shop] ?? "shop". No leisure branch.
-- src/map/types.ts PoiKind (line 62) has no gym kind.
+Goal: The places OSM knows but the game drops (gyms, dojos, dentists, vets, kindergartens, care homes, bars/clubs,
+parcel lockers, offices, craft businesses, healthcare) become POIs, plus hand-added studios OSM does not have,
+without losing or changing any existing POI except the #128 kind fix.
+
+Context (read only, verified at e1fcf8e):
+- scripts/import-osm.ts PLACES_QUERY (line ~46) asks only for nwr["shop"], a fixed amenity list
+  (fuel|pharmacy|bank|police|post_office|townhall|fast_food|restaurant|cafe|ice_cream|pub|biergarten|cinema|hospital|
+  doctors|school|library) and traffic signals. data/places.json is a gitignored cache, re-downloaded only by
+  `pnpm map:fetch` (which ALSO refreshes data/raw.json = roads/buildings) or when the file is missing.
+- src/map/build.ts: poiKind() = amenity via POI_KINDS, else shop → POI_KINDS[shop] ?? "shop", else null. A POI is kept
+  only if poiKind ≠ null AND (brand ?? name) exists, so unnamed nodes are dropped. POI name = tags.brand ?? tags.name.
+- src/map/types.ts PoiKind (line 62): supermarket drugstore bakery fuel pharmacy bank food police post school doctor civic
+  church car_repair shop. Records over PoiKind: overlay.ts POI_STYLE (icon+colour, exhaustive), facade.ts SHOP_FRONTS,
+  overlay.ts IMPORTANT (labelled kinds).
+- Gameplay that reads kinds: src/sim/game.ts findHospital() respawns you at the "doctor" POI nearest home (today
+  Dr. Schmucker, 385 m from the start). src/sim/pickups.ts makes a pickup candidate behind EVERY POI except school/police.
+- POI ids in docs/BACKLOG.md (#n) are list positions (index+1 in map.pois). Adding places renumbers them.
+
 Change:
-1. PLACES_QUERY: add  nwr["leisure"="fitness_centre"](B);  nwr["leisure"="sports_centre"]["sport"~"fitness"](B);
-   nwr["amenity"="dojo"](B);  (do NOT take every sports_centre: that pulls school halls, the Hallenbad, and tennis).
-2. types.ts: add "gym" to PoiKind. build.ts: POI_KINDS dojo → gym; in poiKind() map leisure fitness_centre, and
-   sports_centre with sport~fitness, to "gym" before the shop fallback. Check every switch/record over PoiKind
-   (renderer colours, overlay.ts labels, typecheck will list them) and give gym a sensible default.
-3. #128 "Fitness Forum & Squash": it exists only because OSM node 9955217554 is tagged amenity=pub (the bar inside),
-   so its kind is food. The building way 188648201 carries leisure=fitness_centre with the same name. Once leisure is
-   imported there will be two POIs with that name ~26 m apart: keep the gym one, and drop the pub duplicate (same name
-   within 50 m → prefer gym).
-4. Innings (node 12824612410, Sudetenstraße 49) has NO name in OSM, and build.ts drops unnamed places. Add a small
-   hand-written list of extra POIs in build.ts (name, kind, lat, lon), projected with the same project.ts formula, for:
-   - Sportstudio Innings, 47.855834, 11.489942
-   - BeaFit Frauenfigurstudio, Schubertweg 13, 47.854458, 11.480992 (not in OSM)
-   - Fitness-Studio imPuls, Bürgermeister-Graf-Ring 13, 47.887968, 11.437992 (not in OSM; verify still open)
-   - Muscle & Mind Bodyforming, Lerchenweg 1, 47.874238, 11.472550 (not in OSM)
-   - Elements Yoga und Pilates, Blumenstraße 19, 47.885691, 11.461178 (approx., street-level geocode)
-   - Lu Jong Yoga Studio, Haydnweg 28, 47.854853, 11.478401 (not in OSM)
-5. Re-run the import with the fresh flag, rebuild the map, and check the new pois: expect Bodystreet, clever fit,
-   Club Vital, Tina´s Fitnesstreff, Athletik Delta, Fitness Forum & Squash (gym), BaseFit, PT-Kubis dojo, plus the
-   manual ones. Diff the poi list before/after: the ids (index+1) of later POIs will shift, so update anything that
-   refers to POIs by index (jobs, BACKLOG ids).
-Done when: typecheck + tests pass, each gym above is in public/geretsried.map.json with kind "gym", #128 is no longer food.
+1. Fetch. Add to PLACES_QUERY:
+     nwr["leisure"="fitness_centre"](B);  nwr["leisure"="sports_centre"]["name"](B);
+     nwr["amenity"~"^(dojo|dentist|veterinary|kindergarten|childcare|social_facility|bar|nightclub|parcel_locker)$"](B);
+     nwr["office"](B);  nwr["craft"](B);  nwr["healthcare"](B);
+   Refresh ONLY the places cache: delete data/places.json and run `pnpm map` (do not use map:fetch, it re-downloads
+   roads/buildings and can move dressed places). If the refreshed cache drops or renames EXISTING POIs (OSM edits since the
+   old cache), put the new filters in a separate query with its own cache (data/places-more.json, gitignored) instead
+   and restore the old places.json, so the old POIs stay byte-identical.
+2. Kinds: keep the list minimal. Reuse where honest, add only these new PoiKinds (each needs a POI_STYLE icon+colour):
+     gym           leisure=fitness_centre, leisure=sports_centre (named), amenity=dojo, hand-added studios
+     health        amenity=dentist, amenity=veterinary, healthcare=* (physio, hospice, …) unless amenity already matched.
+                   NOT "doctor": dentist Dr. Thum (235 m) / vets (320 m) would become the respawn "hospital".
+                   healthcare=doctor|clinic may map to "doctor", but then check findHospital (see Done when).
+     kindergarten  amenity=kindergarten, amenity=childcare
+     care_home     amenity=social_facility
+     bar           amenity=bar, amenity=nightclub
+     parcel_locker amenity=parcel_locker
+     office        office=*, craft=*
+   Order in poiKind(): existing amenity match → new amenity map → leisure → healthcare → shop → office/craft → null.
+   SHOP_FRONTS: add gym and bar (street-level businesses); leave the others out. IMPORTANT (map labels): add none.
+   pickups.ts: exclude parcel_locker, kindergarten and care_home from pickup candidates (no pickups in a Kita yard);
+   report candidate count before/after.
+3. #128 "Fitness Forum & Squash": exists only because OSM node 9955217554 is amenity=pub (the bar inside); the building
+   way 188648201 carries leisure=fitness_centre with the same name. Dedupe: same name within 50 m → keep ONE POI, prefer
+   the non-food kind (gym). Apply this rule generally (e.g. a node with healthcare=* duplicating an amenity=doctors node).
+4. Hand-added POIs (no OSM element or no OSM name): a small typed list in build.ts (or src/map/extra-pois.ts) of
+   { name, kind, lat, lon }, projected with the same projection as OSM places, appended after the OSM POIs:
+     Sportstudio Innings              gym  47.855834, 11.489942   (OSM node 12824612410 has no name; Sudetenstraße 49)
+     BeaFit Frauenfigurstudio         gym  47.8544578, 11.4809921 (Schubertweg 13)
+     Lu Jong Yoga Studio              gym  47.8548526, 11.478401  (Haydnweg 28)
+     Takt Tanz                        gym  47.8558943, 11.4890777 (Sudetenstraße 47, dance school)
+     Carsten Schwarz Tanzstudio       gym  47.8558943, 11.4890777 (Sudetenstraße 47; same building as Takt Tanz)
+     Muscle & Mind Bodyforming        gym  47.8742379, 11.4725497 (Lerchenweg 1)
+     Elements Yoga und Pilates        gym  47.8856908, 11.4611779 (Blumenstraße 19; position approx., street geocode)
+     Fitness-Studio imPuls            gym  47.8879683, 11.4379915 (Bürgermeister-Graf-Ring 13, Gelting)
+   If the unnamed Innings node also matches the leisure filter, it is dropped (no name) and the hand entry covers it.
+5. Skip on purpose: the unnamed leisure=sports_centre way 127872149 (Karl-Lederer school hall; the ["name"] filter and the
+   no-name rule drop it) and dada ATELIER (node 12427142624, amenity=fixme, closed Dec 2025; not matched by any filter).
+6. IDs WILL RENUMBER. Write docs/poi-id-map.csv: old_id,new_id,name,kind_old,kind_new (old = index+1 in the committed
+   public/geretsried.map.json before your change, new = after; matched by name + position ≤ 1 m, #128 → its gym POI).
+   Do NOT edit the #ids in docs/BACKLOG.md yourself; the remap is done afterwards from that file.
+   Names/indices used in code (town-jobs.ts named(...), places/*.ts poi:, cafe.ts) are by name: check none now resolves
+   to a different POI (e.g. a new "Sparkasse" office would break places.test's count of 2).
+
+Check list (the acceptance data): every row of the "6e: not in the map yet" table in docs/BACKLOG.md (except the two
+skips) and every row of the "Gyms" table in docs/BACKLOG.md (same rows as gyms.csv; OSM ids there, lat/lon of the
+non-OSM ones in step 4) must appear as a POI in public/geretsried.map.json with the
+right name and position within ±10 m of the listed OSM element / lat-lon. "Right name" = what build.ts produces
+(brand ?? name), e.g. clever fit may come out as its brand "Clever fit", DHL Packstation as "DHL": list such cases.
+
+Done when:
+- every check-list row is a POI (name, position ±10 m, kind as above) — print a table: row, found POI id, distance, kind;
+- no existing POI lost: all 234 old POIs still present (name + position ≤ 1 m); only #128's kind changed (food → gym);
+- docs/poi-id-map.csv written; findHospital still picks Dr. Schmucker for the default start (or explain why not);
+- dressed places render unchanged (places.test passes; Cafe Waldmann untouched);
+- `pnpm check` passes, `pnpm build` passes, and the game starts at Sudetenstraße 19 and runs (open it, drive a bit).
+Report: counts per new kind, the whole-town POI count before/after, the check-list table, any OSM POIs that changed.
 ```
+
+### G-1 · Gyms: add POIs (import change) — Size: M — status: superseded by I-1
+Folded into I-1 (gym kind, #128 dedupe, hand-added studios). Do not run separately.
 
 ## Priority list (all 234 POIs)
 
@@ -1542,7 +1669,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | implemented | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
 | 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
-| 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = free-standing red canopy at the NE end of way 822461881's NW facade, facing the car park (corrected in batch 3; built in B3-0) |
+| 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | implemented (partial) | Stein's main discounter; entrance = free-standing red canopy at the NE end of way 822461881's NW facade, facing the car park (corrected in batch 3; built in B3-0) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 
 ### P2 — gameplay places (jobs, save, spray, police, start)
@@ -1650,7 +1777,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | todo |  |
 | 79 | Piatsa | food | 4646.3, 4763.3 | 47.857163, 11.492293 | 659 | todo |  |
-| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | todo | WRONG KIND: is a gym (Breslauer Weg 103); food only because OSM node 9955217554 is amenity=pub. Fix in G-1 |
+| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | todo | WRONG KIND: is a gym (Breslauer Weg 103); food only because OSM node 9955217554 is amenity=pub. Fix in I-1 |
 | 22 | Pho Viet Restaurant | food | 3358, 5828.9 | 47.847579, 11.475021 | 1343 | todo |  |
 | 213 | Cafeteria | food | 5192.3, 5297.5 | 47.852358, 11.499613 | 1360 | todo |  |
 | 135 | Sempol Imbiss | food | 5005.2, 5567.9 | 47.849927, 11.497105 | 1364 | todo |  |
