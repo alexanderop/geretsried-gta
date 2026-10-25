@@ -1686,7 +1686,7 @@ As built (places-only batch, src/world/places/metzgerei-laenger.ts):
 Size: S
 ```
 
-### B5-5 · Orterer Getränkemarkt, Banater Straße 3 (#195, shop) — Size: S — status: ref-done
+### B5-5 · Orterer Getränkemarkt, Banater Straße 3 (#195, shop) — Size: S — status: implemented (partial: front part spots and sizes, solar field extent, single roof pitch, sign/barrier spots and the sign's square top are guesses)
 ```
 Goal: Drinks market hall with a solar roof and the red-striped Orterer arch by the car park. The Bauernmafia's
   Weißbier run starts here.
@@ -1704,9 +1704,33 @@ In-game: pickup of job "gelting-1" (Gelting gang phone; → Biometzgerei Pichler
   ⚠ STOP_REACH 9 m but the point is 14.0 m inside the hall → probably unreachable. Verify; the fix (move the
   pickup to the entrance, or snap job places to a reachable spot) is a code decision for the dev.
 Acceptance criteria:
-- [ ] From the car park the hall matches 01 (one storey, solar roof, canopy logo, arch pylon).
-- [ ] The gelting-1 pickup can be reached and triggers.
-- [ ] pnpm test + typecheck green.
+- [x] From the car park the hall matches 01 (one storey, solar roof, canopy logo, arch pylon).
+- [ ] The gelting-1 pickup can be reached and triggers. Job part out of scope (places-only batch).
+- [x] pnpm test + typecheck green.
+As built (places-only batch, src/world/places/orterer-nord.ts):
+- Job part out of scope (places-only batch): the pickup reachability (POI 14 m inside the hall, STOP_REACH 9) is not
+  checked or fixed here; the gelting-1 criterion stays unticked. No solid, outline, levels, POI or src/sim change: the
+  hall is drawn as one mass over OSM's outline (the map keeps levels 2), the rest are wall signs, a canopy, roof signs
+  and non-solid pylons.
+- LoD2 (tile 682_5306): DEBY_LOD2_4467576 = hipped (3200), eaves 6.78 m, ridge 11.03 m, ridge NE–SW parallel to the
+  front, plus a 3.7 m flat lean-to at the W corner outside OSM's outline (not built). The model sits 3–4 m W of OSM.
+  Drawn at eaves 6.78 m, hip 16.9° on every wall (gives the model's ridge over OSM's 27.9 m depth); the model's steeper
+  hip ends (≈28°, 16 m ridge) are not possible with one pitch, so the ridge is short (guess/engine limit). Roof tiles
+  #cc8467. Facade "industrial" (cladding) tinted white with a plain white ground floor band up to 3.6 m.
+- Front = wall 2 (faces SE onto the car park, 32.25 m, u 0 at its SW end): two blue-framed windows with crates and
+  posters (new texture orterer-window, Codex, after 01) at u 2.2–7.2 and 8.6–13.6, a small one at u 25.2–27.6; the
+  entrance glazing with crates (orterer-arcade, from Am Stern) at u 15.4–21.4 between two white piers (orterer-pier),
+  the glass canopy (canopy-glass) over it at 3.25 m, 1.8 m deep, and the round-topped Orterer logo (orterer-logo) above.
+- Solar field: solar-field roof signs on the SE plane in three strips up the slope, narrowing at the hips.
+- Street frame (Banater Straße, u NE along it): the arched sign (orterer-logo on a white board on two legs, board
+  1.3–3.45 m) at u 5, n 7 in the planting strip between the car park's two ways in; a raised barrier (red housing,
+  white boom with red bands) at each way in (u -7.4 and 7.9, n 6.2).
+- Guesses: every front part's u/z and size, the small window, the canopy depth, the solar extent, the single pitch,
+  sign and barrier spots, the sign's square top (the texture's arch on a white board). Not built: paving and planting
+  strip (map ground), bushes, the lean-to, the NW/NE/SW sides (no reference).
+- Chunk hashes: with vs without the place only chunk 722 (the building's) differs. pnpm -s check green.
+- Screenshots (local scratchpad `b5-5/`): `play.png` (car park, barriers, sign), `play-front.png` (front, canopy,
+  solar roof), `overhead.png`.
 Size: S
 ```
 
@@ -2268,7 +2292,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | implemented (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
 | 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | implemented (partial) | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
-| 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | ref-done | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |
+| 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | implemented (partial) | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |
 | 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | ref-done (partial) | B5-6. Bayerwaldstraße 2. "kaufland" destroy-BMW (Rathaus job, not a gang job); entrance needs reference |
 | 220 | Huber GmbH, Karosserie-Lack-Center | car_repair | 2353.1, 1757.6 | 47.884194, 11.461548 | 3326 | todo | spray shop |
 | 89 | Auto Stapf | car_repair | 234.3, 1574.7 | 47.885838, 11.433141 | 4859 | todo | spray shop |

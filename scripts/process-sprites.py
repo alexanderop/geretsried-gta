@@ -965,6 +965,12 @@ if find("metz-cow") is not None:
     Image.fromarray(np.clip(pilaster, 0, 255).astype(np.uint8)).save(OUT / "metz-pilaster.webp", "WEBP", quality=88)
     print("metz-awning.webp metz-pilaster.webp")
 
+# Orterer Getränkemarkt (Banater Straße 3): a wide blue-framed window with crates and posters behind the glass (opaque).
+src = find("orterer-window")
+if src is not None:
+    Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "orterer-window.webp", "WEBP", quality=90)
+    print("orterer-window.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

@@ -1058,6 +1058,48 @@ describe("the registry on the real map", () => {
     expect(parts.filter((p) => p.kind === "roofSign").map((p) => (p.kind === "roofSign" ? p.texture : ""))).toEqual(["metz-board"])
   })
 
+  it("dresses Orterer Nord: the LoD2 hipped hall with solar on the SE plane, the front on the car park, the arched sign by the street", () => {
+    const orterer = at(187819175)
+    if (orterer === undefined) throw new Error("no Orterer Nord")
+    const pts = map.buildings[orterer.building]?.pts ?? []
+    const parts = orterer.dressing.parts
+    // The gelting-1 pickup is the POI itself: it stays where it was, and the footprint keeps its storeys (drawn as a mass).
+    const poi = map.pois.find((p) => p.name === "Orterer Getränkemarkt" && p.y < 3000)
+    expect(poi).toMatchObject({ x: 2306.5, y: 2063.1 })
+    expect(orterer.dressing.levels).toBeUndefined()
+    expect(makeWorld(map).map.buildings.find((b) => b.id === 187819175)?.levels).toBe(2)
+    const mass = orterer.dressing.masses?.[0]
+    expect(orterer.dressing.masses).toHaveLength(1)
+    expect((mass?.levels ?? 0) * 3).toBeCloseTo(6.78, 2)
+    // The hip at its pitch over half the 27.9 m depth gives the model's 11.03 m ridge.
+    expect((mass?.levels ?? 0) * 3 + 13.97 * slope(mass?.roof?.hip ?? 0)).toBeCloseTo(11.03, 1)
+    // Wall 2 faces SE onto the car park and Banater Straße and carries the front; nothing on it overlaps.
+    const w2 = wallFrame(pts, 2)
+    if (w2 === null) throw new Error("no wall 2")
+    expect(Math.abs(((Math.atan2(-w2.frame.nx, w2.frame.ny) * 180) / Math.PI + 360) % 360 - 134)).toBeLessThan(5)
+    const signs = parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 2 ? [p] : []))
+    for (const t of ["orterer-window", "orterer-arcade", "orterer-logo"] as const) expect(signs.map((s) => s.texture)).toContain(t)
+    for (const [i, a] of signs.entries()) for (const b of signs.slice(i + 1)) expect(a.u0 < b.u1 && b.u0 < a.u1 && a.z0 < b.z1 && b.z0 < a.z1).toBe(false)
+    expect(parts.some((p) => p.kind === "canopy" && p.edge === 2 && p.texture === "canopy-glass")).toBe(true)
+    // The solar field lies on the SE plane only, at its height over the eaves.
+    const solar = parts.flatMap((p) => (p.kind === "roofSign" ? [p] : []))
+    expect(solar.length).toBeGreaterThan(5)
+    for (const s of solar) {
+      expect(s.edge).toBe(2)
+      expect(s.texture).toBe("solar-field")
+      expect(s.z1 - s.z0).toBeCloseTo((s.n1 - s.n0) * slope(mass?.roof?.hip ?? 0), 3)
+      expect(s.u0).toBeGreaterThan(s.n1)
+      expect(s.u1).toBeLessThan(w2.length - s.n1)
+    }
+    // The arched sign and barriers stand between the street and the hall, off the footprint and off Banater Straße.
+    const pylons = parts.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    expect(pylons.some((p) => p.texture === "orterer-logo")).toBe(true)
+    for (const p of pylons) {
+      expect(pointInPolygon(...toWorld(orterer.frame, p.u, p.n), pts)).toBe(false)
+      expect(p.n).toBeGreaterThan(5)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })
