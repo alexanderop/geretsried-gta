@@ -204,16 +204,123 @@ export const streetLamps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
   return out
 }
 
-/** A bus shelter or a bottle bank where OSM maps one: a sprite seen from above at its roof height, and its shadow. */
-export type StreetProp = { readonly kind: "shelter" | "glass"; readonly x: number; readonly y: number; readonly angle: number }
+/**
+ * A bus shelter at an OSM bus stop (with the stop's green H pole at the kerb, `pole`), or a bottle bank. `angle`
+ * runs along the street; the shelter's open front faces the street on its right (+90°).
+ */
+export type StreetProp =
+  | { readonly kind: "shelter"; readonly x: number; readonly y: number; readonly angle: number; readonly pole: Placed }
+  | { readonly kind: "glass"; readonly x: number; readonly y: number; readonly angle: number }
 
-const PROP_SIZE = { shelter: { length: 4.2, z: 2.6 }, glass: { length: 1.9, z: 1.6 } } as const
+/** The Geretsried shelter (Sudetenstraße, in front of St. Ursula): 6 m by 1.7 m under a flat roof at 2.55 m. */
+export const SHELTER = { length: 6, depth: 1.7, z: 2.55, slab: 0.16 } as const
+const ANTHRACITE: Rgba = [50, 53, 58, 255]
+const ANTHRACITE_DARK: Rgba = [34, 36, 40, 255]
+const ROOF_EDGE: Rgba = [196, 200, 204, 255]
+const GLASS: Rgba = [150, 178, 190, 255]
+const AD_LIGHT: Rgba = [246, 244, 230, 255]
+const POSTER: Rgba = [214, 60, 70, 255]
+const BENCH: Rgba = [140, 96, 58, 255]
+const BIN: Rgba = [236, 118, 24, 255]
+const STOP_GREEN: Rgba = [18, 128, 74, 255]
+const STOP_YELLOW: Rgba = [250, 210, 30, 255]
+const TIMETABLE: Rgba = [26, 72, 160, 255]
+
+const shade = ([r, g, b, a]: Rgba, k: number): Rgba => [Math.round(r * k), Math.round(g * k), Math.round(b * k), a]
+
+/**
+ * A box `2 hl` long (along `angle`) and `2 hw` deep round (x, y), from z0 to z1: its top in `top`, its sides in
+ * `side` lit by which way they face (the sun is opposite the shadows), and optionally its shadow on the ground.
+ */
+const box = (m: MeshBuilder, x: number, y: number, angle: number, hl: number, hw: number, z0: number, z1: number, top: Rgba, side: Rgba, shadow = false) => {
+  const c = Math.cos(angle)
+  const s = Math.sin(angle)
+  const corner = (f: number, r: number) => [x + c * f - s * r, y + s * f + c * r] as const
+  const ring = [corner(-hl, -hw), corner(hl, -hw), corner(hl, hw), corner(-hl, hw)]
+  const v = (p: readonly [number, number], z: number, col: Rgba) => m.vertex(p[0], p[1], z, 0, 0, col, Mode.color, 0)
+  for (let i = 0; i < 4; i++) {
+    const a = ring[i] ?? [0, 0]
+    const b = ring[(i + 1) % 4] ?? [0, 0]
+    // Faces turned away from the sun (towards the shadows) are darker.
+    const nx = b[1] - a[1]
+    const ny = a[0] - b[0]
+    const lit = 0.78 + 0.22 * -Math.sign(nx * SHADOW_DIR[0] + ny * SHADOW_DIR[1])
+    const col = shade(side, lit)
+    m.quad(v(a, z0, col), v(b, z0, col), v(b, z1, col), v(a, z1, col))
+  }
+  m.quad(v(ring[0] ?? [0, 0], z1, top), v(ring[1] ?? [0, 0], z1, top), v(ring[2] ?? [0, 0], z1, top), v(ring[3] ?? [0, 0], z1, top))
+  if (!shadow) return
+  m.target = "shadow"
+  const ox = SHADOW_DIR[0] * z1 * SHADOW_PER_M
+  const oy = SHADOW_DIR[1] * z1 * SHADOW_PER_M
+  const sv = (p: readonly [number, number]) => m.vertex(p[0] + ox, p[1] + oy, Z_SHADOW, 0, 0, SHADOW, Mode.color, 0)
+  m.quad(sv(ring[0] ?? [0, 0]), sv(ring[1] ?? [0, 0]), sv(ring[2] ?? [0, 0]), sv(ring[3] ?? [0, 0]))
+  m.target = "opaque"
+}
+
+/**
+ * The shelter as geometry, for a camera looking straight down: the long anthracite roof with a thin light edge
+ * dominates; under it thin dark posts, glass at the back and both ends, the back-lit ad panel closing one end,
+ * a bench, the orange bin on its post beside it; and the green H pole with its blue timetable at the kerb.
+ */
+const shelter = (m: MeshBuilder, p: Extract<StreetProp, { kind: "shelter" }>) => {
+  const { length, depth, z, slab } = SHELTER
+  const c = Math.cos(p.angle)
+  const s = Math.sin(p.angle)
+  /** A point `f` meters along the shelter and `r` towards the street. */
+  const at = (f: number, r: number) => [p.x + c * f - s * r, p.y + s * f + c * r] as const
+  const hl = length / 2
+  const hw = depth / 2
+  // Posts at the four corners, a little in from the roof's edge.
+  for (const [f, r] of [[-hl + 0.25, -hw + 0.15], [hl - 0.25, -hw + 0.15], [-hl + 0.25, hw - 0.2], [hl - 0.25, hw - 0.2]] as const) {
+    const [px, py] = at(f, r)
+    box(m, px, py, p.angle, 0.05, 0.05, 0, z, ANTHRACITE_DARK, ANTHRACITE_DARK)
+  }
+  // Glass: the back wall and the end opposite the ad panel, thin panes in a dark frame.
+  const [bx, by] = at(0, -hw + 0.15)
+  box(m, bx, by, p.angle, hl - 0.3, 0.025, 0.12, z - 0.05, ANTHRACITE, GLASS)
+  const [ex, ey] = at(hl - 0.25, 0)
+  box(m, ex, ey, p.angle, 0.025, hw - 0.35, 0.12, z - 0.05, ANTHRACITE, GLASS)
+  // The ad panel: a deep, lit box closing the other end, a poster on both faces.
+  const [ax, ay] = at(-hl + 0.3, -0.05)
+  box(m, ax, ay, p.angle, 0.12, hw - 0.3, 0.05, z - 0.05, ANTHRACITE, AD_LIGHT)
+  box(m, ax, ay, p.angle, 0.125, hw - 0.5, 0.4, z - 0.4, AD_LIGHT, POSTER)
+  // The bench along the glass.
+  const [nx, ny] = at(0.4, -hw + 0.45)
+  box(m, nx, ny, p.angle, 1.4, 0.2, 0.42, 0.48, BENCH, BENCH)
+  // The roof: a dark slab, a light edge all round it on top, the dark top inside.
+  const [rx, ry] = at(0, 0)
+  box(m, rx, ry, p.angle, hl, hw, z, z + slab, ROOF_EDGE, ANTHRACITE, true)
+  box(m, rx, ry, p.angle, hl - 0.09, hw - 0.09, z + slab, z + slab + 0.01, ANTHRACITE, ANTHRACITE)
+  // The orange bin on its post, beside the glass end.
+  const [lx, ly] = at(hl + 0.55, -hw + 0.35)
+  box(m, lx, ly, p.angle, 0.04, 0.04, 0, 0.6, ANTHRACITE_DARK, ANTHRACITE_DARK)
+  box(m, lx, ly, p.angle, 0.2, 0.17, 0.55, 1.0, shade(BIN, 0.55), BIN, true)
+  stopPole(m, p.pole.x, p.pole.y, p.angle)
+}
+
+/** The stop's pole: a green H sign at the top, turned across the street, and the blue timetable under it. */
+const stopPole = (m: MeshBuilder, x: number, y: number, angle: number) => {
+  column(m, x, y, 0.045, 2.75)
+  const across = angle + Math.PI / 2
+  box(m, x, y, across, 0.25, 0.03, 2.2, 2.7, STOP_GREEN, STOP_GREEN, true)
+  // The H on both faces: two uprights and the bar, a hair off the plate.
+  const c = Math.cos(across)
+  const s = Math.sin(across)
+  const v = (f: number, r: number, z: number) => m.vertex(x + c * f - s * r, y + s * f + c * r, z, 0, 0, STOP_YELLOW, Mode.color, 0)
+  for (const r of [-0.032, 0.032]) {
+    for (const [f0, f1, z0, z1] of [[-0.15, -0.09, 2.27, 2.63], [0.09, 0.15, 2.27, 2.63], [-0.09, 0.09, 2.42, 2.48]] as const) m.quad(v(f0, r, z0), v(f1, r, z0), v(f1, r, z1), v(f0, r, z1))
+  }
+  // The timetable case on the pole, facing along the sidewalk.
+  box(m, x + Math.cos(angle) * 0.06, y + Math.sin(angle) * 0.06, across, 0.2, 0.025, 1.15, 1.75, TIMETABLE, TIMETABLE)
+}
 
 export const streetProp = (m: MeshBuilder, boxes: SpriteBoxes, p: StreetProp) => {
-  const layer = prop(p.kind === "shelter" ? "prop-shelter" : "prop-glass")
+  if (p.kind === "shelter") return shelter(m, p)
+  const layer = prop("prop-glass")
   const b = boxes[layer] ?? [1, 0.6]
-  const { length, z } = PROP_SIZE[p.kind]
-  flat(m, boxes, layer, { x: p.x, y: p.y, z, angle: p.angle, length, width: (length * b[1]) / b[0] }, WHITE, true)
+  const length = 1.9
+  flat(m, boxes, layer, { x: p.x, y: p.y, z: 1.6, angle: p.angle, length, width: (length * b[1]) / b[0] }, WHITE, true)
 }
 
 const SIDEWALK_M = 2.6
@@ -230,32 +337,44 @@ export const streetProps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
       if (!world.isSolid(p.x, p.y)) out.push({ kind: "glass", x: p.x, y: p.y, angle: 0 })
       continue
     }
-    const hit = world.roadAt(p.x, p.y, 25)
-    if (hit === null || hit.road.kind === "footway" || hit.road.kind === "track") continue
-    const { pts } = hit.road
-    let best = { d: Infinity, x: p.x, y: p.y, angle: 0 }
-    for (let i = 0; i + 3 < pts.length; i += 2) {
-      const ax = pts[i] ?? 0
-      const ay = pts[i + 1] ?? 0
-      const bx = pts[i + 2] ?? 0
-      const by = pts[i + 3] ?? 0
-      const len2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1
-      const t = Math.max(0, Math.min(1, ((p.x - ax) * (bx - ax) + (p.y - ay) * (by - ay)) / len2))
-      const x = ax + (bx - ax) * t
-      const y = ay + (by - ay) * t
-      const d = Math.hypot(x - p.x, y - p.y)
-      if (d < best.d) best = { d, x, y, angle: Math.atan2(by - ay, bx - ax) }
+    // The nearest street (a sidewalk mapped as its own footway is often nearer).
+    let best = { d: 25, x: p.x, y: p.y, angle: 0, width: 0 }
+    for (const r of world.map.roads) {
+      if (r.kind === "footway" || r.kind === "track") continue
+      const { pts } = r
+      for (let i = 0; i + 3 < pts.length; i += 2) {
+        const ax = pts[i] ?? 0
+        const ay = pts[i + 1] ?? 0
+        const bx = pts[i + 2] ?? 0
+        const by = pts[i + 3] ?? 0
+        if (Math.min(ax, bx) > p.x + best.d || Math.max(ax, bx) < p.x - best.d || Math.min(ay, by) > p.y + best.d || Math.max(ay, by) < p.y - best.d) continue
+        const len2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1
+        const t = Math.max(0, Math.min(1, ((p.x - ax) * (bx - ax) + (p.y - ay) * (by - ay)) / len2))
+        const x = ax + (bx - ax) * t
+        const y = ay + (by - ay) * t
+        const d = Math.hypot(x - p.x, y - p.y)
+        if (d < best.d) best = { d, x, y, angle: Math.atan2(by - ay, bx - ax), width: r.width }
+      }
     }
-    // On the stop's side of the street, at the back of the sidewalk, 3.5 m along from the stop itself.
+    if (best.width === 0) continue
+    // On the stop's side of the street: the shelter at the back of the sidewalk, its back half on the verge,
+    // a few meters on from the stop, whose H pole stands at the kerb where the bus's front door halts.
     const nx = -Math.sin(best.angle)
     const ny = Math.cos(best.angle)
     const side = Math.sign((p.x - best.x) * nx + (p.y - best.y) * ny) || 1
-    const off = hit.road.width / 2 + SIDEWALK_M - 0.9
-    const x = best.x + nx * off * side + Math.cos(best.angle) * 3.5
-    const y = best.y + ny * off * side + Math.sin(best.angle) * 3.5
-    if (world.isSolid(x, y) || avoid.some((a) => Math.hypot(a.x - x, a.y - y) < 2.5)) continue
-    // Its glass back to the houses, its open side to the street.
-    out.push({ kind: "shelter", x, y, angle: best.angle + (side === 1 ? Math.PI : 0) })
+    // Its glass back to the houses, its open side (+90°) to the street.
+    const angle = best.angle + (side === 1 ? Math.PI : 0)
+    const kerb = best.width / 2
+    const fx = Math.cos(best.angle)
+    const fy = Math.sin(best.angle)
+    const fits = (x: number, y: number) =>
+      [-1, 1].every((f) => [-1, 1].every((r) => !world.isSolid(x + Math.cos(angle) * f * (SHELTER.length / 2) - Math.sin(angle) * r * (SHELTER.depth / 2), y + Math.sin(angle) * f * (SHELTER.length / 2) + Math.cos(angle) * r * (SHELTER.depth / 2))))
+    const spot = [SIDEWALK_M - 0.3, SIDEWALK_M - 0.9]
+      .map((back) => ({ x: best.x + nx * (kerb + back) * side + fx * 4, y: best.y + ny * (kerb + back) * side + fy * 4 }))
+      .find((q) => fits(q.x, q.y) && !avoid.some((a) => Math.hypot(a.x - q.x, a.y - q.y) < 3.5))
+    if (spot === undefined) continue
+    const pole = { x: best.x + nx * (kerb + 0.45) * side, y: best.y + ny * (kerb + 0.45) * side }
+    out.push({ kind: "shelter", x: spot.x, y: spot.y, angle, pole })
   }
   return out
 }

@@ -84,5 +84,6 @@ describe("traffic lights", () => {
     expect(crossings).toBeGreaterThan(0)
     expect(waiting).toBeGreaterThan(0)
     expect(violations).toBe(0)
-  })
+    // 60 s of the whole town's traffic, buses included.
+  }, 30_000)
 })

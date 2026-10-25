@@ -16,6 +16,7 @@ const map: GameMap = {
   pois: [],
   signals: [], crossings: [], props: [], districts: [],
   covered: [],
+  buses: [],
 }
 
 describe("street routes", () => {

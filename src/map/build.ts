@@ -1,5 +1,6 @@
 import type { Area, AreaKind, Building, Crossing, District, GameMap, Poi, PoiKind, Prop, Road, RoadKind, Signal, Waterway } from "./types.ts"
 import { makeProjection, type Bbox, type LatLon } from "./project.ts"
+import { buildBusLines, type OsmElement } from "./bus.ts"
 
 /** One `way` as Overpass returns it with `out geom`. */
 export type OsmWay = {
@@ -20,6 +21,8 @@ const ROAD_KINDS: Readonly<Record<string, readonly [RoadKind, number]>> = {
   living_street: ["living_street", 5],
   pedestrian: ["living_street", 6],
   service: ["service", 4],
+  // Bus-only roads (the loop at the Schulzentrum): service roads that only buses drive.
+  busway: ["service", 6],
   track: ["track", 3],
   footway: ["footway", 2],
   path: ["footway", 1.8],
@@ -117,9 +120,16 @@ const TYPICAL_LEVELS: Readonly<Record<string, number>> = {
   apartments: 4,
 }
 
+/** Storeys counted on Street View for landmarks OSM maps without `building:levels`. */
+const KNOWN_LEVELS: Readonly<Record<string, number>> = {
+  "Pflegeheim St. Ursula": 4,
+}
+
 export const buildingLevels = (tags: Readonly<Record<string, string>>): number => {
   const levels = Number(tags["building:levels"])
   if (Number.isFinite(levels) && levels > 0) return levels
+  const known = KNOWN_LEVELS[tags.name ?? ""]
+  if (known !== undefined) return known
   return TYPICAL_LEVELS[tags.building ?? ""] ?? 2
 }
 
@@ -129,7 +139,7 @@ const round = (n: number) => Math.round(n * 10) / 10
  * Turn raw Overpass ways into the compact map the game loads.
  * Keeps every feature that touches the bbox; the renderer clips the rest.
  */
-export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmPlace>, bbox: Bbox): GameMap => {
+export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmPlace>, bbox: Bbox, routes: ReadonlyArray<OsmElement> = []): GameMap => {
   const projection = makeProjection(bbox)
   const inside = (p: LatLon) => p.lat >= bbox.south && p.lat <= bbox.north && p.lon >= bbox.west && p.lon <= bbox.east
   const flat = (geometry: ReadonlyArray<LatLon>) =>
@@ -223,6 +233,12 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
   // Big areas first so small ones (ponds, parks) paint on top.
   areas.sort((a, b) => polygonArea(b.pts) - polygonArea(a.pts))
 
+  // A platform of a bus line that OSM maps without a highway=bus_stop node gets its shelter too.
+  const buses = buildBusLines(routes, roads, bbox)
+  for (const stop of buses.flatMap((l) => l.runs.flatMap((r) => r.stops))) {
+    if (!props.some((p) => p.kind === "bus_stop" && Math.hypot(p.x - stop.x, p.y - stop.y) < 20)) props.push({ kind: "bus_stop", x: stop.x, y: stop.y })
+  }
+
   return {
     width: round(projection.width),
     height: round(projection.height),
@@ -237,6 +253,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
     props,
     districts,
     covered: [],
+    buses,
   }
 }
 

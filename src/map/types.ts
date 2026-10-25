@@ -105,6 +105,21 @@ export type Prop = typeof Prop.Type
 export const District = Schema.Struct({ name: Schema.String, x: Schema.Number, y: Schema.Number })
 export type District = typeof District.Type
 
+/** Where a bus halts: the stop's name and platform (x, y), and its place on the run's path: `s` meters into path segment `at` (node `at` to node `at + 1`). */
+export const BusStop = Schema.Struct({ name: Schema.String, x: Schema.Number, y: Schema.Number, at: Schema.Number, s: Schema.Number })
+export type BusStop = typeof BusStop.Type
+
+/**
+ * One direction of a bus line (an OSM route=bus relation), cut to the map: `nodes` are OSM nodes of
+ * drivable roads in driving order, `pts` the same as [x0, y0, ...] meters, and the stops follow the path.
+ */
+export const BusRun = Schema.Struct({ to: Schema.String, nodes: Schema.Array(Schema.Number), pts: Points, stops: Schema.Array(BusStop) })
+export type BusRun = typeof BusRun.Type
+
+/** A bus line: its number (370), the operator, and the one or two runs a bus drives in turn (there and back). */
+export const BusLine = Schema.Struct({ ref: Schema.String, operator: Schema.String, runs: Schema.Array(BusRun) })
+export type BusLine = typeof BusLine.Type
+
 /** A stretch of road the aerial photo shows as tree canopy; the renderer draws it in. */
 export const Covered = Schema.Struct({ width: Schema.Number, pts: Points })
 export type Covered = typeof Covered.Type
@@ -124,6 +139,7 @@ export const GameMap = Schema.Struct({
   props: Schema.Array(Prop),
   districts: Schema.Array(District),
   covered: Schema.Array(Covered),
+  buses: Schema.Array(BusLine),
 })
 export type GameMap = typeof GameMap.Type
 

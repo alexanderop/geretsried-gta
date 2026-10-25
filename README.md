@@ -8,7 +8,7 @@ pnpm dev          # http://localhost:5190
 ```
 
 **Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake (on foot: fire) · F get in / out (works on moving traffic too) ·
-Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · H help.
+Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · H help · F next to a bus at its stop rides along.
 
 ## How the map is made
 
@@ -19,6 +19,9 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - `pnpm map:fetch` downloads every road, building, river and land-use way in the bbox (`BBOX` in `scripts/import-osm.ts`).
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
+- The bus lines come from OSM's `route=bus` relations through the bbox, with their ways and stops, cached in
+  `data/routes.json` (by `pnpm map:fetch`, or when missing). `src/map/bus.ts` turns them into
+  `buses` in the map JSON (see **Buses** below).
 
 ### The picture: WebGL2, GTA 2 style
 
@@ -91,7 +94,7 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 - **HUD** (`src/ui/Hud.tsx`, DOM over the canvas): money top right, lives, health as five hearts, armour as
   a blue shield, the score multiplier, the weapon slot (icon and rounds) under them, wanted level as up to four cop heads at the top centre, the
   job clock and the street name as you turn into it under them (clear of the car in the middle), the car's name as you get in (`src/sim/vehicles.ts`: VW Golf, BMW
-  5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter), BUSTED / WASTED banners, the
+  5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter; the Linienbus you ride, not drive), BUSTED / WASTED banners, the
   mission text and clock. H toggles the controls help.
 - **Money** (`src/sim/score.ts`): a near miss (passing a car at over 50 km/h with centres 3.4–4.6 m
   apart) pays $50, a drift (sliding over a third sideways at speed) $20 every half second. Awards within
@@ -164,8 +167,30 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   -25 or less, members near you on their turf come at you with their fists; from 40 up they let a punch go.
 - **Hidden packages** (`placePackages` in `src/sim/pickups.ts`): ten spinning parcels tucked behind shops
   and in parks, 350 m apart, $1000 each, counted in the save.
-- **Street props**: a glass bus shelter at the back of the sidewalk at each of OSM's 92 bus stops, and
-  bottle banks at its glass recycling points (`streetProps` in `src/render/scene/street.ts`).
+- **Buses** (`src/map/bus.ts` the routes, `src/sim/transit.ts` the lines on the street graph): every bus line
+  through the map from OSM's `route=bus` relations, 15 of them, MVV regional buses run by the RVO, Geldhauser and
+  deuCon. The **370** (RVO) runs Wolfratshausen (S) – Buchberg – Kirchplatz – Fasanenweg – Schulzentrum –
+  Sudetenstraße – Am Stern – Feuerwehrschule – Geretsried, Stein, and back; the 371 (Geldhauser/RVO) ends at
+  the Schulzentrum and leaves east for Deisenhofen; the 310 is the town line Erikaweg – Steiner Ring Süd; the
+  376, 378 and the school buses 370V, 373V, 377V and 379V come up from Wolfratshausen and Gelting, the 372, 374,
+  379 and X970 along the B11, and Wolfratshausen's 301 and 302 just touch the north-west corner at Waldram. A relation's ways are chained in member order (roundabouts driven round from entry to exit), walked
+  node by node along the game's streets (a step between nodes that are not neighbours, a member OSM left out,
+  is bridged by the shortest way round, at most 500 m) and cut to the map. Of a line's many relations it drives
+  the plain pattern (fewest "=>" in the name) with the most stops, and the one that comes back. Platforms
+  become ordered, named stops on that path. In the game each line gets one bus per 4 km of its loop (at most
+  three), spread round it; a bus is ordinary NPC traffic (`Npc.bus`: same lights, collisions and damage, 12 m,
+  the red-and-white RVO livery), but it follows its line instead of turning at random, stands 7 s at each stop
+  and at the end of a run carries on with the way back (off the map's edge, it comes back in where that starts).
+  **Riding**: F next to a standing bus gets you in; it keeps its route, the camera follows, you cannot steer, and
+  the HUD shows the line number, where it goes and the next stop. F while it drives gets you off at the next
+  stop (F again takes that back); F while it stands gets you off at once, on the door side. You are put off at
+  the last stop in the map, unless you got in there.
+- **Bus shelters** (`streetProps` in `src/render/scene/street.ts`): like the real one on Sudetenstraße in front
+  of St. Ursula, drawn as geometry for a camera looking down: a long anthracite flat roof with a thin light edge
+  on thin dark posts, glass at the back and one end, a back-lit ad panel closing the other, a bench, an orange bin
+  on its post, and the green H pole with its blue timetable at the kerb where the bus halts. One at each OSM bus
+  stop (and each platform of a line that has none), at the back of the sidewalk.
+- **Bottle banks** at OSM's glass recycling points.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

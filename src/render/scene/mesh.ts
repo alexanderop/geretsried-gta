@@ -48,6 +48,7 @@ export const Material = {
   canopy: 13,
   floorWood: 14,
   cafeSign: 15,
+  facadeUrsula: 16,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -68,6 +69,7 @@ export const MATERIAL_FILES: ReadonlyArray<string> = [
   "canopy",
   "floor-wood",
   "cafe-sign",
+  "facade-ursula",
 ]
 
 /** Two index lists share one vertex buffer: opaque surfaces, then the shadows laid over the ground. */
@@ -167,7 +169,6 @@ export const PROP_FILES = [
   "prop-star",
   "prop-package",
   "prop-heart",
-  "prop-shelter",
   "prop-glass",
   "pose-cop-aim",
   "pose-thug-punch",
@@ -184,6 +185,7 @@ export const PROP_FILES = [
   "cafe-bistro",
   "cafe-slice",
   "cafe-toilet",
+  "bus-rvo",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

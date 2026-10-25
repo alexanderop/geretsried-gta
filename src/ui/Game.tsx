@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
+import { DT, busNear, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
+import { direction, nextStop } from "#/sim/transit.ts"
 import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
@@ -43,6 +44,14 @@ const compareSpot = (world: World): { x: number; y: number; half: number } | nul
 const weaponSlot = (game: GameState): HudState["weapon"] => {
   const { current, ammo } = game.player.arsenal
   return { id: current, name: WEAPONS[current].name, ammo: current === "fists" ? null : ammo[current] }
+}
+
+/** The bus you ride, for the HUD: its line and direction, the next stop, and whether it stands. */
+const rideInfo = (game: GameState): HudState["ride"] => {
+  const ride = game.player.ride
+  const trip = ride?.bus.bus
+  if (ride === null || trip === undefined) return null
+  return { ref: trip.line.ref, to: direction(trip), next: nextStop(trip), stopped: ride.bus.speed < 0.8, getOff: ride.getOff }
 }
 
 /** The job clock: running from the pickup (or, for a car to wreck, from the call). */
@@ -189,7 +198,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       const copDist = Math.min(Infinity, ...game.cops.map((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y)))
       const level = wantedLevel(game.wanted)
       audio.effects(game.sounds.splice(0), p)
-      audio.update({ speed: game.player.car === null ? 0 : speedKmh(game) / 3.6, inCar: game.player.car !== null, horn: keyboard.horn(), siren: level > 0 ? Math.max(0, 1 - copDist / 140) : 0 })
+      audio.update({ speed: game.player.car === null ? (game.player.ride?.bus.speed ?? 0) : speedKmh(game) / 3.6, inCar: game.player.car !== null || game.player.ride !== null, horn: keyboard.horn(), siren: level > 0 ? Math.max(0, 1 - copDist / 140) : 0 })
 
       for (const m of game.messages.splice(0)) {
         if (m.kind === "car") shown = { ...shown, vehicle: { name: m.text, key: ++keys } }
@@ -227,11 +236,13 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           kmh: Math.round(speedKmh(game)),
           inCar: game.player.car !== null,
           place: place === undefined ? "" : `${poiIcon(place.kind)} ${place.name}`,
-          nearCar: game.parked.some((c) => near(c.x, c.y)) || game.npcs.some((n) => near(n.x, n.y)),
+          nearCar: game.parked.some((c) => near(c.x, c.y)) || game.npcs.some((n) => n.bus === undefined && near(n.x, n.y)),
           big: game.time < bigUntil ? shown.big : "",
           mission: game.time < missionUntil ? shown.mission : "",
           timer: jobClock(game),
           respect: game.turf.map((t) => ({ id: t.gang, name: GANGS[t.gang].name, color: `rgb(${GANGS[t.gang].color.join(",")})`, value: game.respect[t.gang] })),
+          nearBus: busNear(game) !== null,
+          ride: rideInfo(game),
           ringing: game.jobs.phones.some((ph, i) => isRinging(game.jobs, i) && Math.hypot(ph.x - p.x, ph.y - p.y) < 70),
         }
         setHud(shown)

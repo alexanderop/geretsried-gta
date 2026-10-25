@@ -18,6 +18,7 @@ const map: GameMap = {
   pois: [],
   signals: [], crossings: [], props: [], districts: [],
   covered: [],
+  buses: [],
 }
 
 const noCrowns = { xs: new Uint16Array(0), ys: new Uint16Array(0), rs: new Uint8Array(0) }

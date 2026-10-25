@@ -298,6 +298,15 @@ if sign is not None:
     Image.open(sign).convert("RGB").resize((512, 128), Image.LANCZOS).save(OUT / "cafe-sign.webp", "WEBP", quality=92)
     print("cafe-sign.webp")
 
+# The regional bus (MVV / RVO), 12 m long: one sprite, nose right, cut to its body and scaled to 512 px along it.
+bus = find("bus")
+if bus is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(bus)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 512 / im.width
+    im.resize((512, round(im.height * k)), Image.LANCZOS).save(OUT / "bus-rvo.webp", "WEBP", quality=90)
+    print("bus-rvo.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

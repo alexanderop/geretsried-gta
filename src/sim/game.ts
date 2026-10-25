@@ -3,11 +3,12 @@ import { makeProjection } from "#/map/project.ts"
 import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
 import { CAR_LENGTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
-import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
+import { spawnBus, spawnNpc, stepNpc, type Npc } from "./traffic.ts"
+import { atTerminus, direction, nextStop, planTransit } from "./transit.ts"
 import { lightFor, makeSignals } from "./signals.ts"
 import { spawnWalker, stepWalker } from "./pedestrians.ts"
 import { stepArrivals, stepGuest } from "./guests.ts"
-import { carName, POLICE_MODEL } from "./vehicles.ts"
+import { BUS_LENGTH, BUS_MODEL, carName, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
 import { drift, nearMiss, newScore, tickScore } from "./score.ts"
 import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
@@ -16,7 +17,7 @@ import { CAKES, CAKE_COST, COST, SAVE_COST, planShops, spotNear, stepShop } from
 import { toSave } from "./save.ts"
 import { gangJobDone, isHostile, newRespect, turfAt, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
-import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isDead, vitals, type DamageSource } from "./damage.ts"
+import { CAR_HP, MAX_ARMOUR, PERSON_HP, hurt, isBurning, isDead, vitals, type DamageSource } from "./damage.ts"
 import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./weapons.ts"
 import { PACKAGE_REWARD, collect, placePackages, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
 import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
@@ -113,7 +114,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const stations = planStations(world)
   const pickups = placePickups(world, home, hidden)
   const game: Game = {
-    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal(), stride: 0, moving: false },
+    player: { x: home.x, y: home.y, angle: home.angle, car: null, ride: null, vitals: vitals(PERSON_HP), arsenal: newArsenal(), stride: 0, moving: false },
     parked: [car],
     wrecks: [],
     npcs: [],
@@ -146,6 +147,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     home,
     hospital: findHospital(world, home),
     signals: makeSignals(world),
+    transit: planTransit(world),
     random,
     junction: null,
     crashCooldown: 0,
@@ -154,6 +156,10 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     screamCooldown: 0,
     guestCooldown: 2,
   }
+  // The first buses are spread round each line's loop, a little out of step between lines (before the traffic, which tops lines up).
+  game.transit.forEach((line, li) => {
+    for (let k = 0; k < line.buses; k++) game.npcs.push(spawnBus(world, game.nextId++, line, k / line.buses + li * 0.137))
+  })
   fillTraffic(world, game, 40)
   return game
 }
@@ -170,7 +176,8 @@ export const carHitsWall = (world: World, car: Car) =>
 /** Keep about NPC_COUNT cars around the player; recycle the ones left far behind. */
 const fillTraffic = (world: World, game: Game, minR: number) => {
   const { x, y } = playerPos(game)
-  game.npcs = game.npcs.filter((n) => Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
+  game.npcs = game.npcs.filter((n) => n.bus !== undefined || Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
+  topUpBuses(world, game, x, y)
   game.walkers = game.walkers.filter((w) => Math.hypot(w.x - x, w.y - y) < WALKER_FAR + 50)
   game.wrecks = game.wrecks.filter((w) => Math.hypot(w.x - x, w.y - y) < NPC_FAR)
   game.parked = game.parked.filter((c) => Math.hypot(c.x - x, c.y - y) < NPC_FAR)
@@ -182,7 +189,7 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
     if (gang !== null) walker.gang = gang
     game.walkers.push(walker)
   }
-  for (let attempt = 0; game.npcs.length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
+  for (let attempt = 0; game.npcs.filter((n) => n.bus === undefined).length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
     const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
     if (npc === null) return
     // Never spawn on top of another car.
@@ -191,26 +198,46 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   }
 }
 
+/** A line that lost a bus (burnt out) gets a new one at the point of its loop farthest from everyone: out of the player's sight, clear of the others. */
+const topUpBuses = (world: World, game: Game, x: number, y: number) => {
+  game.transit.forEach((line, li) => {
+    const have = game.npcs.filter((n) => n.bus?.line === line)
+    if (have.length >= line.buses) return
+    for (let k = 0; k < line.buses; k++) {
+      const bus = spawnBus(world, game.nextId, line, (k + 0.5) / line.buses + li * 0.137)
+      if (Math.hypot(bus.x - x, bus.y - y) < 200 || have.some((o) => Math.hypot(o.x - bus.x, o.y - bus.y) < 120)) continue
+      game.nextId++
+      game.npcs.push(bus)
+      return
+    }
+  })
+}
+
 export const playerPos = (game: Game) => game.player.car ?? game.player
 
 /** Is anything within a short cone in front of this NPC? */
 const blockedAhead = (game: Game, npc: Npc) => {
   const fx = Math.cos(npc.angle)
   const fy = Math.sin(npc.angle)
-  const check = (x: number, y: number) => {
+  // A bus looks from its nose, and sees a bus's tail, not its middle.
+  const nose = (vehicleLength(npc.model) - CAR_LENGTH) / 2
+  const check = (x: number, y: number, length = CAR_LENGTH) => {
     const dx = x - npc.x
     const dy = y - npc.y
-    const ahead = dx * fx + dy * fy
+    const ahead = dx * fx + dy * fy - nose - (length - CAR_LENGTH) / 2
     const side = Math.abs(dx * -fy + dy * fx)
     return ahead > 0.5 && ahead < 9 && side < 2.2
   }
   const p = playerPos(game)
-  if (check(p.x, p.y)) return true
+  // Out of everyone's reach (a bus across town) only other traffic can be in the way.
+  if (Math.abs(npc.x - p.x) > NPC_FAR + 50 || Math.abs(npc.y - p.y) > NPC_FAR + 50) return game.npcs.some((o) => o !== npc && Math.abs(o.x - npc.x) < 20 && check(o.x, o.y, vehicleLength(o.model)))
+  // A passenger is inside the bus, which the cars see already.
+  if (game.player.ride === null && check(p.x, p.y)) return true
   if (game.parked.some((c) => check(c.x, c.y))) return true
   if (game.cops.some((c) => check(c.car.x, c.car.y))) return true
   if (game.walkers.some((w) => check(w.x, w.y))) return true
   if (game.fighters.some((f) => check(f.x, f.y))) return true
-  return game.npcs.some((o) => o !== npc && check(o.x, o.y))
+  return game.npcs.some((o) => o !== npc && check(o.x, o.y, vehicleLength(o.model)))
 }
 
 /** Push the car out of a circle round (x, y); returns the speed it hit with, or 0 if it did not touch. */
@@ -225,6 +252,13 @@ const pushApart = (car: Car, x: number, y: number, radius: number) => {
   car.vx *= -0.3
   car.vy *= -0.3
   return speed
+}
+
+/** A bus is a row of three circles along its length, so a car can pass beside it and still not drive through it. */
+const pushBus = (car: Car, bus: Npc) => {
+  let hit = 0
+  for (const off of [-BUS_LENGTH / 2.8, 0, BUS_LENGTH / 2.8]) hit = Math.max(hit, pushApart(car, bus.x + Math.cos(bus.angle) * off, bus.y + Math.sin(bus.angle) * off, 3.4))
+  return hit
 }
 
 /** Damage per m/s of impact speed. */
@@ -256,9 +290,10 @@ export const step = (world: World, game: Game, input: Input): void => {
     game.wasted -= DT
     if (game.wasted <= 0) wakeUp(game)
   } else {
-    if (input.use) toggleCar(game)
+    if (input.use) toggleCar(world, game)
     if (input.cycle !== 0) cycle(player.arsenal, input.cycle)
-    if (player.car !== null) driveCar(world, game, player.car, input)
+    if (player.ride !== null) rideBus(world, game)
+    else if (player.car !== null) driveCar(world, game, player.car, input)
     else {
       walk(world, game, input)
       // Space is the handbrake in a car and a second trigger on foot.
@@ -282,6 +317,9 @@ export const step = (world: World, game: Game, input: Input): void => {
   game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
   stepArrivals(world, game, playerPos(game), DT)
   for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
+  // A passenger moves with the bus, this frame, so the camera and the HUD do not trail it.
+  const ride = player.ride?.bus
+  if (ride !== undefined) Object.assign(player, { x: ride.x, y: ride.y, angle: ride.angle })
   police(world, game)
   stepCombat(world, game, wantedLevel(game.wanted), DT, () => {
     // Still inside when it blows: the explosion finds you where the car was.
@@ -338,6 +376,7 @@ const pickUp = (game: Game) => {
 const wasted = (game: Game) => {
   const { player } = game
   if (player.car !== null) getOut(game)
+  player.ride = null
   game.messages.push({ kind: "wasted" })
   game.score.money -= Math.floor(game.score.money / 4)
   disarm(player.arsenal)
@@ -413,7 +452,7 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   const speed = Math.hypot(car.vx, car.vy)
   for (const npc of game.npcs) {
     const dist = Math.hypot(npc.x - car.x, npc.y - car.y)
-    const hit = pushApart(car, npc.x, npc.y, CAR_LENGTH * 0.75)
+    const hit = npc.bus === undefined ? pushApart(car, npc.x, npc.y, CAR_LENGTH * 0.75) : pushBus(car, npc)
     if (hit > 0) {
       npc.speed = 0
       crash(car, hit, DAMAGE.car, "car")
@@ -535,7 +574,7 @@ const police = (world: World, game: Game) => {
  */
 export const arrested = (game: Game, level: number): boolean => {
   const { player } = game
-  if (level === 0 || game.wasted > 0 || player.car !== null || game.fighting > 0) return false
+  if (level === 0 || game.wasted > 0 || player.car !== null || player.ride !== null || game.fighting > 0) return false
   const near = (x: number, y: number, r: number) => Math.hypot(x - player.x, y - player.y) < r
   const byHand = game.fighters.some((f) => f.kind === "cop" && !f.dead && f.down <= 0 && near(f.x, f.y, BUST_HAND))
   const byCar = [...game.cops.map((c) => c.car), ...game.parked.filter((c) => c.model === POLICE_MODEL)].some((c) => Math.hypot(c.vx, c.vy) < 1 && near(c.x, c.y, BUST_RANGE))
@@ -561,6 +600,7 @@ const shoveAside = (world: World, game: Game) => {
 const busted = (game: Game) => {
   const { player, home } = game
   if (player.car !== null) getOut(game)
+  player.ride = null
   game.score.money = Math.floor(game.score.money / 2)
   disarm(player.arsenal)
   game.messages.push({ kind: "busted" })
@@ -678,27 +718,118 @@ const jobCar = (world: World, game: Game, job: Job): Car | null => {
 }
 
 /** F: get out, or take the nearest parked car or NPC (the driver flees, GTA-style). */
-const toggleCar = (game: Game) => {
+const toggleCar = (world: World, game: Game) => {
   const { player } = game
+  if (player.ride !== null) {
+    leaveBus(world, game)
+    return
+  }
   if (player.car !== null) {
     getOut(game)
     return
   }
+  const bus = busNear(game)
+  if (bus !== null) {
+    boardBus(game, bus)
+    return
+  }
   const dist = (x: number, y: number) => Math.hypot(x - player.x, y - player.y)
-  const parked = game.parked.reduce<Car | null>((best, c) => (dist(c.x, c.y) < (best === null ? ENTER_RANGE : dist(best.x, best.y)) ? c : best), null)
+  const parked = game.parked.filter((c) => c.model !== BUS_MODEL).reduce<Car | null>((best, c) => (dist(c.x, c.y) < (best === null ? ENTER_RANGE : dist(best.x, best.y)) ? c : best), null)
   if (parked !== null) {
     game.parked = game.parked.filter((c) => c !== parked)
     player.car = parked
     game.messages.push({ kind: "car", text: carName(parked.model) })
     return
   }
-  const npc = game.npcs.find((n) => dist(n.x, n.y) < ENTER_RANGE)
+  const npc = game.npcs.find((n) => n.bus === undefined && dist(n.x, n.y) < ENTER_RANGE)
   if (npc === undefined) return
   // Pulling a driver out in front of the police is car theft.
   if (policeNear(game, npc.x, npc.y, 40)) commit(game.wanted, "theft")
   game.npcs = game.npcs.filter((n) => n !== npc)
   player.car = { x: npc.x, y: npc.y, angle: npc.angle, vx: 0, vy: 0, model: npc.model, vitals: npc.vitals }
   game.messages.push({ kind: "car", text: carName(npc.model) })
+}
+
+/** Meters from the middle line of a bus to where you can still step in. */
+const BOARD_REACH = 3.2
+
+/** The bus beside you (any speed), if one is within reach of its body. */
+export const busNear = (game: Game): Npc | null => {
+  const { player } = game
+  if (player.car !== null || player.ride !== null || game.wasted > 0) return null
+  let best: Npc | null = null
+  let bestD = BOARD_REACH
+  for (const n of game.npcs) {
+    if (n.bus === undefined) continue
+    // Along the bus, clamped to its length: the distance from you to its body.
+    const along = Math.max(-BUS_LENGTH / 2, Math.min(BUS_LENGTH / 2, (player.x - n.x) * Math.cos(n.angle) + (player.y - n.y) * Math.sin(n.angle)))
+    const d = Math.hypot(player.x - (n.x + Math.cos(n.angle) * along), player.y - (n.y + Math.sin(n.angle) * along))
+    if (d < bestD) {
+      best = n
+      bestD = d
+    }
+  }
+  return best
+}
+
+/** A bus that stands (at a stop, or at a red light) takes you; a moving one does not. */
+const BOARD_SPEED = 0.8
+
+const boardBus = (game: Game, bus: Npc) => {
+  const trip = bus.bus
+  if (trip === undefined) return
+  if (bus.speed > BOARD_SPEED) {
+    game.messages.push({ kind: "mission", text: `Linie ${trip.line.ref} fährt noch: einsteigen, wenn der Bus hält.` })
+    return
+  }
+  game.player.ride = { bus, getOff: false, boarded: { run: trip.run, halt: trip.halt } }
+  game.player.moving = false
+  game.messages.push({ kind: "mission", text: `Linie ${trip.line.ref} Richtung ${direction(trip)}. F: beim nächsten Halt aussteigen.` })
+}
+
+/** F on the bus: out at once when it stands, otherwise at the next stop (F again takes that back). */
+const leaveBus = (world: World, game: Game) => {
+  const ride = game.player.ride
+  if (ride === null) return
+  if (ride.bus.speed <= BOARD_SPEED) return alight(world, game)
+  ride.getOff = !ride.getOff
+  const next = ride.bus.bus === undefined ? "" : nextStop(ride.bus.bus)
+  game.messages.push({ kind: "mission", text: ride.getOff ? `Ausstieg: ${next}` : "Du fährst weiter mit." })
+}
+
+/** Step out of the bus on its door side (the right), or the other if a wall is there. */
+const alight = (world: World, game: Game) => {
+  const { player } = game
+  const bus = player.ride?.bus
+  player.ride = null
+  if (bus === undefined) return
+  for (const off of [2.6, -2.6, 4]) {
+    const a = bus.angle + Math.PI / 2
+    const x = bus.x + Math.cos(a) * off
+    const y = bus.y + Math.sin(a) * off
+    if (world.isSolid(x, y)) continue
+    Object.assign(player, { x, y, angle: a })
+    return
+  }
+  Object.assign(player, { x: bus.x, y: bus.y })
+}
+
+/**
+ * Riding: you go where the bus goes. You get out where you asked to (its next stop), at the end of the
+ * line, and when the bus is wrecked (it burns, you step out on the spot).
+ */
+const rideBus = (world: World, game: Game) => {
+  const { player } = game
+  const ride = player.ride
+  if (ride === null) return
+  const bus = ride.bus
+  const trip = bus.bus
+  player.moving = false
+  Object.assign(player, { x: bus.x, y: bus.y, angle: bus.angle })
+  if (!game.npcs.includes(bus) || isBurning(bus.vitals)) return alight(world, game)
+  if (trip === undefined || trip.dwell <= 0) return
+  const boardedHere = trip.run === ride.boarded.run && trip.halt === ride.boarded.halt
+  if (ride.getOff || (atTerminus(trip) && !boardedHere)) alight(world, game)
 }
 
 /** Speed in km/h for the HUD. */

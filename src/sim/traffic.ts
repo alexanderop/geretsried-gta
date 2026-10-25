@@ -1,7 +1,9 @@
 import type { World } from "#/world/world.ts"
 import { lightFor, stopKey, type Signals } from "./signals.ts"
 import { DRIVABLE } from "#/world/world.ts"
-import { POLICE_MODEL } from "./vehicles.ts"
+import { BUS_MODEL, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
+import { CAR_LENGTH } from "./car.ts"
+import { DWELL_S, along, distanceToHalt, dropPassedHalts, nextBusLeg, type BusTrip, type Line } from "./transit.ts"
 import { CAR_HP, vitals, type Vitals } from "./damage.ts"
 
 /** An NPC car glued to the road graph. It drives from vertex `from` toward `from + dir`. */
@@ -18,6 +20,8 @@ export type Npc = {
   angle: number
   readonly model: number
   readonly vitals: Vitals
+  /** A bus follows its line (transit.ts) instead of turning at random, and stands at its stops. */
+  readonly bus?: BusTrip
 }
 
 /** Meters between a stopped car's centre and its stop line: half a car and a little air, so the bumper stays behind the line. */
@@ -83,6 +87,36 @@ const place = (world: World, npc: Npc) => {
   npc.angle += delta * 0.25
 }
 
+/** A bus of `line` `fraction` of the way round its loop, standing still: the first ones are spread out, so they are far apart. */
+export const spawnBus = (world: World, id: number, line: Line, fraction: number): Npc => {
+  const at = along(line, fraction)
+  const leg = line.runs[at.run]?.legs[at.leg]
+  const npc: Npc = {
+    id,
+    road: leg?.road ?? 0,
+    from: leg?.from ?? 0,
+    dir: leg?.dir ?? 1,
+    s: at.s,
+    speed: 0,
+    x: 0,
+    y: 0,
+    angle: 0,
+    model: BUS_MODEL,
+    vitals: vitals(CAR_HP),
+    bus: { line, run: at.run, leg: at.leg, halt: at.halt, dwell: 0 },
+  }
+  npc.angle = heading(world, npc)
+  place(world, npc)
+  return npc
+}
+
+const heading = (world: World, npc: Npc) => {
+  const pts = world.map.roads[npc.road]?.pts ?? []
+  const [ax, ay] = vertex(pts, npc.from)
+  const [bx, by] = vertex(pts, npc.from + npc.dir)
+  return Math.atan2(by - ay, bx - ax)
+}
+
 /** Put an NPC on a random drivable segment whose midpoint is within `[minR, maxR]` of (cx, cy). */
 export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number): Npc | null => {
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -131,7 +165,21 @@ export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, 
   if (stop !== undefined) {
     const state = lightFor(stop.light.junction, stop.heading, time)
     // On yellow, only cars that can still stop do; a car already over the line drives on.
-    if ((state === "red" || (state === "yellow" && toLine > 10)) && toLine > -0.5) stopAt = Math.max(0, toLine - STOP_GAP)
+    if ((state === "red" || (state === "yellow" && toLine > 10)) && toLine > -0.5) stopAt = Math.max(0, toLine - STOP_GAP - (vehicleLength(npc.model) - CAR_LENGTH) / 2)
+  }
+  // A bus brakes for its next stop, stands there for DWELL_S, then goes on to the one after.
+  const trip = npc.bus
+  if (trip !== undefined) {
+    dropPassedHalts(trip)
+    const toHalt = trip.dwell > 0 ? 0 : distanceToHalt(trip, npc.s)
+    stopAt = Math.min(stopAt, Math.max(0, toHalt))
+    if (trip.dwell > 0) {
+      trip.dwell -= dt
+      if (trip.dwell <= 0) {
+        trip.dwell = 0
+        trip.halt++
+      }
+    } else if (toHalt < 0.4 && npc.speed < 1.2) trip.dwell = DWELL_S
   }
   const target = blocked ? 0 : Math.min(cruise, stopAt < 40 ? stopAt * 0.6 : cruise)
   npc.speed += Math.sign(target - npc.speed) * Math.min(Math.abs(target - npc.speed), (blocked || stopAt < 40 ? 14 : 4) * dt)
@@ -140,7 +188,13 @@ export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, 
   let guard = 0
   while (npc.s >= len && guard++ < 16) {
     npc.s -= len
-    Object.assign(npc, nextLeg(world, npc, random))
+    if (trip === undefined) Object.assign(npc, nextLeg(world, npc, random))
+    else {
+      const { leg, jumped } = nextBusLeg(trip)
+      Object.assign(npc, { road: leg.road, from: leg.from, dir: leg.dir })
+      // Off the map's end and back in at the other: a new run, from rest.
+      if (jumped) Object.assign(npc, { s: 0, speed: 0, angle: heading(world, npc) })
+    }
     len = segmentLength(world, npc)
   }
   place(world, npc)

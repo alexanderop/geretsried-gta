@@ -30,9 +30,18 @@ const CAR_HALF = 15.6
 const MAX_HALF = 28
 /** Speed (m/s) at which the view is widest: about the cars' top speed. */
 const FULL_SPEED = 34
+/** What carries the player: the car they drive, or the bus they ride in (its speed and heading). */
+const carrier = (game: Game): { readonly vx: number; readonly vy: number; readonly speed: number } | null => {
+  const car = game.player.car
+  if (car !== null) return { vx: car.vx, vy: car.vy, speed: Math.abs(forwardSpeed(car)) }
+  const bus = game.player.ride?.bus
+  return bus === undefined ? null : { vx: Math.cos(bus.angle) * bus.speed, vy: Math.sin(bus.angle) * bus.speed, speed: bus.speed }
+}
+
 const halfFor = (game: Game) => {
-  if (game.player.car === null) return ON_FOOT_HALF
-  const t = Math.min(1, Math.abs(forwardSpeed(game.player.car)) / FULL_SPEED)
+  const ride = carrier(game)
+  if (ride === null) return ON_FOOT_HALF
+  const t = Math.min(1, ride.speed / FULL_SPEED)
   return CAR_HALF + (MAX_HALF - CAR_HALF) * t * (2 - t)
 }
 
@@ -49,7 +58,7 @@ const MAX_LEAD = 0.6
  */
 export const followCamera = (camera: Camera, game: Game): void => {
   const p = playerPos(game)
-  const car = game.player.car
+  const car = carrier(game)
   const half = camera.height / FOCAL
   let lx = car === null ? 0 : car.vx * LEAD_S
   let ly = car === null ? 0 : car.vy * LEAD_S

@@ -36,6 +36,10 @@ export type HudState = {
   readonly pickup: { readonly name: string; readonly key: number } | null
   /** Money just paid, for the "+$50" flash. */
   readonly paid: { readonly amount: number; readonly key: number } | null
+  /** A bus is within reach: F gets in. */
+  readonly nearBus: boolean
+  /** The bus you ride: its line, where it goes, the next stop, whether it stands, and whether you asked to get off there. */
+  readonly ride: { readonly ref: string; readonly to: string; readonly next: string; readonly stopped: boolean; readonly getOff: boolean } | null
 }
 
 export const emptyHud: HudState = {
@@ -61,6 +65,8 @@ export const emptyHud: HudState = {
   weapon: { id: "fists", name: "Fäuste", ammo: null },
   pickup: null,
   paid: null,
+  nearBus: false,
+  ride: null,
 }
 
 /** A cop's head from above: face, cap with a badge. */
@@ -73,7 +79,7 @@ const CopHead = ({ on }: { readonly on: boolean }) => (
 )
 
 const HELP =
-  "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen · G — Hupe · M — Ton an/aus · H — Hilfe"
+  "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen (auch Bus: an der Haltestelle) · G — Hupe · M — Ton an/aus · H — Hilfe"
 
 const ICON: Readonly<Record<WeaponId, string>> = {
   fists: "fist",
@@ -210,8 +216,23 @@ export function Hud({ hud, help, muted, onMute }: { readonly hud: HudState; read
           {hud.big}
         </div>
       )}
+      {hud.ride !== null && (
+        <div data-testid="ride" className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-stretch overflow-hidden rounded border-2 border-black bg-black/70 text-white">
+          <div data-testid="ride-line" className="flex min-w-16 items-center justify-center bg-[#d3202a] px-3 text-4xl italic">
+            {hud.ride.ref}
+          </div>
+          <div className="flex flex-col justify-center px-4 py-1 text-xl leading-tight">
+            <div className="text-sm text-white/70 uppercase">Richtung {hud.ride.to}</div>
+            <div data-testid="ride-next">
+              {hud.ride.stopped ? "Halt: " : "Nächster Halt: "}
+              <span className="text-yellow-300">{hud.ride.next}</span>
+            </div>
+            <div className="text-sm text-green-300">{hud.ride.getOff ? "Du steigst hier aus (F: doch nicht)" : hud.ride.stopped ? "F — Aussteigen" : "F — beim nächsten Halt aussteigen"}</div>
+          </div>
+        </div>
+      )}
       {hud.mission !== "" && (
-        <div data-testid="mission" className="absolute bottom-16 left-1/2 max-w-[70%] -translate-x-1/2 rounded bg-black/60 px-4 py-2 text-center text-xl text-yellow-200">
+        <div data-testid="mission" className={`absolute ${hud.ride === null ? "bottom-16" : "bottom-32"} left-1/2 max-w-[70%] -translate-x-1/2 rounded bg-black/60 px-4 py-2 text-center text-xl text-yellow-200`}>
           {hud.mission}
         </div>
       )}
@@ -231,6 +252,7 @@ export function Hud({ hud, help, muted, onMute }: { readonly hud: HudState; read
         )}
         {hud.place !== "" && <div data-testid="place" className="text-lg">{hud.place}</div>}
         {!hud.inCar && hud.nearCar && <div className="text-lg text-green-300">F — Auto nehmen</div>}
+        {hud.nearBus && <div data-testid="near-bus" className="text-lg text-green-300">F — In den Bus einsteigen</div>}
         {hud.ringing && (
           <div data-testid="ringing" className="hud-blink flex items-center gap-2 text-2xl text-yellow-300">
             <span aria-hidden="true">☎</span> Telefon klingelt!

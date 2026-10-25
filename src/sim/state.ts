@@ -17,6 +17,7 @@ import type { Package, Pickup } from "./pickups.ts"
 import type { Pump } from "./stations.ts"
 import type { Shop } from "./shops.ts"
 import type { SaveData } from "./save.ts"
+import type { Transit } from "./transit.ts"
 
 export type Input = {
   readonly up: boolean
@@ -37,11 +38,19 @@ export type Input = {
 export type Point = { readonly x: number; readonly y: number }
 export type Spawn = Point & { readonly angle: number }
 
+/**
+ * Riding a bus (F next to it at a stop): the bus keeps to its line, you go with it. `getOff`: you asked to get off
+ * at the next stop. `boarded`: the run and halt you got in at, so boarding at the end of the line rides on.
+ */
+export type Ride = { readonly bus: Npc; getOff: boolean; readonly boarded: { readonly run: number; readonly halt: number } }
+
 export type Player = {
   x: number
   y: number
   angle: number
   car: Car | null
+  /** The bus you ride in, or null. While you do, you neither walk nor drive. */
+  ride: Ride | null
   readonly vitals: Vitals
   readonly arsenal: Arsenal
   /** Walk-cycle phase, 4 per meter on foot like the pedestrians'. */
@@ -174,6 +183,8 @@ export type Game = {
   /** Where you wake up after being WASTED: the doctor's nearest home. */
   readonly hospital: Spawn
   readonly signals: Signals
+  /** The bus lines (legs and halts); the buses themselves are `npcs` with a `bus` trip. */
+  readonly transit: Transit
   readonly random: () => number
   /** The traffic light junction the car is in, so running a red counts once. */
   junction: object | null

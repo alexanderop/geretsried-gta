@@ -37,13 +37,16 @@ const Z = { area: 0.02, water: 0.03, track: 0.035, footway: 0.04, sidewalk: 0.05
 /** Meters one texture tile covers: at the close camera a ground meter is about 70 screen pixels, so 512 px tiles must not cover much more than 6 m. */
 const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland: 30, lawn: 6, roof: 5, gravel: 6 } as const
 /** Width of a facade tile in meters, and its height: two storeys. */
-const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6 }
+const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8 }
 const FACADE_H = 2 * STOREY_M
+const URSULA_FASCIA_M = 0.9
+const URSULA_FASCIA: Rgba = [104, 66, 40, 255]
 const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   block: Material.facadeBlock,
   house: Material.facadeHouse,
   shop: Material.facadeShop,
   industrial: Material.facadeIndustrial,
+  ursula: Material.facadeUrsula,
 }
 
 const STREETS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
@@ -508,6 +511,11 @@ export class Scene {
       else if (facade === "shop" && top > FACADE_H) {
         wall(0, FACADE_H, FACADE_LAYER.shop, 1, 0)
         wall(FACADE_H, top, FACADE_LAYER.block, 1, 1 - (top - FACADE_H) / FACADE_H)
+      } else if (facade === "ursula") {
+        // The brown timber fascia under St. Ursula's eaves.
+        wall(0, top - URSULA_FASCIA_M, FACADE_LAYER.ursula, 1, 1 - (top - URSULA_FASCIA_M) / FACADE_H)
+        const f = scale(URSULA_FASCIA, light)
+        m.quad(m.vertex(ax, ay, top - URSULA_FASCIA_M, 0, 0, f, Mode.color, 0), m.vertex(bx, by, top - URSULA_FASCIA_M, 0, 0, f, Mode.color, 0), m.vertex(bx, by, top, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, top, 0, 0, f, Mode.color, 0))
       } else wall(0, top, FACADE_LAYER[facade], 1, 1 - top / FACADE_H)
       u += len
     }

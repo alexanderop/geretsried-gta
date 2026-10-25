@@ -5,7 +5,7 @@
  */
 import { SHADOW_DIR } from "#/map/photo.ts"
 import { CAR_LENGTH, PAINTS } from "#/sim/car.ts"
-import { POLICE_MODEL } from "#/sim/vehicles.ts"
+import { BUS_LENGTH, BUS_MODEL, POLICE_MODEL, vehicleLength } from "#/sim/vehicles.ts"
 import { SMOKE_HP, type Game } from "#/sim/game.ts"
 import type { Car } from "#/sim/car.ts"
 import { isRinging, jobTarget } from "#/sim/mission.ts"
@@ -44,8 +44,38 @@ const sprite = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, z
   m.target = "opaque"
 }
 
+/** The bus's roof height, and the white and glass bands of its sides (seen leaning out towards the screen's edges, like house walls). */
+const BUS_Z = 3.15
+const BUS_BANDS: ReadonlyArray<readonly [number, number, Rgba]> = [
+  [0.45, 1.05, [226, 226, 230, 255]],
+  [1.05, 2.45, [38, 52, 74, 255]],
+  [2.45, BUS_Z, [226, 226, 230, 255]],
+]
+const BUS_WIDTH = 2.5
+
+/** A regional bus: the roof sprite at roof height over four sides, the red-and-white livery's side bands, and its shadow. */
+const bus = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed) => {
+  const c = Math.cos(at.angle)
+  const s = Math.sin(at.angle)
+  const hl = BUS_LENGTH / 2
+  const hw = BUS_WIDTH / 2
+  const v = (f: number, r: number, z: number, color: Rgba) => m.vertex(at.x + c * f - s * r, at.y + s * f + c * r, z, 0, 0, color, Mode.color, 0)
+  const wall = (f0: number, r0: number, f1: number, r1: number, shade: number) => {
+    for (const [z0, z1, [r, g, b, a]] of BUS_BANDS) {
+      const color: Rgba = [Math.round(r * shade), Math.round(g * shade), Math.round(b * shade), a]
+      m.quad(v(f0, r0, z0, color), v(f1, r1, z0, color), v(f1, r1, z1, color), v(f0, r0, z1, color))
+    }
+  }
+  wall(-hl, -hw, hl, -hw, 0.85)
+  wall(-hl, hw, hl, hw, 1)
+  wall(hl, -hw, hl, hw, 0.9)
+  wall(-hl, -hw, -hl, hw, 0.8)
+  sprite(m, boxes, prop("bus-rvo"), at, BUS_Z, BUS_LENGTH, BUS_Z * 0.45)
+}
+
 /** A car; one from the spray shop has its paint's hue turned a step round the wheel. */
 const car = (m: MeshBuilder, boxes: SpriteBoxes, at: Placed & { readonly model: number; readonly paint?: number }) => {
+  if (at.model === BUS_MODEL) return bus(m, boxes, at)
   const paint = at.paint ?? 0
   if (paint === 0) sprite(m, boxes, Sprite.car + at.model, at, CAR_Z, CAR_LENGTH * 1.08, 0.7)
   else sprite(m, boxes, Sprite.car + at.model, at, CAR_Z, CAR_LENGTH * 1.08, 0.7, [Math.round((paint / PAINTS) * 255), 0, 0, 255], Mode.hue)
@@ -322,7 +352,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
     sprite(m, boxes, layer, { x: p.x, y: p.y, angle: time * 0.8 }, 0.5 + Math.sin(time * 3 + p.x) * 0.1, 1.1, 0.3)
   }
   for (const sh of game.shops) if (Math.abs(sh.x - player.x) < VIEW_M && Math.abs(sh.y - player.y) < VIEW_M) shopPad(m, boxes, sh, time)
-  for (const c of game.wrecks) sprite(m, boxes, Sprite.fx + Fx.wreck, c, CAR_Z, CAR_LENGTH * 1.08, 0.7)
+  for (const c of game.wrecks) sprite(m, boxes, Sprite.fx + Fx.wreck, c, CAR_Z, vehicleLength(c.model) * 1.08, 0.7)
   for (const c of game.parked) {
     car(m, boxes, c)
     damaged(m, boxes, c, time, c.x)
@@ -333,6 +363,8 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
     damaged(m, boxes, cop.car, time, cop.id)
   }
   for (const n of game.npcs) {
+    // The buses drive the whole town; draw the ones in view.
+    if (Math.abs(n.x - player.x) > VIEW_M || Math.abs(n.y - player.y) > VIEW_M) continue
     car(m, boxes, n)
     damaged(m, boxes, n, time, n.id)
   }
@@ -348,7 +380,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
     if (player.car.model === POLICE_MODEL) lightBar(m, boxes, player.car, time)
     damaged(m, boxes, player.car, time, 0)
   } else if (game.wasted > 0) lying(m, boxes, Sprite.ped, player, 1)
-  else {
+  else if (player.ride === null) {
     // A touch larger than the others, so you find yourself in a crowd.
     const pose = PLAYER_POSE[player.arsenal.current]
     if (pose === null && player.moving) running(m, boxes, "ped-0", player, player.stride, PED_Z + 0.05, 1.12)
