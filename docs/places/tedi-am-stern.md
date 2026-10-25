@@ -10,7 +10,7 @@
 | Engine | levels 2, pitched, DOP roof `#fbf4f5` / `#776d5d` |
 | Street frame | **Sudetenstraße** (tertiary, 8 m): kerb point (4160.9, 4769.7), 17.0 m from the node; street bearing 305°, n bearing 215° (shop is SW of the street) |
 | Position | NE frontage (Sudetenstraße side, edges bearing 303°), **SE part**; the TEDi signs sit at the left (SE) end of the shop front in 01 |
-| Status | **ref-done** |
+| Status | **implemented (partial)** (B4-1, `src/world/places/tedi-sudetenstrasse.ts`): the building cut into the LoD2 model's white NW block (12/17.3 m), peach TEDi block (10.6/15.7 m, gable on the street) and flat hall (4.6 m); grey canopy, blue stair strip, two TEDi boxes, glazing, house door, goods racks, TEDi box on the hall roof. Guesses: see BACKLOG B4-1 "As built" |
 
 ## Images
 | File | What | Source |

@@ -160,6 +160,9 @@ export const MATERIAL_FILES = [
   "daniele-fascia",
   "daniele-script",
   "daniele-parking",
+  "tedi-sign",
+  "tedi-stair",
+  "tedi-front",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -289,6 +292,7 @@ export const PROP_FILES = [
   "disabled-bay",
   "trolley-row",
   "crate-stack",
+  "goods-rack",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

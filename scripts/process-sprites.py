@@ -744,6 +744,22 @@ if parking is not None:
     im.resize((512, 512), Image.LANCZOS).save(OUT / "daniele-parking.webp", "WEBP", quality=90)
     print("daniele-parking.webp")
 
+# TEDi (Sudetenstraße 26): the blue box with the yellow ring and "TEDi" (opaque, stretched square; the wallSign gives it
+# back its aspect), the glazed stairwell strip with blue spandrels and one bay of the store's glazing (opaque, square);
+# a goods rack seen from above (a prop, keyed and cropped like the crates).
+for name in ["tedi-sign", "tedi-stair", "tedi-front"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+rack = find("goods-rack")
+if rack is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(rack)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "goods-rack.webp", "WEBP", quality=90)
+    print("goods-rack.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

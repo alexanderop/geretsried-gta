@@ -1185,7 +1185,7 @@ dressing spec; three have none and stay **needs reference** with no look spec. S
 (Krömer, Sun Style + TEDi, B&L) or NE side (Woolworth), and can go in one PR "Sudetenstraße shop row, Stein".
 Flamingo and Fellomenal are in the Post block 119921780 (B2-2). Backhupferl is a counter inside EDEKA (B3-1).
 
-### B4-1 · TEDi, Sudetenstraße 26 (#15, shop) — Size: S — status: ref-done
+### B4-1 · TEDi, Sudetenstraße 26 (#15, shop) — Size: S — status: implemented (partial: the stair strip's and the boxes' spot and size, the canopy's height and depth (drawn flat), the bays, the door's and racks' spots, the roof sign and the roof colours are guesses; orange lower wall not built)
 ```
 Goal: Discount store under a grey canopy: two blue TEDi boxes over the door, goods racks on the pavement.
 Reference: docs/places/tedi-am-stern.md; reference/tedi-am-stern/01-street-front.png (key), 02, 04.
@@ -1195,10 +1195,37 @@ Spec (via #0b):
 - Two blue sign boxes #2955a1 with white "TEDi" over the entrance; goods-rack props in front.
 - Photos: ≥4 storeys (engine 2): keep levels unless #0b changes heights. Orange lower wall: needs reference.
 Acceptance criteria:
-- [ ] From Sudetenstraße the front matches 01 (canopy, two blue boxes, racks). Pavement stays walkable.
-- [ ] pnpm test + typecheck green.
+- [x] From Sudetenstraße the front matches 01 (canopy, two blue boxes, racks). Pavement stays walkable.
+- [x] pnpm test + typecheck green.
 Size: S
 ```
+
+**B4-1 as built** (`src/world/places/tedi-sudetenstrasse.ts`, a new place for the whole of way 120402837, so B4-7 Sun
+Style / Kafka add their signs to the same file):
+- **Sources.** `reference/tedi-am-stern/01, 02, 04` + `SOURCES.md` on disk and used (01 for the front, 02 for the
+  canopy's run), plus `reference/sun-style/01, 02` for where the peach TEDi block meets the white NW block. Heights and
+  roofs from the Bavarian LoD2 model (tile 684_5302) and the DOP20.
+- **Masses** (the footprint cut along the model's walls; they tile it): the white NW block `DEBY_LOD2_4602689`
+  (Sun Style, Kafka; eaves 12 m, ridge 17.3 m along the street, gables at both ends, `wallColour` white), the peach
+  TEDi block `DEBY_LOD2_4602690` (eaves 10.6 m, ridge ~15.7 m running from the street front back to the hall, so a
+  gable on Sudetenstraße; the model's 14.8 m side ridge to the NW is not drawn) and the store's hall behind it (flat,
+  white, 4.6 m with its parapet). The seam meets wall 7 at u 9.37, where the model's wall lies on OSM's.
+- **Front** (walls 6 and 7, u 0 at their SE ends): a flat grey canopy (z 3.3, 2.4 m deep, 0.35 m fascia) along the whole
+  unit; the glazed stairwell strip with blue spandrels (`tedi-stair`, wall 6 u 1.8–3.9, from the canopy up to 10 m);
+  the two blue TEDi boxes (`tedi-sign`, 1.1 × 0.87 m each) side by side on the canopy's front under it; the store's
+  glazing (`tedi-front`) either side of the entrance (`shop-front`); the house door "26" near the seam (`shop-front`,
+  blue frame not drawn); five goods racks (new prop `goods-rack`) on the pavement 3.4 m out, just past the canopy's
+  edge so the play camera sees them; TEDi's box painted on the hall's flat roof (`roofSign`) for the top-down view.
+- **Sprites:** Codex (four images), processed by `scripts/process-sprites.py` (sign, strip, glazing opaque and square;
+  the rack keyed and cropped like the crates).
+- **Guesses:** the strip's and boxes' spot and size, the canopy's height and depth (01 shows it slanted; the engine's
+  canopy is flat), the bays' widths, the door's and the racks' spots, the roof sign (no photo of the roof), the roof
+  colours (DOP20 medians), the hall's split along the model's roof edge, the peach (#afa187 is a shade sample). The
+  model's front of the TEDi block stands ~2.7 m in front of OSM's wall; OSM's wall stays the solid. Not built: the
+  orange lower wall parts at 01's right (no clean sample); the lower canopy over the junction to the white block
+  (`DEBY_LOD2_105018834`, Sun Style's board under it) is left to B4-7.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1661
+  (the building's).
 
 ### B4-2 · Woolworth, Sudetenstraße 27 (#166, shop) — Size: S — status: ref-done
 ```
@@ -1771,7 +1798,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 114 | Nexial | shop | 188 | ref-done |
 | 116 | GG-Radsport | shop | 190 | ref-done |
 | 157 | Aphrodite-aestetic | shop | 190 | ref-done |
-| 15 | TEDi | shop | 205 | ref-done |
+| 15 | TEDi | shop | 205 | implemented (partial) |
 | 80 | Orterer Getränkemarkt | shop | 221 | implemented (partial) |
 | 81 | Takko Fashion | shop | 223 | implemented (partial) |
 | 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
@@ -2118,7 +2145,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | ref-done | B4-4, inside B3-0 |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | ref-done | B4-5, inside B3-0 |
-| 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | ref-done | B4-1 |
+| 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | implemented (partial) | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | implemented (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | implemented (partial) | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo (needs facade reference) | B6b-1. Breslauer Weg 9; rental closes end 2026, THOMA Reisemobile stays (ask Alex) |

@@ -560,6 +560,47 @@ describe("the registry on the real map", () => {
     for (const c of chimneys) expect(c.h).toBeGreaterThan(15)
   })
 
+  it("dresses TEDi's Sudetenstraße front: two blue boxes on the canopy under the stair strip, racks on the pavement", () => {
+    const tedi = at(120402837)
+    const pts = map.buildings[tedi?.building ?? -1]?.pts ?? []
+    const parts = tedi?.dressing.parts ?? []
+    expect(tedi).toBeDefined()
+    if (tedi === undefined) return
+    // Walls 6 and 7 face Sudetenstraße (NE, bearing about 33°).
+    for (const edge of [6, 7]) {
+      const w = wallFrame(pts, edge)
+      expect(w).toBeTruthy()
+      if (!w) return
+      expect(Math.abs(((Math.atan2(-w.frame.nx, w.frame.ny) * 180) / Math.PI + 360) % 360 - 33)).toBeLessThan(10)
+    }
+    // The white block at the NW end stands over the peach TEDi block, the hall low behind it (LoD2).
+    const [nw, block, hall] = tedi.dressing.masses ?? []
+    expect(nw && block && hall && nw.levels > block.levels && block.levels > hall.levels * 2).toBe(true)
+    // The two boxes on the canopy's front, side by side under the stairwell strip, above head height.
+    const boxes = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "tedi-sign" ? [p] : []))
+    const strip = parts.find((p) => p.kind === "wallSign" && p.texture === "tedi-stair")
+    const canopy = parts.find((p) => p.kind === "canopy" && p.edge === 6)
+    expect(boxes).toHaveLength(2)
+    expect(strip?.kind === "wallSign" && canopy?.kind === "canopy").toBe(true)
+    if (strip?.kind !== "wallSign" || canopy?.kind !== "canopy") return
+    for (const b of boxes) {
+      expect(b.edge).toBe(6)
+      expect(b.out ?? 0).toBeGreaterThan(canopy.depth)
+      expect(b.z0).toBeGreaterThan(2.5)
+      expect(b.z1).toBeLessThanOrEqual(strip.z0 + 0.6)
+      expect(b.u0).toBeGreaterThanOrEqual(strip.u0 - 0.6)
+      expect(b.u1).toBeLessThanOrEqual(strip.u1 + 0.6)
+    }
+    // The racks stand outside the building, on the pavement off Sudetenstraße's carriageway.
+    const racks = parts.flatMap((p) => (p.kind === "sprite" && p.name === "goods-rack" ? [p] : []))
+    expect(racks.length).toBeGreaterThan(2)
+    for (const r of racks) {
+      const [x, y] = toWorld(tedi.frame, r.u, r.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      expect(r.n).toBeGreaterThan(4 + 2)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })
