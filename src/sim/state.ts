@@ -37,7 +37,18 @@ export type Input = {
 export type Point = { readonly x: number; readonly y: number }
 export type Spawn = Point & { readonly angle: number }
 
-export type Player = { x: number; y: number; angle: number; car: Car | null; readonly vitals: Vitals; readonly arsenal: Arsenal }
+export type Player = {
+  x: number
+  y: number
+  angle: number
+  car: Car | null
+  readonly vitals: Vitals
+  readonly arsenal: Arsenal
+  /** Walk-cycle phase, 4 per meter on foot like the pedestrians'. */
+  stride: number
+  /** Took a step this tick. */
+  moving: boolean
+}
 
 /** Something the HUD announces once: a big banner, the car you got into, money paid. */
 export type Message =

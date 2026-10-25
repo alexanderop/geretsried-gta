@@ -20,7 +20,7 @@ import type { Shop } from "#/sim/shops.ts"
 import { GANGS, type GangId } from "#/sim/gangs.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
-import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, WALK_M, prop, spriteQuad, walkFrame, type Rgba, type SpriteBoxes, type WalkSet } from "./mesh.ts"
 import type { WeaponId } from "#/sim/weapons.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
@@ -68,6 +68,13 @@ const posed = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, at: Placed, z:
   sprite(m, boxes, layer, at, z, (width * b[0]) / b[1], 0.9, color)
 }
 
+/** Someone on the move: the run-cycle frame for their stride, `scale` times as big as a passer-by. */
+const running = (m: MeshBuilder, boxes: SpriteBoxes, set: WalkSet, at: Placed, stride: number, z: number, scale: number, color: Rgba = WHITE) =>
+  sprite(m, boxes, walkFrame(set, stride), at, z, WALK_M[0] * scale, 0.9, color)
+
+const PED_SETS: ReadonlyArray<WalkSet> = ["ped-0", "ped-1", "ped-2", "ped-3"]
+const pedSet = (index: number): WalkSet => PED_SETS[index] ?? "ped-0"
+
 /** Flames on someone or something burning. */
 const flames = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, z: number, size: number, time: number, seed: number) => {
   const flicker = 1 + Math.sin(time * 23 + seed) * 0.12
@@ -84,26 +91,20 @@ const gangRing = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, g: G
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => {
   if (w.gang !== undefined && w.down <= 0) gangRing(m, boxes, w.x, w.y, w.gang)
   if (w.down > 0) body(m, boxes, prop("pose-body-man"), w, bodyAlpha(w, CORPSE_FADE_S))
-  else {
-    const bob = 1 + Math.sin(w.stride) * 0.05
-    sprite(m, boxes, Sprite.ped + w.sprite, { x: w.x, y: w.y, angle: w.angle + Math.sin(w.stride / 2) * 0.08 }, PED_Z, 1.25 * bob, 0.9, w.gang === undefined ? WHITE : gangTint(w.gang))
-  }
+  else running(m, boxes, pedSet(w.sprite), w, w.stride, PED_Z, 1, w.gang === undefined ? WHITE : gangTint(w.gang))
   if (w.vitals.fire > 0) flames(m, boxes, w.x, w.y, PED_Z + 0.1, 1.3, time, w.id)
 }
 
 /** Police on foot aim their pistols standing and run with them drawn; tough guys swing their fists. */
 const fighter = (m: MeshBuilder, boxes: SpriteBoxes, f: Fighter, time: number) => {
   if (f.down > 0 || f.dead) body(m, boxes, prop(f.kind === "cop" ? "pose-body-cop" : "pose-body-man"), f, bodyAlpha(f, CORPSE_FADE_S))
-  else {
-    const sway = f.moving ? Math.sin(f.stride / 2) * 0.08 : 0
+  else if (f.gang !== undefined) {
     // Gang members keep their jackets in the gang's colours, a touch bigger than the passers-by.
-    if (f.gang !== undefined) gangRing(m, boxes, f.x, f.y, f.gang)
-    if (f.gang !== undefined) sprite(m, boxes, Sprite.ped + f.sprite, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, 1.35 * (1 + Math.sin(f.stride) * 0.05), 0.9, gangTint(f.gang))
-    else {
-      const layer = f.kind === "thug" ? prop("pose-thug-punch") : prop(f.moving ? "pose-cop-run" : "pose-cop-aim")
-      posed(m, boxes, layer, { x: f.x, y: f.y, angle: f.angle + sway }, PED_Z, PERSON_W * (1 + Math.sin(f.stride) * 0.04))
-    }
-  }
+    gangRing(m, boxes, f.x, f.y, f.gang)
+    if (f.moving) running(m, boxes, pedSet(f.sprite), f, f.stride, PED_Z, 1.08, gangTint(f.gang))
+    else sprite(m, boxes, Sprite.ped + f.sprite, f, PED_Z, 1.35, 0.9, gangTint(f.gang))
+  } else if (f.moving) running(m, boxes, f.kind, f, f.stride, PED_Z, 1)
+  else posed(m, boxes, prop(f.kind === "thug" ? "pose-thug-punch" : "pose-cop-aim"), f, PED_Z, PERSON_W)
   if (f.vitals.fire > 0) flames(m, boxes, f.x, f.y, PED_Z + 0.1, 1.3, time, f.id)
 }
 
@@ -333,7 +334,8 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   else {
     // A touch larger than the others, so you find yourself in a crowd.
     const pose = PLAYER_POSE[player.arsenal.current]
-    if (pose === null) sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.4, 0.9)
+    if (pose === null && player.moving) running(m, boxes, "ped-0", player, player.stride, PED_Z + 0.05, 1.12)
+    else if (pose === null) sprite(m, boxes, Sprite.ped, player, PED_Z + 0.05, 1.4, 0.9)
     else posed(m, boxes, pose, player, PED_Z + 0.05, PERSON_W * 1.12)
   }
   if (player.car === null && player.vitals.fire > 0) flames(m, boxes, player.x, player.y, PED_Z + 0.15, 1.4, time, 7)

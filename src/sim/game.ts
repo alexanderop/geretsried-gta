@@ -112,7 +112,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const stations = planStations(world)
   const pickups = placePickups(world, home, hidden)
   const game: Game = {
-    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal() },
+    player: { x: home.x, y: home.y, angle: home.angle, car: null, vitals: vitals(PERSON_HP), arsenal: newArsenal(), stride: 0, moving: false },
     parked: [car],
     wrecks: [],
     npcs: [],
@@ -373,7 +373,8 @@ const walk = (world: World, game: Game, input: Input) => {
   const { player } = game
   const dx = (input.right ? 1 : 0) - (input.left ? 1 : 0)
   const dy = (input.down ? 1 : 0) - (input.up ? 1 : 0)
-  if (dx === 0 && dy === 0) return
+  player.moving = dx !== 0 || dy !== 0
+  if (!player.moving) return
   const len = Math.hypot(dx, dy)
   // On fire: you run.
   const speed = (input.sprint || player.vitals.fire > 0 ? SPRINT : WALK) * DT
@@ -383,6 +384,7 @@ const walk = (world: World, game: Game, input: Input) => {
   if (!world.isSolid(nx + Math.sign(dx) * PLAYER_RADIUS, player.y)) player.x = nx
   if (!world.isSolid(player.x, ny + Math.sign(dy) * PLAYER_RADIUS)) player.y = ny
   player.angle = Math.atan2(dy, dx)
+  player.stride += speed * 4
 }
 
 const driveCar = (world: World, game: Game, car: Car, input: Input) => {

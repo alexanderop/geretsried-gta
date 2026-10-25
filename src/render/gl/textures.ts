@@ -105,7 +105,7 @@ export type Textures = {
 }
 
 export const uploadTextures = (gl: WebGL2RenderingContext, assets: Assets): Textures => {
-  const spriteImages: Array<Source> = [...assets.cars, ...assets.peds, ...assets.trees, ...lightParts(), ...assets.fx, ...assets.pickups, ...assets.props]
+  const spriteImages: Array<Source> = [...assets.cars, ...assets.peds, ...assets.trees, ...lightParts(), ...assets.fx, ...assets.pickups, ...assets.props, ...assets.walk]
   if (spriteImages.length !== SPRITE_LAYERS || assets.cars.length !== Sprite.ped || Sprite.housing !== Sprite.tree + assets.trees.length || Sprite.pickup !== Sprite.fx + assets.fx.length || Sprite.prop !== Sprite.pickup + assets.pickups.length)
     throw new Error("sprite layers do not match the loaded sprites")
   const boxes = spriteImages.map((img): readonly [number, number] => {

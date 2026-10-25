@@ -283,3 +283,39 @@ canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
     print("canopy.webp")
+
+# Run cycles: Codex paints each person over the 4 x 2 guide of scripts/walk-poses.py (sheet walk-<set>), the hips at
+# each cell's centre. Every frame goes on one canvas, hips at its centre, so the frames line up; the frames' median
+# height (shoulders and arms) becomes 1.2 m, the width the pose sprites are drawn at (PERSON_W in entities.ts).
+WALK_SETS = ["ped-0", "ped-1", "ped-2", "ped-3", "cop", "thug"]
+WALK_CANVAS = (240, 200)  # WALK_M in mesh.ts, at 100 px per meter
+
+
+def save_walk(name: str) -> None:
+    path = find(f"walk-{name}")
+    if path is None:
+        print(f"skip walk-{name}: missing")
+        return
+    sheet = np.asarray(key_magenta_fast(Image.open(path)))
+    h, w = sheet.shape[:2]
+    cells = [sheet[round(r * h / 2):round((r + 1) * h / 2), round(c * w / 4):round((c + 1) * w / 4)] for r in range(2) for c in range(4)]
+    cells = [np.asarray(keep_main_shape(Image.fromarray(c.copy()))) for c in cells]
+    spans = []
+    for c in cells:
+        ys = np.nonzero((c[..., 3] > 24).any(axis=1))[0]
+        if len(ys) == 0:
+            raise SystemExit(f"walk-{name}: empty frame")
+        spans.append(ys[-1] - ys[0])
+    k = 120 / float(np.median(spans))
+    for i, c in enumerate(cells):
+        im = Image.fromarray(c)
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+        canvas = Image.new("RGBA", WALK_CANVAS, (0, 0, 0, 0))
+        # Cell centre on canvas centre; paste clips whatever reaches past the canvas.
+        canvas.paste(im, ((WALK_CANVAS[0] - im.width) // 2, (WALK_CANVAS[1] - im.height) // 2), im)
+        canvas.save(OUT / f"walk-{name}-{i}.webp", "WEBP", quality=90)
+    print(f"walk-{name}-0..7.webp x{k:.2f}")
+
+
+for name in WALK_SETS:
+    save_walk(name)

@@ -166,7 +166,6 @@ export const PROP_FILES = [
   "prop-shelter",
   "prop-glass",
   "pose-cop-aim",
-  "pose-cop-run",
   "pose-thug-punch",
   "pose-player-pistol",
   "pose-player-smg",
@@ -177,7 +176,23 @@ export const PROP_FILES = [
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */
 export const prop = (name: PropName): number => Sprite.prop + PROP_FILES.indexOf(name)
-export const SPRITE_LAYERS = Sprite.prop + PROP_FILES.length
+
+/** People with a run cycle, from `WALK_BASE` on: `WALK_FRAMES` layers each, in this order. The pedestrians first, so `walk-ped-<sprite>` matches `Sprite.ped + sprite`. */
+export const WALK_SETS = ["ped-0", "ped-1", "ped-2", "ped-3", "cop", "thug"] as const
+export type WalkSet = (typeof WALK_SETS)[number]
+export const WALK_FRAMES = 8
+export const WALK_BASE = Sprite.prop + PROP_FILES.length
+/** Every run-cycle frame is the same canvas, hips at its centre, at this size in meters (process-sprites.py: 240 x 200 px at 100 px per meter). */
+export const WALK_M = [2.4, 2] as const
+/** One full cycle (two steps) per this much stride: the sim adds 4 per meter, so a cycle is about 1.6 m. */
+const STRIDE_CYCLE = Math.PI * 2
+/** The run-cycle frame of `set` at walk-cycle phase `stride`. */
+export const walkFrame = (set: WalkSet, stride: number): number => {
+  const frame = Math.floor((stride / STRIDE_CYCLE) * WALK_FRAMES) % WALK_FRAMES
+  return WALK_BASE + WALK_SETS.indexOf(set) * WALK_FRAMES + (frame + WALK_FRAMES) % WALK_FRAMES
+}
+export const WALK_FILES: ReadonlyArray<string> = WALK_SETS.flatMap((set) => Array.from({ length: WALK_FRAMES }, (_, i) => `walk-${set}-${i}`))
+export const SPRITE_LAYERS = WALK_BASE + WALK_FILES.length
 
 /** The effect sprites from `Sprite.fx` on, in `FX_FILES` order. */
 export const Fx = { muzzle: 0, tracer: 1, blastEarly: 2, blastBig: 3, smoke: 4, fire: 5, wreck: 6, scorch: 7 } as const
