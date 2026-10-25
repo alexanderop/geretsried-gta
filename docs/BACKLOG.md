@@ -1996,7 +1996,7 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-5/`): `play.png`, `play-crop.png`, `play-across.png` + `play-across-crop.png`
   (lettering), `overhead.png`.
 
-### B6a-6 · KIND Augenoptik, Sudetenstraße 10 (#115, shop) — Size: S — status: ref-done
+### B6a-6 · KIND Augenoptik, Sudetenstraße 10 (#115, shop) — Size: S — status: implemented (partial: sign-box depth, glazing/shutter widths, side band length, A-board place, corner volume carried onto OSM's corner)
 ```
 Goal: Optician on the corner opposite the VR-Bank: dark-blue "KIND" band wrapping the corner of a white block.
 Reference: docs/places/optik-kind.md; reference/optik-kind/01-street-front.png (key), 02, 03, 04.
@@ -2005,9 +2005,32 @@ Spec (via #0b):
   Sudetenstraße, Sudetenstraße/Kirchweg corner. Blue band #305499 with white "KIND" ×3, wrapping the corner; wall #b4b7c1.
 - Props: A-board sprite. Leave the NW part of the frontage free for the Bistro Malor terrace (B6a-7).
 Acceptance criteria:
-- [ ] From the VR-Bank pavement the corner matches 01/03. pnpm test + typecheck green.
+- [x] From the VR-Bank pavement the corner matches 01/03. pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **New file for the whole house** (`src/world/places/sudetenstrasse-10.ts`, `SUDETENSTRASSE_10`, POI KIND): no earlier place
+  used way 538512734. Front = wall 1 (16.71 m, u 0 at the Kirchweg corner, running NW) + wall 0 (16.21 m, in line);
+  Kirchweg side = wall 2 (corner at its u 22.33). `UNITS` per wall (`kind`: wall 1 u 0–7.9, wall 2 u 16.6–22.33;
+  `bistroMalor`: wall 1 u 7.9–16.71 + all of wall 0) and an exported `atWall(edge, u, out)` (street-frame point and angle
+  for any of walls 0–2), so B6a-7 adds a `BISTRO_MALOR` parts list next to `KIND` and spreads it into `parts`.
+- **Masses from LoD2** (`DEBY_LOD2_4602674`): one gable roof along the street, eaves 12.1 m, ridge 16.2 m (levels 4, roof
+  drawn at 20.6° over OSM's 21.5 m depth to keep the ridge), gables NW and SE; plus the model's flat-roofed corner volume
+  (7.9 × 2.9 m at the eaves) as a second mass. OSM's outline is off the model (front ~2.5 m nearer the street, SE wall ~7 m
+  out over the Kirchweg pavement): the corner volume is carried onto OSM's corner (a **guess** of placement). Tiles
+  red-brown (DOP20); dormers and the SW plane's solar panels not drawn.
+- **Band**: the white serif "KIND" on blue (new `kind-sign`, Codex, padded to 4:1) three times on a #3e64b2 box (`pylon`,
+  base 2.85, top 3.75, 0.3 m deep, in line with the VR Bank row across): two boards on wall 1 (box from 0.3 m past the
+  corner to u 7.9) and one on wall 2 (box u 17.8–22.33), so the play camera sees a blue L round the corner; lettering
+  0.05 m in front of the box. Box depth and side band length are **guesses**.
+- **Ground floor**: `kind-front` (two-pane window + glass door with side light, aluminium frames) on wall 1 u 0–7.9;
+  `kind-side` (narrow + wide grey roller shutters, downpipe) on wall 2 u 16.6–22.33. Widths are **guesses** after 01.
+- **A-board** (`kind-aboard` prop: poster "KIND 0 €" with a man in glasses) 1.6 m in front of the door, upright on
+  screen. Place is a **guess**.
+- Not built: the balconies over the shop (would hide the band from the play camera), the small door canopy.
+- Chunk hashes: before/after only chunk 1615 (the building's) differs. pnpm -s check green (251 tests).
+- Screenshots (local scratchpad `b6a-6/`): `play.png` + `play-crop.png`, `play-across.png` + `play-across-crop.png`
+  (lettering), `overhead.png`.
 
 ### B6a-7 · Bistro Malor, Sudetenstraße 10 (#120, food) — Size: S — status: ref-done (partial)
 ```
@@ -2691,7 +2714,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 |---|---|---|---|---|---|---|---|
 | 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | implemented (partial) | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
 | 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | implemented (partial) | B6a-4. Sudetenstraße 15 |
-| 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | ref-done | B6a-6. Sudetenstraße 10, sign "KIND" |
+| 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | implemented (partial) | B6a-6. Sudetenstraße 10, sign "KIND" |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | implemented (partial) | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |

@@ -222,6 +222,9 @@ export const MATERIAL_FILES = [
   "vr-bank-door",
   "vr-bank-sign",
   "vr-bank-logo",
+  "kind-front",
+  "kind-side",
+  "kind-sign",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -357,6 +360,7 @@ export const PROP_FILES = [
   "gelato-terrace",
   "stroblume-plants",
   "stroblume-heart",
+  "kind-aboard",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

@@ -7,6 +7,7 @@ import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
 import { dressMap, resolvePlaces, towerFrame, type Part, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
+import { KIND, UNITS as UNITS_10 } from "./sudetenstrasse-10.ts"
 import { DOLCE_GELATO, STROBLUME, UNITS, VR_BANK } from "./sudetenstrasse-11-15.ts"
 
 /** Whether (x, y) lies within 0.3 m of a wall of the ring: the masses' corners are rounded to 0.1 m, so spots there prove nothing. */
@@ -1307,6 +1308,57 @@ describe("the registry on the real map", () => {
     expect(u - box.w / 2).toBeCloseTo(logo.u0 - 2.97, 1)
     expect(u + box.w / 2).toBeCloseTo(words.u1, 1)
     expect(words.u1).toBeLessThan(UNITS.vrBank[1])
+  })
+
+  it("wraps a blue KIND box round the Kirchweg corner of Sudetenstraße 10 (walls 1 and 2), the A-board on the pavement", () => {
+    const row = places.find((p) => p.dressing.osmBuildingId === 538512734)
+    if (row === undefined) throw new Error("no Sudetenstraße 10")
+    expect(row.dressing.parts).toEqual(expect.arrayContaining([...KIND]))
+    expect(dressed.buildings[row.building]?.levels).toBe(4)
+    expect(row.dressing.masses?.map((m) => m.levels * 3)).toEqual([12.1, 12.1].map((z) => expect.closeTo(z, 5)))
+    const pts = map.buildings[row.building]?.pts ?? []
+    const w1 = wallFrame(pts, 1)
+    const w2 = wallFrame(pts, 2)
+    if (w1 === null || w2 === null) throw new Error("no walls 1 and 2")
+    // Wall 1 starts where wall 2 ends: the corner.
+    expect(toWorld(w1.frame, 0, 0).map((v) => v.toFixed(1))).toEqual(toWorld(w2.frame, w2.length, 0).map((v) => v.toFixed(1)))
+    const walls = { 1: w1, 2: w2 } as const
+    const boxes = KIND.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    const boards = KIND.flatMap((p) => (p.kind === "wallSign" && p.texture === "kind-sign" ? [p] : []))
+    expect(boards.map((b) => b.edge)).toEqual([1, 1, 2])
+    expect(boxes).toHaveLength(2)
+    const spans = boxes.map((box, i) => {
+      const w = walls[i === 0 ? 1 : 2]
+      const [u, n] = toLocal(w.frame, ...toWorld(row.frame, box.u, box.n))
+      // Back on the wall, from the row's 2.85 m to 3.75 m.
+      expect(Math.abs(n + box.d / 2)).toBeLessThan(0.02)
+      expect([box.base, box.h]).toEqual([2.85, 3.75])
+      return [u - box.w / 2, u + box.w / 2] as const
+    })
+    const [front, side] = spans
+    if (front === undefined || side === undefined) throw new Error("no spans")
+    // The front box runs on past the corner over the side box's end; the side box ends at the corner.
+    expect(front[0]).toBeCloseTo(-0.3, 1)
+    expect(side[1]).toBeCloseTo(w2.length, 1)
+    for (const b of boards) {
+      const [u0, u1] = b.edge === 1 ? front : side
+      expect(b.u0).toBeGreaterThanOrEqual(u0)
+      expect(b.u1).toBeLessThanOrEqual(u1)
+      expect([b.z0, b.z1]).toEqual([2.85, 3.75])
+      expect(b.out).toBeGreaterThanOrEqual(0.3 + 0.05)
+    }
+    // Clear of Bistro Malor's stretch (B6a-7): KIND's parts on wall 1 end at its unit's end.
+    expect(Math.max(...onWall(KIND).flatMap((p) => (p.edge === 1 ? [p.u1] : [])))).toBeLessThanOrEqual(UNITS_10.kind[1][1])
+    expect(front[1]).toBeLessThanOrEqual(UNITS_10.bistroMalor[1][0] + 1e-9)
+    // The A-board: off the footprint, in front of the shop, short of the kerb (n 4).
+    const board = KIND.find((p) => p.kind === "sprite")
+    if (board?.kind !== "sprite") throw new Error("no A-board")
+    const [x, y] = toWorld(row.frame, board.u, board.n)
+    expect(pointInPolygon(x, y, pts)).toBe(false)
+    const [bu] = toLocal(w1.frame, x, y)
+    expect(bu).toBeGreaterThan(UNITS_10.kind[1][0])
+    expect(bu).toBeLessThan(UNITS_10.kind[1][1])
+    expect(board.n - 4).toBeGreaterThan(1)
   })
 
   it("gives St. Ursula its four storeys", () => {

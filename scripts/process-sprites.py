@@ -1057,6 +1057,31 @@ for name in ["vr-bank-front", "vr-bank-door"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# KIND Augenoptik (Sudetenstraße 10): the blue board with the white serif "KIND", padded with its own blue to the
+# 4:1 of one board on the sign box (3.6 x 0.9 m); the corner shop's glazing and the Kirchweg side's roller shutters
+# (opaque, stored square); the A-board with the poster (keyed, cropped).
+src = find("kind-sign")
+if src is not None:
+    im = Image.open(src).convert("RGB")
+    blue = tuple(int(c) for c in np.median(np.asarray(im).reshape(-1, 3), axis=0))
+    band = Image.new("RGB", (max(im.width, im.height * 4), im.height), blue)
+    band.paste(im, ((band.width - im.width) // 2, 0))
+    band.resize((512, 512), Image.LANCZOS).save(OUT / "kind-sign.webp", "WEBP", quality=92)
+    print("kind-sign.webp", blue)
+for name in ["kind-front", "kind-side"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+src = find("kind-aboard")
+if src is not None:
+    im = Image.open(src)
+    im = im.convert("RGBA") if im.mode == "RGBA" and im.getchannel("A").getextrema()[0] < 255 else key_magenta_fast(im)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "kind-aboard.webp", "WEBP", quality=90)
+    print("kind-aboard.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
