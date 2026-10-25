@@ -23,6 +23,7 @@ import { PACKAGE_REWARD, collect, placePackages, placePickups, stepPickups, type
 import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
 import { clearKerb, fillKerbs, kerbCars } from "./parking.ts"
+import { giveWay } from "./junction.ts"
 import { parkArrived, startManoeuvres, stepPullIn, stepPullOut } from "./manoeuvre.ts"
 import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
 import type { Game, Input, Spawn } from "./state.ts"
@@ -384,12 +385,16 @@ export const step = (world: World, game: Game, input: Input): void => {
   // Everyone's road ahead as it is at the start of the step, so two cars can tell whether they see each other. A car
   // off its lane (into a slot, out of one) has none: it is only in others' way.
   const paths = new Map(game.npcs.map((n) => [n, onLane(n) ? roadAhead(world, n) : [n.x, n.y, 0]]))
+  // Right of way at the junctions without lights: who waits at the give-way line, who slows down for it.
+  const holds = giveWay(world, game.signals, game.npcs, DT)
   for (const npc of game.npcs) {
     const mode = npc.mode
     switch (mode.kind) {
-      case "driving":
-        stepNpc(world, game.signals, game.time, npc, leaderAhead(game, npc, paths), DT, game.random)
+      case "driving": {
+        const hold = holds.get(npc)
+        stepNpc(world, game.signals, game.time, npc, leaderAhead(game, npc, paths), DT, game.random, hold?.slowTo, hold?.holdAt)
         break
+      }
       case "pullingIn":
         stepPullIn(world, game, npc, mode, mode.path === null ? leaderAhead(game, npc, paths) : null, DT)
         break

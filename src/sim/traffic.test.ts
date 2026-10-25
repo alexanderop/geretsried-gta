@@ -46,6 +46,7 @@ const car = (s: number, speed: number, segments: number): Npc => ({
   model: 0,
   vitals: vitals(100),
   mode: { kind: "driving" },
+  give: null,
 })
 const turn = (a: number, b: number) => Math.abs(Math.atan2(Math.sin(b - a), Math.cos(b - a)))
 

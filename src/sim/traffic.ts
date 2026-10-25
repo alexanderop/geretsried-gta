@@ -45,13 +45,18 @@ export type Npc = {
   readonly bus?: BusTrip
   /** On the road, or pulling in to the kerb or out of it (manoeuvre.ts). */
   mode: NpcMode
+  /** Where it gives way next: an unsignalled junction it waits at or has decided to drive into (junction.ts). */
+  give: GiveWay | null
 }
+
+/** A car's state at the next unsignalled junction `node`: waiting at its give-way line (for `waited` s), or committed to drive through. */
+export type GiveWay = { readonly node: number; committed: boolean; waiting: boolean; waited: number }
 
 /** The nearest thing on the road ahead: the bumper-to-bumper gap (m) and how fast it moves along the road (m/s). */
 export type Leader = { readonly gap: number; readonly speed: number }
 
 /** Meters between a stopped car's centre and its stop line: half a car and a little air, so the bumper stays behind the line. */
-const STOP_GAP = 2.6
+export const STOP_GAP = 2.6
 /** A car takes a bend over this many meters either side of the vertex (at most half of each segment). */
 const BEND_M = 6
 /** Sideways acceleration a car takes a bend with, and the braking it slows down for one with (m/s²). */
@@ -209,6 +214,14 @@ export type Curve = Bend
 export const curveOf = (p: Bend["p"]): Curve => bendFrom(p, 0, bendFrom(p, 0, 1).arc[BEND_SAMPLES] ?? 1)
 export const curveLength = (curve: Curve): number => curve.arc[BEND_SAMPLES] ?? 0
 export const onCurve = (curve: Curve, m: number): { readonly x: number; readonly y: number; readonly angle: number } => onBend(curve, m, 0, 0)
+
+/** The path a car drives from `seg` round the bend onto `next`, as [x, y, …]: BEND_SAMPLES + 1 points. */
+export const bendPoints = (world: World, seg: Segment, next: Segment): Array<number> => {
+  const [x0, y0, x1, y1, x2, y2, x3, y3] = bendBetween(world, seg, next).p
+  const out: Array<number> = []
+  for (let i = 0; i <= BEND_SAMPLES; i++) out.push(cubic(x0, x1, x2, x3, i / BEND_SAMPLES), cubic(y0, y1, y2, y3, i / BEND_SAMPLES))
+  return out
+}
 
 /** How fast a car may take a bend (m/s). */
 const bendSpeed = (bend: Bend) => Math.max(2, Math.sqrt(A_LAT * bend.radius))
@@ -449,6 +462,7 @@ export const spawnBus = (world: World, id: number, line: Line, fraction: number)
     vitals: vitals(CAR_HP),
     bus: { line, run: at.run, leg: at.leg, halt: at.halt, dwell: 0 },
     mode: { kind: "driving" },
+    give: null,
   }
   if (npc.bus !== undefined) planBus(world, npc, npc.bus)
   place(world, npc)
@@ -457,7 +471,7 @@ export const spawnBus = (world: World, id: number, line: Line, fraction: number)
 
 /** A car `s` meters into `seg`, standing, with its route planned: one that pulls out of a kerbside slot. */
 export const npcOn = (world: World, id: number, seg: Segment, s: number, model: number, carVitals: Vitals, mode: NpcMode, random: () => number): Npc => {
-  const npc: Npc = { id, ...segmentOf(seg), s, speed: 0, x: 0, y: 0, angle: 0, prev: null, route: [], model, vitals: carVitals, mode }
+  const npc: Npc = { id, ...segmentOf(seg), s, speed: 0, x: 0, y: 0, angle: 0, prev: null, route: [], model, vitals: carVitals, mode, give: null }
   plan(world, npc, random)
   place(world, npc)
   return npc
@@ -488,6 +502,7 @@ export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR:
       model: modelFor(id),
       vitals: vitals(CAR_HP),
       mode: { kind: "driving" },
+      give: null,
     }
     plan(world, npc, random)
     place(world, npc)
@@ -501,17 +516,17 @@ export type SlowTo = { readonly toward: number; readonly speed: number }
 
 /**
  * Advance one NPC. It follows `leader` (the nearest thing in front along `roadAhead`) with the Intelligent Driver
- * Model, slows down in time for the bends on its route and for `slowTo`, and treats a red light or its bus stop as
- * a car standing at the stop point.
+ * Model, slows down in time for the bends on its route and for `slowTo`, and treats a red light, its bus stop or
+ * `holdAt` (meters ahead: a give-way line it waits at, junction.ts) as a car standing at the stop point.
  */
-export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, leader: Leader | null, dt: number, random: () => number, slowTo?: SlowTo): void => {
+export const stepNpc = (world: World, signals: Signals, time: number, npc: Npc, leader: Leader | null, dt: number, random: () => number, slowTo?: SlowTo, holdAt = Infinity): void => {
   const road = world.map.roads[npc.road]
   const cruise = CRUISE[road?.kind ?? "residential"] ?? 8
   const here = placeOn(world, npc.prev, npc, npc.route[0] ?? null, npc.s)
   const v = npc.speed
   const route = ahead(world, npc)
   // Red lights at the end of this segment or one further on: stop behind the white line.
-  let stopAt = Infinity
+  let stopAt = Math.max(0, holdAt)
   for (const { seg, toEnd } of route) if (toEnd < LOOK_M + 10) stopAt = Math.min(stopAt, redLight(signals, time, seg, toEnd, v, npc.model))
   // A bus brakes for its next stop, stands there for DWELL_S, then goes on to the one after.
   const trip = npc.bus
