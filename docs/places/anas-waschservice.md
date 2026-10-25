@@ -11,7 +11,7 @@
 | Engine | levels 2, pitched, DOP roof colours → **far too low** (eave 20.4 m ≈ levels 7) |
 | Street frame | **Künnekeweg** (residential, 6.5 m), bearing 109°; kerb point (3653.3, 4628.2), 22.6 m; building is NW of Künnekeweg, W of Neuer Platz |
 | Position | Tall block W of the Neuer Platz plaza; where the laundry is (tower ground floor or the low part) is not seen |
-| Status | **todo (needs reference; ask Alex)**: business identity unclear; massing known |
+| Status | **ref-done (partial)**: massing known (B6b-8 applies levels 7); name kept as Ana's Waschservice (Alex 2026-10-25); facade and sign need reference |
 
 ## Images
 | File | What | Source |
@@ -29,8 +29,8 @@
 | Shop front, sign (Ana's or ZER-O-WASH) | not seen; zerowash.de images are stock photos (not kept) | needs reference |
 
 ## Engine terms
-- Optional now (independent of the name question): #0b `levels: 7` on way 127604869 (LoD2 eave 20.4 m). The 4.6 m low part is not modelled.
-- No sign until Alex decides the name and a photo exists.
+- Do now (Alex 2026-10-25): #0b `levels: 7` on way 127604869 (LoD2 eave 20.4 m), pitched, DOP roof #a39179. The 4.6 m low part is not modelled.
+- Name: keep "Ana’s Waschservice" (Alex 2026-10-25). ZER-O-WASH (zerowash.de, also Händelstraße 2) is a possible successor: **needs check** (sign or listing on site). No sign until a photo shows one.
 - facade.ts: POI inside → `shop`.
 
 ## In-game

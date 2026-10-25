@@ -214,6 +214,9 @@ export const MATERIAL_FILES = [
   "orterer-window",
   "kaufland-band",
   "angel-nails-front",
+  "dolce-gelato-sign",
+  "dolce-gelato-front",
+  "passage-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -346,6 +349,7 @@ export const PROP_FILES = [
   "goods-rack",
   "bike-rack",
   "gg-aboard",
+  "gelato-terrace",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

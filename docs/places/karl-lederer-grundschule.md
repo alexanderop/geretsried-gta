@@ -12,7 +12,7 @@
 | Engine | not built (see Engine gap) |
 | Street frame | nearest named road Richard-Wagner-Straße is 75 m away; a service road S of the school at (3803.9, 4885.1), 59.9 m. Address street J.-S.-Bach-Straße runs S/SW |
 | Position | Ring-shaped block around a courtyard, E of the Mittelschule; Turnhalle with a green roof directly N (01) |
-| Status | **todo (needs facade reference + import fix)** |
+| Status | **todo (needs facade reference; blocked by I-1 step 7, the multipolygon import)** |
 
 ## Images
 | File | What | Source |
@@ -31,7 +31,7 @@
 | Walls, windows, entrance, timber storey | not seen | needs reference |
 
 ## Engine terms
-- Blocked: first the import must keep multipolygon buildings (relation 2014408 with its courtyard hole). Fold this into I-1 or a small import item; then levels 3 (LoD2 ~10 m), flat light-grey roof.
+- Blocked by **I-1 step 7** (Alex 2026-10-25): the import keeps multipolygon buildings (outer + holes); relation 2014408 with its courtyard (inner way 156041502) is that step's acceptance check. Then (B6b-2) levels 3 (LoD2 ~10 m), flat light-grey roof.
 - No wall colour, no signs: needs reference.
 - facade.ts: POI inside → `school`.
 

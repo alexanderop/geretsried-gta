@@ -11,7 +11,7 @@
 | Engine | levels 2, flat, roof `#f5ece5` (matches LoD2 + DOP: no change needed) |
 | Street frame | **Tattenkofener Straße** (secondary, 9 m), bearing 99°; kerb point (4130.7, 4408.0), 28.1 m; a service road passes 18.3 m away at (4117.6, 4451.7) |
 | Position | Single free-standing block on a yard N of Breslauer Weg; vans/motorhomes parked around it (01) |
-| Status | **todo (needs facade reference)**: massing + roof known; no sign seen. **Question for Alex** (rename after the closure?) |
+| Status | **todo (needs facade reference)**: massing + roof known; no sign seen. **Decision (Alex 2026-10-25): keep the POI "miwomo" as it is** |
 
 ## Images
 | File | What | Source |
@@ -38,7 +38,7 @@
 
 ## In-game
 - No hooks. Kind `shop` is not IMPORTANT → **no map label** (overlay.ts: the HUD names it when near).
-- If Alex renames the POI to THOMA Reisemobile, kind stays `shop` (OSM shop=caravan).
+- Name kept as "miwomo" (Alex 2026-10-25). Note: THOMA Reisemobile (caravan repairs) trades at the same address and the rental closes at the end of 2026; look again then. A later rename keeps kind `shop` (OSM shop=caravan).
 
 ## Sources
 - https://miwomo.de/ (closure notice, fetched 2026-10-25)

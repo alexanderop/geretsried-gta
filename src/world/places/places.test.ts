@@ -1174,6 +1174,54 @@ describe("the registry on the real map", () => {
     expect(parts.some((p) => p.kind === "pylon" || p.kind === "sprite" || p.kind === "canopy")).toBe(false)
   })
 
+  it("dresses Sudetenstraße 11–15 at the LoD2 heights, Dolce Gelato's plate box, awning and terrace at the SE end of wall 4", () => {
+    const row = at(127604887)
+    if (row === undefined) throw new Error("no Sudetenstraße 11–15")
+    const pts = map.buildings[row.building]?.pts ?? []
+    const parts = row.dressing.parts
+    // Four houses at the model's eaves; the shop row's ridge (16° over half of OSM's 13.1 m depth) at the model's 11.2 m.
+    const masses = row.dressing.masses ?? []
+    expect(masses).toHaveLength(4)
+    for (const m of masses) expect(m.levels * 3).toBeCloseTo(9.35, 2)
+    expect(9.35 + 6.55 * slope(16)).toBeCloseTo(11.2, 1)
+    // Wall 4 is the street front, the Mühlenbäck front's line: its SE end is that row's NW corner, its frame faces the street.
+    const wall = wallFrame(pts, 4)
+    if (wall === null) throw new Error("no wall 4")
+    expect(wall.length).toBeCloseTo(36.33, 1)
+    expect(toWorld(wall.frame, wall.length, 0).map((v) => Math.round(v * 10) / 10)).toEqual([3985.8, 4641.5])
+    // The unit's parts lie on wall 4 within Dolce Gelato's stretch and the passage, the POI in front of it.
+    const poi = map.pois.find((p) => p.name === "Dolce Gelato")
+    const [poiU] = toLocal(wall.frame, poi?.x ?? 0, poi?.y ?? 0)
+    expect(poiU).toBeGreaterThan(27)
+    expect(poiU).toBeLessThan(33.5)
+    const onWall = parts.flatMap((p) => (p.kind === "wallSign" || p.kind === "canopy" ? [p] : []))
+    for (const p of onWall) {
+      expect(p.edge).toBe(4)
+      expect(p.u0).toBeGreaterThanOrEqual(27)
+    }
+    // The plate's box: back on the wall, the lettering on its front, the same 2.85 m bottom as the Mühlenbäck row's signs.
+    const sign = parts.find((p) => p.kind === "wallSign" && p.texture === "dolce-gelato-sign")
+    const box = parts.find((p) => p.kind === "pylon")
+    if (sign?.kind !== "wallSign" || box?.kind !== "pylon") throw new Error("no sign box")
+    const [u, n] = toLocal(wall.frame, ...toWorld(row.frame, box.u, box.n))
+    expect(Math.abs(n + box.d / 2)).toBeLessThan(0.02)
+    expect(u).toBeCloseTo((sign.u0 + sign.u1) / 2, 1)
+    expect([box.base, box.h]).toEqual([2.85, sign.z1])
+    expect(sign.z0).toBe(2.85)
+    expect(sign.out).toBeGreaterThan(box.d)
+    // The terrace stands at the awning's edge, off the footprint, at least 0.9 m of pavement left before the kerb (n 4).
+    const awning = parts.find((p) => p.kind === "canopy" && p.texture === "awning")
+    const tables = parts.flatMap((p) => (p.kind === "sprite" && p.name === "gelato-terrace" ? [p] : []))
+    expect(tables).toHaveLength(2)
+    for (const t of tables) {
+      const [x, y] = toWorld(row.frame, t.u, t.n)
+      expect(pointInPolygon(x, y, pts)).toBe(false)
+      const [, tn] = toLocal(wall.frame, x, y)
+      expect(-tn - 0.35).toBeLessThan(awning?.kind === "canopy" ? awning.depth : 0)
+      expect(t.n - 0.35 - 4).toBeGreaterThan(0.9)
+    }
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

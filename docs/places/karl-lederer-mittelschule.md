@@ -11,7 +11,7 @@
 | Engine | 127604843: levels 2, flat, roof `#d3cfcd`; 188651575: levels 2, pitched → **too low** (LoD2 main ~13 m ≈ levels 4, N wing ~10 m ≈ 3) |
 | Street frame | **Johann-Sebastian-Bach-Straße** (residential, 6.5 m), bearing 117°; kerb point (3721.3, 4870.1), 43.9 m; school is N of the street |
 | Position | Long block W of the Grundschule; trees on its S side hide much of the roof (01) |
-| Status | **todo (needs facade reference)**: massing + roof known. **Question for Alex** (building future) |
+| Status | **ref-done (partial)**: massing + roof known (B6b-4 applies levels 4 / 3); facade needs reference. Name kept (Alex 2026-10-25) |
 
 ## Images
 | File | What | Source |
@@ -30,9 +30,9 @@
 | Entrance, windows, school sign | not seen | needs reference |
 
 ## Engine terms
-- Optional now: #0b `levels: 4` on way 127604843 and `levels: 3` on 188651575 (LoD2 heights). Roof stays flat (1.3 m rise is close to flat).
+- Do now (Alex 2026-10-25): #0b `levels: 4` on way 127604843 and `levels: 3` on 188651575 (LoD2 heights). Roof stays flat (1.3 m rise is close to flat).
 - No wallColour, no signs: needs reference.
-- Name: keep the OSM name until Alex decides (see question).
+- Name: keep the current POI name "Karl-Lederer-Hauptschule Geretsried" (Alex 2026-10-25). Note: the school is being merged into the Adalbert-Stifter-Mittelschule by 2029–2031; look at the name again then.
 - facade.ts: POI inside → `school`.
 
 ## In-game

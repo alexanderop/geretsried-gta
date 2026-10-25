@@ -979,6 +979,34 @@ if src is not None:
     Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "kaufland-band.webp", "WEBP", quality=92)
     print("kaufland-band.webp")
 
+# Sudetenstraße 11–15 (Dolce Gelato): the white plate with "Dolce Gelato", keyed and squared like the Mühlenbäck boards
+# (its own colours kept inside); the ice-cream café's glazing with the cone banner and the recessed passage with its
+# wooden house door (opaque, stored square; the wallSign gives them back their aspect); and a white plastic table with
+# two chairs from above (keyed, cropped; the slats' holes keep the chairs apart, so not cut to the main shape).
+src = find("dolce-gelato-sign")
+if src is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (200, 200, 200, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "dolce-gelato-sign.webp", "WEBP", quality=92)
+    print("dolce-gelato-sign.webp")
+for name in ["dolce-gelato-front", "passage-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+src = find("gelato-terrace")
+if src is not None:
+    im = key_magenta_fast(Image.open(src))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "gelato-terrace.webp", "WEBP", quality=90)
+    print("gelato-terrace.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

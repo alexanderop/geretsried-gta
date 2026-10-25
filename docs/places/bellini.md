@@ -11,7 +11,7 @@
 | Engine | levels 2, pitched, DOP roof colours → **too low** (eave ~12.5 m ≈ levels 4) |
 | Street frame | **Neuer Platz** (residential, 6.5 m), bearing 111°; kerb point (3648.9, 4666.8), 21.0 m; a service road runs on the E side, 16.1 m, at (3683.6, 4669.5) |
 | Position | Long block with the pedestrian Neuer Platz (fountain, trees) on its W side and a car park on the E side. **Which side the salon faces is not seen** |
-| Status | **todo (needs facade reference)**: massing + roof + logo known. **Question for Alex** (POI name) |
+| Status | **ref-done (partial)**: massing (LoD2 masses) + roof + logo + name known; facade needs reference. **Rename the POI to "Hair & Style Bellini"** (Alex 2026-10-25) |
 
 ## Images
 | File | What | Source |
@@ -31,7 +31,8 @@
 | Shop front, sign, which side | not seen | needs reference |
 
 ## Engine terms
-- Optional now: #0b `levels: 4` on way 127604892 (affects the whole block, also its other tenants; LoD2 eaves 12.2–13.6 m).
+- Do now (Alex 2026-10-25): #0b `masses` on way 127604892, one per LoD2 building (DEBY_LOD2_4602770…4602782): the 4-storey parts levels 4, pitched, DOP roof colours; the 3.5–3.9 m single-storey parts levels 1, flat. Affects the whole block and its other tenants. Bellini's own part: 4602775 (eave 12.2 m) + its 3.9 m low part.
+- Name fix (Alex 2026-10-25): POI #159 "Bellini" → "Hair & Style Bellini" via a small typed name override by OSM id (node 12427142627) in build.ts, not by editing the map JSON by hand.
 - No wallSign until a photo shows the salon front (plaza W side or car-park E side).
 - facade.ts: POI inside → `shop`.
 
