@@ -18,6 +18,8 @@ export type HudState = {
   readonly place: string
   /** The street you just entered, with a key that changes on every entry so the fade restarts. */
   readonly street: { readonly name: string; readonly key: number }
+  /** The part of town you just crossed into, announced big like GTA 2's district names. */
+  readonly district: { readonly name: string; readonly key: number }
   readonly vehicle: { readonly name: string; readonly key: number } | null
   /** BUSTED, WASTED, … */
   readonly big: string
@@ -49,6 +51,7 @@ export const emptyHud: HudState = {
   nearCar: false,
   place: "",
   street: { name: "", key: 0 },
+  district: { name: "", key: 0 },
   vehicle: null,
   big: "",
   mission: "",
@@ -192,6 +195,11 @@ export function Hud({ hud, help, muted, onMute }: { readonly hud: HudState; read
           </div>
         )}
       </div>
+      {hud.district.name !== "" && (
+        <div key={hud.district.key} data-testid="district" className="hud-fade absolute top-[28%] left-1/2 -translate-x-1/2 text-6xl whitespace-nowrap text-white uppercase italic">
+          {hud.district.name}
+        </div>
+      )}
       {hud.vehicle !== null && (
         <div key={hud.vehicle.key} data-testid="vehicle" className="hud-fade absolute bottom-[22%] left-1/2 -translate-x-1/2 text-3xl text-white">
           {hud.vehicle.name}

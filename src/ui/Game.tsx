@@ -3,6 +3,7 @@ import { DT, newGame, playerPos, speedKmh, step, type Game as GameState } from "
 import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
+import { districtAt } from "#/map/districts.ts"
 import { bakeMinimap, drawMinimap, drawPlaces, drawPlayerMarker, drawTargetArrow, poiIcon } from "#/render/overlay.ts"
 import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
@@ -128,7 +129,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     }
     const renderer = new Renderer(gl, world, assets)
     window.__gta = { game, world, renderer }
-    const minimap = bakeMinimap(world.map, assets.overview, Math.round(180 * devicePixelRatio))
+    const minimap = bakeMinimap(world.map, assets.overview)
     const camera = startCamera(game)
     const compare = compareSpot(world)
     if (compare !== null) Object.assign(camera, { x: compare.x, y: compare.y, height: 100 })
@@ -149,6 +150,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     // What the HUD shows besides the game state: announcements and when they end.
     let keys = 0
     let street = ""
+    let district = ""
     let shown: HudState = emptyHud
     let bigUntil = 0
     let missionUntil = 0
@@ -181,9 +183,9 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       drawPlaces(ctx, world.map, matrix, devicePixelRatio)
       const target = jobTarget(game.jobs, playerPos(game))
       if (target !== null) drawTargetArrow(ctx, matrix, target, game.time, devicePixelRatio)
-      drawMinimap(ctx, minimap, world.map, game)
-
       const p = playerPos(game)
+      const here = districtAt(world.map.districts, p.x, p.y)?.name ?? ""
+      drawMinimap(ctx, minimap, world.map, game, target, here, game.player.car === null ? 0 : speedKmh(game), devicePixelRatio)
       const copDist = Math.min(Infinity, ...game.cops.map((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y)))
       const level = wantedLevel(game.wanted)
       audio.effects(game.sounds.splice(0), p)
@@ -207,6 +209,9 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         // GTA 2 announces each street as you turn into it.
         if (name !== "" && name !== street) shown = { ...shown, street: { name, key: ++keys } }
         if (name !== "") street = name
+        // And each part of town, in big letters, when you cross into it.
+        if (here !== "" && here !== district) shown = { ...shown, district: { name: here, key: ++keys } }
+        district = here
         const place = world.map.pois.find((poi) => Math.hypot(poi.x - p.x, poi.y - p.y) < 30)
         const near = (x: number, y: number) => Math.hypot(x - p.x, y - p.y) < 4
         shown = {

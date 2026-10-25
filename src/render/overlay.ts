@@ -97,9 +97,9 @@ export const drawPlaces = (ctx: CanvasRenderingContext2D, map: GameMap, view: Fl
   }
 }
 
-/** A one-time overview of the whole town for the minimap: the aerial photo, streets and important places on top. */
-export const bakeMinimap = (map: GameMap, overview: HTMLImageElement, size: number): HTMLCanvasElement => {
-  const s = size / Math.max(map.width, map.height)
+/** A one-time overview of the whole town for the minimap, at the aerial photo's own resolution: the photo, streets and important places on top. */
+export const bakeMinimap = (map: GameMap, overview: HTMLImageElement): HTMLCanvasElement => {
+  const s = 1 / OVERVIEW_M_PER_PX
   const canvas = document.createElement("canvas")
   canvas.width = Math.ceil(map.width * s)
   canvas.height = Math.ceil(map.height * s)
@@ -122,39 +122,118 @@ export const bakeMinimap = (map: GameMap, overview: HTMLImageElement, size: numb
     ctx.strokeStyle = "#fff"
     ctx.lineWidth = 0.8 / s
     ctx.beginPath()
-    ctx.arc(poi.x, poi.y, 2.4 / s, 0, Math.PI * 2)
+    ctx.arc(poi.x, poi.y, 1.6 / s, 0, Math.PI * 2)
     ctx.fill()
     ctx.stroke()
   }
   return canvas
 }
 
-export const drawMinimap = (ctx: CanvasRenderingContext2D, minimap: HTMLCanvasElement, map: GameMap, game: Game) => {
-  const { width, height } = ctx.canvas
-  const pad = 16
-  // Bottom right, clear of the money and the attribution line.
-  const x0 = width - minimap.width - pad
-  const y0 = height - minimap.height - pad * 3
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.globalAlpha = 0.9
-  ctx.drawImage(minimap, x0, y0)
-  ctx.globalAlpha = 1
-  ctx.strokeStyle = "rgba(0,0,0,0.7)"
-  ctx.lineWidth = 2
-  ctx.strokeRect(x0, y0, minimap.width, minimap.height)
-  const p = playerPos(game)
-  const angle = game.player.car?.angle ?? game.player.angle
-  ctx.save()
-  ctx.translate(x0 + (p.x / map.width) * minimap.width, y0 + (p.y / map.height) * minimap.height)
-  ctx.rotate(angle)
-  ctx.fillStyle = "#ff3b30"
+/** Metres the minimap shows edge to edge, on foot; it zooms out with speed so the road ahead stays in view. */
+const RADAR_M = 600
+const RADAR_MAX_M = 1000
+/** Screen size of the minimap in CSS pixels. */
+const RADAR_PX = 180
+
+/** GTA's pointer: an arrowhead of size `a` facing +x, yellow with a black edge. */
+const arrowHead = (ctx: CanvasRenderingContext2D, a: number, fill: string, edge: number) => {
   ctx.beginPath()
-  ctx.moveTo(6, 0)
-  ctx.lineTo(-4, 4)
-  ctx.lineTo(-4, -4)
+  ctx.moveTo(a, 0)
+  ctx.lineTo(-a * 0.7, a * 0.75)
+  ctx.lineTo(-a * 0.3, 0)
+  ctx.lineTo(-a * 0.7, -a * 0.75)
   ctx.closePath()
+  ctx.lineWidth = edge
+  ctx.strokeStyle = "#000"
+  ctx.stroke()
+  ctx.fillStyle = fill
   ctx.fill()
+}
+
+/**
+ * A radar that follows the player: the town scrolls under a yellow arrow
+ * fixed in the middle, the job target sits on it or is pinned to its edge,
+ * and the part of town you are in is named on top.
+ */
+export const drawMinimap = (
+  ctx: CanvasRenderingContext2D,
+  minimap: HTMLCanvasElement,
+  map: GameMap,
+  game: Game,
+  target: { readonly x: number; readonly y: number } | null,
+  district: string,
+  kmh: number,
+  dpr: number,
+) => {
+  const { width, height } = ctx.canvas
+  const size = RADAR_PX * dpr
+  const pad = 16 * dpr
+  // Bottom right, clear of the money and the attribution line.
+  const x0 = width - size - pad
+  const y0 = height - size - pad * 3
+  const cx = x0 + size / 2
+  const cy = y0 + size / 2
+  const p = playerPos(game)
+  const metres = Math.min(RADAR_MAX_M, RADAR_M + kmh * 5)
+  const s = minimap.width / map.width
+  const half = (metres / 2) * s
+  const zoom = size / metres
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x0, y0, size, size)
+  ctx.clip()
+  ctx.fillStyle = "#1c2b1c"
+  ctx.fillRect(x0, y0, size, size)
+  ctx.imageSmoothingQuality = "high"
+  ctx.drawImage(minimap, p.x * s - half, p.y * s - half, half * 2, half * 2, x0, y0, size, size)
+
+  if (target !== null) {
+    const dx = (target.x - p.x) * zoom
+    const dy = (target.y - p.y) * zoom
+    const edge = size / 2 - 9 * dpr
+    const k = Math.max(Math.abs(dx), Math.abs(dy)) / edge
+    ctx.save()
+    if (k <= 1) {
+      ctx.translate(cx + dx, cy + dy)
+      ctx.beginPath()
+      ctx.arc(0, 0, (5 + Math.sin(game.time * 6)) * dpr, 0, Math.PI * 2)
+      ctx.lineWidth = 2 * dpr
+      ctx.strokeStyle = "#000"
+      ctx.stroke()
+      ctx.fillStyle = "#ffd60a"
+      ctx.fill()
+    } else {
+      ctx.translate(cx + dx / k, cy + dy / k)
+      ctx.rotate(Math.atan2(dy, dx))
+      arrowHead(ctx, 7 * dpr, "#ffd60a", 2 * dpr)
+    }
+    ctx.restore()
+  }
+
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(game.player.car?.angle ?? game.player.angle)
+  arrowHead(ctx, 10 * dpr, "#ffd60a", 3 * dpr)
   ctx.restore()
+
+  if (district !== "") {
+    ctx.font = `900 ${12 * dpr}px "Arial Black", "Arial Bold", Impact, sans-serif`
+    ctx.textAlign = "center"
+    ctx.textBaseline = "top"
+    ctx.lineJoin = "round"
+    ctx.lineWidth = 3 * dpr
+    ctx.strokeStyle = "#000"
+    const label = district.toUpperCase()
+    ctx.strokeText(label, cx, y0 + 5 * dpr)
+    ctx.fillStyle = "#fff"
+    ctx.fillText(label, cx, y0 + 5 * dpr)
+    ctx.textAlign = "start"
+  }
+  ctx.restore()
+  ctx.lineWidth = 2 * dpr
+  ctx.strokeStyle = "rgba(0,0,0,0.8)"
+  ctx.strokeRect(x0, y0, size, size)
 }
 
 /** Pixels from the screen edge the off-screen arrow keeps. */
