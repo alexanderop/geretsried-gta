@@ -11,3 +11,5 @@ data/routes.json
 # Scouting photos (Street View screenshots etc.): reference/<slug>/ at the root or docs/reference/<slug>/, local only
 reference/
 .vercel
+
+.claude/worktrees/
