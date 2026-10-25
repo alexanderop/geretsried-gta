@@ -1429,7 +1429,7 @@ Size: S
 - **Screenshots** (local scratchpad `b4-6/`): `play.png`, `play-crop.png`, `play-across.png`, `play-across-crop.png`,
   `overhead.png`.
 
-### B4-7 · Sun Style Bodystyling Studio, Sudetenstraße 24 (#169, shop) — Size: S — status: ref-done
+### B4-7 · Sun Style Bodystyling Studio, Sudetenstraße 24 (#169, shop) — Size: S — status: implemented (partial: the glass canopy's run, height and depth, every bay's, door's and sign's spot and size, the units' split, the porch's door, pier and board spots, the gold and the roof sign are guesses; the fascia and Kafka's panel sit on the canopy's front, the porch is drawn flat)
 ```
 Goal: Tanning studio with a black-and-gold "Sun Style" fascia on a glass canopy, white building with brown bay
 windows, insurance broker Kafka next door.
@@ -1441,9 +1441,45 @@ Spec (via #0b):
 - Unit order vs Kafka needs verification (OSM node order and photo disagree). White/peach parts in one outline:
   per-part colour, ask first. Do not model the election poster in 01.
 Acceptance criteria:
-- [ ] From Sudetenstraße the fascia + canopy match 01. pnpm test + typecheck green.
+- [x] From Sudetenstraße the fascia + canopy match 01. pnpm test + typecheck green.
+      (The glass canopy runs along the white block with the black/gold fascia on its front edge and Kafka's panel on
+      it further NW, as in 01. From the straight-down play camera both read as thin strips on the canopy's edge, as
+      B4-4–B4-6's do; the fascia painted on the roof carries the name for the top-down view.)
 Size: S
 ```
+
+**B4-7 as built** (`src/world/places/tedi-sudetenstrasse.ts`, B4-1's place for way 120402837, extended; no new
+building or mass):
+- **Sources.** `docs/places/sun-style.md`, `reference/sun-style/01, 02, 04` + `SOURCES.md` on disk and used (01 for
+  everything, 02 for the viewing direction), `reference/tedi-am-stern/01` (door "26"), the Bavarian LoD2 model (tile
+  684_5302: the white block's 0.4 m bay steps at u 15.15–18.95 and 25.62–29.4; the porch `DEBY_LOD2_105018834`).
+- **Unit order.** 01 looks SW (02 looks SE with the peach block on its right), so left in 01 is SE: Sun Style is at
+  the white block's SE end by the seam, Kafka NW of it. OSM's nodes have it the other way round (Kafka 10 m SE); the
+  photo wins. The POIs stay where they are (Sun Style's lies at wall 7 u 29).
+- **Porch** where the blocks meet (`105018834`, u 6.1–9.3, 2.4 m deep, a dark metal shed roof from 4.23 m at the
+  wall to 2.62 m at the front): a flat canopy (top 2.95 m, 0.2 m fascia, #564a54) on a peach pier at its SE front
+  corner (plain `pylon`), a door on the wall in it (`shop-front`), and Sun Style's black service board
+  (`sunstyle-board`, 1.7 × 2.15 m) on the porch's front under the roof's edge, where 01 shows it. TEDi's canopy on
+  wall 7 now ends at u 5.0 (was 9.17) and door "26" moved to u 3.4–4.9 (was 6.6–8.4, inside the porch), its glazing
+  to one bay u 0.1–3.3: tedi/01 shows the door at the canopy's NW end with peach wall past it.
+- **White block:** a glass canopy (`canopy-glass`, u 9.47–29.8, top 3.55 m, 2 m deep); Sun Style's white-framed
+  glazing and glass door (`sunstyle-glass`, `sunstyle-door`, u 9.8–19.8, to 2.5 m) and Kafka's door and glazing
+  (u 20–29.6); Sun Style's fascia (`sunstyle-fascia`, 4.4 × 1.0 m) hanging from the canopy's front edge at u 9.6–14;
+  Kafka's grey panel (`kafka-sign`, 3.8 × 0.89 m, "VERSICHERUNGEN / FINANZIERUNGEN · KREDITE") standing on it at
+  u 20.6–24.4; the two maroon-brown bay windows (`sunstyle-bay`, 0.4 m proud) from 3.9 m up under the eaves; the
+  fascia painted on the street-side roof plane (u 11–20, 9 × 2.05 m, top towards the street).
+- **Sprites** (Codex, `process-sprites.py`): the fascia, the board and Kafka's panel cut out of their magenta margin
+  (opaque, squared), the glazed bay, the door bay and the bay cladding (opaque, squared).
+- **Guesses:** the glass canopy's run, height and depth; every bay's, door's and sign's spot and size (read off 01
+  against the model's bay steps); the units' split at u 19.9; the porch's door, pier and board spots and the flat
+  porch roof's height; the gold (#d4a640; too small in 01 to sample); the board's text (Codex; 01's is unreadable);
+  the roof sign (no photo of the roof). Not built: the third brown bay at u 34–38 (past OSM's wall end, not in a
+  photo), the parking signs and the election poster.
+- **What the camera shows:** from the pavement the glass canopy runs along the white block, the porch's dark roof sits
+  lower between it and TEDi's grey canopy, the brown bays show on the wall towards the screen edge; the fascia and
+  Kafka's panel are thin strips on the canopy's edge; the gold "Sun Style" reads large on the roof.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical to HEAD except chunk 1661 (the building's own).
+- **Screenshots** (local scratchpad `b4-7/`): `play.png`, `play-crop.png`, `play-across.png`, `overhead.png`.
 
 ### B4-8 · Spielwaren Krömer, Sudetenstraße 20 (#170, shop) — Size: S — status: ref-done
 ```
@@ -1928,7 +1964,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 170 | Spielwaren Krömer | shop | 135 | ref-done |
 | 56 | Cafe Waldmann | food | 148 | implemented |
 | 166 | Woolworth | shop | 157 | implemented (partial) |
-| 169 | Sun Style Bodystyling Studio | shop | 173 | ref-done |
+| 169 | Sun Style Bodystyling Studio | shop | 173 | implemented (partial) |
 | 114 | Nexial | shop | 188 | implemented (partial) |
 | 116 | GG-Radsport | shop | 190 | implemented (partial) |
 | 157 | Aphrodite-aestetic | shop | 190 | implemented (partial) |
@@ -2275,7 +2311,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | ref-done | B4-8 |
 | 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | implemented (partial) | B4-2 |
-| 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
+| 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | implemented (partial) | B4-7 |
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | implemented (partial) | B4-6, inside B3-0; OSM shop tag wrong (IT services) |
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | implemented (partial) | B4-4, inside B3-0 |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | implemented (partial) | B4-5, inside B3-0 |

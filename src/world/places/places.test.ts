@@ -779,6 +779,62 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Sun Style and Kafka on the white block: fascia under and panel over the glass canopy's front, the porch and its board by the seam", () => {
+    const tedi = at(120402837)
+    const pts = map.buildings[tedi?.building ?? -1]?.pts ?? []
+    const parts = tedi?.dressing.parts ?? []
+    const w7 = wallFrame(pts, 7)
+    if (!w7 || tedi === undefined) throw new Error("no wall 7")
+    const sign = (t: string) => parts.find((p) => p.kind === "wallSign" && p.texture === t)
+    const canopies = parts.flatMap((p) => (p.kind === "canopy" && p.edge === 7 ? [p] : []))
+    const glass = canopies.find((c) => c.texture === "canopy-glass")
+    const fascia = sign("sunstyle-fascia")
+    const kafka = sign("kafka-sign")
+    const board = sign("sunstyle-board")
+    if (!glass || fascia?.kind !== "wallSign" || kafka?.kind !== "wallSign" || board?.kind !== "wallSign") throw new Error("missing parts")
+    // The glass canopy runs along the white block's ground floor NW of the seam (u 9.37), within wall 7.
+    expect(glass.u0).toBeGreaterThan(9.37)
+    expect(glass.u1).toBeLessThan(w7.length)
+    // Sun Style's fascia hangs from the canopy's front edge, SE of Kafka's panel standing on it; both over head height.
+    expect(fascia.out ?? 0).toBeGreaterThan(glass.depth)
+    expect(kafka.out ?? 0).toBeGreaterThan(glass.depth)
+    expect(fascia.z1).toBeCloseTo(glass.z)
+    expect(fascia.z0).toBeGreaterThanOrEqual(2.5)
+    expect(kafka.z0).toBeCloseTo(glass.z)
+    expect(fascia.u1).toBeLessThan(kafka.u0)
+    expect(fascia.u0).toBeGreaterThanOrEqual(glass.u0)
+    expect(kafka.u1).toBeLessThanOrEqual(glass.u1)
+    // The glazing under the canopy stays under the fascia; one door in each unit.
+    const bays = parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 7 && (p.texture === "sunstyle-glass" || p.texture === "sunstyle-door") ? [p] : []))
+    expect(bays.filter((b) => b.texture === "sunstyle-door")).toHaveLength(2)
+    for (const b of bays) {
+      expect(b.z1).toBeLessThanOrEqual(fascia.z0)
+      expect(b.u0).toBeGreaterThanOrEqual(glass.u0)
+      expect(b.u1).toBeLessThanOrEqual(glass.u1)
+    }
+    // The porch over the seam (LoD2 105018834, u 6.1–9.3) sits lower than both canopies and clear of TEDi's; the board on
+    // its front, the pier under its SE front corner outside the footprint.
+    const porch = canopies.find((c) => c.u0 > 5.5 && c.u1 < 9.37)
+    const tediCanopy = canopies.find((c) => c.u0 === 0)
+    if (!porch || !tediCanopy) throw new Error("no porch")
+    expect(porch.z).toBeLessThan(tediCanopy.z)
+    expect(porch.u0).toBeGreaterThanOrEqual(tediCanopy.u1)
+    expect(board.out ?? 0).toBeGreaterThan(porch.depth)
+    expect(board.u0).toBeGreaterThanOrEqual(porch.u0)
+    expect(board.u1).toBeLessThanOrEqual(porch.u1)
+    expect(board.z1).toBeLessThanOrEqual(porch.z - (porch.fascia?.h ?? 0))
+    const pier = parts.find((p) => p.kind === "pylon" && p.texture === undefined)
+    if (pier?.kind !== "pylon") throw new Error("no pier")
+    const [px, py] = toWorld(tedi.frame, pier.u, pier.n)
+    expect(pointInPolygon(px, py, pts)).toBe(false)
+    const [pu, pn] = toLocal(w7.frame, px, py)
+    expect(pu).toBeGreaterThan(porch.u0)
+    expect(pu).toBeLessThan(porch.u0 + 1)
+    expect(-pn).toBeGreaterThan(1.5)
+    expect(-pn).toBeLessThan(porch.depth)
+    expect(pier.h).toBeLessThanOrEqual(porch.z)
+  })
+
   it("dresses Woolworth's car-park front: red letters on the white band over the glazing, the LoD2 flat roof", () => {
     const woolworth = at(1385222318)
     const pts = map.buildings[woolworth?.building ?? -1]?.pts ?? []

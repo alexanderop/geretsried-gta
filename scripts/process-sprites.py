@@ -841,6 +841,25 @@ for name in ["wv-glass", "wv-door"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Sun Style / Versicherungsmakler Kafka (Sudetenstraße 24): Sun Style's black fascia and service board and Kafka's grey
+# panel, cut out of their magenta margin (opaque, stretched square; the wallSign gives them back their aspect), and
+# the white-framed glazed bay, the door bay and the maroon-brown bay window's cladding.
+for name in ["sunstyle-fascia", "sunstyle-board", "kafka-sign"]:
+    src = find(name)
+    if src is not None:
+        im = Image.open(src).convert("RGB")
+        a = np.asarray(im).astype(int)
+        board = ~((a[..., 0] > 200) & (a[..., 1] < 80) & (a[..., 2] > 200))
+        ys, xs = np.nonzero(board)
+        im = im.crop((xs.min() + 2, ys.min() + 2, xs.max() - 1, ys.max() - 1))
+        im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+        print(f"{name}.webp", im.size)
+for name in ["sunstyle-glass", "sunstyle-door", "sunstyle-bay"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

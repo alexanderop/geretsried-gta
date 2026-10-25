@@ -181,6 +181,12 @@ export const MATERIAL_FILES = [
   "wv-fascia",
   "wv-glass",
   "wv-door",
+  "sunstyle-fascia",
+  "sunstyle-board",
+  "kafka-sign",
+  "sunstyle-glass",
+  "sunstyle-door",
+  "sunstyle-bay",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
