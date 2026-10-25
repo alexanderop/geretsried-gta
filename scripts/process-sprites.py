@@ -631,6 +631,23 @@ for name in ["denns-front", "denns-cladding"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Rossmann (Sudetenstraße 33): the red ROSSMANN letters with the logo disc as the O, keyed, cropped to the ink and
+# stretched square like denns'; one bay of the drugstore's dark-framed glazing with posters (opaque, square).
+letters = find("rossmann-letters")
+if letters is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(letters))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(letters).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    print("rossmann-letters aspect", round(im.width / im.height, 2))
+    im.resize((512, 512), Image.LANCZOS).save(OUT / "rossmann-letters.webp", "WEBP", quality=92)
+    print("rossmann-letters.webp")
+front = find("rossmann-front")
+if front is not None:
+    Image.open(front).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "rossmann-front.webp", "WEBP", quality=90)
+    print("rossmann-front.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

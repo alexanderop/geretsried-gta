@@ -146,6 +146,8 @@ export const MATERIAL_FILES = [
   "denns-letters",
   "denns-front",
   "denns-cladding",
+  "rossmann-letters",
+  "rossmann-front",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

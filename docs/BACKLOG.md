@@ -965,7 +965,7 @@ Size: S
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
   block's).
 
-### B3-3 · Rossmann, Sudetenstraße 33 (#65, drugstore) — Size: S — status: ref-done
+### B3-3 · Rossmann, Sudetenstraße 33 (#65, drugstore) — Size: S — status: implemented (partial: the balcony floors, the pillars' spacing, how far the glazing runs, the letters' spot and size, the chimneys' spots, height and size, and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: Red ROSSMANN letters on the white ground floor of the 3-storey balcony block with the terracotta roof.
 Reference: docs/places/rossmann-am-stern.md; reference/rossmann-am-stern/01-street-front.png (key), 02, 03 (pylon).
@@ -974,9 +974,35 @@ Spec (via #0b, inside B3-0):
   near (4247.7, 4775.3): letters #d6666b on wall #cedae2; glass strip under.
 - Levels 4 → 3 (photos: ground + 2 balcony storeys): ask first. Roof decal "ROSSMANN" (red). Door: needs reference.
 Acceptance criteria:
-- [ ] Across the car park the block matches 01/02. pnpm test + typecheck green.
+- [x] Across the car park the block matches 01/02. pnpm test + typecheck green.
 Size: S
 ```
+
+**B3-3 as built** (`src/world/places/rossmann-am-stern.ts`, on B3-0's masses; roof sign `roof-rossmann` from B3-0):
+- **Sources.** `reference/rossmann-am-stern/01–04` + `SOURCES.md` on disk and used: 01 for the front and the heights
+  (read against the LoD2 eaves at 12.3 m), 02 for the context, 04 for the chimneys. Levels stay as B3-0 set them
+  (the model's 12.3 m eaves; the photos' "3 storeys" is a tall shop floor and tall flats), so nothing to ask.
+- **Front, walls 3 and 4** (the car-park front, u 0 at their NW ends, the bend by the POI between them): a colonnade,
+  white posts about every 6.2 m (`canopy` with `posts`) carrying a white band from 3 m up under the lowest balcony
+  (its fascia); the store's dark-framed glazing with posters (`rossmann-front`, five ~4 m panels) from wall 3 u 17.2
+  to wall 4 u 10.2; the red ROSSMANN letters with the logo disc as the O (`rossmann-letters`, 6.9 × 0.95 m, z 3.7)
+  on the band at wall 4 u 0.2. The bays NW and SE of the store stay closed white wall, as in 01. Like denns, band,
+  posts and glazing stand on the balconies' front line (`BALCONY_DEPTH`).
+- **Balconies** moved from B3-0's floors 4.8 / 8.2 m to 5.2 / 8.4 m (01's parapets start at about 5.3 and 8.5 m).
+- **Chimneys:** four pairs (0.9 m apart) of terracotta chimneys with a darker cap, 7.6–8.1 m in from the front just
+  short of the ridge, at u 6.2 and 18 on wall 3 and 4.8 and 17.2 on wall 4 (04 shows four dark pairs there; 01 their
+  pots over the ridge), tops 0.8 m over the roof (15.8 m). Drawn with the generic `tower` part (a 0.44 m box with a
+  cap), no engine change.
+- **Sprites:** Codex (two images), processed by `scripts/process-sprites.py` (letters keyed and cropped, 7.26:1,
+  stored square; the glazing opaque).
+- **Guesses:** the balcony floors and depth, the pillars' spacing and their drawing as thin posts, where the glazing
+  starts and ends, the letters' spot (01 has them centred a few meters SE of the bend; places.test wants a sign on one
+  wall, so they start at wall 4's NW end) and size, the chimneys' spots (±1 m from 04), height and size, the shop
+  front's line. Not built: the entrance door (not resolved in the photos), the blue parking sign on the glass.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1662 (the
+  Rossmann block's).
+- **Screenshots** (local): `?compare=47.85705,11.48705,40` from above (ROSSMANN board, chimney pairs); on foot at
+  (4247, 4783) the band with the red letters' edge under the balconies.
 
 ### B3-4 · Takko Fashion, Sudetenstraße 29b (#81, shop) — Size: S — status: ref-done
 ```
@@ -1632,7 +1658,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 81 | Takko Fashion | shop | 223 | ref-done |
 | 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
 | 134 | B&L Hairstyling | shop | 253 | ref-done |
-| 65 | Rossmann | drugstore | 283 | ref-done |
+| 65 | Rossmann | drugstore | 283 | implemented (partial) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 77 | da Daniele | food | 329 | ref-done |
@@ -1894,7 +1920,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P4 — everyday services (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 65 | Rossmann | drugstore | 4251.4, 4773.7 | 47.857069, 11.486999 | 283 | ref-done | B3-3; Rossmann block 293545707, 3 storeys (engine 4) |
+| 65 | Rossmann | drugstore | 4251.4, 4773.7 | 47.857069, 11.486999 | 283 | implemented (partial) | B3-3; Rossmann block 293545707, 3 storeys (engine 4) |
 | 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | ref-done | B3-6; W corner of the Penny block, red A, pylon |
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | todo |  |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo |  |

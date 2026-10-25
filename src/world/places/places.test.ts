@@ -368,6 +368,32 @@ describe("the registry on the real map", () => {
     expect(letters.z1).toBeLessThan(lowest)
   })
 
+  it("dresses Rossmann's car-park front: letters over the glazing by the bend, under the balconies, chimneys on the roof", () => {
+    const rossmann = at(293545707)
+    const pts = map.buildings[rossmann?.building ?? -1]?.pts ?? []
+    const parts = rossmann?.dressing.parts ?? []
+    // Walls 3 and 4 are the car-park front, facing SW (bearing about 213°), their shared corner the bend by the POI.
+    for (const edge of [3, 4]) {
+      const w = wallFrame(pts, edge)
+      expect(w).toBeDefined()
+      if (w === undefined || w === null) return
+      expect(Math.abs(((Math.atan2(-w.frame.nx, w.frame.ny) * 180) / Math.PI + 360) % 360 - 213)).toBeLessThan(10)
+    }
+    const letters = parts.find((p) => p.kind === "wallSign" && p.texture === "rossmann-letters")
+    const glass = parts.flatMap((p) => (p.kind === "wallSign" && p.texture === "rossmann-front" ? [p] : []))
+    expect(letters?.kind).toBe("wallSign")
+    if (letters?.kind !== "wallSign") return
+    // The letters over glazing on the same wall, under the lowest balcony, within 10 m of the bend.
+    expect(glass.some((g) => g.edge === letters.edge && g.u0 <= letters.u0 + 0.5 && g.z1 < letters.z0)).toBe(true)
+    const lowest = Math.min(...parts.flatMap((p) => (p.kind === "balcony" ? p.z : [])))
+    expect(letters.z1).toBeLessThan(lowest)
+    expect(letters.edge === 4 ? letters.u0 : (wallFrame(pts, 3)?.length ?? 0) - letters.u1).toBeLessThan(10)
+    // The chimneys rise over the block's 15 m ridge.
+    const chimneys = parts.flatMap((p) => (p.kind === "tower" ? [p] : []))
+    expect(chimneys.length).toBe(8)
+    for (const c of chimneys) expect(c.h).toBeGreaterThan(15)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })
