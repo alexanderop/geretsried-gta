@@ -1032,6 +1032,31 @@ for name in ["stroblume-plants", "stroblume-heart"]:
         im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp", im.size)
 
+# VR Bank München Land (Sudetenstraße 11): the blue letters and logo on the white wall, cropped to the lettering and
+# padded with the wall's own white to the sign box's front (7.0 x 0.9 m), like stroblume-sign, and cut in two at the
+# corner between the two walls it spans. The two orange ground-floor
+# fronts (the windows, the entrance) as they are.
+src = find("vr-bank-sign")
+if src is not None:
+    im = Image.open(src).convert("RGB")
+    a = np.asarray(im).astype(int)
+    wall = tuple(int(c) for c in np.median(a.reshape(-1, 3), axis=0))
+    ys, xs = np.nonzero(np.abs(a - np.array(wall)).sum(axis=2) > 60)
+    pad = round((ys.max() - ys.min()) * 0.12)
+    im = im.crop((xs.min() - pad, ys.min() - pad, xs.max() + pad, ys.max() + pad))
+    band = Image.new("RGB", (max(im.width, round(im.height * 7.0 / 0.9)), round(max(im.width, round(im.height * 7.0 / 0.9)) * 0.9 / 7.0)), wall)
+    band.paste(im, ((band.width - im.width) // 2, (band.height - im.height) // 2))
+    # The box spans walls 5 and 4 of the outline (2.26 + 4.73 m of its 7.0 m): one half for each wall's wallSign.
+    cut = round(band.width * 2.26 / 7.0)
+    band.crop((0, 0, cut, band.height)).resize((512, 512), Image.LANCZOS).save(OUT / "vr-bank-logo.webp", "WEBP", quality=92)
+    band.crop((cut, 0, band.width, band.height)).resize((512, 512), Image.LANCZOS).save(OUT / "vr-bank-sign.webp", "WEBP", quality=92)
+    print("vr-bank-logo.webp, vr-bank-sign.webp", wall, im.size)
+for name in ["vr-bank-front", "vr-bank-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

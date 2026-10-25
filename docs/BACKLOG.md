@@ -1963,7 +1963,7 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-4/`): `play.png`, `play-crop.png`, `play-across.png` + `play-across-crop.png` (script),
   `overhead.png`.
 
-### B6a-5 · VR Bank München Land, Sudetenstraße 11 (#13, bank) — Size: S — status: ref-done
+### B6a-5 · VR Bank München Land, Sudetenstraße 11 (#13, bank) — Size: S — status: implemented (partial: canopy depth, blue letter box, door/window widths; orange 0–2.85 m, not 3.5)
 ```
 Goal: The bank at the NW corner of the row: orange ground floor, blue "VR Bank München Land" letters, grey canopy.
 Reference: docs/places/vr-bank-zentrum.md; reference/vr-bank-zentrum/01-street-front.png (key), 02, 04.
@@ -1973,9 +1973,28 @@ Spec (via #0b):
 - Letters wallSign blue #5574d5 + square VR logo above a grey canopy strip #787c75.
 - ATM position: needs reference (OSM atm=yes). Do not add one.
 Acceptance criteria:
-- [ ] Front matches 01; the orange band does not bleed onto Bodystreet. pnpm test + typecheck green.
+- [x] Front matches 01; the orange band does not bleed onto Bodystreet. pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **In the row file** `src/world/places/sudetenstrasse-11-15.ts`: a `VR_BANK` parts list (exported) spread into `parts`. No
+  building or mass changes; Bodystreet (u 7.2–17.3) untouched. The bank's front is wall 5 (2.97 m, almost in line with
+  wall 4) plus wall 4 u 0–7.2 (`UNITS.vrBank`): 10.2 m, about what 01 shows.
+- **Orange ground floor** as two new wallSigns 0–2.85 m (the row's `FRONT_Z`; the spec's 3.5 m would run into the sign):
+  `vr-bank-door` on wall 5 (orange pier, glazed entrance with side panel) and `vr-bank-front` on wall 4 u 0–7.2 (two wide
+  white-framed windows with frosted film and small blue plates), Codex after 01. The orange ends at the LoD2 cut (u 7.2).
+- **Canopy**: grey #787c75 slab on both walls, top at 2.85 m, 0.45 m deep (depth a **guess**; deeper hid the orange from
+  the play camera).
+- **Letters**: a blue #5574d5 box (`pylon` base 2.85, top `h` 3.75, 0.3 m deep, like the Dolce Gelato/Stroblume boxes) over
+  01's 7–76 % of the front, sitting on the canopy, so the play camera sees a blue strip; the white-wall lettering (logo +
+  "VR Bank München Land", new Codex texture) on its front as two wallSigns that meet at the wall 5/4 corner
+  (`vr-bank-logo` on wall 5, `vr-bank-sign` on wall 4; process-sprites.py cuts one band in two). Out 0.05 m past the box:
+  at 0.02 m the far half z-fought away. The box is a **guess** (the real letters are single letters on the wall).
+- Not built: the ATM (position unknown), the street-name plate, the A-board, the blue P sign. Upper floors stay the
+  house's white render.
+- Chunk hashes: before/after only chunk 1616 (the building's) differs. pnpm -s check green (250 tests).
+- Screenshots (local scratchpad `b6a-5/`): `play.png`, `play-crop.png`, `play-across.png` + `play-across-crop.png`
+  (lettering), `overhead.png`.
 
 ### B6a-6 · KIND Augenoptik, Sudetenstraße 10 (#115, shop) — Size: S — status: ref-done
 ```
@@ -2261,7 +2280,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 12 | HoangAnh | food | 6 | todo (needs reference; unit shows Deliqos) |
 | 47 | Dolce Gelato | food | 20 | implemented (partial) |
 | 155 | Stroblume | shop | 29 | implemented (partial) |
-| 13 | VR-Bank | bank | 48 | ref-done |
+| 13 | VR-Bank | bank | 48 | implemented (partial) |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | ref-done |
 | 120 | Bistro Malor | food | 69 | ref-done (partial) |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | ref-done |
@@ -2556,7 +2575,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P3 — landmarks & big anchors (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | ref-done | B6a-5. Sudetenstraße 11, sign "VR Bank München Land" |
+| 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | implemented (partial) | B6a-5. Sudetenstraße 11, sign "VR Bank München Land" |
 | 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | implemented (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
 | 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo (needs facade reference) | B6b-2. Relation building missing in-game (I-1 step 7); LoD2 ~10 m |
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | ref-done (partial) | B6b-4. Now Karl-Lederer-Mittelschule; merger by 2029–2031 (name kept); LoD2 ~13 m |

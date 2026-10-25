@@ -218,6 +218,10 @@ export const MATERIAL_FILES = [
   "dolce-gelato-front",
   "passage-door",
   "stroblume-sign",
+  "vr-bank-front",
+  "vr-bank-door",
+  "vr-bank-sign",
+  "vr-bank-logo",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

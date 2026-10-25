@@ -7,7 +7,7 @@ import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
 import { dressMap, resolvePlaces, towerFrame, type Part, type PlaceDressing } from "./dressing.ts"
 import { PLACES } from "./index.ts"
-import { DOLCE_GELATO, STROBLUME, UNITS } from "./sudetenstrasse-11-15.ts"
+import { DOLCE_GELATO, STROBLUME, UNITS, VR_BANK } from "./sudetenstrasse-11-15.ts"
 
 /** Whether (x, y) lies within 0.3 m of a wall of the ring: the masses' corners are rounded to 0.1 m, so spots there prove nothing. */
 const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
@@ -1197,7 +1197,7 @@ describe("the registry on the real map", () => {
     const [poiU] = toLocal(wall.frame, poi?.x ?? 0, poi?.y ?? 0)
     expect(poiU).toBeGreaterThan(27)
     expect(poiU).toBeLessThan(33.5)
-    for (const p of onWall(parts)) expect(p.edge).toBe(4)
+    for (const p of onWall(parts)) expect([4, 5]).toContain(p.edge)
     for (const p of onWall(DOLCE_GELATO)) expect(p.u0).toBeGreaterThanOrEqual(27)
     // The plate's box: back on the wall, the lettering on its front, the same 2.85 m bottom as the Mühlenbäck row's signs.
     const sign = parts.find((p) => p.kind === "wallSign" && p.texture === "dolce-gelato-sign")
@@ -1263,6 +1263,50 @@ describe("the registry on the real map", () => {
       expect(tu).toBeLessThan(UNITS.stroblume[1])
       expect(t.n - 0.45 - 4).toBeGreaterThan(0.5)
     }
+  })
+
+  it("gives the VR Bank its orange ground floor, grey canopy and blue letter box on walls 5 and 4 of Sudetenstraße 11–15, clear of Bodystreet", () => {
+    const row = at(127604887)
+    if (row === undefined) throw new Error("no Sudetenstraße 11–15")
+    expect(row.dressing.parts).toEqual(expect.arrayContaining([...VR_BANK]))
+    const pts = map.buildings[row.building]?.pts ?? []
+    const w4 = wallFrame(pts, 4)
+    const w5 = wallFrame(pts, 5)
+    if (w4 === null || w5 === null) throw new Error("no walls 4 and 5")
+    // Wall 5 runs on into wall 4's NW end: together the bank's front, the POI in front of it.
+    expect(toWorld(w5.frame, w5.length, 0).map((v) => v.toFixed(1))).toEqual(toWorld(w4.frame, 0, 0).map((v) => v.toFixed(1)))
+    const poi = map.pois.find((p) => p.name === "VR-Bank")
+    const [poiU] = toLocal(w4.frame, poi?.x ?? 0, poi?.y ?? 0)
+    expect(poiU).toBeGreaterThan(UNITS.vrBank[0])
+    expect(poiU).toBeLessThan(UNITS.vrBank[1])
+    // The orange fronts and the canopy stay on the bank's stretch (all of wall 5, wall 4 up to the Bodystreet cut).
+    const wallParts = onWall(VR_BANK)
+    expect(wallParts.filter((p) => p.kind === "wallSign").map((p) => p.texture).toSorted()).toEqual(["vr-bank-door", "vr-bank-front", "vr-bank-logo", "vr-bank-sign"])
+    for (const p of wallParts) {
+      expect([4, 5]).toContain(p.edge)
+      expect(p.u0).toBeGreaterThanOrEqual(0)
+      expect(p.u1).toBeLessThanOrEqual(p.edge === 4 ? UNITS.vrBank[1] : w5.length + 0.01)
+    }
+    // The letter box: from the row's 2.85 m on the canopy, its back on wall 4's line, within the bank's 10.2 m front,
+    // the lettering on its front in two halves that meet at the corner of walls 5 and 4.
+    const box = VR_BANK.find((p) => p.kind === "pylon")
+    const canopy = VR_BANK.find((p) => p.kind === "canopy")
+    const logo = VR_BANK.find((p) => p.kind === "wallSign" && p.texture === "vr-bank-logo")
+    const words = VR_BANK.find((p) => p.kind === "wallSign" && p.texture === "vr-bank-sign")
+    if (box?.kind !== "pylon" || canopy?.kind !== "canopy" || logo?.kind !== "wallSign" || words?.kind !== "wallSign") throw new Error("no letter box, canopy or lettering")
+    expect([box.base, box.h]).toEqual([2.85, 3.75])
+    for (const s of [logo, words]) {
+      expect([s.z0, s.z1]).toEqual([box.base, box.h])
+      expect(s.out).toBeGreaterThan(box.d)
+    }
+    expect([logo.edge, logo.u1, words.edge, words.u0]).toEqual([5, 2.97, 4, 0])
+    expect(canopy.z).toBe(2.85)
+    expect(canopy.depth).toBeGreaterThan(box.d)
+    const [u, n] = toLocal(w4.frame, ...toWorld(row.frame, box.u, box.n))
+    expect(Math.abs(n + box.d / 2)).toBeLessThan(0.02)
+    expect(u - box.w / 2).toBeCloseTo(logo.u0 - 2.97, 1)
+    expect(u + box.w / 2).toBeCloseTo(words.u1, 1)
+    expect(words.u1).toBeLessThan(UNITS.vrBank[1])
   })
 
   it("gives St. Ursula its four storeys", () => {

@@ -6,7 +6,7 @@ import type { Mass, Part, PlaceDressing } from "./dressing.ts"
  * one OSM outline over four shop units, NW to SE VR Bank München Land (No. 11, the corner by the car park), Bodystreet,
  * Stroblume and Dolce Gelato (No. 15), then a recessed passage to the house door. The street front is wall 4 (36.33 m,
  * u 0 at its NW end) plus wall 5, a 2.97 m jog that carries it on to the NW corner; `UNITS` gives each unit's stretch
- * of wall 4, so B6a-4 (Stroblume) and B6a-5 (VR Bank, Bodystreet) add their parts in their own sections below.
+ * of wall 4, so B6a-4 (Stroblume) and B6a-5 (VR Bank) add their parts in their own sections below.
  *
  * The Bavarian LoD2 model (2026, tile 684_5302) has four houses here: `DEBY_LOD2_4602982` the white VR corner house
  * (hipped to the NW), `DEBY_LOD2_4602981` (Bodystreet) and `DEBY_LOD2_4602922` (Stroblume, Dolce Gelato) under one gable
@@ -167,6 +167,46 @@ export const STROBLUME: ReadonlyArray<Part> = [
   { kind: "sprite", name: "stroblume-heart", ...atWall(HEART.u, HEART.out), z: 1.0, angle: UPRIGHT, len: 0.9 },
 ]
 
+/**
+ * VR Bank München Land (B6a-5, reference/vr-bank-zentrum/01 key, 02): the white corner house's ground floor is orange
+ * render (#e2a470 sun / #d68756 shade) around a glass entrance at the NW and two wide white-framed windows with frosted
+ * film; a thin grey metal canopy (#787c75) runs over the whole front, and above it blue letters "VR Bank München Land"
+ * with the square VR logo stand on the white wall. Its front is wall 5 (2.97 m, the entrance) plus wall 4 u 0–7.2 (the
+ * windows), 10.2 m, about what 01 shows; the orange stops at the LoD2 cut, so none reaches Bodystreet. The letters span
+ * 01's 7 % to 76 % of the front (10.17 m): they go on a box in line with the row's signs (the 2.85 m bottom, sitting on
+ * the canopy), blue so the straight-down play camera sees a blue strip in front of the white house; the lettering on
+ * the white wall goes on its front as two wallSigns, the logo half on wall 5 and the words on wall 4 (one texture cut at
+ * the corner). The canopy is only 0.45 m deep, so a little of the orange below it shows past it. Guesses: the canopy's
+ * depth, the box and its blue sides and top (the real letters are single letters on the wall), the door's and windows'
+ * widths. Not built: the ATM (OSM atm=yes, place unknown), the street-name plate, the A-board.
+ */
+const VR_GREY: Rgba = [120, 124, 117, 255]
+const VR_BLUE: Rgba = [85, 116, 213, 255]
+/** Wall 5's 2.97 m ends at wall 4's u 0 almost in line with it (0.017 rad off): the box spans both, placed off wall 4. */
+const VR_FRONT = 10.17
+const VR_WALL5 = 2.97
+const VR_SIGN = { c0: 0.07 * VR_FRONT, c1: 0.76 * VR_FRONT, z1: 3.75, depth: 0.3 } as const
+const VR_CANOPY = 0.45
+
+export const VR_BANK: ReadonlyArray<Part> = [
+  { kind: "wallSign", texture: "vr-bank-door", edge: 5, u0: 0, u1: VR_WALL5, z0: 0, z1: FRONT_Z },
+  { kind: "wallSign", texture: "vr-bank-front", edge: WALL, u0: UNITS.vrBank[0], u1: UNITS.vrBank[1], z0: 0, z1: FRONT_Z },
+  { kind: "canopy", edge: 5, u0: 0.1, u1: VR_WALL5, z: FRONT_Z, depth: VR_CANOPY, colour: VR_GREY },
+  { kind: "canopy", edge: WALL, u0: UNITS.vrBank[0], u1: UNITS.vrBank[1] - 0.1, z: FRONT_Z, depth: VR_CANOPY, colour: VR_GREY },
+  {
+    kind: "pylon",
+    ...atWall((VR_SIGN.c0 + VR_SIGN.c1) / 2 - VR_WALL5, VR_SIGN.depth / 2),
+    angle: WALL_ANGLE,
+    w: VR_SIGN.c1 - VR_SIGN.c0,
+    d: VR_SIGN.depth,
+    h: VR_SIGN.z1,
+    base: FRONT_Z,
+    colour: VR_BLUE,
+  },
+  { kind: "wallSign", texture: "vr-bank-logo", edge: 5, u0: VR_SIGN.c0, u1: VR_WALL5, z0: FRONT_Z, z1: VR_SIGN.z1, out: VR_SIGN.depth + 0.05 },
+  { kind: "wallSign", texture: "vr-bank-sign", edge: WALL, u0: 0, u1: VR_SIGN.c1 - VR_WALL5, z0: FRONT_Z, z1: VR_SIGN.z1, out: VR_SIGN.depth + 0.05 },
+]
+
 /** The open passage at the SE end, the house door at its back (01, right of the awning). */
 const PASSAGE: ReadonlyArray<Part> = [{ kind: "wallSign", texture: "passage-door", edge: WALL, u0: UNITS.passage[0] + 0.1, u1: UNITS.passage[1] - 0.1, z0: 0, z1: FRONT_Z }]
 
@@ -178,5 +218,5 @@ export const SUDETENSTRASSE_11_15: PlaceDressing = {
   facade: "render",
   wallColour: BEIGE,
   masses: MASSES,
-  parts: [...STROBLUME, ...DOLCE_GELATO, ...PASSAGE],
+  parts: [...VR_BANK, ...STROBLUME, ...DOLCE_GELATO, ...PASSAGE],
 }
