@@ -1,6 +1,6 @@
 /**
  * The parts of a dressed place (world/places/dressing.ts) as 3D geometry:
- * signs and arcades on the footprint's walls, towers with a pyramid roof,
+ * signs, arcades and balconies on the footprint's walls, towers with a pyramid roof,
  * prop sprites. Drawn with the building they belong to; its walls, storeys
  * and roof colours are scene.ts's.
  */
@@ -17,6 +17,11 @@ const GLAZING_OUT = 0.02
 /** The band over an arcade's arches, and the segments of each arch. */
 const ARCADE_BAND = 0.45
 const ARCH_STEPS = 10
+/** A balcony's floor slab and the parapet round it, and how thick that parapet is. */
+const BALCONY_SLAB = 0.18
+const BALCONY_RAIL = 1
+const RAIL = 0.06
+
 /** A tower's quoins (square, standing proud of its walls), the cornice under its roof, the eaves' overhang. */
 const QUOIN = 0.45
 const QUOIN_OUT = 0.05
@@ -74,6 +79,18 @@ const arcade = (b: Builder, p: Extract<Part, { kind: "arcade" }>) => {
   face(b, u0, 0, u0, front, spring, top, pillar)
   face(b, u1, front, u1, 0, spring, top, pillar)
   flat(b, [u0, u1, front, 0], top, pillar)
+}
+
+/** Balconies standing out from the wall (n = 0), one per floor height: a slab and a parapet round its front and ends. */
+const balcony = (b: Builder, p: Extract<Part, { kind: "balcony" }>) => {
+  const { u0, u1, depth, colour } = p
+  for (const z of p.z) {
+    box(b, [u0, u1, -depth, 0], z - BALCONY_SLAB, z, p.slab ?? colour)
+    const top = z + BALCONY_RAIL
+    box(b, [u0, u1, -depth, -depth + RAIL], z, top, colour)
+    box(b, [u0, u0 + RAIL, -depth + RAIL, 0], z, top, colour)
+    box(b, [u1 - RAIL, u1, -depth + RAIL, 0], z, top, colour)
+  }
 }
 
 /** The corners of a tower's side, left to right seen from outside (see TowerFace). */
@@ -171,6 +188,7 @@ export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts
       if (wall === null) continue
       const b = { m, f: wall.frame, boxes }
       if (part.kind === "wallSign") panel(b, part.texture, part.u0, part.u1, part.z0, part.z1, -(part.out ?? SIGN_OUT))
+      else if (part.kind === "balcony") balcony(b, part)
       else arcade(b, part)
     }
   }
@@ -183,6 +201,7 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
     if (part.kind === "sprite") return [[rectRing(place.frame, square(part.u, part.n, part.len)), part.z]]
     const wall = wallFrame(pts, part.edge)
     if (wall === null) return []
+    if (part.kind === "balcony") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), Math.max(0, ...part.z) + BALCONY_RAIL]]
     const out = part.kind === "arcade" ? part.depth : (part.out ?? SIGN_OUT)
     return [[rectRing(wall.frame, [part.u0, part.u1, -out, 0]), part.kind === "arcade" ? part.h + ARCADE_BAND : part.z1]]
   })

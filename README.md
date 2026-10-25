@@ -61,7 +61,7 @@ place listed in `index.ts`, keyed by the exact POI name and the street it faces.
 (`osmBuildingId`) stays the building and the solid and takes the overrides: storeys (applied when the
 map loads, and baked by `pnpm map`), a facade texture, a wall colour, horizontal wall bands (textured or
 plain, like a timber fascia), the roof colour and pitch. Parts are drawn on top and never solid
-(`src/render/scene/places.ts`): signs and ground-floor arcades on a wall of the footprint, square towers
+(`src/render/scene/places.ts`): signs, ground-floor arcades and balcony stacks on a wall of the footprint, square towers
 with a pyramid roof (kept inside the footprint by a test), prop sprites on poles. Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
 `facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
@@ -206,6 +206,11 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   drop-off: three storeys in light grey-blue render, a ground-floor arcade of round arches on white pillars
   along its front, "REHMAUS APOTHEKE" in red serif capitals over the pharmacy's four arches (readable when
   the front leans in at the screen edge), and the red pharmacy "A" on its post on the green in front.
+- **Sparkasse** (`src/world/places/sparkasse-stein.ts`), the Stein branch at the corner of Händelstraße and
+  Johann-Sebastian-Bach-Straße: four storeys, the bank's grey ground floor under two white storeys and a grey
+  top storey, tall bank windows with red bands and the red "Sparkasse" with its S logo on the Händelstraße
+  face and the corner face, a stack of grey metal balconies at the N end, solar panels along the ridge, and
+  the red Sparkasse flag on its pole and a yield sign at the corner.
 - **Sound** (`src/ui/audio.ts`, WebAudio, no files): an engine hum pitched by speed, a two-tone horn (G),
   a German two-tone siren that swells as police cars close in, and gunshots, explosions, flames,
   breaking bottles, punches and cartoon screams from filtered noise and swept tones, quieter with distance. It starts with the first key press.

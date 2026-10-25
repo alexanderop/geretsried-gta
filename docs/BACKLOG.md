@@ -190,7 +190,7 @@ Size: S
   sidewalk and the arcade there is grass with a few paved patches. The drop-off (STOP_REACH 9 m round the
   POI, which is 17.7 m from the street's centre line) means standing or parking on that green.
 
-### B1-2 · Sparkasse, Händelstraße (#20, bank) — Size: S — status: ref-done
+### B1-2 · Sparkasse, Händelstraße (#20, bank) — Size: S — status: implemented
 ```
 Goal: Make the Sparkasse branch at the corner of Händelstraße / Johann-Sebastian-Bach-Straße read as a real
 Sparkasse: grey bank ground floor with big red "Sparkasse" lettering under a white apartment block. Exterior only.
@@ -206,11 +206,49 @@ Spec (via #0b):
 - Sprites: red flagpole + yield sign at the S corner. Solar panels on the roof only if a roof texture variant is cheap.
 - Single-storey podium extent is "needs reference" in the doc: don't add a podium beyond the OSM outline.
 Acceptance criteria:
-- [ ] Next to the building, the grey base vs white upper floors split is obvious, like 01/03.
-- [ ] Red "Sparkasse" visible on both street faces; red flag at the corner seen from above.
-- [ ] Building height clearly 4 storeys vs neighbours; no collision changes; pnpm test + typecheck green.
+- [x] Next to the building, the grey base vs white upper floors split is obvious, like 01/03.
+- [x] Red "Sparkasse" visible on both street faces; red flag at the corner seen from above.
+- [x] Building height clearly 4 storeys vs neighbours; no collision changes; pnpm test + typecheck green.
 Size: S
 ```
+
+**B1-2 as built** (`src/world/places/sparkasse-stein.ts`) and gotchas for B1-3…B1-5:
+- **Levels 4, `facade: "render"`, `wallColour` white, two textured bands:** the base z 0–3 [204, 200, 193] and the
+  top storey z 9–12 [124, 124, 131]. The render's plaster is 240, so a band colour is the target hex ÷ 0.94
+  (#c0bcb5 → 204, 200, 193). The DOP roof colours stay.
+- **Bank windows as opaque wall signs:** `sparkasse-windows` (material, Codex, 2:1: grey render, two tall windows
+  with a red band and a white S, a lamp between, a plinth; stored square) in 6 m × 3 m strips, four on wall 4
+  (u 0.3–24.3 from the S corner) and two on wall 3. Being opaque, a strip hides the band's block windows behind
+  it; the N end of wall 4 and the back walls keep the grey band with the render's windows. Repeating a strip as
+  several wall signs is the cheap way to get a ground floor that differs from the facade on some walls only.
+- **Lettering:** `sparkasse-sign` (material, Codex, 4:1 on #FF00FF, the S logo plus "Sparkasse" spelled letter by
+  letter, right first time; keyed and squared like `rehmaus-sign`), at `out` 0.1 over the strips (0.04), so the
+  two layers don't fight. 1.3 m tall was a red smear; **1.7 m** (z 1.9–3.6, 6.8 m wide, reaching 0.6 m into the
+  white storey) reads on wall 4 when it leans in at the left screen edge (stand at 3566.5, 4716.5, on the east
+  sidewalk of Händelstraße). Wall 3 faces SSW, so it only shows at the top screen edge, where screens are
+  shortest and walls lean least: there it is red lettering on the grey base, not readable letters.
+- **New generic part `balcony { edge, u0, u1, z: [floor heights], depth, colour, slab? }`** (dressing.ts,
+  places.ts): per floor a slab and a solid 1 m parapet round its front and ends. Overhead, so it may stick out
+  further than an arcade; places.test.ts keeps the lowest floor at z ≥ 2.5. No ground shadow (the building's
+  covers most of it). Here u 30.5–36.5 on wall 4 at z 3, 6, 9, depth 1.3, parapet #526471, slab #75757b:
+  from above a grey stack standing out of the white front. Count and width per floor are a guess (no photo).
+- **Sprites:** `sparkasse-flag` at u −4, n 8.5, z 7 on a 7 m pole (the part puts its pole under the sprite's
+  middle, not at the flag's hoist; from above it doesn't show), `yield-sign` at u −8, n 4.9, z 2.1 on the
+  corner of the sidewalk where Händelstraße ends at Johann-Sebastian-Bach-Straße, both turned by
+  −frameAngle (0.907) to read upright. **Solar panels** without a roof texture variant: a `solar-panels`
+  sprite lying on the roof at z 12.08 (the roof is flat at the eaves, 12 m), 11 m along the ridge on the
+  street-side plane, where the DOP40 photo shows a dark strip (tile `3-4`, pixels 541–566, 681–722).
+- **Sprite angle sign:** `angle` turns the other way from (u, n). n is u turned *clockwise* on the map (y
+  points south), so a direction at +a from u towards n needs `angle: −a`. The ridge here runs at +0.302 rad,
+  so the panels have −0.302; with +0.302 they lay across the roof.
+- **Two "Sparkasse" POIs:** the other one (2748.9, 2748.5) is 2 km away, outside `POI_REACH_M` (80 m), so the
+  registry picks #20; places.test.ts pins it (frame foot within 12 m of #20, 4 storeys).
+- **process-sprites.py rewrites every output whose Codex source is in the directories you pass** (the
+  scratchpad `img/` still held `rehmaus-sign`, and the re-encode came out byte-different): pass only the new
+  images' directories, or `git checkout` the sprites you did not mean to touch.
+- **Needs a photo:** the DOP40 shows the S ~20 m of the footprint under an orange roof with that dark strip and
+  leaning less than the lighter N part, so the S half may be lower (the single-storey podium, or a lower wing).
+  Not modelled: the whole footprint is 4 storeys, as the prompt says.
 
 ### B1-3 · Rathaus Geretsried (#174, civic) — Size: M — status: ref-done
 ```
@@ -258,26 +296,27 @@ Acceptance criteria:
 Size: S
 ```
 
-### B1-5 · PENNY Am Stern (#66, supermarket) — Size: S — status: ref-done (unblocked by 05/06)
+### B1-5 · PENNY Am Stern (#66, supermarket) — Size: S — status: ref-done (location corrected in batch 3; build inside B3-0)
 ```
-Goal: Make Stein's PENNY readable from the street: the red "PENNY. Am Stern" fascia over a glass shop front at
-the W end of the white balcony block (Rossmann block, Sudetenstr. 33), facing the Am Stern car park, plus the red
-PENNY / ROSSMANN / Ahorn Apotheke / BEYER pylon at the car-park entrance. Exterior only.
-Reference: docs/places/penny-sudetenstrasse.md; reference/penny-sudetenstrasse/05-street-entrance.png (key:
-  entrance, fascia, pylon), 06-street-carpark.png (whole block from Sudetenstraße), 01-street-front.png +
-  02-street-side.png (corner sign over Ahorn Apotheke, pylon; Street View Aug 2022), 04-satellite.png (roofs).
-Spec (via #0b):
-- POI stays #66 "PENNY" (OSM node, Sudetenstr. 43). The dressing goes on building way 293545707
-  (Sudetenstr. 33, 53.3 × 20.0 m), NOT on the node's building 822461881.
-- Wall-sign strip "PENNY. Am Stern" (red, sunlit #e7595e; white PENNY + yellow dot) + glass-front strip at the
-  W end of 293545707's SW (car-park) long edge, ground floor only, recessed under the first-floor overhang.
-- Keep/add: the existing corner sign on 822461881's Sudetenstraße corner (01) and a red pylon sprite at the
-  car-park entrance with 4 panels PENNY / ROSSMANN / Ahorn Apotheke (green #669c36) / BEYER.
-- White block with grey balcony rails above: engine levels 4, 05 suggests 5 storeys. Do NOT override unless
-  a second count confirms it. No trolleys, no door position: needs reference.
+Goal: Make Stein's PENNY readable: a free-standing red canopy "PENNY. Am Stern" on posts, trolleys under it, in
+front of a glass shop front at the NE end of the white balcony block's NW facade (way 822461881), facing the
+Am Stern car park. Plus the "PENNY." board on the block's Sudetenstraße end wall. Exterior only.
+Reference: docs/places/penny-sudetenstrasse.md; reference/da-daniele/02-street-side.png (key: canopy on posts,
+  trolleys), reference/penny-sudetenstrasse/05-street-entrance.png (the whole NW facade: Penny NE end,
+  da Daniele, Ahorn), 06-street-carpark.png, 01-street-front.png (board on the Sudetenstraße end; Aug 2022),
+  04-satellite.png (roofs).
+Spec (via #0b, built as part of B3-0):
+- POI stays #66 "PENNY" (OSM node 2971507476, Sudetenstr. 43, 4288.8, 4804.3). The dressing goes on way
+  822461881, the node's own building. NOT on 293545707 (that is the Rossmann block; batch 2 was wrong and
+  penny.de's geo is wrong).
+- Canopy: red board (sunlit #e7595e; shade #871b21) "PENNY." white + yellow dot, small "Am Stern", on posts
+  in front of the NE end of the NW facade ((4292.8, 4792.7) → (4298.3, 4784.2) area); glass strip behind;
+  trolley sprites under it. Door position: needs reference.
+- Board "PENNY." on the SW (Sudetenstraße) end wall above the Ahorn corner (01).
+- Red pylon at the car-park entrance: see B3-0 (panels PENNY / ROSSMANN / Ahorn Apotheke / Schlüsseldienst GEYER).
 Acceptance criteria:
-- [ ] Driving into the Am Stern car park, the red PENNY sign at the W end of the balcony block matches 05.
-- [ ] The pylon is visible at the car-park entrance from Sudetenstraße as in 06.
+- [ ] From the car park, the red canopy with trolleys at the NE end of the Penny block matches da-daniele/02 + 05.
+- [ ] Driving past on Sudetenstraße, the PENNY board and the pylon match 01/02.
 - [ ] Car park stays drivable; Post Filiale 571 job (van on Sudetenstraße across the road) unaffected;
       pnpm test + typecheck green.
 Size: S
@@ -407,18 +446,175 @@ Acceptance criteria:
 Size: S
 ```
 
+### Batch 3: Am Stern (decision)
+Same rules: **exterior only** via **#0b**. Seven places plus PENNY sit around one car park. Build the buildings
+**once** (B3-0), then dress each unit (B3-1…B3-7 are dressing specs that B3-0 pulls in; do them in the same PR or
+right after). New things #0b must support for this batch:
+- **Unit wall-signs on a shared facade**: a list of `{edge, u0, u1, text/texture}` per building, not one sign per building.
+- **Corner signs** (one sign wrapping a corner) and **projecting signs** (Ahorn's red "A").
+- **Pylon sprite**: a post with stacked panels.
+- **Roof-readable signs**: a flat decal on the roof near the store's facade, so the top-down camera can tell the units apart.
+- **Footprint split or per-part height**: OSM puts two balcony blocks + a single-storey link in one outline (127872184, 822461881).
+
+### B3-0 · Am Stern block (umbrella: buildings, car park, pylon) — Size: M — status: ref-done (partial)
+```
+Goal: Stein's shopping hub, built once: three white balcony blocks with terracotta roofs around one car park off
+Sudetenstraße, plus EDEKA as a separate flat hall across Breslauer Weg. Each shop unit gets its own sign, the
+red pylon stands at the car-park entrance, and from above the player can tell the shops apart. Exterior only.
+Reference: docs/places/{denns-biomarkt,takko-am-stern,orterer-am-stern,rossmann-am-stern,penny-sudetenstrasse,
+  da-daniele,ahorn-apotheke,edeka-am-stern}.md; reference/penny-sudetenstrasse/05 + 06 (overview),
+  reference/denns-biomarkt/04-satellite.png and reference/ahorn-apotheke/04-satellite.png (roofs, link roof).
+Spec (via #0b):
+- West block, way 127872184 (Sudetenstr. 29a–c): Sudetenstraße frontage = SW edge (4149.3, 4748) →
+  (4185.3, 4772.5). Units NW → SE: Denns (B3-2) · Takko (B3-4) · Orterer (B3-5, S corner + open arcade with
+  grey pillars, passage to the car park). Photos: ground + 4 balcony storeys (engine 2). The outline also holds
+  a north block and a single-storey link with skylights (satellite): split or per-part height, ask first.
+- Rossmann block, way 293545707 (Sudetenstr. 33): SW facade on the car park; ground + 2 balcony storeys = 3
+  (engine 4), terracotta roof with chimneys (B3-3).
+- Penny block, way 822461881 (Sudetenstr. 39–43): NW facade on the car park, units NE → SW: PENNY canopy
+  (B1-5) · da Daniele (B3-7) · Schlüsseldienst Geyer (no sign seen on the facade; pylon panel only) · Ahorn
+  Apotheke (B3-6, W corner). Ground + 4 balcony storeys (engine 2); the outline also wraps the E block around
+  the round plaza: same split question.
+- Car park: engine `parking` area x 4197–4287, y 4752–4824, bounded by Sudetenstraße, the Rossmann block, the
+  Penny block and the Orterer passage. Entrance from Sudetenstraße at the Ahorn corner (service lane
+  (4266.1, 4817.6)). Red/white barrier posts + "2 Std." sign in front of da Daniele. Must stay drivable.
+- Pylon: red post at the car-park entrance beside the Ahorn corner (≈ (4268–4272, 4822–4830), place by eye from
+  rossmann/03), panels top → bottom: PENNY Am Stern (red) · ROSSMANN (white) · Ahorn Apotheke (green #669c36,
+  red A) · Schlüsseldienst GEYER (white). It reads GEYER, not BEYER (OSM node 3450946413, Sudetenstr. 39).
+- EDEKA, way 189042651 (Breslauer Weg 113), flat hall NE of Breslauer Weg with its own car park SW and a yellow
+  "Heininger & Dietz" pylon (B3-1). Not part of the Am Stern outline: separate building, same PR.
+- Roof-readable signs (top-down): one decal per big unit near its facade edge: EDEKA (yellow), PENNY (red),
+  ROSSMANN (red), denns (green). Small units (Takko, Orterer, da Daniele, Ahorn) rely on wall signs + HUD.
+- Map labels: overlay.ts draws IMPORTANT labels in POI order and later ones yield. Rossmann (#65), PENNY (#66),
+  Ahorn (#67), Denns (#82), EDEKA (#204) crowd within ≈ 250 m. Do not change label logic in this item; note it.
+- Post Filiale 571 (#150, 4238.7, 4832.4) is across Sudetenstraße; its van spawns on the Sudetenstraße kerb.
+  Nothing from this item may sit on Sudetenstraße's carriageway.
+Acceptance criteria:
+- [ ] Driving into the car park from Sudetenstraße: pylon at the Ahorn corner, Penny canopy far left, Rossmann
+      ahead across the car park, as in penny/06 and rossmann/03.
+- [ ] Along Sudetenstraße NW of the car park: denns · TAKKO · Orterer corner in that order, as in denns/01, takko/02.
+- [ ] From the top-down camera, EDEKA / PENNY / ROSSMANN / denns can be told apart by roof signs.
+- [ ] Car park drivable, pickups on it still reachable; Post van job and the #195 Orterer job unaffected;
+      pnpm test + typecheck green.
+Size: M
+```
+
+### B3-1 · EDEKA Heininger & Dietz, Breslauer Weg 113 (#204, supermarket) — Size: S — status: ref-done
+```
+Goal: A big flat EDEKA hall: yellow band with the blue EDEKA logo and "Heininger & Dietz" over a glazed front,
+dark blue-grey upper band with round porthole windows, white roof edge, blue "Fleischwaren" board, yellow pylon.
+Reference: docs/places/edeka-am-stern.md; reference/edeka-am-stern/01-street-front.png (key), 02/03 (front,
+  pylon, car park), 04-satellite.png (flat light-grey roof). Street View Sep 2023.
+Spec (via #0b, inside B3-0):
+- POI #204 "EDEKA" at 4429.1, 4804.1 (there are 3 "EDEKA" POIs; match by id/position). Footprint 189042651
+  (56 × 33 m, flat, levels 1, roof #dcdcde: keep). Height bump only if #0b has one: ask first.
+- Shop facade = SW long edge, S (4434.4, 4836.2) → W (4398.4, 4793.3): glass strip, canopy band, yellow sign band
+  (exact yellow: needs reference/brand; sunlit is clipped), blue logo #448ffd near the W corner, upper band
+  #48595c with round windows, white roof edge #cacfd2. Entrance: glazed, at the W corner (Breslauer Weg end).
+  "Fleischwaren" board #4060c8 + hours board at that corner. NW side (Breslauer Weg): glass, no sign.
+- Yellow pylon "Heininger & Dietz" at the car-park edge (exact spot: needs reference). Roof decal "EDEKA".
+- Not seen / needs reference: bakery Backhupferl sign, "Hahn im Korb", the yellow cabinet in 03.
+Acceptance criteria:
+- [ ] From the SW car park the front matches 01/03; from above the roof decal reads EDEKA.
+- [ ] Car park (x 4362–4436, y 4797–4873) stays drivable. pnpm test + typecheck green.
+Size: S
+```
+
+### B3-2 · denns BioMarkt, Sudetenstraße 29 C (#82, supermarket) — Size: S — status: ref-done (partial)
+```
+Goal: Green "denns BioMarkt" letters on a white band over a glazed front, NW unit of the west block.
+Reference: docs/places/denns-biomarkt.md; reference/denns-biomarkt/01-street-front.png (key), 02 (height,
+  NW canopy), 04-satellite.png.
+Spec (via #0b, inside B3-0):
+- POI #82 at 4208, 4747.7 (node sits ≈ 27 m behind the sign, in the north block: store may run deep; leave it).
+- Way 127872184, SW edge, NW third: band #d9dedf, letters #8bd448; glass strip under; thin grey striped canopy
+  at the NW end. Roof decal "denns" (green). Door position: needs reference.
+Acceptance criteria:
+- [ ] From Sudetenstraße, denns sits NW of TAKKO as in 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B3-3 · Rossmann, Sudetenstraße 33 (#65, drugstore) — Size: S — status: ref-done
+```
+Goal: Red ROSSMANN letters on the white ground floor of the 3-storey balcony block with the terracotta roof.
+Reference: docs/places/rossmann-am-stern.md; reference/rossmann-am-stern/01-street-front.png (key), 02, 03 (pylon).
+Spec (via #0b, inside B3-0):
+- POI #65 at 4251.4, 4773.7 (another "Rossmann" #36 exists). Way 293545707, SW (car-park) facade, sign centred
+  near (4247.7, 4775.3): letters #d6666b on wall #cedae2; glass strip under.
+- Levels 4 → 3 (photos: ground + 2 balcony storeys): ask first. Roof decal "ROSSMANN" (red). Door: needs reference.
+Acceptance criteria:
+- [ ] Across the car park the block matches 01/02. pnpm test + typecheck green.
+Size: S
+```
+
+### B3-4 · Takko Fashion, Sudetenstraße 29b (#81, shop) — Size: S — status: ref-done
+```
+Goal: The yellow-orange TAKKO panel on the middle unit of the west block's Sudetenstraße front.
+Reference: docs/places/takko-am-stern.md; reference/takko-am-stern/01-street-front.png (key), 02.
+Spec (via #0b, inside B3-0):
+- POI #81 at 4195.3, 4751.3. Way 127872184, SW edge, middle unit: panel #e9cb76 with dark "TAKKO" lettering
+  (exact lettering colour: needs reference); glass strip under. No map label (kind shop): HUD only.
+Acceptance criteria:
+- [ ] Order denns · TAKKO · Orterer along Sudetenstraße as in takko/02. pnpm test + typecheck green.
+Size: S
+```
+
+### B3-5 · Orterer Getränkemarkt, Sudetenstraße 29a (#80, shop) — Size: S — status: ref-done (partial)
+```
+Goal: The drinks market at the west block's S corner: round red Orterer logo on the corner pier, an open arcade
+with grey pillars and stacked crates, and the passage through to the car park.
+Reference: docs/places/orterer-am-stern.md; reference/orterer-am-stern/01-street-front.png (key), 03 (arcade).
+Spec (via #0b, inside B3-0):
+- POI #80 at 4184.1, 4765.8. NOT #195 (2306.5, 2063.1), which town-jobs.ts targets (`p.y < 3000`): never move
+  #80 north of y 3000 and never rename it.
+- Way 127872184, S corner (4185.3, 4772.5): logo red #d65c68 on the pier; arcade = walkable ground floor with
+  solid pillar posts; crate sprites. Keep the passage along the SE edge open. Synthetic building -156 (49 m²
+  in the passage): what it is needs reference; don't dress it. Poster text: needs reference.
+Acceptance criteria:
+- [ ] Corner matches 01/03; player can walk through the passage. Orterer job (#195) unchanged; tests green.
+Size: S
+```
+
+### B3-6 · Ahorn Apotheke, Sudetenstraße 41 (#67, pharmacy) — Size: S — status: ref-done
+```
+Goal: The glass corner pharmacy at the car-park entrance: light-green "Ahorn Apotheke" lettering, a red
+pharmacy "A" sticking out at the corner.
+Reference: docs/places/ahorn-apotheke.md; reference/ahorn-apotheke/01-street-front.png (key), 02, 03.
+Spec (via #0b, inside B3-0):
+- POI #67 at 4276.7, 4823.1. Way 822461881, W corner (4270.7, 4827.3): glass on both faces; green lettering
+  (#609c2b / #669c36) on the NW facade and the Sudetenstraße end face; projecting red "A" sign at the corner.
+Acceptance criteria:
+- [ ] From Sudetenstraße the corner + pylon match 01. Post van job unaffected; tests green.
+Size: S
+```
+
+### B3-7 · Bar Café da Daniele, Sudetenstraße 39 (#77, food) — Size: S — status: ref-done
+```
+Goal: A crimson "Bar Café da Daniele" fascia with the cup logo, a grey script sign above, parking bays with
+red/white posts right in front.
+Reference: docs/places/da-daniele.md; reference/da-daniele/01-street-front.png (key), 02.
+Spec (via #0b, inside B3-0):
+- POI #77 at 4280.4, 4816.7. Way 822461881, NW facade between the Penny canopy and Ahorn: fascia #8d384f,
+  white text; grey script sign above. Barrier-post sprites along the bays.
+- Terrace: not seen (website mentions an outdoor area): needs reference, add no tables.
+Acceptance criteria:
+- [ ] From the car park the unit matches 01. Bays stay drivable. pnpm test + typecheck green.
+Size: S
+```
+
+
 ## Priority list (all 234 POIs)
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5)
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | ref-done (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
 | 174 | Rathaus Geretsried | civic | 2605.1, 2845.4 | 47.874411, 11.464927 | 2278 | ref-done | job hub: payphone + Mercedes G / Taxi jobs; Karl-Lederer-Platz 1 |
 | 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
-| 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = W end of the Rossmann block (way 293545707), facing the car park (05/06) |
-| 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | ref-done | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
+| 66 | PENNY | supermarket | 4288.8, 4804.3 | 47.856794, 11.4875 | 330 | ref-done | Stein's main discounter; entrance = free-standing red canopy at the NE end of way 822461881's NW facade, facing the car park (corrected in batch 3; built in B3-0) |
+| 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 
 ### P2 — gameplay places (jobs, save, spray, police, start)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
@@ -442,10 +638,10 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | todo |  |
-| 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | todo |  |
+| 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | ref-done (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
 | 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo |  |
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | todo |  |
-| 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | todo |  |
+| 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | ref-done | B3-1; EDEKA Heininger & Dietz, Breslauer Weg 113; flat hall, yellow band, porthole upper wall |
 | 234 | Aussegnungshalle | church | 3894.5, 4149.6 | 47.862682, 11.482214 | 509 | todo |  |
 | 189 | Franz-Marc-Schule | school | 3315.3, 4811.1 | 47.856733, 11.474448 | 702 | todo |  |
 | 233 | Christuskirche | church | 4193.1, 5389.8 | 47.851528, 11.486217 | 767 | todo |  |
@@ -486,8 +682,8 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P4 — everyday services (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 65 | Rossmann | drugstore | 4251.4, 4773.7 | 47.857069, 11.486999 | 283 | todo |  |
-| 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | todo |  |
+| 65 | Rossmann | drugstore | 4251.4, 4773.7 | 47.857069, 11.486999 | 283 | ref-done | B3-3; Rossmann block 293545707, 3 storeys (engine 4) |
+| 67 | Ahorn Apotheke | pharmacy | 4276.7, 4823.1 | 47.856625, 11.487338 | 329 | ref-done | B3-6; W corner of the Penny block, red A, pylon |
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | todo |  |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo |  |
 | 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo |  |
@@ -520,7 +716,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | todo |  |
 | 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | todo |  |
 | 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | todo |  |
-| 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | todo |  |
+| 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | ref-done | B3-7; crimson fascia; terrace not seen (needs reference) |
 | 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo |  |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | todo |  |
@@ -567,8 +763,8 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 116 | GG-Radsport | shop | 4174.6, 4715.9 | 47.857589, 11.485969 | 189 | todo |  |
 | 157 | Aphrodite-aestetic | shop | 4170, 4726.8 | 47.857491, 11.485907 | 189 | todo |  |
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | todo |  |
-| 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | todo |  |
-| 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | todo |  |
+| 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | ref-done (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
+| 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | ref-done | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo |  |
 | 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | todo |  |
 | 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo |  |

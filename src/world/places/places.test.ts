@@ -110,7 +110,7 @@ describe("the registry on the real map", () => {
     const wrong = places.flatMap(({ dressing, building, frame }) => {
       const pts = map.buildings[building]?.pts ?? []
       return dressing.parts.flatMap((part) => {
-        if (part.kind === "wallSign" || part.kind === "arcade") {
+        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony") {
           const wall = wallFrame(pts, part.edge)
           const fits = wall !== null && part.u0 >= 0 && part.u0 < part.u1 && part.u1 <= wall.length + 0.01
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
@@ -123,12 +123,25 @@ describe("the registry on the real map", () => {
     expect(wrong).toEqual([])
   })
 
+  it("hangs balconies above head height, so people and cars pass under them", () => {
+    const low = PLACES.flatMap((d) => d.parts.flatMap((part) => (part.kind === "balcony" && Math.min(...part.z) < 2.5 ? [`${d.poi}: balcony at ${Math.min(...part.z)}`] : [])))
+    expect(low).toEqual([])
+  })
+
   it("keeps bands within the walls", () => {
     const wrong = places.flatMap(({ dressing, building }) => {
       const top = (dressed.buildings[building]?.levels ?? 0) * 3 + 0.6
       return (dressing.bands ?? []).filter((b) => !(b.z0 >= 0 && b.z0 < b.z1 && b.z1 <= top)).map((b) => `${dressing.poi}: band ${b.z0}..${b.z1}`)
     })
     expect(wrong).toEqual([])
+  })
+
+  it("dresses the Händelstraße Sparkasse, not the one in the old town, with its four storeys", () => {
+    const sparkasse = places.find((p) => p.dressing.osmBuildingId === 128271967)
+    expect(map.pois.filter((p) => p.name === "Sparkasse")).toHaveLength(2)
+    // The frame's foot on Händelstraße lies opposite the POI at (3550.6, 4719.7), not 2 km away at the other branch.
+    expect(Math.hypot((sparkasse?.frame.ox ?? 0) - 3550.6, (sparkasse?.frame.oy ?? 0) - 4719.7)).toBeLessThan(12)
+    expect(dressed.buildings[sparkasse?.building ?? -1]?.levels).toBe(4)
   })
 
   it("gives St. Ursula its four storeys", () => {

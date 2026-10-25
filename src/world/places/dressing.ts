@@ -12,7 +12,7 @@
  * Coordinates (world/frame.ts): free-standing parts (tower, sprite) are in
  * the street frame, u along the street, n from its centre line towards the
  * place (the POI, or the footprint's middle when no POI marks it). Wall
- * parts (wallSign, arcade) sit on one wall of the footprint, `edge` i
+ * parts (wallSign, arcade, balcony) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
  */
@@ -46,6 +46,13 @@ export type Part =
    * footprint behind it stays solid.
    */
   | { readonly kind: "arcade"; readonly edge: number; readonly u0: number; readonly u1: number; readonly arches: number; readonly h: number; readonly depth: number; readonly pillar: Rgba; readonly glazing: Rgba }
+  /**
+   * A stack of balconies on wall `edge` from u0 to u1, one with its floor at
+   * each height in `z`: a slab `depth` meters deep (in `slab`, else `colour`)
+   * with a solid 1 m parapet in `colour` round its front and ends. Overhead
+   * (places.test.ts keeps the lowest above head height), so never in the way.
+   */
+  | { readonly kind: "balcony"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: ReadonlyArray<number>; readonly depth: number; readonly colour: Rgba; readonly slab?: Rgba }
   /**
    * A square tower on `rect` (street frame, inside the footprint): walls up
    * to `h`, a pyramid roof `roofH` high, corner quoins in `trim`, a post with

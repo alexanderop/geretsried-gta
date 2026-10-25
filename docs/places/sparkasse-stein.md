@@ -9,7 +9,7 @@
 | OSM building | way **128271967** contains the node: 451 m², 38.1 × 11.8 m, long axis bearing 21° (NNE), 6 nodes. No levels or roof tags → engine default 2 levels |
 | Engine roof colours (DOP40) | `#daab8b` (sunlit face) / `#897666` (shade face), pitched |
 | Street frame | **Händelstraße** (residential, 6.5 m), kerb point (3558.5, 4725.9), 10.0 m. Street bearing 218°; n bearing 308° (NW). The long SE edge (3552.6,4721.6 → 3566.1,4686.0, 38.1 m) faces Händelstraße. Johann-Sebastian-Bach-Straße is 13.8 m away at the S corner (corner with the yield sign + flagpole). |
-| Status | **ref-done** |
+| Status | **implemented** (B1-2, `src/world/places/sparkasse-stein.ts`; podium and solar layout still need a photo) |
 
 ## Images
 | File | What | Source |

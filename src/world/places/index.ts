@@ -4,6 +4,7 @@
  */
 import type { PlaceDressing } from "./dressing.ts"
 import { REHMAUS_APOTHEKE } from "./rehmaus-apotheke.ts"
+import { SPARKASSE_STEIN } from "./sparkasse-stein.ts"
 import { ST_URSULA } from "./st-ursula.ts"
 
-export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE]
+export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE, SPARKASSE_STEIN]

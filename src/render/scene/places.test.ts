@@ -36,6 +36,8 @@ const hall: PlaceDressing = {
     { kind: "arcade", edge: 0, u0: 14, u1: 28, arches: 4, h: 3, depth: 0.4, pillar: [232, 222, 210, 255], glazing: [110, 108, 104, 255] },
     { kind: "tower", rect: [-3, 3, 112, 118], h: 16, roofH: 5, colours: { wall: [233, 222, 205, 255], roof: [90, 80, 65, 255], trim: [219, 178, 103, 255], finial: [60, 60, 60, 255] } },
     { kind: "sprite", name: "prop-church", u: 0, n: 100, z: 2.5, angle: 0, len: 1.2, pole: [200, 40, 40, 255] },
+    // Wall 2 runs along y = 170, seen from the south: left end (150, 170), u east, out south (+y).
+    { kind: "balcony", edge: 2, u0: 5, u1: 10, z: [3, 6], depth: 1.2, colour: [82, 100, 113, 255] },
   ],
 }
 
@@ -91,6 +93,13 @@ describe("a dressed place", () => {
   it("puts the tower's roof tip over its middle and the finial on it", () => {
     expect(vs.some((v) => near(v.x, 165) && near(v.y, 155) && near(v.z, 21))).toBe(true)
     expect(Math.max(...vs.map((v) => v.z))).toBeCloseTo(22.4)
+  })
+
+  it("stands a balcony out from its wall at each floor, its parapet a meter over the slab", () => {
+    const front = vs.filter((v) => near(v.y, 171.2))
+    expect(front.length).toBeGreaterThan(0)
+    for (const v of front) expect(v.x >= 155 - 1e-3 && v.x <= 160 + 1e-3).toBe(true)
+    expect([...new Set(front.map((v) => Math.round(v.z * 100) / 100))].toSorted((a, b) => a - b)).toEqual([2.82, 3, 4, 5.82, 6, 7])
   })
 
   it("lays the sprite flat at its spot in the street frame, on its pole", () => {

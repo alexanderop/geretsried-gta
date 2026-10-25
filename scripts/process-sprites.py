@@ -325,6 +325,31 @@ if lettering is not None:
     square_.save(OUT / "rehmaus-sign.webp", "WEBP", quality=92)
     print("rehmaus-sign.webp")
 
+# Sparkasse Händelstraße: the red flag, the yield sign at its corner and the roof's solar array, prop sprites seen from above.
+for name in ["sparkasse-flag", "yield-sign", "solar-panels"]:
+    path = find(name)
+    if path is None:
+        continue
+    im = keep_main_shape(key_magenta_fast(Image.open(path)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+    print(f"{name}.webp")
+# Its loose red "Sparkasse" with the S logo (keyed and squared like rehmaus-sign), and the bank's ground floor:
+# grey render with two tall windows, red bands and a lamp, 2:1 and opaque, stored square (a wall sign stretches it back).
+lettering = find("sparkasse-sign")
+if lettering is not None:
+    im = key_magenta_fast(Image.open(lettering))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (255, 59, 48, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "sparkasse-sign.webp", "WEBP", quality=92)
+    print("sparkasse-sign.webp")
+windows = find("sparkasse-windows")
+if windows is not None:
+    Image.open(windows).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "sparkasse-windows.webp", "WEBP", quality=90)
+    print("sparkasse-windows.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
