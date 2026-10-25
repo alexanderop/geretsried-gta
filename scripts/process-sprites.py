@@ -557,6 +557,61 @@ if trolleys is not None:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "trolley-row.webp", "WEBP", quality=90)
     print("trolley-row.webp")
 
+# EDEKA Heininger & Dietz (Breslauer Weg 113): the blue EDEKA logo box and the Fleischwaren + opening-hours boards
+# (keyed and squared like the Post board, their own colours kept inside); one bay of the blue-grey upper wall with its
+# porthole and the yellow pylon's face (opaque, stored square; the pylon cut to its face). The yellow band is laid out
+# here: Codex's lettering ("Heininger & Dietz", 3:1) is stretched wide as the photo's extended letters are and put
+# into a 20:1 band of its own yellow between its grey rails, starting 35 % in (the logo stands left of it), so the
+# wallSign's 20:1 rectangle shows it in proportion.
+for name in ["edeka-logo", "edeka-boards"]:
+    src = find(name)
+    if src is None:
+        continue
+    keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (40, 80, 180, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp")
+panels = find("edeka-panels")
+if panels is not None:
+    Image.open(panels).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "edeka-panels.webp", "WEBP", quality=90)
+    print("edeka-panels.webp")
+face = find("edeka-pylon")
+if face is not None:
+    im = Image.open(face).convert("RGB")
+    a = np.asarray(im, np.int32)
+    # The face: the columns that are not the white surround.
+    cols = np.nonzero((a.min(axis=2) < 200).mean(axis=0) > 0.5)[0]
+    im.crop((int(cols[0]), 0, int(cols[-1]) + 1, im.height)).resize((512, 512), Image.LANCZOS).save(OUT / "edeka-pylon.webp", "WEBP", quality=92)
+    print("edeka-pylon.webp")
+band = find("edeka-band")
+if band is not None:
+    src = Image.open(band).convert("RGB")
+    w, h = src.size
+    a = np.asarray(src, np.int32)
+    # The grey rails: the rows at top and bottom whose left end is not yellow (blue channel high); the ink: red low.
+    grey = np.nonzero(a[:, 4, 2] > 120)[0]
+    top = int(max([r for r in grey if r < h // 2], default=0)) + 1
+    bottom = int(min([r for r in grey if r > h // 2], default=h - 1))
+    yellow = tuple(int(v) for v in np.median(a[top + 4:top + 24, 4:w // 20].reshape(-1, 3), axis=0))
+    H = 128
+    W = H * 20
+    out = Image.new("RGB", (W, H), yellow)
+    rail = round(H * top / h)
+    out.paste(src.crop((0, 0, w, top)).resize((W, rail)), (0, 0))
+    out.paste(src.crop((0, bottom, w, h)).resize((W, H - round(H * bottom / h))), (0, round(H * bottom / h)))
+    ink = np.nonzero((a[top + 4:bottom - 4, :, 0] < 120).any(axis=0))[0]
+    ink = ink[(ink > w // 40) & (ink < w - w // 40)]
+    text = src.crop((int(ink[0]) - 8, top, int(ink[-1]) + 8, bottom))
+    tw = round(W * 0.48)
+    out.paste(text.resize((tw, round(H * bottom / h) - rail), Image.LANCZOS), (round(W * 0.355), rail))
+    out.resize((512, 512), Image.LANCZOS).save(OUT / "edeka-band.webp", "WEBP", quality=92)
+    print("edeka-band.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

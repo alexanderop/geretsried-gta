@@ -886,7 +886,7 @@ Size: M
 - **Screenshots** (local): `?compare=47.85685,11.4876,90` from above; on foot at (4260, 4822) the pylon at the
   corner; at (4276, 4794) the canopy's red fascia with PENNY at the bottom right.
 
-### B3-1 · EDEKA Heininger & Dietz, Breslauer Weg 113 (#204, supermarket) — Size: S — status: ref-done
+### B3-1 · EDEKA Heininger & Dietz, Breslauer Weg 113 (#204, supermarket) — Size: S — status: implemented (partial: the band, canopy and porthole heights, how far the band and glazing run, the portholes' spots, the NW glazing, the pylon's size and spot, the exact yellow and the roof board are guesses)
 ```
 Goal: A big flat EDEKA hall: yellow band with the blue EDEKA logo and "Heininger & Dietz" over a glazed front,
 dark blue-grey upper band with round porthole windows, white roof edge, blue "Fleischwaren" board, yellow pylon.
@@ -902,10 +902,33 @@ Spec (via #0b, inside B3-0):
 - Yellow pylon "Heininger & Dietz" at the car-park edge (exact spot: needs reference). Roof decal "EDEKA".
 - Not seen / needs reference: bakery Backhupferl sign, "Hahn im Korb", the yellow cabinet in 03.
 Acceptance criteria:
-- [ ] From the SW car park the front matches 01/03; from above the roof decal reads EDEKA.
-- [ ] Car park (x 4362–4436, y 4797–4873) stays drivable. pnpm test + typecheck green.
+- [x] From the SW car park the front matches 01/03; from above the roof decal reads EDEKA.
+- [x] Car park (x 4362–4436, y 4797–4873) stays drivable. pnpm test + typecheck green.
 Size: S
 ```
+
+**B3-1 as built** (`src/world/places/edeka-am-stern.ts`, extending B3-0's masses and roof sign):
+- **Sources.** `reference/edeka-am-stern/01–04` and `SOURCES.md` are on disk now (B3-0 did not have them) and were
+  used for the front; heights from B3-0's LoD2 masses (hall 9.44 m, entrance corner 5.93 m), roof from the DOP20.
+- **Walls** (`facade: render`, bands; the corner mass has its own): white glazed storey to 3.4 m, a light band to
+  3.95 m, blue-grey panels `#48595c` to 8.6 m, white roof edge `#cacfd2` on top (corner: panels to 5.5 m, edge over).
+- **Front, wall 1** (u 0 at the W corner): glazing (`shop-front`) u 5.6–55.6; a light canopy 1.6 m deep at 3.75 m
+  along the whole front, clear of the car park (3.6 m out); Fleischwaren + opening-hours boards (`edeka-boards`) on the
+  white corner u 1–4; the yellow band (`edeka-band`, "Heininger & Dietz") u 0.2–22 at z 4.35–5.45 with the blue
+  EDEKA logo box (`edeka-logo`) proud of it at u 4.9–6.8; porthole bays (`edeka-panels`, 3.2 m) at u 25, 33, 41, 49.
+- **NW wall on Breslauer Weg (wall 2):** glazing, no lettering, three porthole bays, the logo over the corner (01's
+  left edge).
+- **Pylon:** yellow "Heininger & Dietz" face with the E (`edeka-pylon`), 0.8 × 4.1 m, between the corner and the
+  entrance, 3 m in front of wall 1 at u 5.5 (street frame u 20.38, n 14.04), its faces to the car park and the store.
+- **Sprites:** Codex (five images), processed by `scripts/process-sprites.py`; the band's lettering is stretched
+  into a 20:1 band so it keeps the photo's wide letters on the wall.
+- **Generic test change:** places.test's "keeps bands within the walls" now measures a place with `masses` against
+  its tallest mass, and each mass's own bands against that mass (before it used OSM's levels, 3.6 m here).
+- **Guesses:** band, canopy and porthole heights (read off 01 against the LoD2 heights); how far the yellow band and
+  the glazing run; porthole count and spots; the NW glazing; the pylon's size and spot; the yellow `#ffe31a`-ish
+  (photo clipped); the roof board (B3-0). Not built: bakery Backhupferl, "Hahn im Korb" (no sign seen), the yellow
+  cabinet in 03 (not identified), the seasonal pallets.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1662 (EDEKA's).
 
 ### B3-2 · denns BioMarkt, Sudetenstraße 29 C (#82, supermarket) — Size: S — status: ref-done (partial)
 ```
@@ -1395,11 +1418,123 @@ Acceptance criteria:
 Size: S
 ```
 
+### Batch 6b: start area, next 8 (decision)
+Same rules as 6a: **exterior only** (Size S), everything through **#0b**, no interiors, no new ShopKind. Flamingo (#152) and
+Fellomenal (#158) are batch 4 (B4-10/B4-11). Street View had no usable fronts for these 8 (only distant/obstructed views and
+one interior photosphere), so the references are: **BVV DOP20 orthophoto** + **BVV LoD2 3D model** (both CC BY 4.0, credit
+"© Bayerische Vermessungsverwaltung – www.geodaten.bayern.de"), business websites (logos, reference only) and OSM tags. Result:
+massing and roof are known for all 8, **no shop front was seen for any of them**, so no wallSign/awning/props yet: every item
+below only does what the data shows (levels, roof colour) and is marked "needs facade reference".
+Wikimedia Commons has nothing for these buildings; Mapillary needs an OAuth token (not used).
+Finding: **multipolygon buildings are dropped by the import** (scripts/import-osm.ts fetches only `way["building"]`), so the
+Karl-Lederer-Grundschule (relation 2014408) is missing in-game (B6b-2).
+Open questions for Alex: miwomo closes end of 2026 → keep / rename to THOMA Reisemobile / drop (B6b-1); Mittelschule merger and
+OSM name (B6b-4); POI name "Bellini" → "Hair & Style Bellini"? (B6b-5); Ana's vs ZER-O-WASH at Händelstraße 2 (B6b-8);
+apply the LoD2 levels below now, or wait for facade photos?
+
+### B6b-1 · miwomo / THOMA Reisemobile, Breslauer Weg 9 (#138, shop) — Size: S — status: todo (needs facade reference; ask Alex)
+```
+Massing already matches: way 127872177, engine levels 2 + flat roof #f5ece5 = LoD2 (flat, 7.9 m) + DOP (#f6ebe5). Nothing to
+build. Street View (Nov 2022, text only): grey two-storey workshop with red trim behind trees, no sign. miwomo.de: the rental
+closes at the end of 2026; THOMA Reisemobile (caravan repairs, same address) continues. Do not add a miwomo sign (never seen on
+the building). Alex decides the POI name. See docs/places/miwomo.md.
+```
+
+### B6b-2 · Karl-Lederer-Grundschule, J.-S.-Bach-Straße 4 (#228, school) — Size: S (after the import fix) — status: todo (needs facade reference + import fix)
+```
+Goal: The primary school exists in-game as a ring-shaped 3-storey-high block around a courtyard, with a light-grey flat roof.
+Reference: docs/places/karl-lederer-grundschule.md; reference/karl-lederer-grundschule/01-dop20-ortho.jpg, 02 (outline),
+03/04 (LoD2 massing).
+Blocker: scripts/import-osm.ts only fetches way["building"], so OSM relation 2014408 (type=multipolygon, building=yes; outer
+way 127604842, inner courtyard way 156041502) never becomes a building. Fold "keep multipolygon buildings (outer + holes)" into
+I-1 or a small import item first; check how many other relation buildings in the bbox are missing.
+Spec (via #0b, once the building exists):
+- POI "Karl-Lederer-Grundschule Geretsried" (#228 at 3800.4, 4825.3, in the courtyard). levels 3 (LoD2: flat roofs 9.5–10.4 m,
+  one low gable wing 9.7–10.3 m), roof colour #c0b8ab, flat.
+- Walls, windows, entrance, the 2018 timber storey: needs reference. No wallColour, no signs.
+Acceptance criteria:
+- [ ] The ring block with its open courtyard stands where the DOP shows it; the POI is in the courtyard, not inside a wall.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B6b-3 · Friseurteam Haar Genau, Carl-Maria-von-Weber-Weg 34 (#54, shop) — Size: S — status: todo (needs facade reference)
+```
+Goal: The salon's building gets its real height: a 5-storey-high flat-roof block.
+Reference: docs/places/haar-genau.md; reference/haar-genau/01-dop20-ortho.jpg, 03/04 (LoD2), 06-web-logo.jpg (logo, reference only).
+Spec (via #0b):
+- POI "Haar Genau Friseurteam" (#54 at 3734.1, 4574). Way 127604894: levels 5 (LoD2 main roof 16.2 m = 5×3 + 0.6 parapet);
+  roof stays flat (#b4aa9b engine / #aaac9e DOP). The 18.9 m rooftop box and the 4.1 m low part are not modelled.
+- Logo exists (teal-green #05e49a "HAAR" + dark #25170e "GENAU", scissors-G) but where it hangs is not seen → no wallSign.
+Acceptance criteria:
+- [ ] Only way 127604894 gets taller; neighbours unchanged. pnpm test + typecheck green.
+Size: S
+```
+
+### B6b-4 · Karl-Lederer-Mittelschule (OSM: Hauptschule), J.-S.-Bach-Straße (#186, school) — Size: S — status: todo (needs facade reference; ask Alex)
+```
+Goal: The Mittelschule gets its real height: a long ~13 m block with a lower N wing.
+Reference: docs/places/karl-lederer-mittelschule.md; reference/karl-lederer-mittelschule/01-dop20-ortho.jpg, 03/04 (LoD2).
+Spec (via #0b):
+- POI "Karl-Lederer-Hauptschule Geretsried" (#186 at 3740.9, 4830.9). Way 127604843: levels 4 (LoD2 main roofs 12.8–14.1 m,
+  very low gable → keep flat, roof #d3cfcd). N wing way 188651575: levels 3 (LoD2 9.6–11.1 m).
+- Walls (Street View: "light multi-storey block through trees", no capture), entrance, sign: needs reference.
+- Name: do not rename; Alex decides (school is being merged into the Adalbert-Stifter-Mittelschule by 2029–2031).
+Acceptance criteria:
+- [ ] Only the two school ways change height. pnpm test + typecheck green.
+Size: S
+```
+
+### B6b-5 · Hair & Style Bellini, Neuer Platz 22 (#159, shop) — Size: S — status: todo (needs facade reference; ask Alex)
+```
+Goal: The long Neuer Platz block (Bellini and its neighbours) gets its real height: 4 storeys under a brown gable roof.
+Reference: docs/places/bellini.md; reference/bellini/01-dop20-ortho.jpg, 03/04 (LoD2), 06-web-logo.png (logo, reference only).
+Spec (via #0b):
+- POI "Bellini" (#159 at 3668.4, 4674.7). Way 127604892 (L-shaped, whole block): levels 4 (LoD2 eaves 12.2–13.6 m, ridges
+  14.4–16.0 m); keep pitched + the DOP roof colours (#a29078). This changes every tenant in the block; the LoD2 splits it into
+  11 segments (Bellini's: 4602775, eave 12.2 m, plus a 3.9 m single-storey part) if per-part masses are preferred (as for Am Stern).
+- Salon front: not seen; plaza (W) or car-park (E, address node Neuer Platz 22) side unknown → no wallSign. Logo: light-grey
+  #d3cfcf "HAIR&STYLE" + purple #86639b script "Bellini".
+- Not the same place as Ammos (B6b-6).
+Acceptance criteria:
+- [ ] The block is taller, the plaza stays open and walkable. pnpm test + typecheck green.
+Size: S
+```
+
+### B6b-6 · Restaurant Ammos, Neuer Platz 9 (#58, food) — Size: S — status: todo (needs facade reference)
+```
+Goal: Ammos' low building N of the Neuer Platz fountain gets its grey-green roof.
+Reference: docs/places/ammos.md; reference/ammos/01-dop20-ortho.jpg, 03/04 (LoD2).
+Spec (via #0b):
+- POI "Restaurant Ammos" (#58 at 3655.2, 4645.4). Way 188651577: roof { colour: "#858d7e" } (engine has no DOP colour here);
+  levels stay 2 (LoD2 eave 7.0 m, ridge 7.9 m).
+- Facade, sign, terrace furniture: needs reference (only an interior photosphere exists). No props.
+Acceptance criteria:
+- [ ] Roof colour matches 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B6b-7 · Pia's Hair & Beauty, J.-S.-Bach-Straße 11a (#161, shop) — Size: S — status: todo (needs facade reference)
+```
+Massing already matches: way 127604860, engine levels 2 + pitched + DOP roof colours = LoD2 (eave 6.8 m, ridge 10.0 m) + DOP
+(red tiled roof #d8a384 with roof windows). Street View (text only): cream residential block, red roof, no sign. Nothing to
+build until a photo shows the 11a entrance/sign. See docs/places/pias-hair-beauty.md.
+```
+
+### B6b-8 · Ana's Waschservice, Händelstraße 2 (#16, shop) — Size: S — status: todo (needs reference; ask Alex)
+```
+OSM node 370891567 (shop=laundry, no address) sits in way 127604869, whose outline carries the address node Händelstraße 2.
+Old listings: "Ana's Wäscheservice", Händelstr. 2. zerowash.de (ZER-O-WASH laundry pickup service) also gives Händelstraße 2.
+Which name trades there is unknown → no sign. Independent of the name, the massing is wrong: LoD2 = hipped roof, eave 20.4 m,
+ridge 21.9 m (+ a 4.6 m low part); engine has levels 2. Optional: #0b levels 7 on way 127604869 (DOP roof #a39179).
+See docs/places/anas-waschservice.md.
+```
+
 ## Start area (everything within ~800 m of the start)
 
 Start = Sudetenstraße 19 spawn at map (3997.4, 4648.0). Radius 800 m, map metres (project.ts). Source: public/geretsried.map.json pois
 at HEAD c5af0a7, statuses from the priority list below. 64 POIs in the map are within 800 m: 41 todo, 23 already ref-done/partial/implemented (before 6a; after 6a: 33 todo, 31 done/partial/implemented).
-Capture order: nearest first, ~10 per batch: 6a (done) → 6b → 6c → 6d → then 6e + all gyms, once I-1 has made them POIs.
+Capture order: nearest first, ~10 per batch: 6a (done) → 6b (researched; no fronts seen) → 6c → 6d → then 6e + all gyms, once I-1 has made them POIs.
 Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 
 ### 6a (captured 2026-10-25: B6a-1…B6a-10)
@@ -1416,19 +1551,19 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 11 | Quelle | shop | 154 | todo (needs reference; probably closed) |
 | 177 | Gaststätte Isarwinkel | food | 180 | ref-done (partial) |
 
-### 6b
+### 6b (researched 2026-10-25 from DOP20/LoD2/web: B6b-1…B6b-8; no shop fronts seen)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 138 | miwomo | shop | 248 | todo |
-| 228 | Karl-Lederer-Grundschule Geretsried | school | 265 | todo |
-| 54 | Haar Genau Friseurteam | shop | 274 | todo |
-| 186 | Karl-Lederer-Hauptschule Geretsried | school | 315 | todo |
-| 159 | Bellini | shop | 330 | todo |
-| 152 | Flamingo Damenmode | shop | 341 | todo |
-| 58 | Restaurant Ammos | food | 342 | todo |
-| 158 | Fellomenal Hundesalon | shop | 343 | todo |
-| 161 | Pia's Hair & Beauty | shop | 356 | todo |
-| 16 | Ana’s Waschservice | shop | 360 | todo |
+| 138 | miwomo | shop | 248 | todo (needs facade reference; closes end 2026, ask Alex) |
+| 228 | Karl-Lederer-Grundschule Geretsried | school | 265 | todo (needs facade reference; building missing in-game: import fix) |
+| 54 | Haar Genau Friseurteam | shop | 274 | todo (needs facade reference; massing ref-done) |
+| 186 | Karl-Lederer-Hauptschule Geretsried | school | 315 | todo (needs facade reference; ask Alex) |
+| 159 | Bellini | shop | 330 | todo (needs facade reference; massing ref-done) |
+| 152 | Flamingo Damenmode | shop | 341 | todo (needs reference; B4-10) |
+| 58 | Restaurant Ammos | food | 342 | todo (needs facade reference; massing ref-done) |
+| 158 | Fellomenal Hundesalon | shop | 343 | todo (needs reference, probably moved; B4-11) |
+| 161 | Pia's Hair & Beauty | shop | 356 | todo (needs facade reference; massing ref-done) |
+| 16 | Ana’s Waschservice | shop | 360 | todo (needs reference; Ana's or ZER-O-WASH, ask Alex) |
 
 ### 6c
 | # | Name | Kind | m from start | Status |
@@ -1483,7 +1618,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 67 | Ahorn Apotheke | pharmacy | 330 | ref-done |
 | 66 | PENNY | supermarket | 331 | implemented (partial) |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
-| 204 | EDEKA | supermarket | 459 | ref-done |
+| 204 | EDEKA | supermarket | 459 | implemented (partial) |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 
 ### 6e: not in the map yet: pending I-1 (import), capture after 6b–6d together with the gyms
@@ -1663,7 +1798,7 @@ Folded into I-1 (gym kind, #128 dedupe, hand-added studios). Do not run separate
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2 · batch 6a = start area nearest 10 (B6a-1…B6a-10)
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2 · batch 6a = start area nearest 10 (B6a-1…B6a-10) · batch 6b = start area next 8 (B6b-1…B6b-8, massing only)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
@@ -1695,9 +1830,9 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 |---|---|---|---|---|---|---|---|
 | 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | ref-done | B6a-5. Sudetenstraße 11, sign "VR Bank München Land" |
 | 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | ref-done (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
-| 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo |  |
-| 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | todo |  |
-| 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | ref-done | B3-1; EDEKA Heininger & Dietz, Breslauer Weg 113; flat hall, yellow band, porthole upper wall |
+| 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo (needs facade reference) | B6b-2. Relation building missing in-game (import); LoD2 ~10 m |
+| 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | todo (needs facade reference) | B6b-4. Now Karl-Lederer-Mittelschule; merger by 2029–2031 (ask Alex); LoD2 ~13 m |
+| 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | implemented (partial) | B3-1; EDEKA Heininger & Dietz, Breslauer Weg 113; flat hall, yellow band, porthole upper wall |
 | 234 | Aussegnungshalle | church | 3894.5, 4149.6 | 47.862682, 11.482214 | 509 | todo |  |
 | 189 | Franz-Marc-Schule | school | 3315.3, 4811.1 | 47.856733, 11.474448 | 702 | todo |  |
 | 233 | Christuskirche | church | 4193.1, 5389.8 | 47.851528, 11.486217 | 767 | todo |  |
@@ -1773,7 +1908,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | ref-done (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
 | 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | ref-done (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
 | 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | ref-done | B3-7; crimson fascia; terrace not seen (needs reference) |
-| 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo |  |
+| 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo (needs facade reference) | B6b-6. Neuer Platz 9; roof #858d7e; front needs reference |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | todo |  |
 | 79 | Piatsa | food | 4646.3, 4763.3 | 47.857163, 11.492293 | 659 | todo |  |
@@ -1821,14 +1956,14 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 15 | TEDi | shop | 4151.2, 4783.6 | 47.85698, 11.485655 | 205 | ref-done | B4-1 |
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | ref-done (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | ref-done | B3-4; middle unit of the west block |
-| 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo |  |
+| 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo (needs facade reference) | B6b-1. Breslauer Weg 9; rental closes end 2026, THOMA Reisemobile stays (ask Alex) |
 | 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | ref-done | B4-3 |
-| 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo |  |
-| 159 | Bellini | shop | 3668.4, 4674.7 | 47.857959, 11.479182 | 331 | todo |  |
+| 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo (needs facade reference) | B6b-3. C.-M.-v.-Weber-Weg 34; LoD2 16.2 m → levels 5 |
+| 159 | Bellini | shop | 3668.4, 4674.7 | 47.857959, 11.479182 | 331 | todo (needs facade reference) | B6b-5. Hair & Style Bellini, Neuer Platz 22 (not Ammos); LoD2 → levels 4 |
 | 152 | Flamingo Damenmode | shop | 4258.4, 4867.9 | 47.856222, 11.487093 | 341 | todo | needs reference: no photo (B4-10) |
 | 158 | Fellomenal Hundesalon | shop | 4252.8, 4876.4 | 47.856145, 11.487017 | 342 | todo | needs reference; probably moved to Deisenhofen (B4-11) |
-| 161 | Pia's Hair & Beauty | shop | 3756.8, 4910.1 | 47.855842, 11.480368 | 356 | todo |  |
-| 16 | Ana’s Waschservice | shop | 3638.9, 4610.8 | 47.858534, 11.478787 | 361 | todo |  |
+| 161 | Pia's Hair & Beauty | shop | 3756.8, 4910.1 | 47.855842, 11.480368 | 356 | todo (needs facade reference) | B6b-7. J.-S.-Bach-Str. 11a; massing already right |
+| 16 | Ana’s Waschservice | shop | 3638.9, 4610.8 | 47.858534, 11.478787 | 361 | todo (needs reference) | B6b-8. Händelstraße 2; Ana's vs ZER-O-WASH (ask Alex); LoD2 20.4 m |
 | 160 | Feinkost Christos | shop | 3621, 4676.6 | 47.857942, 11.478547 | 378 | todo |  |
 | 73 | BRK KleiderMarkt | shop | 3691.5, 4872.7 | 47.856179, 11.479492 | 380 | todo |  |
 | 17 | Juchheim Cosmetics | shop | 3582.7, 4710.5 | 47.857637, 11.478033 | 420 | todo |  |

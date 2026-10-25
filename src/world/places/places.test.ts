@@ -23,6 +23,9 @@ const nearWall = (x: number, y: number, ring: ReadonlyArray<number>) => {
   return false
 }
 
+/** The bands that do not lie on a wall `top` meters high. */
+const outside = (bands: ReadonlyArray<{ z0: number; z1: number }>, top: number) => bands.filter((b) => !(b.z0 >= 0 && b.z0 < b.z1 && b.z1 <= top + 1e-9))
+
 const road = (name: string, pts: Array<number>): Road => ({ kind: "residential", name, width: 6, oneway: false, pts, nodes: pts.filter((_, i) => i % 2 === 0).map((_, i) => i + 1) })
 const tiny: GameMap = {
   width: 256,
@@ -181,8 +184,13 @@ describe("the registry on the real map", () => {
 
   it("keeps bands within the walls", () => {
     const wrong = places.flatMap(({ dressing, building }) => {
-      const top = (dressed.buildings[building]?.levels ?? 0) * 3 + 0.6
-      return (dressing.bands ?? []).filter((b) => !(b.z0 >= 0 && b.z0 < b.z1 && b.z1 <= top)).map((b) => `${dressing.poi}: band ${b.z0}..${b.z1}`)
+      // With masses the walls are theirs: the place's bands reach the tallest, each mass's own bands its own top.
+      const masses = dressing.masses ?? []
+      const top = (masses.length > 0 ? Math.max(...masses.map((m) => m.levels)) : (dressed.buildings[building]?.levels ?? 0)) * 3 + 0.6
+      return [
+        ...outside(dressing.bands ?? [], top).map((b) => `${dressing.poi}: band ${b.z0}..${b.z1}`),
+        ...masses.flatMap((m, i) => outside(m.bands ?? [], m.levels * 3 + 0.6).map((b) => `${dressing.poi}: mass ${i} band ${b.z0}..${b.z1}`)),
+      ]
     })
     expect(wrong).toEqual([])
   })
@@ -303,6 +311,38 @@ describe("the registry on the real map", () => {
     const free = (penny?.dressing.parts ?? []).flatMap((x) => (x.kind === "pylon" ? [x.n - x.w / 2] : x.kind === "sprite" ? [x.n - x.len / 2] : []))
     expect(free.length).toBeGreaterThan(2)
     for (const n of free) expect(n).toBeGreaterThan(half + 2.6)
+  })
+
+  it("dresses EDEKA's SW front with the yellow band, the logo and the boards, its pylon and canopy off the car park", () => {
+    const edeka = at(189042651)
+    const pts = map.buildings[edeka?.building ?? -1]?.pts ?? []
+    const parts = edeka?.dressing.parts ?? []
+    const signs = (edge: number) => parts.flatMap((p) => (p.kind === "wallSign" && p.edge === edge ? [p.texture] : []))
+    // Wall 1 is the shop front facing SW (bearing about 230°) on the car park.
+    const w1 = wallFrame(pts, 1)?.frame
+    expect(w1).toBeDefined()
+    if (w1 === undefined) return
+    expect(Math.abs(((Math.atan2(-w1.nx, w1.ny) * 180) / Math.PI + 360) % 360 - 230)).toBeLessThan(10)
+    for (const t of ["edeka-band", "edeka-logo", "edeka-boards", "edeka-panels", "shop-front"] as const) expect(signs(1)).toContain(t)
+    // The band and the logo sit over the canopy, which stays under head height's clearance and short of the car park.
+    const canopy = parts.find((p) => p.kind === "canopy")
+    const band = parts.find((p) => p.kind === "wallSign" && p.texture === "edeka-band")
+    expect(canopy?.kind === "canopy" && band?.kind === "wallSign" && band.z0 > canopy.z).toBe(true)
+    const park = map.areas.find((a) => a.kind === "parking" && pointInPolygon(4400, 4840, a.pts))?.pts ?? []
+    expect(park.length).toBeGreaterThan(6)
+    if (canopy?.kind !== "canopy") return
+    for (const u of [canopy.u0, (canopy.u0 + canopy.u1) / 2, canopy.u1]) expect(pointInPolygon(...toWorld(w1, u, -canopy.depth), park)).toBe(false)
+    // The pylon stands outside the hall, in front of the corner, not on the car park.
+    const pylon = parts.find((p) => p.kind === "pylon")
+    expect(pylon?.kind === "pylon" && pylon.texture === "edeka-pylon").toBe(true)
+    if (pylon?.kind !== "pylon" || edeka === undefined) return
+    const [x, y] = toWorld(edeka.frame, pylon.u, pylon.n)
+    const [u, n] = toLocal(w1, x, y)
+    expect(u).toBeGreaterThan(3)
+    expect(u).toBeLessThan(9)
+    expect(n).toBeLessThan(-2)
+    expect(pointInPolygon(x, y, pts)).toBe(false)
+    expect(pointInPolygon(x, y, park)).toBe(false)
   })
 
   it("gives St. Ursula its four storeys", () => {
