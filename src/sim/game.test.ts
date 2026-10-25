@@ -341,6 +341,21 @@ describe("the payphone jobs", () => {
     expect(game.score.money).toBe(money + 2500)
     expect(game.jobs.done).toContain("mercedes")
   })
+
+  it("keep a far-off job car parked while you are on your way to it", () => {
+    const game = newGame(world, 1)
+    const job = must(game.jobs.jobs.find((j) => j.id === "gartenberg-1"))
+    for (const j of game.jobs.jobs) if (j.phone === job.phone && j !== job) game.jobs.done.push(j.id)
+    const phone = must(game.jobs.phones[job.phone])
+    Object.assign(game.player, { x: phone.x, y: phone.y })
+    step(world, game, idle)
+    expect(game.jobs.active?.job.id).toBe("gartenberg-1")
+    const target = must(game.jobs.active?.target)
+    expect(Math.hypot(target.x - phone.x, target.y - phone.y)).toBeGreaterThan(1000)
+    // Traffic is recycled once a second, around the player still at the phone.
+    run(game, idle, 2)
+    expect(game.parked.includes(target as Car)).toBe(true)
+  })
 })
 
 describe("save points and spray shops", () => {

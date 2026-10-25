@@ -180,7 +180,9 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   topUpBuses(world, game, x, y)
   game.walkers = game.walkers.filter((w) => Math.hypot(w.x - x, w.y - y) < WALKER_FAR + 50)
   game.wrecks = game.wrecks.filter((w) => Math.hypot(w.x - x, w.y - y) < NPC_FAR)
-  game.parked = game.parked.filter((c) => Math.hypot(c.x - x, c.y - y) < NPC_FAR)
+  // The active job's car stays wherever it is: you are on your way to it.
+  const target = game.jobs.active?.target
+  game.parked = game.parked.filter((c) => c === target || Math.hypot(c.x - x, c.y - y) < NPC_FAR)
   for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
     const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
     if (walker === null) continue
