@@ -2,10 +2,8 @@ import type { Building, Poi, PoiKind } from "#/map/types.ts"
 import { polygonArea } from "#/map/build.ts"
 import { distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
 
+/** Wall textures: the four facadeFor picks, and the ones only a place dressing (world/places) asks for. */
 export type Facade = "block" | "house" | "shop" | "industrial" | "ursula"
-
-/** Pflegeheim St. Ursula next to Cafe Waldmann (OSM way): its own facade, vertical bands of ochre and cream. */
-export const ST_URSULA = 127604847
 
 /** Places with a shop front; police, schools, doctors and town halls look like any other block. */
 const SHOP_FRONTS: ReadonlySet<PoiKind> = new Set(["supermarket", "drugstore", "bakery", "pharmacy", "bank", "food", "post", "shop", "fuel"])
@@ -23,10 +21,9 @@ const nearOutline = (x: number, y: number, pts: ReadonlyArray<number>, reach: nu
 /**
  * Which wall texture a building gets: a shop front where a shop is inside or
  * at the wall, corrugated metal for big low halls, an apartment block from
- * three storeys, a Bavarian house otherwise; St. Ursula its own. `pois` are the places near it.
+ * three storeys, a Bavarian house otherwise. `pois` are the places near it.
  */
 export const facadeFor = (b: Building, pois: ReadonlyArray<Poi>): Facade => {
-  if (b.id === ST_URSULA) return "ursula"
   const shop = pois.some((p) => SHOP_FRONTS.has(p.kind) && (pointInPolygon(p.x, p.y, b.pts) || nearOutline(p.x, p.y, b.pts, SHOP_REACH_M)))
   if (shop) return "shop"
   if (polygonArea(b.pts) > 800 && b.levels <= 2) return "industrial"

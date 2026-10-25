@@ -120,16 +120,9 @@ const TYPICAL_LEVELS: Readonly<Record<string, number>> = {
   apartments: 4,
 }
 
-/** Storeys counted on Street View for landmarks OSM maps without `building:levels`. */
-const KNOWN_LEVELS: Readonly<Record<string, number>> = {
-  "Pflegeheim St. Ursula": 4,
-}
-
 export const buildingLevels = (tags: Readonly<Record<string, string>>): number => {
   const levels = Number(tags["building:levels"])
   if (Number.isFinite(levels) && levels > 0) return levels
-  const known = KNOWN_LEVELS[tags.name ?? ""]
-  if (known !== undefined) return known
   return TYPICAL_LEVELS[tags.building ?? ""] ?? 2
 }
 

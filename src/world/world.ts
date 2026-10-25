@@ -2,6 +2,8 @@ import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
 import { planCafe, type Cafe } from "./cafe.ts"
+import { dressMap, resolvePlaces, type Place, type PlaceDressing } from "./places/dressing.ts"
+import { PLACES } from "./places/index.ts"
 
 const CELL = 32
 
@@ -31,9 +33,13 @@ export type World = {
   readonly areaAt: (x: number, y: number) => AreaKind | null
   /** Cafe Waldmann's pavilion, laid out by cafe.ts: its walls and furniture are solid. */
   readonly cafe: Cafe | null
+  /** The dressed places (places/): their footprints in `map` already have the storeys they set. */
+  readonly places: ReadonlyArray<Place>
 }
 
-export const makeWorld = (map: GameMap): World => {
+/** The world of `osm` with the place dressings applied (the registry unless given). */
+export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> = PLACES): World => {
+  const map = dressMap(osm, dressings)
   // Buildings are solid: nothing drives or walks through them. Canopies (petrol stations) stand on pillars: you drive under them.
   const cafe = planCafe(map)
   const solids = [...map.buildings.map((b) => b.pts), ...(cafe?.solids ?? [])]
@@ -115,7 +121,7 @@ export const makeWorld = (map: GameMap): World => {
     return out
   }
 
-  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe }
+  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe, places: resolvePlaces(map, dressings) }
 }
 
 const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): number => {

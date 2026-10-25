@@ -9,6 +9,8 @@
 import { Console, Effect, FileSystem, Schema } from "effect"
 import { NodeRuntime, NodeServices } from "@effect/platform-node"
 import { buildMap } from "../src/map/build.ts"
+import { dressMap } from "../src/world/places/dressing.ts"
+import { PLACES as DRESSINGS } from "../src/world/places/index.ts"
 import { encodeCrowns } from "../src/map/crowns.ts"
 import { encodePng } from "../src/map/png.ts"
 import { readPhoto } from "../src/map/photo.ts"
@@ -142,7 +144,7 @@ const program = Effect.gen(function* () {
   const raw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(OverpassResponse))(yield* fs.readFileString(RAW))
   const ways = raw.elements.filter((e) => e.type === "way")
   const photo = yield* loadPhoto(BBOX)
-  const { map, crowns, paved } = readPhoto(buildMap(ways, places, BBOX, routes), photo)
+  const { map, crowns, paved } = readPhoto(dressMap(buildMap(ways, places, BBOX, routes), DRESSINGS), photo)
   yield* fs.writeFileString(OUT, JSON.stringify(map))
   yield* fs.writeFile(GROUND_OUT, encodePng(paved))
   // Row by row, so neighbours sit together and the file gzips well.

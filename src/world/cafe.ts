@@ -11,19 +11,9 @@
  * of it, the game puts the cake counter's pad at `cake`.
  */
 import type { GameMap } from "#/map/types.ts"
+import { rectRing, square, toWorld, type Frame, type Rect } from "./frame.ts"
 
-export type Frame = { readonly ox: number; readonly oy: number; readonly ux: number; readonly uy: number; readonly nx: number; readonly ny: number }
-/** A rectangle in the frame: u0..u1 along the street, n0..n1 away from it. */
-export type Rect = readonly [u0: number, u1: number, n0: number, n1: number]
-
-export const toWorld = (f: Frame, u: number, n: number): readonly [number, number] => [f.ox + f.ux * u + f.nx * n, f.oy + f.uy * u + f.ny * n]
-export const toLocal = (f: Frame, x: number, y: number): readonly [number, number] => [(x - f.ox) * f.ux + (y - f.oy) * f.uy, (x - f.ox) * f.nx + (y - f.oy) * f.ny]
-export const inRect = (r: Rect, u: number, n: number, pad = 0) => u >= r[0] - pad && u <= r[1] + pad && n >= r[2] - pad && n <= r[3] + pad
-/** The rectangle's corners in the world, as a flat ring. */
-export const rectRing = (f: Frame, r: Rect): Array<number> => [...toWorld(f, r[0], r[2]), ...toWorld(f, r[1], r[2]), ...toWorld(f, r[1], r[3]), ...toWorld(f, r[0], r[3])]
-
-/** A square of half-width r round (u, n). */
-export const square = (u: number, n: number, r: number): Rect => [u - r, u + r, n - r, n + r]
+export { inRect, rectRing, square, toLocal, toWorld, type Frame, type Rect } from "./frame.ts"
 
 export const CAFE_NAME = "Cafe Waldmann"
 const STREET = "Sudetenstraße"

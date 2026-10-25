@@ -26,6 +26,8 @@ import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
 import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, zebra, type StreetLamp, type StreetProp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import type { Place, PlaceDressing } from "#/world/places/dressing.ts"
+import { placeBox, placeParts } from "./places.ts"
 
 export const CHUNK_M = 128
 export const STOREY_M = 3
@@ -39,8 +41,6 @@ const TILE = { road: 6, sidewalk: 4, paving: 5, water: 12, forest: 20, farmland:
 /** Width of a facade tile in meters, and its height: two storeys. */
 const FACADE_W: Readonly<Record<Facade, number>> = { block: 6.4, house: 6.4, shop: 8, industrial: 6, ursula: 12.8 }
 const FACADE_H = 2 * STOREY_M
-const URSULA_FASCIA_M = 0.9
-const URSULA_FASCIA: Rgba = [104, 66, 40, 255]
 const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
   block: Material.facadeBlock,
   house: Material.facadeHouse,
@@ -169,6 +169,31 @@ export const roofColors = (b: Building, nx: number, ny: number, d: number): { re
   return { sides: [best[0] ?? best[1] ?? base, best[1] ?? best[0] ?? base], pitched: true }
 }
 
+/** A place dressing's roof: one colour on both planes (the second in shade), pitched or flat as it says. */
+const dressedRoof = (roof: { readonly sides: readonly [Rgba, Rgba]; readonly pitched: boolean }, dress: PlaceDressing | undefined) => {
+  const over = dress?.roof
+  if (over === undefined) return roof
+  const pitched = over.pitched ?? roof.pitched
+  const c = over.colour
+  return { sides: c === undefined ? roof.sides : ([c, pitched ? scale(c, 0.8) : c] as const), pitched }
+}
+
+/**
+ * The wall from the ground to `top` as pieces of facade texture, bottom up:
+ * up to `z1`, `layer`, its bottom row at height `base` and `span` meters of
+ * wall per texture height. A shop front gets the block above its two storeys;
+ * metal halls stretch one tile over the whole wall.
+ */
+const wallPieces = (facade: Facade, top: number): ReadonlyArray<{ readonly z1: number; readonly layer: Material; readonly base: number; readonly span: number }> => {
+  if (facade === "industrial") return [{ z1: top, layer: FACADE_LAYER.industrial, base: 0, span: top }]
+  if (facade === "shop" && top > FACADE_H)
+    return [
+      { z1: FACADE_H, layer: FACADE_LAYER.shop, base: 0, span: FACADE_H },
+      { z1: top, layer: FACADE_LAYER.block, base: FACADE_H, span: FACADE_H },
+    ]
+  return [{ z1: top, layer: FACADE_LAYER[facade], base: 0, span: FACADE_H }]
+}
+
 export class Scene {
   readonly cols: number
   readonly rows: number
@@ -178,6 +203,8 @@ export class Scene {
   /** Petrol station canopies, and the other roofs on pillars OSM maps (carports, shelters). */
   private readonly canopies: Array<Canopy> = []
   private readonly facades: Array<Facade>
+  /** The dressed places (world/places), by the index of their footprint. */
+  private readonly places: ReadonlyMap<number, Place>
   /** Chunk keys by their bounds, for the view query. */
   private readonly grid: Grid
   private readonly builder = new MeshBuilder()
@@ -207,9 +234,10 @@ export class Scene {
 
     const poiGrid = new Grid(map.width, map.height, 64)
     map.pois.forEach((p, i) => poiGrid.insert(i, { minX: p.x, minY: p.y, maxX: p.x, maxY: p.y }))
-    this.facades = map.buildings.map((b) => {
-      const near = poiGrid.query(boxOf(b.pts, 4)).flatMap((i) => map.pois[i] ?? [])
-      return facadeFor(b, near)
+    this.places = new Map(world.places.map((p) => [p.building, p]))
+    this.facades = map.buildings.map((b, i) => {
+      const near = poiGrid.query(boxOf(b.pts, 4)).flatMap((k) => map.pois[k] ?? [])
+      return this.places.get(i)?.dressing.facade ?? facadeFor(b, near)
     })
     const stations = planStations(world)
     for (const st of stations) if (st.kiosk >= 0) this.facades[st.kiosk] = "shop"
@@ -234,8 +262,12 @@ export class Scene {
     }
     map.buildings.forEach((b, i) => {
       if (b.canopy === true) return
-      const box = boxOf(b.pts, wallHeight(b.levels) * SHADOW_PER_M)
-      own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.buildings.push(i)
+      const walls = boxOf(b.pts, wallHeight(b.levels) * SHADOW_PER_M)
+      const place = this.places.get(i)
+      const parts = place === undefined ? null : placeBox(place, b.pts)
+      const box = parts === null ? walls : { minX: Math.min(walls.minX, parts.minX), minY: Math.min(walls.minY, parts.minY), maxX: Math.max(walls.maxX, parts.maxX), maxY: Math.max(walls.maxY, parts.maxY) }
+      // Owned by the chunk of the walls' middle, as without parts.
+      own((walls.minX + walls.maxX) / 2, (walls.minY + walls.maxY) / 2, box)?.buildings.push(i)
     })
     map.areas.forEach((a, i) => {
       if (AREA_LOOK[a.kind] === undefined) return
@@ -354,7 +386,10 @@ export class Scene {
     }
     for (const i of chunk.buildings) {
       const b = map.buildings[i]
-      if (b !== undefined) this.building(m, b, this.facades[i] ?? "house")
+      if (b === undefined) continue
+      const place = this.places.get(i)
+      this.building(m, b, this.facades[i] ?? "house", place?.dressing)
+      if (place !== undefined) placeParts(m, this.sprites, place, b.pts)
     }
     for (const i of chunk.canopies) {
       const c = this.canopies[i]
@@ -468,9 +503,10 @@ export class Scene {
    * Walls from the ground to the eaves with the building's facade (in meters,
    * so windows keep their real size), lit by which way they face; the roof
    * split along the ridge in the two plane colours from the photo; and the
-   * shadow the block casts.
+   * shadow the block casts. A place dressing's wall colour, bands and roof
+   * override them.
    */
-  private building(m: MeshBuilder, b: Building, facade: Facade) {
+  private building(m: MeshBuilder, b: Building, facade: Facade, dress?: PlaceDressing) {
     const ring = openRing(b.pts)
     const n = ring.length / 2
     if (n < 3) return
@@ -483,10 +519,14 @@ export class Scene {
     const nx = -ry
     const ny = rx
     const d = nx * mx + ny * my
-    const { sides, pitched } = roofColors(b, nx, ny, d)
+    const { sides, pitched } = dressedRoof(roofColors(b, nx, ny, d), dress)
     // Flat roofs sit inside a parapet: the walls run on past the roof.
     const top = pitched ? h : h + PARAPET_M
     const tint = 0.9 + hash2(b.id, 0, 1) * 0.15
+    const pieces = wallPieces(facade, top)
+    // Where the wall changes texture or band: the pieces' ends, cut at the bands'.
+    const bands = dress?.bands ?? []
+    const cuts = [...new Set([0, ...pieces.map((p) => p.z1), ...bands.flatMap((bd) => [bd.z0, bd.z1]).filter((z) => z > 0 && z < top)])].toSorted((a, z) => a - z)
     let u = hash2(b.id, 0, 2) * FACADE_W[facade]
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n
@@ -500,23 +540,27 @@ export class Scene {
       const wx = (orient * (by - ay)) / len
       const wy = (orient * -(bx - ax)) / len
       const light = 0.62 + 0.38 * Math.max(0, -(wx * SHADOW_DIR[0] + wy * SHADOW_DIR[1]))
-      const c = scale(WHITE, tint * light)
-      const wall = (z0: number, z1: number, layer: Material, v0: number, v1: number) => {
-        const u0 = u / FACADE_W[facade]
-        const u1 = (u + len) / FACADE_W[facade]
-        m.quad(m.vertex(ax, ay, z0, u0, v0, c, Mode.material, layer), m.vertex(bx, by, z0, u1, v0, c, Mode.material, layer), m.vertex(bx, by, z1, u1, v1, c, Mode.material, layer), m.vertex(ax, ay, z1, u0, v1, c, Mode.material, layer))
+      const c = dress?.wallColour === undefined ? scale(WHITE, tint * light) : scale(dress.wallColour, light)
+      const u0 = u / FACADE_W[facade]
+      const u1 = (u + len) / FACADE_W[facade]
+      for (let k = 0; k + 1 < cuts.length; k++) {
+        const z0 = cuts[k] ?? 0
+        const z1 = cuts[k + 1] ?? top
+        const mid = (z0 + z1) / 2
+        const piece = pieces.find((p) => mid < p.z1) ?? pieces[pieces.length - 1]
+        const over = bands.findLast((bd) => mid > bd.z0 && mid < bd.z1)
+        if (piece === undefined) continue
+        if (over?.plain === true) {
+          const f = scale(over.colour, light)
+          m.quad(m.vertex(ax, ay, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z1, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, z1, 0, 0, f, Mode.color, 0))
+          continue
+        }
+        const col = over === undefined ? c : scale(over.colour, light)
+        // The texture's bottom row is the ground floor; image rows run down, so v falls as z rises.
+        const v0 = 1 - (z0 - piece.base) / piece.span
+        const v1 = 1 - (z1 - piece.base) / piece.span
+        m.quad(m.vertex(ax, ay, z0, u0, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z0, u1, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z1, u1, v1, col, Mode.material, piece.layer), m.vertex(ax, ay, z1, u0, v1, col, Mode.material, piece.layer))
       }
-      // The texture's bottom row is the ground floor; image rows run down, so v falls as z rises.
-      if (facade === "industrial") wall(0, top, FACADE_LAYER.industrial, 1, 0)
-      else if (facade === "shop" && top > FACADE_H) {
-        wall(0, FACADE_H, FACADE_LAYER.shop, 1, 0)
-        wall(FACADE_H, top, FACADE_LAYER.block, 1, 1 - (top - FACADE_H) / FACADE_H)
-      } else if (facade === "ursula") {
-        // The brown timber fascia under St. Ursula's eaves.
-        wall(0, top - URSULA_FASCIA_M, FACADE_LAYER.ursula, 1, 1 - (top - URSULA_FASCIA_M) / FACADE_H)
-        const f = scale(URSULA_FASCIA, light)
-        m.quad(m.vertex(ax, ay, top - URSULA_FASCIA_M, 0, 0, f, Mode.color, 0), m.vertex(bx, by, top - URSULA_FASCIA_M, 0, 0, f, Mode.color, 0), m.vertex(bx, by, top, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, top, 0, 0, f, Mode.color, 0))
-      } else wall(0, top, FACADE_LAYER[facade], 1, 1 - top / FACADE_H)
       u += len
     }
 

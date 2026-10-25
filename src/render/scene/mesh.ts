@@ -52,7 +52,7 @@ export const Material = {
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
-export const MATERIAL_FILES: ReadonlyArray<string> = [
+export const MATERIAL_FILES = [
   "lawn",
   "road",
   "sidewalk",
@@ -70,7 +70,10 @@ export const MATERIAL_FILES: ReadonlyArray<string> = [
   "floor-wood",
   "cafe-sign",
   "facade-ursula",
-]
+] as const
+export type MaterialName = (typeof MATERIAL_FILES)[number]
+/** The material layer of a texture file. */
+export const material = (name: MaterialName): number => MATERIAL_FILES.indexOf(name)
 
 /** Two index lists share one vertex buffer: opaque surfaces, then the shadows laid over the ground. */
 export type Mesh = {

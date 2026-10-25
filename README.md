@@ -56,6 +56,15 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
 Storeys come from OSM where it has them; otherwise from the building type (`buildingLevels` in
 `src/map/build.ts`: garages one, apartments four, the rest two).
 
+**Place dressing** (`src/world/places/`): what makes one real building recognisable is data, one file per
+place listed in `index.ts`, keyed by the exact POI name and the street it faces. The OSM footprint
+(`osmBuildingId`) stays the building and the solid and takes the overrides: storeys (applied when the
+map loads, and baked by `pnpm map`), a facade texture, a wall colour, horizontal wall bands (textured or
+plain, like a timber fascia), the roof colour and pitch. Parts are drawn on top and never solid
+(`src/render/scene/places.ts`): signs and ground-floor arcades on a wall of the footprint, square towers
+with a pyramid roof (kept inside the footprint by a test), prop sprites on poles. Pflegeheim St. Ursula
+(`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
+
 The photo tiles (`pnpm photo`, `scripts/photo-tiles.ts`, `public/photo/`) are no longer drawn; only their
 overview is, as the minimap.
 
