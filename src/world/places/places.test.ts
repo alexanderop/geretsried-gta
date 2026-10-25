@@ -213,6 +213,35 @@ describe("the registry on the real map", () => {
     expect(dressed.buildings[bakery?.building ?? -1]?.levels).toBe(3)
   })
 
+  it("hangs Angel Nails' pink box sign and pillar on the Mühlenbäck front, against wall 0 and clear of the street", () => {
+    const bakery = places.find((p) => p.dressing.osmBuildingId === 127604891)
+    const parts = bakery?.dressing.parts ?? []
+    const sign = parts.find((p) => p.kind === "wallSign" && p.texture === "angel-nails-sign")
+    expect(parts.some((p) => p.kind === "wallSign" && p.texture === "angel-nails-front" && p.edge === 0)).toBe(true)
+    const wall = wallFrame(map.buildings[bakery?.building ?? -1]?.pts ?? [], 0)?.frame
+    const frame = bakery?.frame
+    const boxes = parts.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    expect(boxes).toHaveLength(2)
+    if (wall === undefined || frame === undefined || sign?.kind !== "wallSign") return
+    for (const b of boxes) {
+      // The box's back face lies on wall 0 (within 2 cm), its front at most 0.3 m out, over the sidewalk.
+      const [x, y] = toWorld(frame, b.u, b.n)
+      const [u, n] = toLocal(wall, x, y)
+      expect(Math.abs(n + b.d / 2)).toBeLessThan(0.02)
+      expect(b.d).toBeLessThanOrEqual(0.3)
+      expect(u).toBeGreaterThan(13)
+      expect(u).toBeLessThan(18.6)
+    }
+    // The box sign under the lettering: same stretch and heights, the lettering on its front.
+    const box = boxes.find((b) => b.base !== undefined)
+    const [x, y] = toWorld(frame, box?.u ?? 0, box?.n ?? 0)
+    const [u] = toLocal(wall, x, y)
+    expect(u).toBeCloseTo((sign.u0 + sign.u1) / 2, 1)
+    expect(box?.w).toBeCloseTo(sign.u1 - sign.u0)
+    expect([box?.base, box?.h]).toEqual([sign.z0, sign.z1])
+    expect(sign.out).toBeGreaterThan(box?.d ?? 0)
+  })
+
   it("dresses the Post block with three storeys and keeps its letter box and bin on the sidewalk, off the street the van parks on", () => {
     const post = places.find((p) => p.dressing.osmBuildingId === 119921780)
     // The frame's foot on Sudetenstraße lies 10 m from the POI at (4238.7, 4832.4), which the "post" job finds by name.

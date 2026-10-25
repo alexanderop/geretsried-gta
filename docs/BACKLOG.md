@@ -1787,7 +1787,7 @@ way 127604891 (Sudetenstr. 17–19: unit 17 · Angel Nails · Mühlenbäck) and 
 Stroblume · Dolce Gelato, NW→SE), both NE of Sudetenstraße (bearing 304°). Build B6a-1…B6a-5 as one pass so the signs line up.
 Open questions for Alex: HoangAnh vs Deliqos (B6a-2), Autohaus name (B6a-8), drop Quelle (B6a-9).
 
-### B6a-1 · Angel Nails, Sudetenstraße 19 (#154, shop) — Size: S — status: ref-done
+### B6a-1 · Angel Nails, Sudetenstraße 19 (#154, shop) — Size: S — status: implemented (partial: box-sign and pillar depth, door/window widths, posters)
 ```
 Goal: Pink nail studio right next to the spawn: pink fascia, pink pillar by the door, NW of the Mühlenbäck front.
 Reference: docs/places/angel-nails.md; reference/angel-nails/02-street-side.png (key), 05-crop-sign.png, 01, 04.
@@ -1796,10 +1796,29 @@ Spec (via #0b):
   the Mühlenbäck sign (B2-1). Fascia wallSign pink #ec86a0 (~5 m) with white "Angel Nails"; pillar strip #9b4668 left of the door.
 - Wall stays as the building (#b5b7b4 white/cream). No canopy of its own.
 Acceptance criteria:
-- [ ] From the spawn the pink fascia is visible left of Mühlenbäck, matching 02. The player still spawns on the pavement.
-- [ ] pnpm test + typecheck green.
+- [x] From the spawn the pink fascia is visible left of Mühlenbäck, matching 02. The player still spawns where it did
+  (3991.6, 4651.0, unchanged; the parts are never solid).
+- [x] pnpm test + typecheck green.
 Size: S
 ```
+As built (2026-10-25):
+- **In the Mühlenbäck file** (`src/world/places/muehlenbaeck.ts`, B2-1's way 127604891): no second building. Wall 0 u 13.0–18.6
+  keeps the unit; its generic `shop-front` became its own `angel-nails-front` (new sprite, Codex from 05: pink pillar left,
+  white-framed glass door, window with a white price list and a face poster, a band of nail photos over them).
+- **Box sign**: the existing `angel-nails-sign` (u 13.4–18.3, z 2.85–3.9) now sits on the front of a pink #ec86a0 box 0.3 m
+  deep (a `pylon` with `base` 2.85, top `h` 3.9), so the straight-down play camera sees a pink strip left of the Mühlenbäck
+  awning; the lettering reads from across the street. Depth is a **guess**.
+- **Pillar**: a #d15f8c box (spec's shaded #9b4668 lifted like the wall's #b5b7b4 → cream) 0.56 × 0.2 m, 0–2.85 m, at
+  u 13.0–13.56 left of the door. Its depth is a **guess**.
+- **Sign heights for B6a-2…5**: Sudetenstraße 17–19 hangs its signs from `FRONT_Z` 2.85 m (bottom) up to 3.9 m (Angel Nails)
+  / 4.2 m (Mühlenbäck); way 127604887 should use the same 2.85 m bottom so the row lines up. Wall 0 lies at street-frame
+  u −21.97, n 7.14 (`WALL_U0`, `WALL_N` in the file).
+- **Spawn**: the start spot is computed by the sim (`spotNear`), unaffected; it lies at street n ≈ 2.5 (on the carriageway
+  edge, as before this item, not on the pavement; a sim matter, out of scope).
+- Guesses: box-sign and pillar depths, the door's and window's widths, the posters' content (Street View too blurred).
+- Chunk hashes: before/after only one chunk (the building's) differs. pnpm -s check green.
+- Screenshots (local scratchpad `b6a-1/`): `before-spawn.png`, `play.png` (spawn), `play-crop.png`, `play-across.png` and
+  `play-across-crop.png` (lettering and front from across the street), `overhead.png`, `overhead-crop.png`.
 
 ### B6a-2 · HoangAnh, Sudetenstraße 17 (#12, food) — Size: S — status: todo (needs reference; ask Alex)
 ```
@@ -2037,7 +2056,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 ### 6a (captured 2026-10-25: B6a-1…B6a-10)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 154 | Angel Nails | shop | 3 | ref-done |
+| 154 | Angel Nails | shop | 3 | implemented (partial) |
 | 12 | HoangAnh | food | 6 | todo (needs reference; unit shows Deliqos) |
 | 47 | Dolce Gelato | food | 20 | ref-done |
 | 155 | Stroblume | shop | 29 | ref-done |
@@ -2439,7 +2458,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P6 — generic shops & car repair (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | ref-done | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
+| 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | implemented (partial) | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
 | 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | ref-done | B6a-4. Sudetenstraße 15 |
 | 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | ref-done | B6a-6. Sudetenstraße 10, sign "KIND" |
 | 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |

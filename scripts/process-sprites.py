@@ -422,8 +422,10 @@ for name in ["muehlenbaeck-sign", "angel-nails-sign", "shop-board-red"]:
     square_.save(OUT / f"{name}.webp", "WEBP", quality=92)
     print(f"{name}.webp")
 # An awning's fabric seen from above in neutral greys (a canopy part's texture, times its colour): the wall at the
-# top, two panels, the valance at the bottom; painted seamless left to right, so only resized.
-for name in ["bakery-front", "shop-front", "awning"]:
+# top, two panels, the valance at the bottom; painted seamless left to right, so only resized. Angel Nails' ground floor
+# (the pink pillar, the white door, the window with its price list and face poster under a band of nail photos) is a
+# shop front of its own, opaque, 2:1, stored square.
+for name in ["bakery-front", "shop-front", "awning", "angel-nails-front"]:
     src = find(name)
     if src is not None:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
