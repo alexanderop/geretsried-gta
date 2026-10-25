@@ -159,6 +159,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
         pts: flat(way.geometry),
         nodes: [...way.nodes],
         ...(tags.service === "parking_aisle" ? { aisle: true } : {}),
+        id: way.id,
       })
     } else if (tags.building !== undefined) {
       buildings.push({ id: way.id, levels: buildingLevels(tags), pts: flat(way.geometry), ...(tags.building === "roof" ? { canopy: true } : {}) })
@@ -199,7 +200,7 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
       continue
     }
     if (tags.highway === "bus_stop") {
-      props.push({ kind: "bus_stop", x, y })
+      props.push({ kind: "bus_stop", x, y, node: place.id, ...(tags.shelter === "no" ? { shelter: false } : {}) })
       continue
     }
     if (tags.amenity === "recycling") {

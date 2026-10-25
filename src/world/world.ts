@@ -4,6 +4,8 @@ import { Grid } from "./grid.ts"
 import { planCafe, type Cafe } from "./cafe.ts"
 import { dressMap, resolvePlaces, type Place, type PlaceDressing } from "./places/dressing.ts"
 import { PLACES } from "./places/index.ts"
+import { STREETS } from "./places/streets.ts"
+import { layoutStreet, type StreetLayout, type StreetProfile } from "./street-profile.ts"
 
 const CELL = 32
 
@@ -35,10 +37,12 @@ export type World = {
   readonly cafe: Cafe | null
   /** The dressed places (places/): their footprints in `map` already have the storeys they set. */
   readonly places: ReadonlyArray<Place>
+  /** The street profiles (places/streets.ts) laid out on the map: their parked cars and bollards are solid. */
+  readonly streets: ReadonlyArray<StreetLayout>
 }
 
 /** The world of `osm` with the place dressings applied (the registry unless given). */
-export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> = PLACES): World => {
+export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> = PLACES, profiles: ReadonlyArray<StreetProfile> = STREETS): World => {
   const map = dressMap(osm, dressings)
   // Buildings are solid: nothing drives or walks through them. Canopies (petrol stations) stand on pillars: you drive under them.
   const cafe = planCafe(map)
@@ -70,10 +74,31 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
     return map.areas[best]?.kind ?? null
   }
 
-  const isSolid = (x: number, y: number) => {
+  const inBuilding = (x: number, y: number) => {
     for (const i of buildingGrid.at(x, y)) {
       const box = buildingBoxes[i]
       const pts = solids[i]
+      if (box === undefined || pts === undefined) continue
+      if (x < box.minX || x > box.maxX || y < box.minY || y > box.maxY) continue
+      if (pointInPolygon(x, y, pts)) return true
+    }
+    return false
+  }
+
+  // Street profiles: laid out against the buildings alone; their parked cars and bollards then stand in the way too.
+  const streets = profiles.flatMap((p) => layoutStreet(map, p, { isBuilding: inBuilding }) ?? [])
+  const furniture = streets.flatMap((s) => s.solids)
+  const furnitureGrid = new Grid(map.width, map.height, CELL)
+  const furnitureBoxes = furniture.map((pts, i) => {
+    const box = boxOf(pts)
+    furnitureGrid.insert(i, box)
+    return box
+  })
+  const isSolid = (x: number, y: number) => {
+    if (inBuilding(x, y)) return true
+    for (const i of furnitureGrid.at(x, y)) {
+      const box = furnitureBoxes[i]
+      const pts = furniture[i]
       if (box === undefined || pts === undefined) continue
       if (x < box.minX || x > box.maxX || y < box.minY || y > box.maxY) continue
       if (pointInPolygon(x, y, pts)) return true
@@ -121,7 +146,7 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
     return out
   }
 
-  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe, places: resolvePlaces(map, dressings) }
+  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe, places: resolvePlaces(map, dressings), streets }
 }
 
 const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): number => {

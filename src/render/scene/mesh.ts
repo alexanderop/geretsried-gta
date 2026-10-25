@@ -232,6 +232,9 @@ export const MATERIAL_FILES = [
   "isarwinkel-sign",
   "isarwinkel-mural",
   "isarwinkel-pole",
+  "paving-slab-grey",
+  "sett-gutter-grey",
+  "road-name-sudetenstrasse",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -376,6 +379,12 @@ export const PROP_FILES = [
   "billion-car-2",
   "billion-car-3",
   "isarwinkel-planter",
+  "vz314-parken-links",
+  "zz-mo-sa-8-19",
+  "vz1040-32-2std",
+  "vz350",
+  "vz224",
+  "flash-amber",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

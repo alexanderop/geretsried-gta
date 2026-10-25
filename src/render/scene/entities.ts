@@ -10,7 +10,8 @@ import { SMOKE_HP, type Game } from "#/sim/game.ts"
 import type { Car } from "#/sim/car.ts"
 import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { lightFor, type Light, type StopLine } from "#/sim/signals.ts"
-import { HEAD, LAMP_AT, MAST_Z, signalHead, uprightQuad } from "./street.ts"
+import { FLASH, HEAD, LAMP_AT, MAST_Z, signalHead, uprightQuad } from "./street.ts"
+import { STREETS } from "#/world/places/streets.ts"
 import { CORPSE_FADE_S, type Walker } from "#/sim/pedestrians.ts"
 import type { Effect, Fighter, Projectile } from "#/sim/state.ts"
 import type { Vitals } from "#/sim/damage.ts"
@@ -189,6 +190,22 @@ const signal = (m: MeshBuilder, boxes: SpriteBoxes, st: StopLine, time: number) 
 }
 
 const box = (boxes: SpriteBoxes, layer: number): readonly [number, number] => boxes[layer] ?? [1, 1]
+
+/** The zebras' amber flashing lights (street profiles' signs with `flash`): on for half of every second. */
+const FLASHERS = STREETS.flatMap((p) => (p.signs ?? []).filter((sg) => sg.flash === true))
+const AMBER: Rgba = [255, 168, 20, 255]
+export const flashOn = (time: number) => time % 1 < 0.5
+
+const flashers = (m: MeshBuilder, boxes: SpriteBoxes, time: number, px: number, py: number) => {
+  if (!flashOn(time)) return
+  for (const f of FLASHERS) {
+    if (Math.abs(f.x - px) > VIEW_M || Math.abs(f.y - py) > VIEW_M) continue
+    const x = f.x
+    const y = f.y - FLASH.up
+    spriteQuad(m, { x, y, z: FLASH.z + 0.02, angle: 0, length: FLASH.size * 0.55, width: FLASH.size * 0.55 }, Sprite.lamp, box(boxes, Sprite.lamp), AMBER, Mode.sprite)
+    spriteQuad(m, { x, y, z: FLASH.z + 0.01, angle: 0, length: 1.6, width: 1.6 }, Sprite.glow, box(boxes, Sprite.glow), [AMBER[0], AMBER[1], AMBER[2], 190], Mode.sprite)
+  }
+}
 
 const BLUE: Rgba = [40, 110, 255, 255]
 const RED: Rgba = [255, 40, 40, 255]
@@ -371,6 +388,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
   for (const w of game.walkers) walker(m, boxes, w, time)
   for (const f of game.fighters) fighter(m, boxes, f, time)
   for (const st of game.signals.stops) if (Math.abs(st.x - player.x) < VIEW_M && Math.abs(st.y - player.y) < VIEW_M) signal(m, boxes, st, time)
+  flashers(m, boxes, time, player.x, player.y)
   for (const f of game.fires) {
     const fade = Math.min(1, (f.life - f.t) / 1.5)
     flames(m, boxes, f.x, f.y, 0.4, f.r * 1.4 * fade, time, f.x)

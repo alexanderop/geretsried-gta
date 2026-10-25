@@ -132,7 +132,7 @@ Size: M
 ### #0c: Generic Place registry for walk-in interiors — Size: L — status: todo (only before the first Size-L place)
 Generalise `World.cafe` / `Chunk.cafe` / `roofAt` / `ShopKind "cake"` / `guests.ts` into N places. Not needed for batch 1.
 
-### S-1 · Start-area streetscape: Sudetenstraße at the spawn — Size: M — status: ref-done (partial: values marked *(SV?)* need a Street View check)
+### S-1 · Start-area streetscape: Sudetenstraße at the spawn — Size: M — status: implemented (partial: parking extents and gaps, lamp spacing and side, S3/S4 positions, the 6 m kerb radii, the Rehmaus parking bay and the road-name lettering are guesses; NE pavement stays 1.9 m because the OSM fronts were kept; S1 stands 1.3 m off its listed spot)
 **Goal:** the first 30 seconds of play happen on Sudetenstraße. Today it reads as an 8 m road between two thin 2.6 m sidewalks,
 grass behind, one tree, no parked cars, no signs or lamps. Real Sudetenstraße is a ~25 m wide shopping street: wide paved
 pavements with café seating and street trees, cars parked along both kerbs, granite-sett gutters, curved-arm lamps, a zebra
@@ -183,17 +183,67 @@ ignoring `shelter=no`.
 
 **Acceptance criteria:**
 - [ ] At station 0: kerb-to-kerb **12 ± 0.5 m**; NE pavement (kerb → facade) **≥ 4 m**; facade-to-facade **24.9 ± 1 m**
-      if spec 11 is done, else **21.0 m** with no overlap.
-- [ ] No grass between the SW kerb and the Autohof Jorde facade at station −10 … +10 (compare 24 vs 23).
+      if spec 11 is done, else **21.0 m** with no overlap. *(Partly met: kerb to kerb 12.0 m, no overlap; the NE pavement is
+      1.9 m (kerb +5.3 → OSM front +7.2), so ≥ 4 m fails while the fronts stay. The game's facades at station 0 are
+      +7.2 / −17.7 = 24.9 m: the SW footprint 120402836 stands at −17.7, not −13.9.)*
+- [x] No grass between the SW kerb and the Autohof Jorde facade at station −10 … +10 (compare 24 vs 23).
 - [ ] Sign poles within **± 1 m** of the listed positions; the VZ 350 light blinks; sprites readable from the play camera.
-- [ ] Trees: ≥ 8 street trees within station ±30 m (DOP shows 9); exactly one per real crown, no stacking with the aerial tree.
-- [ ] Lamps present on Sudetenstraße in scope; none added to other tertiary roads.
-- [ ] Stop 3448196000 shows a pole, **no shelter**; stop 3448196002 keeps its shelter.
-- [ ] Zebra 370882647 still at (4016.0, 4670.6) and walkable; traffic lanes, NPC sidewalks and car paths unchanged in
+      *(Partly met: S2 0.0 m, S3 0.9 m, the lights blink at 1 Hz, signs read at 0.6 m; S1 1.3 m off: its listed spot is
+      inside the kept OSM footprint of No. 19.)*
+- [x] Trees: ≥ 8 street trees within station ±30 m (DOP shows 9); exactly one per real crown, no stacking with the aerial tree.
+- [x] Lamps present on Sudetenstraße in scope; none added to other tertiary roads.
+- [x] Stop 3448196000 shows a pole, **no shelter**; stop 3448196002 keeps its shelter.
+- [x] Zebra 370882647 still at (4016.0, 4670.6) and walkable; traffic lanes, NPC sidewalks and car paths unchanged in
       count; parked cars and bollards are solid and don't block the zebra or driveways.
 - [ ] `?compare=47.858199,11.483593,110` screenshot overlays the DOP (20) with carriageway and pavement edges within ±0.5 m.
-- [ ] `pnpm test` + typecheck green; a test asserts the profile bands tile kerb to facade with no gaps/overlaps.
+      *(Met from station +28 to −40 (kerb faces +5.0 / −7.0 vs DOP +5.2 / −7.2); NW of +28 the class carriageway stays.)*
+- [x] `pnpm test` + typecheck green; a test asserts the profile bands tile kerb to facade with no gaps/overlaps.
 **Size:** M (new street-profile + sign data types, several sprites, no interior).
+
+**S-1 as built** (`src/world/street-profile.ts`, data in `src/world/places/streets.ts`, tests in
+`src/world/street-profile.test.ts`) and gotchas for later street profiles:
+- **A profile is data per OSM way:** `build.ts` now keeps the way id on every road (`Road.id`) and the node and
+  `shelter=no` on bus stops; the map's `roads` and `props` were re-baked from `data/` and spliced into
+  `public/geretsried.map.json` (a full `pnpm map` would also change buildings, `covered` and `trees.bin`, unrelated to
+  S-1). Stations run from the foot of an origin point along the way (`direction` ±1), offset + is right of +station.
+- **What changes and what does not:** a range's bands (lanes, parking, sett gutter, kerb, slab pavement, class sidewalk,
+  forecourt) replace the drawn cross-section; a `"facade"` band ends at the first building (ray march, capped by the
+  side's `reach`), so nothing is drawn into a wall. `Road.width` stays 8 m: traffic lanes (±2 m), the line people walk
+  (±5 m), zebras and stop lines are the sim's and were not touched. The parked cars' solids are kept off that ±5 m line
+  (NE parked cars at +3.95, SW at −5.95, solids 4.2 × 1.7 m), so walkers on the SW side now walk between the lane and
+  the parked cars (the real pavement is at −7.3 … −9.5); fixing that needs the sim to read the profile.
+- **Sudetenstraße (way 157363825):** +28 … −39.9 (Berliner Weg node): NE lanes to 3.0, parking 3.0–4.6, gutter to 5.0,
+  kerb 5.0–5.3, pavement to the OSM front (+7.2); SW lanes to 5.0, parking 5.0–6.6, gutter to 7.0, kerb 7.0–7.3,
+  pavement to 9.5, forecourt to the facade (−17.5 at most). −39.9 … −72: NE the class default, SW the Rehmaus parking bay
+  and pavement to 9.5 (the lawn behind stays). No solid edge lines from +170 to −170. Read off a DOP20 strip
+  (`by_dop20c`, 5 px/m) rotated along the OSM centre line, which runs ~1 m NE of the real one.
+- **Rounded kerb at Berliner Weg:** `corners` with radii 6/6 m: the kerb, gutter and pavement stop between the two
+  tangent points (−26.7 and −46.3), an asphalt fan fills each corner, and the paved plaza runs from the start building's
+  SE gable (−24.6) to Berliner Weg.
+- **Parked cars:** 19, regular car sprites (Golf, BMW, A3, G, VW bus; hue-tinted), solid; automatic gaps at the zebra
+  (±7 m), the corner, every road or drive meeting the kerb; data gaps for the player's car (NE +28 … −1.5: `game.test.ts`
+  drives it straight ahead 20 m) and SW −12 … −40 (police cars turning out of Berliner Weg swing wide and got stuck on
+  a parked car, failing the arrest test).
+- **Bollards:** 17 red/white posts at −7.5, −41 … −66, drawn 0.16 m but solid 0.5 m square: a car's collision points
+  sit a meter apart, so thinner solids let a car through; people still walk between them.
+- **Trees:** nine street trees from the DOP20 crowns (NE +11, −1.5, −21 at +6.2; SW +8, −1.5, −9, −17, −24, −31 at −8.4);
+  aerial crowns within r + 2 m of one are dropped (the one tree the game drew, at −12.7/−6.7, is one of them).
+- **Lamps:** 11 on the NE side every 30 m from +168 to −170 (the class rule for primary/secondary is unchanged),
+  slid up to 6 m off zebras, the corner and road mouths.
+- **Signs (`StreetSign`):** a 7 cm pole and the signs as flat sprites at their heights (0.6 m, bottom at 2.2 m; plates
+  0.6 × 0.33 m stacked down the screen), so the top-down camera reads them; `facing` is kept as data. S1 VZ 314 +
+  "Mo-Sa 8-19 h" + 1040-32 at (4018.5, 4661.0); S2/S3 VZ 350 with the flashing light (entities.ts, on half of every
+  second) at (4019.4, 4665.6) / (4012.0, 4676.3); S4 VZ 224 on both H poles. Zebra bars now span kerb to kerb (render
+  only). "Sudetenstraße" painted in the SE-bound lane at −45.
+- **Shelters:** `shelter=no` is honoured only for the stops checked (`POLE_ONLY_STOPS`: 3448196000, 2024816308,
+  3823202158); 55 more stops carry the tag unchecked and keep their shelters. Bus lines and the job phones are untouched.
+- **Chunk hashes** (every chunk's vertices, indices and index counts, before/after): 7 of 2112 changed: 1570, 1614,
+  1615, 1616, 1660 (the scope) and 1612, 1657 (Neuer Platz and Karl-Lederer-Schule stops).
+- **New textures (Codex):** materials `paving-slab-grey`, `sett-gutter-grey`, `road-name-sudetenstrasse`; props
+  `vz314-parken-links`, `zz-mo-sa-8-19`, `vz1040-32-2std`, `vz350`, `vz224`, `flash-amber` (`process-sprites.py`).
+- **Guesses:** parking extents and gaps (DOP shows cars, no bays), lamp spacing/side, S3 and S4 spots, the 6 m radii,
+  the Rehmaus bay as parallel parking (the DOP looks angled), the lettering's wording/lane, NE tree offsets (pushed onto
+  the narrow pavement). Reference images 01–13 and 20–24 were all on disk.
 
 ### B1-1 · Rehmaus Apotheke (#168, pharmacy) — Size: S — status: implemented
 ```
@@ -2411,6 +2461,20 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 233 | Christuskirche | church | 767 | todo |
 | 78 | BSZ Direktmarketing GmbH | shop | 783 | todo |
 
+6d, new (added 2026-10-25 from the gap check; not POIs/areas yet: pending I-1/I-2). Capture the exterior now with the rest
+of 6d (Street View still to do); the #id comes from docs/poi-id-map.csv once imported.
+| # | Name | Kind | lat, lon | map x, y | m from start | Status |
+|---|---|---|---|---|---|---|
+| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | todo (needs reference: surface + equipment, DOP20 + SV) |
+| — | Centrale Geretsried (ex Coffeeholic), Neuer Platz 5 | food (hand-added, I-2) | 47.8577969, 11.4785523 | 3621.4, 4692.7 | 379 | todo (needs facade + sign reference; which name is on the sign?) |
+| — | Café Bar DUO, Sudetenstraße 47a | bar (hand-added, I-2) | 47.8561907, 11.4897066 | 4453.4, 4871.3 | 508 | todo (needs facade reference; same block as Takt Tanz, no. 47) |
+| — | Laufbahnen Franz-Marc-Schule (ways 258497399–402, 269909762, asphalt) | track area (I-2) | 47.8579, 11.4746 | 3330, 4680 | 660–690 | todo (needs reference: lanes/markings, DOP20) |
+| — | Spielplatz J.-S.-Bach-Straße (way 122032725, public) | playground area (I-2) | 47.858685, 11.474506 | 3319.6, 4594.0 | 680 | todo (needs reference) |
+| — | Fitness-Station (way 574767212) near St 2369 | pitch area (I-2) | 47.862484, 11.475803 | 3416.3, 4171.5 | 751 | todo (needs reference; 127 m off the road, probably no SV: DOP20) |
+| — | Fitness-Station (way 497511384, lit) near St 2369 | pitch area (I-2) | 47.861853, 11.474556 | 3323.3, 4241.7 | 787 | todo (needs reference; DOP20) |
+| — | Champini Sport- & Bewegungskita, Jeschkenstraße 103 (way 524105770) | kindergarten (I-1) | 47.851222, 11.487208 | 4267.0, 5423.8 | 821 | todo (needs facade reference; just over 800 m) |
+Not added: Indian Palace, Sudetenstraße 47 (no sign of being open: only old directory entries); see I-2 step 3.
+
 ### Already done in the start area (no capture needed)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
@@ -2558,7 +2622,8 @@ Change:
    old cache), put the new filters in a separate query with its own cache (data/places-more.json, gitignored) instead
    and restore the old places.json, so the old POIs stay byte-identical.
 2. Kinds: keep the list minimal. Reuse where honest, add only these new PoiKinds (each needs a POI_STYLE icon+colour):
-     gym           leisure=fitness_centre, leisure=sports_centre (named), amenity=dojo, hand-added studios
+     gym           leisure=fitness_centre, leisure=sports_centre (named) ONLY with sport=fitness (Tina´s, ClubVital),
+                   amenity=dojo, hand-added studios. Other named sports centres (Hallenbad, Turnhallen, tennis): I-2.
      health        amenity=dentist, amenity=veterinary, healthcare=* (physio, hospice, …) unless amenity already matched.
                    NOT "doctor": dentist Dr. Thum (235 m) / vets (320 m) would become the respawn "hospital".
                    healthcare=doctor|clinic may map to "doctor", but then check findHospital (see Done when).
@@ -2619,10 +2684,348 @@ Done when:
 Report: counts per new kind, the whole-town POI count before/after, the check-list table, any OSM POIs that changed.
 ```
 
+### I-2 · Import leisure areas, schools, sport venues + verified web restaurants (whole town) — Size: L — status: todo
+Run AFTER I-1 (needs its new kinds, extra-pois list, relation fetch and poi-id-map.csv). Alex 2026-10-25: "füge die alle
+hinzu" (gap check: docs/work/gap-check-food-play-school.md + .csv, Overpass 2026-10-25, map bbox).
+```
+Goal: Playgrounds and running tracks show on the ground; kindergartens, the Feuerwehrschule, driving schools, the public
+sports venues (Hallenbad, Eisstadion, Isarau Stadion, tennis centre) and 5 verified restaurants that OSM lacks become POIs.
+School gyms and private garden pools stay out. No existing POI, area or building changes, except: none.
+
+Context (read only, verified on the box clone at 44fc414; re-check line numbers at HEAD):
+- scripts/import-osm.ts QUERY (roads/buildings/areas, cache data/raw.json) fetches areas only as ways:
+  way["landuse"], way["natural"~"water|wood"], way["leisure"~"park|pitch"], way["amenity"="parking"]. No playground/track.
+- src/map/build.ts areaKind() (line ~34) maps leisure park → "park", pitch → "pitch". src/map/types.ts AreaKind (line 16):
+  water forest grass farmland residential industrial park pitch parking. Areas in map.json are {kind, pts}: no name/id.
+  Today: 743 areas (grass 255, parking 160, forest 108, farmland 60, pitch 57, water 52, industrial 28, residential 20, park 3).
+- src/render/scene/scene.ts AREA_LOOK (line ~77): [Material, TILE, tint, z-offset] per area kind (pitch = lawn tint
+  [175,215,160]). src/map/photo.ts:472 masks pitch pixels; src/sim/pickups.ts:95 uses park/pitch/parking areas as pickup ground.
+- After I-1: PLACES_QUERY already fetches nwr["leisure"="sports_centre"]["name"] and amenity kindergarten|childcare.
+  I-1 step 2 sends ONLY sport=fitness sports centres to "gym" (Tina´s, ClubVital); everything else named is handled here.
+
+Change:
+1. Areas: fetch (separate query + own gitignored cache data/areas-more.json, so data/raw.json and every existing area stay
+   byte-identical; same pattern as I-1 step 7):
+     way["leisure"~"^(playground|track|fitness_station)$"](B);
+     relation["leisure"~"^(playground|track)$"]["type"="multipolygon"](B);   out geom (outer ring(s) only)
+   New AreaKinds (types.ts + areaKind() + AREA_LOOK, keep it minimal):
+     playground      leisure=playground (ways + relations). NOT nodes (2 in bbox: skip).
+     track           leisure=track (running/athletics/long-jump; relation 16929053 is the tartan track at Jahnstraße).
+     fitness_station → reuse "pitch" (small outdoor exercise patches, no new kind).
+   Skip leisure=stadium as an AREA on purpose: its outline wraps the pitch/track areas that already render; painting it would
+   cover them. Stadiums become POIs (step 2). Do NOT import leisure=swimming_pool at all: 19 in bbox, all unnamed, 18 are
+   private garden pools (relation 21399402 is swimming_pool=personal); the one at the Hallenbad (way 1311996572) is covered
+   by the Hallenbad building/POI.
+   Look (no invented colours): colour = the `surface` tag where present (track: asphalt → paving grey like parking;
+   tartan → red-brown; playground: sand/woodchips/grass/paving → nearest existing Material). Where `surface` is missing
+   (most playgrounds), sample the DOP20 aerial (Bayerische Vermessungsverwaltung, CC BY 4.0) at the area's centroid and use
+   that tint; print the sampled hex per area. Draw order: on top of grass/park/residential (small areas paint last).
+   pickups.ts: playground is NOT pickup ground (no pickups in a Kita/playground); track may be (like pitch). Report the
+   pickup candidate count before/after.
+2. POIs. Add to PLACES_QUERY: nwr["amenity"~"^(college|driving_school|arts_centre)$"](B); nwr["leisure"="stadium"]["name"](B).
+   Kinds (one new kind only; reuse the rest):
+     sport (NEW)     public/club sports venues: leisure=stadium (named); leisure=sports_centre (named) whose sport is NOT
+                     fitness, e.g. sport=swimming (Hallenbad), tennis. Needs a POI_STYLE icon+colour; add to SHOP_FRONTS: no;
+                     IMPORTANT (labels): yes for stadium/swimming (big landmarks). Why one kind: pool, ice rink, stadium and
+                     tennis hall all play the same in-game role (big public sports building); separate kinds add 3 icons for nothing.
+     gym             unchanged from I-1 (fitness_centre, dojo, sports_centre with sport=fitness, hand-added studios).
+     school          + amenity=college (Feuerwehrschule is a school campus; pickups already skip school).
+     office          + amenity=driving_school (I-1's office kind: a small business with a sign, same role).
+     civic           + amenity=arts_centre (like cinema/library: Kulturbühne Hinterhalt).
+     kindergarten    unchanged from I-1.
+   Skip (print each as "skipped: reason"):
+     - leisure=sports_centre whose name starts with "Turnhalle" or whose building=sports_hall/centroid lies inside an
+       amenity=school area (school gyms: Turnhalle Mittelschule way 188593099, Turnhalle Gymnasium way 188593876, and the
+       unnamed Karl-Lederer hall way 127872149 from I-1).
+     - unnamed sports centres (tennis halls ways 188632620/188632640, way 1086044529): dropped by the no-name rule.
+     - unnamed amenity=school ways (12 in bbox, parts of existing campuses): dropped by the no-name rule.
+   Dedupe (I-1 step 3 rule, extended): same site = centroids ≤ 50 m AND one name is a prefix of the other
+   (e.g. "Champini" way 1271723889 + "Champini Sport- & Bewegungskita Geretsried" way 524105770 → keep the longer name).
+3. Hand-added POIs (append to I-1's extra-pois list; verified open 2026-10-25, not in OSM; coordinates NOT guessed):
+     name                          kind  lat, lon                 map x, y         m    address / source
+     Centrale Geretsried           food  47.8577969, 11.4785523   3621.4, 4692.7   379  Neuer Platz 5 (Nominatim house).
+                                                                                         Formerly "Coffeeholic Café/Bistro": same
+                                                                                         address + phone, posts as Centrale May 2026
+     Café Bar DUO                  bar   47.8561907, 11.4897066   4453.4, 4871.3   508  Sudetenstraße 47a (Nominatim building)
+     Asien Perle                   food  47.8511639, 11.4898048   4460.7, 5430.3   909  Jeschkenstraße 28 (listing pin; OSM has no
+                                                                                         no. 28, DLRG 28a is 45 m N). Sign may read
+                                                                                         "Perle des Ostens"
+     Club57                        food  47.8526785, 11.4955387   4888.4, 5261.9  1082  Sudetenstraße 74 (listing pin, restaurantguru
+                                                                                         + exa agree; no no. 74 in OSM)
+     Restaurant Akropolis          food  47.887615, 11.439643      719.2, 1377.1  4631  Brunnenfeldweg 4, Gelting (official tourism
+                                                                                         portal pin; OSM has no no. 4)
+   x/y = same projection as OSM places (check: your projection of each lat/lon must land within 1 m of the x/y above).
+   Not added (do NOT add): Indian Palace, Sudetenstr. 47 (only old directory entries, no recent reviews; DUO now at 47a);
+   Boulevard Bistro, Jeschkenstr. 13 (newest reviews 2012, directories contradict each other); Yellow Chilli (it is in
+   Königsdorf, outside Geretsried); Café Centrale = Centrale above (same place); Restaurant Ostasien (old name at Pho Viet's
+   address, #22). Wirtshaus Alter Wirth (OSM node 692015044, lon 11.4238) and Servus Gelting ex Neu Wirt (OSM node
+   692015054, lon 11.4228) are real and open but lie WEST of the map bbox (west 11.43): they stay out unless the bbox grows.
+   Kulturbühne Hinterhalt comes from OSM (way 191174401, amenity=arts_centre → civic), not from this list.
+4. IDs renumber again: extend docs/poi-id-map.csv (old = after I-1, new = after I-2), same rules as I-1 step 6.
+
+Check list (acceptance data; positions ±10 m of the OSM element / lat-lon):
+  Kindergartens (I-1 filter, NOT in I-1's check list; 9 sites): Champini Sport- & Bewegungskita Geretsried (way 524105770,
+  Jeschkenstraße 103, one POI after dedupe), Kindergarten des Diakonischen Werkes (way 539822403, Steiner Ring 159),
+  Kinderland Gartenberg (way 188240368, Adalbert-Stifter-Straße 7), Waldkindergarten Isartal e.V. (way 285710835),
+  Johanniter Kinderhaus Zwergenland (node 11809512565, Johannisplatz 4a), Kindergarten Ascholding (way 189251625),
+  Kindertagesstätte "Isarkinder" Ascholding (way 1069594154), Kindergarten Gelting (way 92101829),
+  Städt. Kindergarten & Kinderkrippe (way 97695048, Sudetenstraße 102).
+  school: Staatliche Feuerwehrschule Geretsried (way 107100808, Sudetenstraße 81).
+  office: Fahrschule Leirich (node 6247244441), Fahschule Schattschneider (node 7513431851, OSM's spelling),
+          Fahrschule kmh (way 320687022).
+  sport: Interkommunales Hallenbad Geretsried (way 772881803), Heinz-Schneider-Eisstadion (way 172282411),
+         Isarau Stadion (way 981957335), Sport Center Hahn (node 2716650515, tennis).
+  civic: Kulturbühne Hinterhalt (way 191174401).
+  hand-added: the 5 restaurants of step 3.
+  NOT POIs: Turnhalle Mittelschule, Turnhalle Gymnasium (skipped), no swimming pools.
+  Areas: playground = 20 (all leisure=playground ways in bbox on 2026-10-25, incl. way 1271723892 Breslauer Weg and
+  way 122032725 J.-S.-Bach-Straße; OSM may have changed: print the list, explain any difference); track = 8 (ways 258497399,
+  258497400, 258497401, 258497402, 269909762 at the Franz-Marc-Schule, 1236727141/1236727142 long-jump pits, relation
+  16929053 tartan track); pitch = 57 + 3 fitness stations (ways 497511384, 574767212, 574767217) = 60. All other area
+  counts unchanged.
+
+Done when:
+- every check-list row is a POI (print table: row, POI id, distance, kind) and the area counts above match (print per kind,
+  before/after); no old POI lost (all names + positions ≤ 1 m, from poi-id-map.csv), no old area or building changed;
+- in game (screenshots): the Breslauer Weg playground (map ≈ 4303, 4561, 318 m NE of the start) and the J.-S.-Bach-Straße
+  playground (≈ 3320, 4594) show as their own ground patch, not lawn; the Franz-Marc tracks (≈ 3330, 4680) read as grey
+  asphalt strips; the tartan track at Jahnstraße reads red-brown; the Hallenbad and Isarau Stadion carry a "sport" label;
+  Café Bar DUO and Centrale Geretsried icons sit on their buildings (Sudetenstraße 47a, Neuer Platz 5), not in the road;
+- findHospital still picks Dr. Schmucker; places.test passes; `pnpm check` + `pnpm build` pass; the game starts at
+  Sudetenstraße 19 and runs (drive past the Breslauer Weg playground).
+Report: POI count before/after per kind, area counts per kind before/after, sampled playground tints, skipped list,
+pickup candidate count before/after.
+```
+
 ### G-1 · Gyms: add POIs (import change) — Size: M — status: superseded by I-1
 Folded into I-1 (gym kind, #128 dedupe, hand-added studios). Do not run separately.
 
+## Looks like Geretsried (V-items, added 2026-10-25)
+
+Source: `docs/work/looks-like-geretsried.md` (ranked gaps, numbers, sources) · contact sheet
+`reference/contact-sheets/looks-gap.png` (6 spots, game `?compare` vs DOP20). Alex 2026-10-25: "aktuell sieht es nicht wie
+geretsried aus". Whole-town look items; they never touch a Place's own dressing (src/world/places/*). Check every item with
+`pnpm compare <lat> <lon> 120 <name>` at the six spots in the doc (start 47.858199,11.483593 · Neuer Platz 47.8579,11.4786 ·
+Rathaus 47.8746,11.4655 · Am Stern 47.8568,11.4894 · Gartenberg 47.8720,11.4730 · Isar 47.8810,11.4816 half 200) and put
+before/after pairs in the PR. Line numbers are from f9ca49d; re-check at HEAD. Aerial credit: © Bayerische
+Vermessungsverwaltung – www.geodaten.bayern.de, CC BY 4.0.
+
+**Alex 2026-10-25: V items approved, but keep the dark GTA style.** Fix accuracy (what is where, which
+hue family, shapes, positions), never brighten or desaturate the overall look. New tints come from / sit inside the
+existing dark palette (no colour lighter than today's lightest ground/roof tone); the average frame lightness at the six
+spots must not rise by more than ~3 %. V-4 and V-5 are won't do for that reason.
+
+### V-1 · Roof tone: brown and grey-beige tiles stop turning terracotta — Size: S — status: todo
+```
+Goal: The town's pitched roofs show their real mix (brick red, brown, anthracite) instead of ~all orange.
+Evidence: src/render/scene/roof-tone.ts isWarm() = hue < 0.12 || > 0.95 with s >= 0.1, then hue -> <= 0.055 and
+saturation x2.2 (0.35..0.58). 3215 of 3872 photo-coloured pitched roofs (83 %) come out terracotta; 1528 of them measure
+hue 25-43 deg, sat < 0.25 (brown/grey-beige concrete or fibre-cement tiles, e.g. Neuer Platz blocks #746d5c, #7f705f,
+#686454 -> painted orange; DOP20 shows dark brown). Terracotta pixel share per 240 m frame: game 10-24 %, DOP20 1.7-6 %.
+Change: only real clay red stays terracotta (start point: hue < 0.07 AND s >= 0.18 measured; tune on the six frames);
+low-saturation warm hues (0.07..0.12, or s < 0.18) grade to dark brown / dark grey-beige at the same or lower
+lightness as today's terracotta output (dark GTA palette, no lighter roofs), never saturation > 0.3; greys stay anthracite. Keep it monotonic in lightness (lit/shaded planes). Optional: re-sample roof colours from DOP20
+(by_dop20c, less haze) instead of DOP40 in scripts/photo-*.ts if the grade alone can't split them.
+Done when:
+- [ ] roof-tone unit test: #746d5c, #7f705f, #686454 -> brown/anthracite (s <= 0.3); a clear clay red (e.g. #b0583c)
+      still terracotta; flat roofs unchanged.
+- [ ] Count script (or test over map.json): pitched roofs graded terracotta drop from 3215 to <= ~1700.
+- [ ] compare pairs at Neuer Platz + Gartenberg: the long Stein blocks read brown, Gartenberg reads mixed red/grey/brown.
+- [ ] Dark style kept: mean roof lightness at the six spots <= before (+3 % max); no roof lighter than today's lightest.
+- [ ] Places with their own roof colour unchanged (pnpm test green, typecheck green).
+```
+
+### V-2 · Building heights from Bavarian LoD2 for the whole town — Size: M — status: todo
+```
+Goal: The 4-8 storey Wohnblocks and the new centre stand tall; houses stay low. Today 4538 of 5749 buildings sit on the
+2-storey default (OSM has building:levels on 159 of 5523).
+Evidence (box check, 2 LoD2 tiles 684_5302 + 684_5304, 6453 buildings): of 543 matched non-Place buildings >= 150 m2,
+120 have a ridge >= 12 m and 71 of those are drawn with 2 levels (6 m walls); 87 are >= 6 m too low. puls G
+(way 980958027, Karl-Lederer-Platz, 7 storeys per Kraemmel) drawn 5; way 833483720 (27.5 m) drawn 2.
+Change: new script scripts/lod2-heights.ts: download the CityGML tiles covering the bbox
+(https://download1.bayernwolke.de/a/lod2/citygml/<E>_<N>.gml, E/N = even km in EPSG:25832, ~16 tiles; gitignored cache
+data/lod2/), read each bldg:Building's GroundSurface + measuredHeight + roofType, match to OSM building ways by footprint
+overlap (IoU >= 0.5, else centroid inside), and write data/lod2-levels.json {wayId: levels} with
+levels = round(eaveHeight / 3) (eave = lowest roof-surface z minus ground; fall back to measuredHeight for flat roofs).
+build.ts buildingLevels(): an OSM building:levels tag wins, then lod2-levels, then TYPICAL_LEVELS. Places untouched.
+Credit line for LoD2 next to the DOP credit in the HUD/README.
+Done when:
+- [ ] Of the 120 >= 12 m buildings above, <= 10 remain at 2 levels; houses (LoD2 < 9 m) stay 1-2 levels.
+- [ ] puls G 7 levels; Neuer Platz blocks 3-4 levels; compare pairs at Rathaus + Neuer Platz show the height.
+- [ ] Re-import is deterministic (same json twice); README credits LoD2; pnpm test + typecheck green.
+```
+
+### V-3 · Isar as a wild river: gravel bars + jade water — Size: M — status: todo
+```
+Goal: At the Isar the player sees gravel banks and a green-tinted river in the right place between dark woods, not a
+blue canal in lawn. Dark GTA palette stays (Alex 2026-10-25).
+Evidence: natural=shingle 44 ways, 15.4 ha in the bbox, not imported (QUERY has natural~"water|wood" only). Game water
+median (22,87,124); DOP20 channel samples ~ (143-168,143-174,102-141). At 47.881,11.4816 the OSM channel lies ~60 m off
+today's DOP20 channel (wild river; DOP pixels under the game's water are bright gravel (235,225,217)). Wikipedia: "eine der
+letzten europaeischen Wildflusslandschaften"; NSG Isarauen (way 291496772).
+Change: fetch way/relation natural=shingle (own gitignored cache data/areas-river.json so data/raw.json stays identical),
+new AreaKind "gravel" drawn with the existing gravel texture in a muted grey-beige that is the lightest ground tone
+but no lighter than today's road markings/kerbs, above grass, below water. River water tint for the Isar (waterway
+width 40 + its riverbank areas): dark teal/jade (green >= blue) at the same or lower lightness as today's water, not pale
+(small streams keep theirs). Channel position: where the OSM channel is > 30 m off the DOP20 channel, add a small
+override file (data/isar-channel.json, traced from DOP20, credited, documented in README) instead of hand-editing raw
+data; never invent a course without DOP20 evidence.
+Done when:
+- [ ] map.json has ~44 gravel areas (~15 ha); compare at the Isar spot (half 200): gravel banks where DOP20 has them.
+- [ ] Isar water in the game screenshot has G >= B (greenish), lightness <= the old blue (+3 % max); streams unaffected.
+- [ ] At 47.881,11.4816 the drawn channel lies within ~15 m of the DOP20 channel (override documented) or the offset is
+      noted as an open point.
+- [ ] No z-fighting gravel/water; pnpm test + typecheck green.
+```
+
+### V-4 · Ground palette: less, darker lawn; paved courtyards — Size: S — status: won't do – Alex 2026-10-25: keep dark GTA style
+```
+Goal: Between the blocks the ground reads like Geretsried: mottled darker gardens, paved yards and car spaces, not wall-to-
+wall bright lawn.
+Evidence (256 px frames, game vs DOP20): green pixel share 43-58 % vs 27-38 %, saturation ~0.5 vs ~0.23 (DOP haze lowers it,
+but a ~2x gap stays). Courtyards on DOP20 at Neuer Platz/Am Stern are largely paved.
+Change: lawn tint darker/less saturated (one constant in scene.ts AREA_LOOK / lawn material; target: frame green
+saturation <= 0.38 at the 5 town spots); where photo.ts already samples the aerial, classify bright low-saturation
+ground (no building, no road) as paving instead of lawn. Keep pitches/park as they are.
+Done when:
+- [ ] Before/after pairs at the 5 town spots in the PR; green share 30-45 %, saturation <= 0.38.
+- [ ] Alex OK on the look (GTA 2 tone kept); pnpm test + typecheck green.
+```
+
+### V-5 · Road surface: lighter asphalt; sand-coloured Neue Mitte — Size: S — status: won't do – Alex 2026-10-25: keep dark GTA style
+```
+Goal: Streets read as the light grey Bavarian asphalt; Karl-Lederer-Platz + Egerlandstraße as sand-coloured asphalt with
+the brook channels and 7 planting islands.
+Evidence: game carriageway (61,80,76) at all 4 samples near the start; DOP20 same spots (200-216,192-204,178-192).
+geretsried.de/stadtzentrum: "sandfarbenen Farbasphalt" between the two garage ramps, Bachlaeufe from the Auftaktbrunnen
+(Egerlandstr./KLP) to the Rathaus, opened 28.07.2023; SZ: 7 islands (Feldahorn, Gleditschie, Kupfer-Felsenbirne,
+Rot-Esche).
+Change: road tint one step lighter/greyer (keep markings readable). Footway/pedestrian polygons of Karl-Lederer-Platz +
+Egerlandstraße (OSM highway=pedestrian, 5 ways + 2 relations in bbox) get a sand tint. The brook channel and islands only
+if the Rathaus place doesn't already draw them (check src/world/places/rathaus.ts); else skip.
+Done when:
+- [ ] Pair at the Rathaus spot: sand-coloured plaza, lighter streets; markings + zebras still clear at play zoom.
+- [ ] Alex OK; pnpm test + typecheck green.
+```
+
+### V-6 · Parked cars on surface car parks — Size: M — status: todo
+```
+Goal: Car parks look used: rows of parked cars like on DOP20 (Am Stern EDEKA, start, Rathaus lots are full).
+Evidence: 160 parking areas in map.json, all empty. OSM: amenity=parking 161 ways + 12 nodes; parking=surface 97,
+street_side 33, underground 4 (skip), multi-storey 1 (skip).
+Change: static parked-car sprites (existing car-0..7) on parking areas: fill along the long axis at 2.5 x 5 m bays,
+occupancy ~60-80 % seeded per area (deterministic), not on the drive aisle (leave a 6 m strip), not on pickup spots
+(src/sim/pickups.ts uses parking areas: keep those clear). Solid for collisions or skip collisions: decide by perf.
+Done when:
+- [ ] Am Stern pair: EDEKA lot ~3/4 full; no car on roads/buildings; pickups still reachable.
+- [ ] Frame time at the start spot within 5 % of before; pnpm test + typecheck green.
+```
+
+### V-7 · Trees: more conifers in town, darker forest — Size: S — status: todo (mix needs a DOP20 count first)
+```
+Goal: The town keeps its "built into the Wolfratshauser Forst" look: tall dark spruce/pine between the blocks, dark
+mixed woods, no star/palm-looking crowns.
+Evidence: town crowns CROWNS = [0,0,0,1,2,3,6,6] (1 of 8 conifer); FOREST_TREES = [0,1,1,1,6]; tree-1 (spruce) and
+tree-5 (thuja) read star/palm-like at play zoom; Isar woods read yellow-green vs dark green DOP20. Wikipedia: works
+"mit Buschwerk getarnt" in the forest; the fir in the coat of arms = the conifer forest. 148 276 crowns in trees.bin.
+Step 1 (reference, no code): count conifer vs broadleaf crowns on DOP20 in 4 sample squares (Neuer Platz, start,
+Gartenberg, Isar wood), 50 crowns each; write the ratio into docs/work/looks-like-geretsried.md.
+Step 2: set CROWNS/FOREST_TREES to that ratio; darken forest tint; make the conifer crown read round-conical (darker
+centre, no long star spikes) via sprite tint/scale only (no new art without Codex).
+Done when:
+- [ ] Ratio from step 1 documented with the 4 squares; town mix matches it within 1 sprite slot.
+- [ ] Pairs at Neuer Platz + Isar: crowns darker, nothing reads as a palm; pnpm test + typecheck green.
+```
+
+### V-8 · Railway: Industriegleis + city freight line — Size: M — status: todo
+```
+Goal: The old works railway shows: tracks through Gewerbegebiet Nord and Sued with level crossings and buffer stops.
+Evidence: 0 rails in game; OSM railway=rail 14 ways, 5.4 km in bbox (named "Industriegleis" ways 92449865, 278787684,
+278787690, 1348095243; Sued group 250762133-137, 264115244/5), 14 level_crossing, 8 buffer_stop, 10 switch.
+Wikipedia: "Die Werkbahnen und Betonstrassen bestimmen noch heute das Stadtbild"; private freight line to
+Wolfratshausen owned by the city. railway=proposed (S7) and abandoned: do NOT draw.
+Change: fetch way["railway"="rail"] (own cache data/rail.json); draw as ballast band (gravel, 3 m) + two steel rails
+(1.435 m gauge) + sleepers texture, under roads at level crossings (road drawn over), buffer stop props at the 8 nodes.
+Drivable over (no collision), no trains.
+Done when:
+- [ ] 14 rail ways in map.json; compare at 47.8805,11.4730 and 47.8535,11.5010 shows tracks where DOP20 has them.
+- [ ] Level crossings render road over rail, no z-fighting; pnpm test + typecheck green.
+```
+
+### V-9 · Hedges, fences and walls — Size: M — status: todo
+```
+Goal: Gardens and lots get their edges: dark green hedges, fences, walls.
+Evidence: OSM barrier=hedge 47 ways 1.65 km, fence 35 ways 7.9 km, wall 19 ways 1.96 km, retaining_wall 3 (0.1 km); DOP20
+Gartenberg/start show many more hedge lines than OSM has (OSM only, no tracing).
+Change: fetch way["barrier"~"^(hedge|fence|wall|retaining_wall)$"] (own cache). Hedge: 1.0 m wide, 1.6 m high dark green
+box with leaf texture; fence: thin 1.2 m see-through line (no top fill); wall: 0.3 m x 1.5 m mid/dark grey from the existing palette. Solid for player
+and cars (like buildings) except where a highway crosses (gap 4 m). Never on a Place footprint.
+Done when:
+- [ ] 101 barrier ways in map.json; pairs at start + Gartenberg show them; nothing blocks a road or a Place door.
+- [ ] pnpm test (invariant: no barrier segment intersects a road polygon) + typecheck green.
+```
+
+### V-10 · Land cover: scrub, wetland, grassland, cemetery, allotments, construction, farmyard — Size: M — status: todo
+```
+Goal: The edges of town look Upper-Bavarian: scrub, moor meadows, the forest cemetery with graves, allotment gardens.
+Evidence: not imported: natural=scrub 63 (38.9 ha), wetland 28 (66.1 ha, e.g. Babenstubener Moore), grassland 58
+(9.7 ha); landuse=construction 13 (7.4 ha), allotments 1 (4.1 ha), quarry 1. landuse=cemetery -> "grass" (Waldfriedhof
+8.1 ha, way 104959902, renders as empty lawn); farmyard 19 (17.3 ha) -> "farmland" (field texture on yards).
+Change: fetch natural scrub|wetland|grassland (own cache); new kinds: scrub (bush sprites tree-4/7 dense on rough grass),
+wetland (darker olive grass, small dark water specks), cemetery (paths grid + grave stones props under existing
+crowns), allotments (small plots + sheds already in buildings), construction (dark bare earth). All new tints from the
+existing dark palette, none lighter than today's grass. farmyard -> paving, not farmland.
+grassland -> grass.
+Done when:
+- [ ] Area counts as above in map.json; compare at Waldfriedhof (47.8627,11.4831) shows grave rows, not lawn.
+- [ ] Scrub/wetland visible at the Isar/Babenstuben edges; frame lightness there <= before (+3 % max).
+- [ ] pnpm test + typecheck green.
+```
+
+### V-11 · Street furniture: benches, bins, recycling islands, bike racks — Size: M — status: todo
+```
+Goal: Streets and plazas get the small stuff players notice: benches, bins, the Wertstoffinseln, bike racks.
+Evidence: props today = 92 bus_stop + 7 glass (only recycling:glass_bottles=yes). OSM: bench 166, waste_basket 80,
+recycling 62 (50 nodes + 12 ways), bicycle_parking 26, shelter 6, drinking_water 1. Street lamps are tagged once only:
+don't derive from OSM.
+Change: EXTRA_QUERY adds these nodes (ways: centroid); props kinds bench, bin, recycling (reuse glass sprite as a row of
+3 containers: glass/paper/can), bike_rack (bike-rack.webp exists). Snap to the nearest footway edge, face the path.
+Done when:
+- [ ] props counts ~ bench 166, bin 80, recycling 62, bike_rack 26; none inside a building or on a carriageway.
+- [ ] Pairs at Rathaus + Neuer Platz show them; pnpm test + typecheck green.
+```
+
+### V-12 · High-voltage lines — Size: S — status: todo
+```
+Goal: The power lines across the forest show from above: pylons and wires (and their cleared strips are already in the
+aerial-derived crowns' gaps).
+Evidence: OSM power=line 5 ways, 14.0 km in bbox ("Kochel - Foehrenwald", "Geretsried - Schoenmuehl", "Foehrenwald -
+Hoellriegelskreuth", ...), minor_line 3 (1.9 km), power=tower 54, substations 21.
+Change: fetch way power=line|minor_line + node power=tower (own cache). Pylon = lattice prop (square 6-8 m base) at tower
+nodes; 3 thin dark wires between consecutive towers drawn at height with shadow. No collision for wires; pylons solid.
+Done when:
+- [ ] 54 pylons placed at OSM towers; wires follow the 5 lines; compare at a crossing spot shows pylons on DOP20 spots.
+- [ ] pnpm test + typecheck green.
+```
+
+### V-13 · Landmarks of the town's history (references first) — Size: M — status: todo (needs reference)
+```
+Goal: The places that make Geretsried Geretsried: the 1722 Nikolauskapelle, the bunkers of the explosives works, the
+Kunstmeile figures, the Rathaus brook.
+List (coords/ids in docs/work/looks-like-geretsried.md, "Zusaetzliche Wahrzeichen", L1-L23): Nikolauskapelle
+(way 822460728, octagon + onion tower, Denkmal D-1-73-126-1), Kohlebunker Isardamm 20 (Lechner, Denkmal D-1-73-126-24),
+Blauer Bunker (node 466518495), Versoehnungskirche Richard-Wagner-Str. 3 (hexagon modules, D-1-73-126-25, ~210 m from
+start), Gorilla (node 11089456182), Wassertraegerinnen + brook (node 8123619978), Dialog, Stele Stadt Geretsried,
+Waldfriedhof memorials, Loeschkette fountain, Schloss Ascholding, St. Anna, DITIB, Badehaus.
+Step 1 (scout, no code): Street View / photos per landmark into reference/<slug>/ (dark-mode contact sheet), LoD2 heights
+from the tile, then a B-item per landmark in the usual Place format.
+Done when:
+- [ ] Each landmark has reference photos or is marked "needs reference"; one B-item each; no look invented.
+```
+
 ## Priority list (all 234 POIs)
+
+> V items (Looks like Geretsried, above): approved by Alex 2026-10-25 — keep the dark GTA style; V-4 and V-5 won't do.
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 

@@ -13,7 +13,9 @@ import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
 import type { Road } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
 import type { StopLine, Zebra } from "#/sim/signals.ts"
-import { MeshBuilder, Mode, prop, spriteQuad, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import type { StreetSign } from "#/world/street-profile.ts"
+import { POLE_ONLY_STOPS } from "#/world/places/streets.ts"
+import { MeshBuilder, Mode, prop, spriteQuad, type PropName, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
 const PAINT: Rgba = [245, 245, 240, 255]
@@ -210,6 +212,8 @@ export const streetLamps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
  */
 export type StreetProp =
   | { readonly kind: "shelter"; readonly x: number; readonly y: number; readonly angle: number; readonly pole: Placed }
+  /** A stop without a shelter (OSM shelter=no, checked: POLE_ONLY_STOPS): only its H pole at the kerb. */
+  | { readonly kind: "pole"; readonly x: number; readonly y: number; readonly angle: number }
   | { readonly kind: "glass"; readonly x: number; readonly y: number; readonly angle: number }
 
 /** The Geretsried shelter (Sudetenstraße, in front of St. Ursula): 6 m by 1.7 m under a flat roof at 2.55 m. */
@@ -317,6 +321,7 @@ const stopPole = (m: MeshBuilder, x: number, y: number, angle: number) => {
 
 export const streetProp = (m: MeshBuilder, boxes: SpriteBoxes, p: StreetProp) => {
   if (p.kind === "shelter") return shelter(m, p)
+  if (p.kind === "pole") return stopPole(m, p.x, p.y, p.angle)
   const layer = prop("prop-glass")
   const b = boxes[layer] ?? [1, 0.6]
   const length = 1.9
@@ -365,6 +370,10 @@ export const streetProps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
     // Its glass back to the houses, its open side (+90°) to the street.
     const angle = best.angle + (side === 1 ? Math.PI : 0)
     const kerb = best.width / 2
+    if (p.shelter === false && p.node !== undefined && POLE_ONLY_STOPS.has(p.node)) {
+      out.push({ kind: "pole", x: best.x + nx * (kerb + 0.45) * side, y: best.y + ny * (kerb + 0.45) * side, angle })
+      continue
+    }
     const fx = Math.cos(best.angle)
     const fy = Math.sin(best.angle)
     const fits = (x: number, y: number) =>
@@ -377,4 +386,58 @@ export const streetProps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
     out.push({ kind: "shelter", x: spot.x, y: spot.y, angle, pole })
   }
   return out
+}
+
+/** The sprite of each traffic sign (StVO number) and Zusatzzeichen a StreetSign can show. */
+export const SIGN_SPRITES: Readonly<Record<string, PropName>> = {
+  "314": "vz314-parken-links",
+  "350": "vz350",
+  "224": "vz224",
+  "Mo-Sa 8-19 h": "zz-mo-sa-8-19",
+  "1040-32": "vz1040-32-2std",
+}
+/** A sign's size: square signs 0.6 m with their bottom edge at 2.2 m, plates 0.6 x 0.33 m under them, the pole 7 cm thick. */
+export const SIGN = { size: 0.6, bottom: 2.2, plate: 0.33, pole: 0.035 } as const
+/** Where a zebra's flashing light sits over its sign: on top of the pole, the lamp facing the screen. */
+export const FLASH = { z: 3.15, size: 0.3, up: 0.42 } as const
+
+/**
+ * A traffic sign as the top-down camera reads it: the grey pole up to the sign's top, the sign and its plates as
+ * sprites lying flat at their heights, upright on the screen (image top to the north), each plate drawn a little
+ * further down the screen than the one above, and the zebra's flashing light on top (lit per frame in entities.ts).
+ */
+export const streetSign = (m: MeshBuilder, boxes: SpriteBoxes, sg: StreetSign) => {
+  const top = SIGN.bottom + SIGN.size + (sg.flash === true ? 0.25 : 0)
+  column(m, sg.x, sg.y, SIGN.pole, top)
+  const face = prop(SIGN_SPRITES[sg.vz] ?? "vz350")
+  flat(m, boxes, face, { x: sg.x, y: sg.y, z: SIGN.bottom + SIGN.size, angle: 0, length: SIGN.size, width: SIGN.size }, WHITE, true)
+  let y = sg.y + SIGN.size / 2
+  let z = SIGN.bottom
+  for (const plate of sg.plates ?? []) {
+    const layer = prop(SIGN_SPRITES[plate] ?? "zz-mo-sa-8-19")
+    const b = boxes[layer] ?? [1, 0.55]
+    const h = (SIGN.size * b[1]) / b[0]
+    flat(m, boxes, layer, { x: sg.x, y: y + h / 2 + 0.02, z, angle: 0, length: SIGN.size, width: h }, WHITE, true)
+    y += h + 0.02
+    z -= SIGN.plate
+  }
+  if (sg.flash === true) {
+    const lamp = prop("flash-amber")
+    const b = boxes[lamp] ?? [0.8, 1]
+    flat(m, boxes, lamp, { x: sg.x, y: sg.y - FLASH.up, z: FLASH.z, angle: 0, length: (FLASH.size * b[0]) / b[1], width: FLASH.size }, WHITE, true)
+  }
+}
+
+const BOLLARD_RED: Rgba = [204, 34, 30, 255]
+const BOLLARD_WHITE: Rgba = [238, 236, 230, 255]
+
+/** A red and white bollard, 0.9 m high, `side` meters square, and its shadow. */
+export const bollard = (m: MeshBuilder, x: number, y: number, side: number) => {
+  const h = side / 2
+  const bands: ReadonlyArray<readonly [number, number, Rgba]> = [
+    [0, 0.3, BOLLARD_RED],
+    [0.3, 0.6, BOLLARD_WHITE],
+    [0.6, 0.9, BOLLARD_RED],
+  ]
+  for (const [z0, z1, c] of bands) box(m, x, y, 0, h, h, z0, z1, c, c, z1 === 0.9)
 }

@@ -24,8 +24,10 @@ import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/statio
 import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
 import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
-import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, zebra, type StreetLamp, type StreetProp } from "./street.ts"
-import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import { bollard, signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, streetSign, zebra, type StreetLamp, type StreetProp } from "./street.ts"
+import { FADES, Material, MeshBuilder, Mode, Sprite, material as materialLayer, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
+import { BOLLARD_M, type ParkedCar, type StreetLayout, type StreetSign, type Strip } from "#/world/street-profile.ts"
+import { CAR_LENGTH } from "#/sim/car.ts"
 import type { Mass, Place, PlaceDressing } from "#/world/places/dressing.ts"
 import { placeBox, placeParts } from "./places.ts"
 import { hipFaces, type HipFace } from "./hip-roof.ts"
@@ -91,6 +93,8 @@ const SMALL_CROWNS = [0, 4, 5, 5]
 type Line = { readonly pts: ReadonlyArray<number> }
 
 type Chunk = {
+  /** Street profile pieces (ProfileItem) drawn with this chunk. */
+  readonly profile: Array<number>
   readonly buildings: Array<number>
   readonly areas: Array<number>
   /** [road, first point index] of each road segment starting here. */
@@ -111,6 +115,37 @@ type Chunk = {
  * and how far it fades: canopies to a third, the cafe's roof all the way.
  */
 export type RoofOver = { readonly frame: readonly [number, number, number, number]; readonly rect: Rect; readonly floor: number }
+
+/** A piece of a street profile (world/street-profile.ts): a band, a rounded kerb, a plaza, a parked car, a bollard, a tree, a sign, lettering. */
+type ProfileItem =
+  | { readonly kind: "strip"; readonly layout: StreetLayout; readonly strip: Strip }
+  | { readonly kind: "fillet"; readonly layout: StreetLayout; readonly asphalt: ReadonlyArray<number>; readonly kerb: Strip; readonly gutter: Strip }
+  | { readonly kind: "plaza"; readonly ring: ReadonlyArray<number> }
+  | { readonly kind: "parked"; readonly car: ParkedCar }
+  | { readonly kind: "bollard"; readonly x: number; readonly y: number }
+  | { readonly kind: "tree"; readonly x: number; readonly y: number; readonly r: number; readonly seed: number }
+  | { readonly kind: "sign"; readonly sign: StreetSign }
+  | { readonly kind: "paint"; readonly x: number; readonly y: number; readonly angle: number; readonly length: number }
+
+/** How each profile band looks: material (-1 plain colour), meters per texture tile, height, tint. */
+const BAND_LOOK: Readonly<Record<Strip["kind"], readonly [number, number, number, Rgba]>> = {
+  lanes: [Material.road, TILE.road, 0.07, WHITE],
+  parking: [Material.road, TILE.road, 0.07, WHITE],
+  gutter: [materialLayer("sett-gutter-grey"), 2, 0.072, WHITE],
+  kerb: [-1, 1, 0.06, KERB],
+  pavement: [materialLayer("paving-slab-grey"), 4, 0.054, WHITE],
+  sidewalk: [Material.sidewalk, TILE.sidewalk, 0.05, WHITE],
+  forecourt: [materialLayer("paving-slab-grey"), 4, 0.046, [226, 226, 222, 255]],
+}
+/** The plazas' slabs, under the pavement's. */
+const PLAZA_Z = 0.052
+/** Parked cars: sprite at roof height, as entities.ts draws cars. */
+const PARKED_Z = 1.5
+/** A sprite-hue step per paint (entities.ts car paints). */
+const PAINT_STEPS = 5
+/** Lettering on the asphalt: over the lane markings, this wide across the lane. */
+const PAINT_Z = 0.083
+const PAINT_W = 1.5
 
 /** A piece of street furniture, drawn by street.ts. */
 type StreetItem =
@@ -205,6 +240,7 @@ export class Scene {
   private readonly chunks: Array<Chunk>
   private readonly lines: Array<Line> = []
   private readonly street: Array<StreetItem> = []
+  private readonly profileItems: Array<ProfileItem> = []
   /** Petrol station canopies, and the other roofs on pillars OSM maps (carports, shelters). */
   private readonly canopies: Array<Canopy> = []
   private readonly facades: Array<Facade>
@@ -225,7 +261,7 @@ export class Scene {
     this.chunks = Array.from({ length: this.cols * this.rows }, (_, key) => {
       const x = (key % this.cols) * CHUNK_M
       const y = Math.floor(key / this.cols) * CHUNK_M
-      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], cafe: false, bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
+      return { profile: [], buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], cafe: false, bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
     })
     const own = (x: number, y: number, box: Box): Chunk | undefined => {
       const cx = Math.min(this.cols - 1, Math.max(0, Math.floor(x / CHUNK_M)))
@@ -291,13 +327,18 @@ export class Scene {
     map.roads.forEach((r, i) => segments(r.pts, r.width / 2 + SIDEWALK_M + 1, (chunk, k) => chunk.segments.push([i, k])))
     map.waterways.forEach((w, i) => segments(w.pts, w.width / 2 + 1, (chunk, k) => chunk.rivers.push([i, k])))
     map.roads.forEach((r, i) => {
-      for (const pts of this.markings(r, i)) {
+      const profile = world.streets.find((l) => l.road === i)
+      for (const { pts, edge } of this.markings(r, i)) {
         for (let s = 0; s < polylineLength(pts); s += PIECE_M) {
-          const piece = subPolyline(pts, s, s + PIECE_M)
-          if (piece.length < 4) continue
-          const box = boxOf(piece, 1)
-          own(piece[0] ?? 0, piece[1] ?? 0, box)?.lines.push(this.lines.length)
-          this.lines.push({ pts: piece })
+          const whole = subPolyline(pts, s, s + PIECE_M)
+          // A profile without edge lines cuts them out of the pieces it covers; the others stay as they were.
+          const pieces = edge && profile !== undefined ? withoutStations(whole, profile) : [whole]
+          for (const piece of pieces) {
+            if (piece.length < 4) continue
+            const box = boxOf(piece, 1)
+            own(piece[0] ?? 0, piece[1] ?? 0, box)?.lines.push(this.lines.length)
+            this.lines.push({ pts: piece })
+          }
         }
       }
     })
@@ -308,6 +349,8 @@ export class Scene {
       // Streets stay readable: no crown over the asphalt.
       const road = world.roadAt(x, y, 1)
       if (road !== null && road.road.kind !== "footway" && road.road.kind !== "track") continue
+      // A street profile plants its own trees where the photo shows crowns: one tree per crown.
+      if (world.streets.some((l) => l.trees.some((t) => Math.hypot(t.x - x, t.y - y) < t.r + 2))) continue
       // Nor over the cafe and its terrace: you look in from above.
       if (cafe !== null) {
         const [u, n] = toLocal(cafe.frame, x, y)
@@ -316,6 +359,20 @@ export class Scene {
       const reach = r * 1.2 + crownHeight(r) * SHADOW_PER_M
       own(x, y, { minX: x - reach, minY: y - reach, maxX: x + reach, maxY: y + reach })?.crowns.push(i)
     }
+    for (const layout of world.streets) {
+      const add = (item: ProfileItem, x: number, y: number, box: Box) => {
+        own(x, y, box)?.profile.push(this.profileItems.length)
+        this.profileItems.push(item)
+      }
+      for (const strip of layout.strips) add({ kind: "strip", layout, strip }, strip.inner[0] ?? 0, strip.inner[1] ?? 0, boxOf([...strip.inner, ...strip.outer], 0.5))
+      for (const f of layout.fillets) add({ kind: "fillet", layout, ...f }, f.asphalt[0] ?? 0, f.asphalt[1] ?? 0, boxOf([...f.asphalt, ...f.gutter.inner], 1))
+      for (const ring of layout.plazas) add({ kind: "plaza", ring }, ring[0] ?? 0, ring[1] ?? 0, boxOf(ring, 0.5))
+      for (const car of layout.parked) add({ kind: "parked", car }, car.x, car.y, boxOf([car.x, car.y], CAR_LENGTH + PARKED_Z * SHADOW_PER_M))
+      for (const b of layout.bollards) add({ kind: "bollard", x: b.x, y: b.y }, b.x, b.y, boxOf([b.x, b.y], 1.5))
+      layout.trees.forEach((t, i) => add({ kind: "tree", x: t.x, y: t.y, r: t.r, seed: 70001 + i }, t.x, t.y, boxOf([t.x, t.y], t.r * 1.2 + crownHeight(t.r) * SHADOW_PER_M)))
+      for (const sign of layout.signs) add({ kind: "sign", sign }, sign.x, sign.y, boxOf([sign.x, sign.y], 4))
+      for (const p of layout.paint) add({ kind: "paint", x: p.x, y: p.y, angle: p.angle, length: p.length }, p.x, p.y, boxOf([p.x, p.y], p.length))
+    }
     const signals = makeSignals(world)
     const items: Array<StreetItem> = [
       ...signals.stops.map((stop): StreetItem => ({ kind: "stop", stop })),
@@ -323,6 +380,7 @@ export class Scene {
     ]
     const furniture = [...signals.stops.map((st) => signalHead(st).pole), ...signals.zebras]
     items.push(...streetLamps(world, furniture).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
+    items.push(...world.streets.flatMap((l) => l.lamps).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
     items.push(...streetProps(world, furniture).map((p): StreetItem => ({ kind: "prop", prop: p })))
     for (const item of items) {
       const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.prop
@@ -385,7 +443,11 @@ export class Scene {
     }
     for (const [i, k] of chunk.segments) {
       const r = map.roads[i]
-      if (r !== undefined) this.road(m, r, k)
+      if (r !== undefined) this.road(m, r, k, i)
+    }
+    for (const i of chunk.profile) {
+      const item = this.profileItems[i]
+      if (item !== undefined) this.profileItem(m, item)
     }
     for (const i of chunk.lines) {
       const line = this.lines[i]
@@ -409,7 +471,7 @@ export class Scene {
     for (const i of chunk.street) {
       const item = this.street[i]
       if (item?.kind === "stop") stopLine(m, this.sprites, item.stop)
-      else if (item?.kind === "zebra") zebra(m, this.sprites, item.zebra, ZEBRA_M)
+      else if (item?.kind === "zebra") zebra(m, this.sprites, this.profiledZebra(item.zebra), ZEBRA_M)
       else if (item?.kind === "lamp") streetLamp(m, this.sprites, item.lamp)
       else if (item?.kind === "prop") streetProp(m, this.sprites, item.prop)
     }
@@ -423,6 +485,83 @@ export class Scene {
     return m.finish()
   }
 
+  /** One piece of a street profile. */
+  private profileItem(m: MeshBuilder, item: ProfileItem) {
+    switch (item.kind) {
+      case "strip": {
+        const [layer, tile, z, tint] = BAND_LOOK[item.strip.kind]
+        const world = item.strip.kind === "lanes" || item.strip.kind === "parking"
+        bandStrip(m, item.strip, layer, z, tint, (x, y) => {
+          if (world) return [x / tile, y / tile]
+          const [s, n] = item.layout.local(x, y)
+          return [s / tile, n / tile]
+        })
+        return
+      }
+      case "fillet": {
+        const ids = Array.from({ length: item.asphalt.length / 2 }, (_, i) => {
+          const x = item.asphalt[i * 2] ?? 0
+          const y = item.asphalt[i * 2 + 1] ?? 0
+          return m.vertex(x, y, Z.road, x / TILE.road, y / TILE.road, WHITE, Mode.material, Material.road)
+        })
+        for (let i = 1; i + 1 < ids.length; i++) m.tri(ids[0] ?? 0, ids[i] ?? 0, ids[i + 1] ?? 0)
+        const [kl, , kz, kc] = BAND_LOOK.kerb
+        bandStrip(m, item.kerb, kl, kz, kc, () => [0, 0])
+        const [gl, gt, gz, gc] = BAND_LOOK.gutter
+        let along = 0
+        bandStrip(m, item.gutter, gl, gz, gc, (x, y, i, outer) => {
+          if (i > 0 && !outer) along += Math.hypot(x - (item.gutter.inner[i * 2 - 2] ?? x), y - (item.gutter.inner[i * 2 - 1] ?? y))
+          return [along / gt, outer ? 0.4 / gt : 0]
+        })
+        return
+      }
+      case "plaza": {
+        const [layer, tile, , tint] = BAND_LOOK.pavement
+        polygon(m, item.ring, PLAZA_Z, (x, y) => [x / tile, y / tile], tint, Mode.material, layer)
+        return
+      }
+      case "parked": {
+        const { car } = item
+        const layer = Sprite.car + car.model
+        const box = this.sprites[layer] ?? [1, 0.48]
+        const length = CAR_LENGTH * 1.08
+        const q = { x: car.x, y: car.y, z: PARKED_Z, angle: car.angle, length, width: (length * box[1]) / box[0] }
+        if (car.paint === 0) spriteQuad(m, q, layer, box, WHITE, Mode.sprite)
+        else spriteQuad(m, q, layer, box, [Math.round((car.paint / PAINT_STEPS) * 255), 0, 0, 255], Mode.hue)
+        m.target = "shadow"
+        spriteQuad(m, { ...q, x: car.x + SHADOW_DIR[0] * 0.7, y: car.y + SHADOW_DIR[1] * 0.7, z: Z.shadow }, layer, box, SHADOW, Mode.silhouette)
+        m.target = "opaque"
+        return
+      }
+      case "bollard":
+        return bollard(m, item.x, item.y, BOLLARD_M)
+      case "tree": {
+        const pool = item.r < 3.6 ? SMALL_CROWNS : CROWNS
+        // Street trees: the broad-leaved crowns only (beech, maple), never a thuja or a bush.
+        const sprite = [0, 6][Math.floor(hash2(item.seed, 0, 7) * 2)] ?? pool[0] ?? 0
+        return this.tree(m, item.x, item.y, item.r * 2 * 1.2, crownHeight(item.r) + hash2(item.seed, 0, 5) * 0.5, sprite, item.seed)
+      }
+      case "sign":
+        return streetSign(m, this.sprites, item.sign)
+      case "paint": {
+        spriteQuad(m, { x: item.x, y: item.y, z: PAINT_Z, angle: item.angle, length: item.length, width: PAINT_W }, materialLayer("road-name-sudetenstrasse"), [1, 1], LINE, Mode.material)
+        return
+      }
+    }
+  }
+
+  /** A zebra on a profiled street reaches kerb to kerb (the sim's zebra spans the class width). */
+  private profiledZebra(z: Zebra): Zebra {
+    for (const l of this.world.streets) {
+      const [s, n] = l.local(z.x, z.y)
+      const c = Math.abs(n) < 1.5 ? l.carriageway(s) : null
+      if (c === null) continue
+      const [x, y] = l.world(s, (c.right - c.left) / 2)
+      return { ...z, x, y, width: c.right + c.left }
+    }
+    return z
+  }
+
   /** The chunk's square of lawn and paving; the shader picks which by the paved mask. */
   private ground(m: MeshBuilder, cx: number, cy: number) {
     const x0 = cx * CHUNK_M
@@ -431,8 +570,75 @@ export class Scene {
     m.quad(v(x0, y0), v(x0 + CHUNK_M, y0), v(x0 + CHUNK_M, y0 + CHUNK_M), v(x0, y0 + CHUNK_M))
   }
 
-  /** One segment of a street (k: index of its first x in `pts`): sidewalks, kerbs, asphalt. */
-  private road(m: MeshBuilder, r: Road, k: number) {
+  /**
+   * One segment of a street (k: index of its first x in `pts`): sidewalks, kerbs, asphalt. Where a street profile
+   * replaces the cross-section (its spans of the polyline) only the rest of the segment is drawn here.
+   */
+  private road(m: MeshBuilder, r: Road, k: number, index: number) {
+    const spans = this.world.streets.find((l) => l.road === index)?.spans
+    if (spans !== undefined) {
+      const ax = r.pts[k] ?? 0
+      const ay = r.pts[k + 1] ?? 0
+      const len = Math.hypot((r.pts[k + 2] ?? 0) - ax, (r.pts[k + 3] ?? 0) - ay)
+      let t0 = 0
+      for (let j = 2; j <= k; j += 2) t0 += Math.hypot((r.pts[j] ?? 0) - (r.pts[j - 2] ?? 0), (r.pts[j + 1] ?? 0) - (r.pts[j - 1] ?? 0))
+      const t1 = t0 + len
+      if (spans.some(([a, b]) => a < t1 && b > t0)) {
+        const keep = keepIntervals(len, spans.map(([a, b]) => [a - t0, b - t0] as const))
+        for (const [a, b] of keep) this.roadPart(m, r, k, a, b, a === 0, b >= len - 1e-6 && k + 4 >= r.pts.length - 1)
+        return
+      }
+    }
+    this.roadBands(m, r, k)
+  }
+
+  /** Part a..b meters of segment k drawn as the class default, with round joints only at the ends asked for. */
+  private roadPart(m: MeshBuilder, r: Road, k: number, a: number, b: number, startCap: boolean, endCap: boolean) {
+    if (b - a < 1e-3) return
+    const ax = r.pts[k] ?? 0
+    const ay = r.pts[k + 1] ?? 0
+    const bx = r.pts[k + 2] ?? 0
+    const by = r.pts[k + 3] ?? 0
+    const len = Math.hypot(bx - ax, by - ay)
+    const dx = (bx - ax) / len
+    const dy = (by - ay) / len
+    const pts = [ax + dx * a, ay + dy * a, ax + dx * b, ay + dy * b]
+    const half = r.width / 2
+    const caps = (z: number, w: number, material: number, tile: number, along: boolean, color: Rgba) => {
+      this.segmentPart(m, pts, ax, ay, w, z, material, tile, along, color, startCap, endCap)
+    }
+    if (STREETS.has(r.kind)) {
+      caps(Z.sidewalk, half + SIDEWALK_M, Material.sidewalk, TILE.sidewalk, true, WHITE)
+      caps(Z.kerb, half + KERB_M, -1, 1, false, KERB)
+      caps(Z.road, half, Material.road, TILE.road, false, WHITE)
+    } else caps(Z.road, half, Material.road, TILE.road, false, WHITE)
+  }
+
+  /** As segment(), for a piece of a segment whose slabs keep the whole segment's grid (`ox`, `oy`: its start). */
+  private segmentPart(m: MeshBuilder, pts: ReadonlyArray<number>, ox: number, oy: number, half: number, z: number, material: number, tile: number, along: boolean, color: Rgba, startCap: boolean, endCap: boolean) {
+    const ax = pts[0] ?? 0
+    const ay = pts[1] ?? 0
+    const bx = pts[2] ?? 0
+    const by = pts[3] ?? 0
+    const len = Math.hypot(bx - ax, by - ay)
+    if (len < 1e-3) return
+    const dx = (bx - ax) / len
+    const dy = (by - ay) / len
+    const mode = material < 0 ? Mode.color : Mode.material
+    const layer = Math.max(0, material)
+    const uv = (x: number, y: number): readonly [number, number] =>
+      along ? [((x - ox) * dx + (y - oy) * dy + ox * 0.37) / tile, ((x - ox) * -dy + (y - oy) * dx) / tile] : [x / tile, y / tile]
+    const v = (x: number, y: number) => {
+      const [u, w] = uv(x, y)
+      return m.vertex(x, y, z, u, w, color, mode, layer)
+    }
+    m.quad(v(ax - dy * half, ay + dx * half), v(bx - dy * half, by + dx * half), v(bx + dy * half, by - dx * half), v(ax + dy * half, ay - dx * half))
+    if (startCap) disc(m, ax, ay, half, v)
+    if (endCap) disc(m, bx, by, half, v)
+  }
+
+  /** The class default cross-section of segment k. */
+  private roadBands(m: MeshBuilder, r: Road, k: number) {
     const half = r.width / 2
     if (STREETS.has(r.kind)) {
       this.segment(m, r.pts, k, half + SIDEWALK_M, Z.sidewalk, Material.sidewalk, TILE.sidewalk, true, WHITE)
@@ -476,7 +682,7 @@ export class Scene {
    * Lane markings of one road as polylines: a dashed centre line on two-way
    * main roads and solid edge lines on wide ones, cut out where other streets join.
    */
-  private markings(r: Road, index: number): Array<Array<number>> {
+  private markings(r: Road, index: number): Array<{ readonly pts: Array<number>; readonly edge: boolean }> {
     if (!MARKED.has(r.kind)) return []
     const { map, junctions } = this.world
     const cuts: Array<readonly [number, number]> = []
@@ -495,15 +701,15 @@ export class Scene {
     }
     const length = polylineLength(r.pts)
     const keep = keepIntervals(length, cuts)
-    const out: Array<Array<number>> = []
-    if (!r.oneway) for (const [a, b] of keep) out.push(...dashes(r.pts, a, b, 3, 6))
+    const out: Array<{ readonly pts: Array<number>; readonly edge: boolean }> = []
+    if (!r.oneway) for (const [a, b] of keep) out.push(...dashes(r.pts, a, b, 3, 6).map((pts) => ({ pts, edge: false })))
     if (r.width >= 7) {
       const inset = r.width / 2 - 0.45
       for (const [a, b] of keep) {
         const piece = subPolyline(r.pts, a, b)
         if (piece.length < 4) continue
         const { left, right } = band(piece, inset)
-        out.push(left, right)
+        out.push({ pts: left, edge: true }, { pts: right, edge: true })
       }
     }
     return out
@@ -794,6 +1000,61 @@ const polygon = (m: MeshBuilder, ring: ReadonlyArray<number>, z: number, uv: (x:
   })
   const tris = triangulate(ring)
   for (let t = 0; t + 2 < tris.length; t += 3) m.tri(ids[tris[t] ?? 0] ?? 0, ids[tris[t + 1] ?? 0] ?? 0, ids[tris[t + 2] ?? 0] ?? 0)
+}
+
+/** The parts of a polyline outside the profile's stations without edge lines (all of it when it has none). */
+const withoutStations = (pts: ReadonlyArray<number>, layout: StreetLayout): Array<Array<number>> => {
+  const range = layout.profile.noEdgeLines
+  if (range === undefined) return [[...pts]]
+  const lo = Math.min(range[0], range[1])
+  const hi = Math.max(range[0], range[1])
+  const st = Array.from({ length: pts.length / 2 }, (_, i) => layout.local(pts[i * 2] ?? 0, pts[i * 2 + 1] ?? 0)[0])
+  if (st.every((s) => s < lo || s > hi)) return [[...pts]]
+  const out: Array<Array<number>> = []
+  let cur: Array<number> = []
+  const inside = (s: number) => s >= lo && s <= hi
+  for (let i = 0; i < st.length; i++) {
+    const s = st[i] ?? 0
+    const x = pts[i * 2] ?? 0
+    const y = pts[i * 2 + 1] ?? 0
+    if (i > 0) {
+      const ps = st[i - 1] ?? 0
+      if (inside(ps) !== inside(s)) {
+        // Where the segment crosses the range's end, by its stations.
+        const edge = (inside(ps) ? s : ps) < lo ? lo : hi
+        const k = (edge - ps) / (s - ps || 1)
+        const ex = (pts[i * 2 - 2] ?? 0) + (x - (pts[i * 2 - 2] ?? 0)) * k
+        const ey = (pts[i * 2 - 1] ?? 0) + (y - (pts[i * 2 - 1] ?? 0)) * k
+        cur.push(ex, ey)
+        if (inside(s)) {
+          out.push(cur)
+          cur = []
+        }
+      }
+    }
+    if (!inside(s)) cur.push(x, y)
+  }
+  if (cur.length >= 4) out.push(cur)
+  return out.filter((p) => p.length >= 4)
+}
+
+/** A band between two polylines of the same length (a profile strip), its texture coordinates from `uv`. */
+const bandStrip = (m: MeshBuilder, strip: Strip, layer: number, z: number, color: Rgba, uv: (x: number, y: number, i: number, outer: boolean) => readonly [number, number]) => {
+  const mode = layer < 0 ? Mode.color : Mode.material
+  const n = Math.min(strip.inner.length, strip.outer.length) / 2
+  let prev: readonly [number, number] | null = null
+  for (let i = 0; i < n; i++) {
+    const ix = strip.inner[i * 2] ?? 0
+    const iy = strip.inner[i * 2 + 1] ?? 0
+    const ox = strip.outer[i * 2] ?? 0
+    const oy = strip.outer[i * 2 + 1] ?? 0
+    const [iu, iv] = uv(ix, iy, i, false)
+    const [ou, ov] = uv(ox, oy, i, true)
+    const a = m.vertex(ix, iy, z, iu, iv, color, mode, Math.max(0, layer))
+    const b = m.vertex(ox, oy, z, ou, ov, color, mode, Math.max(0, layer))
+    if (prev !== null) m.quad(prev[0], a, b, prev[1])
+    prev = [a, b]
+  }
 }
 
 /** A plain-coloured band along a polyline (lane markings, roof edges). */

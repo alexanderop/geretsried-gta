@@ -1,0 +1,222 @@
+osm,name,category,tag,address,dist_m,status,match,importer,sport,near_road,access,lat,lon,x,y,inbbox
+node 370882648,HoangAnh,food_drink,amenity=restaurant,Sudetenstraße 17,6,in_game,"#12 HoangAnh (food, 0 m)",current filter,,Sudetenstraße (9 m),,47.858235,11.48353,3992.6,4644.1,y
+node 1912662383,Dolce Gelato,food_drink,amenity=ice_cream,Sudetenstraße 15,21,in_game,"#47 Dolce Gelato (food, 0 m)",current filter,,Sudetenstraße (8 m),,47.858304,11.483367,3980.5,4636.3,y
+node 9161424552,Bistro Malor,food_drink,amenity=restaurant,Sudetenstraße 10,69,in_game,"#120 Bistro Malor (food, 0 m)",current filter,,Sudetenstraße (17 m),,47.858339,11.482688,3929.8,4632.5,y
+node 2560122458,Cafe Waldmann,food_drink,amenity=cafe,Sudetenstraße 3,148,in_game,"#56 Cafe Waldmann (food, 0 m)",current filter,,Adalbert-Stifter-Straße (31 m),,47.859102,11.482135,3888.6,4547.6,y
+way 119894071,Gaststätte Isarwinkel,food_drink,amenity=restaurant,Richard-Wagner-Straße 14,180,in_game,"#177 Gaststätte Isarwinkel (food, 0 m)",current filter,,Richard-Wagner-Straße (20 m),,47.856893,11.48216,3890.5,4793.3,y
+way 127872172,,sport,leisure=pitch,,218,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",basketball,Richard-Wagner-Straße (44 m),,47.857243,11.481048,3807.6,4754.4,y
+way 127872174,,sport,leisure=pitch,,220,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",athletics,Künnekeweg (24 m),,47.857635,11.480763,3786.3,4710.8,y
+way 919079656,Caritas Kindergarten,school_childcare,amenity=kindergarten,,226,backlog,named in BACKLOG,I-1 step 1,,Sudetenstraße (29 m),,47.859459,11.481215,3820.0,4507.9,y
+way 127872197,Classic ShishaBar Lounge Geretsried,food_drink,amenity=bar,Breslauer Weg 11,233,backlog,named in BACKLOG,I-1 step 1,,Breslauer Weg (47 m),,47.859838,11.485542,4142.8,4465.8,y
+way 127872149,,sport,leisure=sports_centre,,246,backlog,OSM id in BACKLOG,NOT covered,,Richard-Wagner-Straße (67 m),,47.856922,11.480898,3796.4,4790.0,y
+way 149415484,,school_childcare,amenity=school,,248,missing,,current filter but no name -> dropped,,Richard-Wagner-Straße (39 m),,47.856428,11.481567,3846.3,4844.9,y
+way 127872275,Sportplatz Karl-Lederer-Hauptschule,sport,leisure=pitch,,254,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Künnekeweg (58 m),,47.857407,11.480403,3759.5,4736.1,y
+way 1271753004,,school_childcare,amenity=school,,261,missing,,current filter but no name -> dropped,,Richard-Wagner-Straße (84 m),,47.856932,11.480641,3777.2,4788.9,y
+relation 2014408,Karl-Lederer-Grundschule Geretsried,school_childcare,amenity=school,Johann-Sebastian-Bach-Straße 4,265,in_game,"#228 Karl-Lederer-Grundschule Geretsried (school, 0 m)",current filter,,Richard-Wagner-Straße (75 m),,47.856605,11.480952,3800.3,4825.3,y
+way 127604843,Karl-Lederer-Hauptschule Geretsried,school_childcare,amenity=school,,315,in_game,"#186 Karl-Lederer-Hauptschule Geretsried (school, 0 m)",current filter,,Johann-Sebastian-Bach-Straße (44 m),,47.856555,11.480154,3740.9,4830.8,y
+way 1271723892,,playground,leisure=playground,,318,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Breslauer Weg (24 m),yes,47.85898,11.487694,4303.2,4561.2,y
+node 6269837940,Kinderland Geretsried,school_childcare,amenity=kindergarten,Künnekeweg 5,325,backlog,named in BACKLOG,I-1 step 1,,Künnekeweg (28 m),,47.85858,11.479272,3675.0,4605.7,y
+node 3450934542,da Daniele,food_drink,amenity=cafe,Sudetenstraße 39,329,in_game,"#77 da Daniele (food, 0 m)",current filter,,Sudetenstraße (26 m),,47.856683,11.487388,4280.4,4816.6,y
+node 2599419102,Restaurant Ammos,food_drink,amenity=restaurant,,342,in_game,"#58 Restaurant Ammos (food, 0 m)",current filter,,Künnekeweg (16 m),,47.858223,11.479005,3655.2,4645.4,y
+node 12427142634,Erle Elebnis Lernen e.V.,school_childcare,amenity=childcare,,368,backlog,named in BACKLOG,I-1 step 1,,Neuer Platz (27 m),,47.857341,11.478834,3642.4,4743.5,y
+node 2599419101,Munzur Kebap,food_drink,amenity=fast_food,,392,in_game,"#57 Munzur Kebap (food, 0 m)",current filter,,Neuer Platz (19 m),,47.857829,11.478364,3607.4,4689.2,y
+node 370894688,Italy,food_drink,amenity=restaurant,,468,in_game,"#19 Italy (food, 0 m)",current filter,,Johann-Sebastian-Bach-Straße (28 m),,47.857099,11.477537,3545.6,4770.4,y
+way 574767207,,sport,leisure=pitch,,593,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",basketball,Jeschkenstraße (39 m),yes,47.852867,11.483593,3997.3,5240.9,y
+node 3528911945,M1 Lounge,food_drink,amenity=nightclub,Lausitzer Straße 12,642,backlog,named in BACKLOG,I-1 step 1,,Wallensteinstraße (29 m),,47.857327,11.492101,4631.9,4744.9,y
+node 3528911971,Vegas Casino,food_drink,amenity=nightclub,Lausitzer Straße 12,651,backlog,named in BACKLOG,I-1 step 1,,Wallensteinstraße (28 m),,47.85725,11.492199,4639.2,4753.6,y
+node 3528911943,Piatsa,food_drink,amenity=pub,Lausitzer Straße 12,659,in_game,"#79 Piatsa (food, 0 m)",current filter,,Wallensteinstraße (29 m),,47.857163,11.492293,4646.3,4763.3,y
+way 258497401,,sport,leisure=track,,660,missing,,NOT covered,,Robert-Schumann-Weg (17 m),,47.857877,11.474764,3338.8,4683.8,y
+way 258497400,,sport,leisure=track,,668,missing,,NOT covered,,Robert-Schumann-Weg (27 m),,47.857925,11.474641,3329.7,4678.5,y
+way 258497399,,sport,leisure=track,,672,missing,,NOT covered,,Robert-Schumann-Weg (29 m),,47.857879,11.474592,3326.0,4683.6,y
+way 269909762,,sport,leisure=track,,676,missing,,NOT covered,,Robert-Schumann-Weg (36 m),,47.857978,11.474539,3322.0,4672.6,y
+way 122032725,,playground,leisure=playground,,680,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Johann-Sebastian-Bach-Straße (54 m),yes,47.858685,11.474506,3319.6,4594.0,y
+way 1271753009,Blechkiste,school_childcare,amenity=kindergarten,,689,backlog,named in BACKLOG,I-1 step 1,,Robert-Schumann-Weg (63 m),,47.858386,11.474357,3308.5,4627.2,y
+node 9955217554,Fitness Forum & Squash,food_drink,amenity=pub,Breslauer Weg 103,690,in_game,"#128 Fitness Forum & Squash (food, 0 m)",current filter,,Breslauer Weg (20 m),,47.859275,11.492707,4677.1,4528.4,y
+way 258497402,,sport,leisure=track,,690,missing,,NOT covered,,Robert-Schumann-Weg (45 m),,47.857902,11.474358,3308.6,4681.0,y
+way 128271980,Franz-Marc-Schule,school_childcare,amenity=school,Robert-Schumann-Weg 5,701,in_game,"#189 Franz-Marc-Schule (school, 0 m)",current filter,,Robert-Schumann-Weg (70 m),,47.856733,11.474449,3315.3,4811.1,y
+way 258498599,,sport,leisure=pitch,,720,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",basketball,Robert-Schumann-Weg (85 m),,47.858151,11.473935,3277.0,4653.3,y
+way 122032717,ESV Geretsried,sport,leisure=pitch,,732,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",ice_stock,Robert-Schumann-Weg (61 m),,47.857831,11.473794,3266.5,4688.9,y
+way 1271753003,,school_childcare,amenity=school,,741,missing,,current filter but no name -> dropped,,Robert-Schumann-Weg (51 m),,47.856787,11.473889,3273.5,4805.0,y
+way 574767212,,sport,leisure=fitness_station,,751,missing,,NOT covered,fitness,St 2369 (127 m),,47.862484,11.475803,3416.3,4171.5,y
+way 122032701,,sport,leisure=pitch,,773,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Wiesensteig (97 m),,47.858559,11.473246,3225.6,4608.0,y
+way 822457544,,sport,leisure=pitch,,782,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",,Robert-Schumann-Weg (44 m),,47.856735,11.473333,3232.1,4810.9,y
+way 497511384,,sport,leisure=fitness_station,,787,missing,,NOT covered,fitness,St 2369 (46 m),,47.861853,11.474556,3323.3,4241.7,y
+way 1271753000,Kita Blechkiste,school_childcare,amenity=kindergarten,,788,backlog,named in BACKLOG,I-1 step 1,,Johann-Sebastian-Bach-Straße (23 m),,47.860931,11.473849,3270.6,4344.2,y
+way 258498598,,sport,leisure=pitch,,801,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Robert-Schumann-Weg (97 m),,47.857965,11.472865,3197.2,4674.0,y
+way 539818761,,sport,leisure=pitch,,808,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Richard-Wagner-Straße (33 m),private,47.851902,11.47819,3594.4,5348.2,y
+way 524105770,Champini Sport- & Bewegungskita Geretsried,school_childcare,amenity=kindergarten,Jeschkenstraße 103,821,missing,,I-1 step 1,,Jeschkenstraße (19 m),,47.851222,11.487208,4267.0,5423.8,y
+way 1271723889,Champini,school_childcare,amenity=kindergarten,,822,missing,,I-1 step 1,,Jeschkenstraße (20 m),,47.851217,11.487196,4266.1,5424.4,y
+way 1385177361,,school_childcare,amenity=kindergarten,,830,missing,,I-1 step 1,,Robert-Schumann-Weg (65 m),,47.856442,11.472783,3191.1,4843.4,y
+node 371388338,Tina´s Fitnesstreff Geretsried,sport,leisure=sports_centre,,990,backlog,OSM id in BACKLOG,I-1 step 1 (as kind gym!),fitness,Spreestraße (9 m),,47.851507,11.49234,4649.8,5392.2,y
+way 574767217,,sport,leisure=fitness_station,,1124,missing,,NOT covered,fitness,Ahornweg (149 m),,47.865249,11.472789,3191.5,3864.1,y
+node 370873070,ClubVital,sport,leisure=sports_centre,,1150,backlog,named in BACKLOG,I-1 step 1 (as kind gym!),fitness,Wallensteinstraße (12 m),,47.852664,11.496613,4968.5,5263.5,y
+way 772881803,Interkommunales Hallenbad Geretsried,sport,leisure=sports_centre,Adalbert-Stifter-Straße 22,1174,missing,,I-1 step 1 (as kind gym!),swimming,Adalbert-Stifter-Straße (56 m),,47.866822,11.474521,3320.7,3689.2,y
+way 1311996572,,pool,leisure=swimming_pool,,1176,missing,,NOT covered,,Ammerseeweg (4 m),,47.848866,11.47617,3443.7,5685.8,y
+way 122032724,Gasthof Geiger,food_drink,amenity=restaurant,Tattenkofener Straße 1,1181,in_game,"#181 Gasthof Geiger (food, 0 m)",current filter,,Bundesstraße (14 m),,47.860538,11.468141,2844.9,4388.0,y
+way 496090149,,playground,leisure=playground,,1189,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Adalbert-Stifter-Straße (28 m),yes,47.867345,11.475337,3381.5,3631.0,y
+way 188593074,,school_childcare,amenity=school,,1269,in_game,"#175 Mittelschule Geretsried (school, 36 m)",current filter but no name -> dropped,,Adalbert-Stifter-Straße (137 m),,47.867063,11.472876,3198.0,3662.4,y
+way 121438344,,sport,leisure=pitch,,1274,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Hirschenweg (85 m),,47.868371,11.475734,3411.2,3517.0,y
+way 288011939,,sport,leisure=pitch,,1277,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",multi,Hirschenweg (54 m),,47.868554,11.476196,3445.6,3496.6,y
+way 92736527,Mittelschule Geretsried,school_childcare,amenity=school,Adalbert-Stifter-Straße 18,1280,in_game,"#175 Mittelschule Geretsried (school, 0 m)",current filter,,Adalbert-Stifter-Straße (103 m),,47.867329,11.473139,3217.6,3632.8,y
+way 188593099,Turnhalle Mittelschule,sport,leisure=sports_centre,Adalbert-Stifter-Straße 18,1285,missing,,I-1 step 1 (as kind gym!),multi,Adalbert-Stifter-Straße (56 m),,47.867615,11.473607,3252.5,3601.0,y
+way 172282411,Heinz-Schneider-Eisstadion,sport,leisure=stadium,Jahnstraße 25,1301,missing,,NOT covered,ice_skating;ice_hockey;ice_stock,Jahnstraße (51 m),,47.869554,11.479401,3684.7,3385.5,y
+node 371372815,Pho Viet Restaurant,food_drink,amenity=restaurant,Steiner Ring 8,1343,in_game,"#22 Pho Viet Restaurant (food, 0 m)",current filter,,Steiner Ring (9 m),,47.847579,11.475021,3358.0,5828.9,y
+way 188593873,,school_childcare,amenity=school,,1355,missing,,current filter but no name -> dropped,,Adalbert-Stifter-Straße (44 m),,47.868181,11.473182,3220.9,3538.1,y
+way 256175401,,sport,leisure=pitch,,1357,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",basketball,Adalbert-Stifter-Straße (113 m),,47.868941,11.474968,3354.1,3453.6,y
+way 288093391,Cafeteria,food_drink,amenity=fast_food,,1360,in_game,"#213 Cafeteria (food, 0 m)",current filter,,Verwaltungsweg (27 m),private,47.852358,11.499613,5192.2,5297.5,y
+way 981957335,Isarau Stadion,sport,leisure=stadium,Jahnstraße 4,1362,missing,,NOT covered,multi,Jahnstraße (122 m),,47.869037,11.475081,3362.5,3442.9,y
+node 11092475964,Sempol Imbiss,food_drink,amenity=fast_food,Jeschkenstraße 14,1364,in_game,"#135 Sempol Imbiss (food, 0 m)",current filter,,Jeschkenstraße (9 m),,47.849927,11.497105,5005.2,5567.9,y
+way 188593874,,school_childcare,amenity=school,,1364,in_game,"#38 Staatliche Realschule Geretsried (school, 35 m)",current filter but no name -> dropped,,Adalbert-Stifter-Straße (100 m),,47.867953,11.472499,3169.9,3563.5,y
+way 264946411,,sport,leisure=pitch,,1364,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",basketball,Unterkunftsstraße (38 m),private,47.853185,11.500289,5242.7,5205.5,y
+way 669533891,,school_childcare,amenity=kindergarten,,1369,missing,,I-1 step 1,,Adalbert-Stifter-Straße (34 m),,47.868669,11.473944,3277.6,3483.8,y
+way 1236727144,,sport,leisure=pitch,,1372,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Jahnstraße (64 m),,47.869355,11.475747,3412.1,3407.5,y
+way 539822403,Kindergarten des Diakonischen Werkes,school_childcare,amenity=kindergarten,Steiner Ring 159,1376,missing,,I-1 step 1,,Steiner Ring (31 m),,47.846209,11.479025,3656.6,5981.2,y
+way 169271318,,playground,leisure=playground,,1380,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Osterseeweg (11 m),yes,47.846649,11.476828,3492.8,5932.4,y
+way 188240368,Kinderland Gartenberg,school_childcare,amenity=kindergarten,Adalbert-Stifter-Straße 7,1382,missing,,I-1 step 1,,Adalbert-Stifter-Straße (24 m),,47.86872,11.473726,3261.4,3478.2,y
+way 188593872,,school_childcare,amenity=school,,1383,missing,,current filter but no name -> dropped,,Adalbert-Stifter-Straße (170 m),,47.867695,11.471615,3104.0,3592.2,y
+way 1236727143,,sport,leisure=pitch,,1384,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",beachvolleyball,Jahnstraße (37 m),,47.869547,11.475964,3428.3,3386.2,y
+way 860968099,,sport,leisure=pitch,,1387,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",beachvolleyball,Hauptstraße (26 m),private,47.85299,11.500495,5258.0,5227.2,y
+way 1236727141,,sport,leisure=track,,1387,missing,,NOT covered,athletics,Adalbert-Stifter-Straße (66 m),,47.86895,11.474176,3295.0,3452.6,y
+way 860968098,Soccer Five,sport,leisure=pitch,,1388,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Hauptstraße (28 m),private,47.85314,11.500603,5266.1,5210.6,y
+way 1267704285,Bogensportclub Geretsried,sport,leisure=pitch,,1392,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",archery,Bundesstraße (44 m),,47.848559,11.471686,3109.3,5719.9,y
+node 1426976161,Staatliche Realschule Geretsried,school_childcare,amenity=school,Adalbert-Stifter-Straße 14,1394,in_game,"#38 Staatliche Realschule Geretsried (school, 0 m)",current filter,,Adalbert-Stifter-Straße (82 m),,47.868263,11.472447,3166.0,3529.0,y
+node 3749645677,Primo Pizza,food_drink,amenity=restaurant,,1395,in_game,"#83 Primo Pizza (food, 0 m)",current filter,,Tegernseeweg (11 m),,47.847048,11.475015,3357.6,5888.0,y
+way 107100808,Staatliche Feuerwehrschule Geretsried,school_childcare,amenity=college,Sudetenstraße 81,1398,missing,,NOT covered,,Hauptstraße (14 m),,47.852941,11.500625,5267.7,5232.7,y
+way 121439132,,sport,leisure=pitch,,1401,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",multi,Jahnstraße (51 m),,47.86959,11.475571,3399.0,3381.4,y
+node 6247244441,Fahrschule Leirich,school_childcare,amenity=driving_school,Tegernseeweg 1,1413,missing,,NOT covered,,Tegernseeweg (10 m),,47.846858,11.475053,3360.4,5909.1,y
+way 188593870,,school_childcare,amenity=school,,1414,in_game,"#38 Staatliche Realschule Geretsried (school, 21 m)",current filter but no name -> dropped,,Adalbert-Stifter-Straße (76 m),,47.868442,11.472356,3159.2,3509.0,y
+way 121822081,Sportheim,food_drink,amenity=restaurant,Jahnstraße 4,1420,in_game,"#179 Sportheim (food, 0 m)",current filter,,Jahnstraße (14 m),,47.869869,11.475862,3420.7,3350.4,y
+way 92736529,,sport,leisure=pitch,,1422,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Jahnstraße (100 m),,47.869457,11.474562,3323.7,3396.2,y
+way 188593871,,school_childcare,amenity=school,,1424,missing,,current filter but no name -> dropped,,B 11 (140 m),,47.867993,11.471288,3079.6,3559.0,y
+relation 16929053,,sport,leisure=track,,1424,missing,,NOT covered,running,Jahnstraße (101 m),,47.869453,11.474482,3317.8,3396.6,y
+node 1426976162,Gymnasium Geretsried,school_childcare,amenity=school,Adalbert-Stifter-Straße 14,1428,in_game,"#39 Gymnasium Geretsried (school, 0 m)",current filter,,Adalbert-Stifter-Straße (94 m),,47.86845,11.47206,3137.2,3508.2,y
+way 169270686,,playground,leisure=playground,,1433,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Tegernseeweg (25 m),unknown,47.847013,11.474058,3286.2,5891.8,y
+node 7513431851,Fahschule Schattschneider,school_childcare,amenity=driving_school,Adalbert-Stifter-Straße 5,1442,missing,,NOT covered,,Adalbert-Stifter-Straße (20 m),,47.869149,11.473235,3224.8,3430.4,y
+way 188593875,,school_childcare,amenity=school,,1443,missing,,current filter but no name -> dropped,,Adalbert-Stifter-Straße (137 m),,47.86833,11.4715,3095.4,3521.5,y
+way 1236727142,,sport,leisure=track,,1444,missing,,NOT covered,athletics,Adalbert-Stifter-Straße (71 m),,47.869412,11.473818,3268.3,3401.2,y
+way 92736528,Schulzentrum Geretsried,school_childcare,amenity=school,Adalbert-Stifter-Straße 14,1449,in_game,"#176 Schulzentrum Geretsried (school, 0 m)",current filter,,Adalbert-Stifter-Straße (75 m),,47.868713,11.472126,3142.1,3478.9,y
+way 256176854,,school_childcare,amenity=school,,1451,missing,,current filter but no name -> dropped,,B 11 (129 m),,47.868326,11.471335,3083.1,3521.9,y
+way 188593876,Turnhalle Gymnasium,sport,leisure=sports_centre,,1474,missing,,I-1 step 1 (as kind gym!),multi,Adalbert-Stifter-Straße (75 m),,47.868929,11.471988,3131.7,3454.9,y
+way 256175178,,sport,leisure=pitch,,1484,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Jahnstraße (48 m),,47.869943,11.474152,3293.2,3342.2,y
+way 539824773,,playground,leisure=playground,,1493,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Steiner Ring (74 m),,47.845334,11.477877,3571.0,6078.6,y
+way 335236443,,school_childcare,amenity=school,,1503,missing,,current filter but no name -> dropped,,B 11 (99 m),,47.868877,11.471238,3075.9,3460.7,y
+way 287938508,,sport,leisure=pitch,,1504,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Steiner Ring (20 m),,47.845681,11.475962,3428.2,6039.9,y
+way 287938507,,park,leisure=park,,1533,in_game_area,area kind=park (unnamed),"areas (no POI, no name)",,Steiner Ring (108 m),,47.845024,11.477559,3547.3,6113.1,y
+way 496087546,,sport,leisure=pitch,,1533,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,B 11 (78 m),,47.869139,11.471093,3065.0,3431.6,y
+node 2716650515,Sport Center Hahn,sport,leisure=sports_centre,Königsdorfer Weg 7,1575,missing,,I-1 step 1 (as kind gym!),,Grundstraße (26 m),,47.8488,11.499386,5175.4,5693.1,y
+way 188632640,,sport,leisure=sports_centre,,1586,missing,,NOT covered,tennis,Stollenwiese (31 m),,47.848727,11.499493,5183.3,5701.2,y
+way 188632620,,sport,leisure=sports_centre,,1592,missing,,NOT covered,tennis,Grundstraße (32 m),,47.848447,11.499216,5162.6,5732.5,y
+way 320687022,Fahrschule kmh,school_childcare,amenity=driving_school,Egerlandstraße 2,1597,missing,,NOT covered,,Alpspitzweg (13 m),,47.870568,11.4727,3184.9,3272.6,y
+way 254502011,,sport,leisure=pitch,,1605,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Grundstraße (46 m),,47.847984,11.498789,5130.8,5783.9,y
+node 1075032839,Cafe L´Arena,food_drink,amenity=cafe,Egerlandstraße 1,1617,in_game,"#33 Cafe L´Arena (food, 0 m)",current filter,,Jahnstraße (12 m),,47.870499,11.472038,3135.5,3280.3,y
+node 12917521828,Pizza Roma,food_drink,amenity=fast_food,,1640,in_game,"#167 Pizza Roma (food, 0 m)",current filter,,Egerlandstraße (12 m),,47.870735,11.471997,3132.4,3254.1,y
+way 244426965,,sport,leisure=pitch,,1640,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Stollenwiese (73 m),,47.848311,11.499898,5213.5,5747.5,y
+way 540414311,,pool,leisure=swimming_pool,,1819,missing,,NOT covered,,Blombergweg (51 m),,47.87278,11.472523,3171.7,3026.7,y
+way 540414313,,pool,leisure=swimming_pool,,1825,missing,,NOT covered,,Alpspitzweg (39 m),,47.872681,11.472085,3139.0,3037.8,y
+way 867302410,,pool,leisure=swimming_pool,,1902,missing,,NOT covered,,Egerlandstraße (15 m),,47.872678,11.470018,2984.8,3038.1,y
+way 867302413,,pool,leisure=swimming_pool,,1986,missing,,NOT covered,,Karlsbader Weg (7 m),,47.873144,11.469009,2909.6,2986.3,y
+way 1271723886,,school_childcare,amenity=kindergarten,,2079,missing,,I-1 step 1,,Martin-Luther-Weg (36 m),,47.873658,11.467916,2828.1,2929.1,y
+node 1833322590,,playground,leisure=playground,,2080,missing,,NOT covered,,Isardamm (46 m),private,47.876284,11.476491,3467.7,2637.1,y
+way 870423846,,pool,leisure=swimming_pool,,2093,missing,,NOT covered,,Rotkehlchenweg (41 m),,47.875795,11.473629,3254.1,2691.4,y
+way 188048970,,sport,leisure=pitch,,2100,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,B 11 (92 m),,47.872633,11.465442,2643.6,3043.0,y
+way 188048969,,sport,leisure=pitch,,2157,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,B 11 (64 m),,47.873091,11.465058,2614.9,2992.1,y
+way 871848105,,pool,leisure=swimming_pool,,2172,missing,,NOT covered,,Lerchenweg (41 m),,47.875928,11.471368,3085.6,2676.7,y
+node 1911099478,Schmid-Bäck',food_drink,amenity=cafe,Egerlandstraße 47b,2210,in_game,"#43 Schmid-Bäck' (food, 0 m)",current filter,,Egerlandstraße (7 m),,47.87492,11.467567,2802.0,2788.8,y
+way 285710835,Waldkindergarten Isartal e.V.,school_childcare,amenity=kindergarten,,2211,missing,,I-1 step 1,,Am Forst (148 m),,47.872383,11.462825,2448.3,3070.8,y
+node 12507126416,Aram Döner,food_drink,amenity=fast_food,Karl-Lederer-Platz 22,2236,in_game,"#164 Aram Döner (food, 0 m)",current filter,,Lenauweg (12 m),,47.874766,11.46661,2730.6,2805.9,y
+node 8000452145,Zum Alten Öl,food_drink,amenity=pub,Böhmerwaldstraße 23,2244,in_game,"#109 Zum Alten Öl (food, 0 m)",current filter,,Böhmerwaldstraße (18 m),,47.876277,11.470227,3000.4,2637.9,y
+node 9078898351,Amormio Gelati Caffè,food_drink,amenity=ice_cream,Karl-Lederer-Platz 12-14,2244,in_game,"#118 Amormio Gelati Caffè (food, 0 m)",current filter,,Karl-Lederer-Platz (7 m),,47.874504,11.465875,2675.8,2835.0,y
+node 12642567790,Shinwari,food_drink,amenity=restaurant,Egerlandstraße 58,2269,in_game,"#165 Shinwari (food, 0 m)",current filter,,Egerlandstraße (19 m),,47.87541,11.467251,2778.4,2734.2,y
+node 2604594271,Karl 13,food_drink,amenity=cafe,Karl-Lederer-Platz 13a,2286,in_game,"#62 Karl 13 (food, 0 m)",current filter,,Hermann-Löns-Weg (15 m),,47.875143,11.466243,2703.3,2764.0,y
+way 870435104,,pool,leisure=swimming_pool,,2292,missing,,NOT covered,,Johannisplatz (9 m),,47.877494,11.472796,3192.0,2502.6,y
+node 3387759520,Subway,food_drink,amenity=fast_food,Karl-Lederer-Platz 9,2294,in_game,"#75 Subway (food, 0 m)",current filter,,Hermann-Löns-Weg (9 m),,47.87507,11.465891,2677.0,2772.1,y
+way 833472869,,playground,leisure=playground,,2302,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,B 11 (23 m),yes,47.874345,11.464265,2555.8,2852.7,y
+way 189412278,Ratsstuben,food_drink,amenity=biergarten,,2308,in_game,"#205 Ratsstuben (food, 0 m)",current filter,,B 11 (30 m),,47.874414,11.464284,2557.1,2845.0,y
+way 186928843,Ratsstuben,food_drink,amenity=restaurant,Karl-Lederer-Platz 1a,2314,in_game,"#192 Ratsstuben (food, 0 m)",current filter,,Graslitzer Straße (36 m),,47.874576,11.464451,2569.6,2827.0,y
+node 11809512565,Johanniter Kinderhaus Zwergenland,school_childcare,amenity=kindergarten,Johannisplatz 4a,2352,missing,,I-1 step 1,,Johannisplatz (15 m),,47.877934,11.472236,3150.2,2453.6,y
+way 1194996431,,playground,leisure=playground,,2354,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Amselweg (14 m),,47.876089,11.466726,2739.3,2658.7,y
+way 1271723888,,playground,leisure=playground,,2355,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Johannisplatz (18 m),,47.878295,11.473638,3254.8,2413.4,y
+way 188048971,,sport,leisure=pitch,,2371,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Am Forst (37 m),,47.873739,11.461832,2374.3,2920.0,y
+way 1271723887,,playground,leisure=playground,,2380,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Johannisplatz (13 m),,47.878322,11.472706,3185.3,2410.4,y
+node 11922102084,Rialto Eiscafe Und Pizzeria,food_drink,amenity=restaurant,Egerlandstraße 61,2397,in_game,"#147 Rialto Eiscafe Und Pizzeria (food, 0 m)",current filter,,Egerlandstraße (8 m),,47.876038,11.465558,2652.2,2664.4,y
+way 285710830,,sport,leisure=pitch,,2427,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Am Forst (30 m),,47.8743,11.461632,2359.3,2857.7,y
+node 3137326934,Il Soprano,food_drink,amenity=restaurant,Egerlandstraße 78,2429,in_game,"#72 Il Soprano (food, 0 m)",current filter,,Egerlandstraße (12 m),,47.876368,11.465523,2649.6,2627.8,y
+way 285710831,Dirtpark Geretsried,sport,leisure=pitch,Am Forst 1a,2522,in_game,"#70 Dirtpark (shop, 15 m)","areas (no POI, no name)",bmx,Am Forst (24 m),,47.874983,11.460841,2300.3,2781.7,y
+way 188048829,Der neue Döner-Laden,food_drink,amenity=fast_food,Egerlandstraße 77,2607,in_game,"#200 Der neue Döner-Laden (food, 0 m)",current filter,,Egerlandstraße (18 m),,47.877542,11.463844,2524.3,2497.2,y
+way 1283274019,,playground,leisure=playground,,2642,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Graslitzer Straße (23 m),private,47.877051,11.462033,2389.2,2551.8,y
+way 540041004,,pool,leisure=swimming_pool,,2707,missing,,NOT covered,,Amselweg (23 m),,47.878971,11.464666,2585.6,2338.3,y
+way 121591462,Tennisclub Geretsried,sport,leisure=pitch,,2715,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Isardamm (86 m),,47.88192,11.47498,3354.9,2010.3,y
+way 540037737,,pool,leisure=swimming_pool,,2794,missing,,NOT covered,,Kirchplatz (31 m),,47.878455,11.461427,2344.0,2395.7,y
+way 669545299,,sport,leisure=pitch,,2804,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,B 11 (70 m),,47.877869,11.46008,2243.5,2460.8,y
+way 218664626,Isardammschule,school_childcare,amenity=school,,2807,in_game,"#212 Isardammschule (school, 0 m)",current filter,,Isardamm (70 m),,47.882593,11.473907,3274.9,1935.5,y
+way 669545298,,sport,leisure=pitch,,2810,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,B 11 (83 m),private,47.87785,11.459902,2230.3,2463.0,y
+way 803229236,,playground,leisure=playground,,2856,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Lieferantenzufahrt Füger Fachhandel (31 m),,47.879375,11.461916,2380.5,2293.4,y
+way 244277086,,sport,leisure=pitch,,2881,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",,Isardamm (35 m),,47.8833,11.474027,3283.8,1857.0,y
+way 244279532,Laufbahn,sport,leisure=pitch,,2884,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",,Isardamm (59 m),,47.883409,11.47453,3321.4,1844.8,y
+way 540027380,,playground,leisure=playground,,2923,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Kirchplatz (12 m),customers,47.879711,11.461068,2317.3,2256.0,y
+way 177622024,,playground,leisure=playground,,2964,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Isardamm (49 m),yes,47.884209,11.474917,3350.3,1755.8,y
+way 1486499368,,playground,leisure=playground,,2973,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Kirchplatz (40 m),,47.880347,11.461262,2331.7,2185.3,y
+way 177621774,,sport,leisure=pitch,,2992,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer;basketball,Isardamm (47 m),,47.884452,11.474775,3339.6,1728.9,y
+way 758742552,,playground,leisure=playground,,2999,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Rosenweg (49 m),,47.884148,11.472645,3180.8,1762.7,y
+node 13306464058,,sport,leisure=pitch,,3011,missing,,NOT covered,table_tennis,Banater Straße (31 m),,47.881629,11.463359,2488.2,2042.8,y
+way 858218235,,pool,leisure=swimming_pool,,3096,missing,,NOT covered,,Asternweg (11 m),,47.884102,11.46836,2861.1,1767.8,y
+way 858218220,,pool,leisure=swimming_pool,,3137,missing,,NOT covered,,Lilienstraße (38 m),,47.883809,11.465941,2680.7,1800.4,y
+way 858218221,,pool,leisure=swimming_pool,,3152,missing,,NOT covered,,Fliederweg (23 m),,47.884104,11.466427,2717.0,1767.5,y
+way 1559188568,,pool,leisure=swimming_pool,,3219,missing,,NOT covered,,Nelkenweg (44 m),,47.884607,11.465902,2677.8,1711.6,y
+relation 21399402,,pool,leisure=swimming_pool,,3233,missing,,NOT covered,,Lilienstraße (43 m),personal,47.88472,11.465827,2672.2,1699.0,y
+way 441582581,,park,leisure=park,,3290,in_game_area,area kind=park (unnamed),"areas (no POI, no name)",,Maiglöckchenweg (13 m),,47.885848,11.46789,2826.1,1573.6,y
+node 9653740977,An Niehn Asian Streetfood,food_drink,amenity=fast_food,Bayerwaldstraße 2,3313,in_game,"#124 An Niehn Asian Streetfood (food, 0 m)",current filter,,Blumenstraße (19 m),,47.883246,11.459527,2202.4,1863.0,y
+node 9653740976,Dönerworks,food_drink,amenity=fast_food,Bayerwaldstraße 2,3314,in_game,"#123 Dönerworks (food, 0 m)",current filter,,Blumenstraße (19 m),,47.883291,11.459614,2208.8,1858.0,y
+way 1227375138,,park,leisure=park,,3392,in_game_area,area kind=park (unnamed),"areas (no POI, no name)",,Akeleiweg (8 m),,47.886243,11.465714,2663.8,1529.7,y
+way 189251625,Kindergarten Ascholding,school_childcare,amenity=kindergarten,Isarstraße 24,3509,missing,,I-1 step 1,,Isarstraße (19 m),,47.887964,11.499239,5164.4,1338.4,y
+node 6253792193,,playground,leisure=playground,,3520,missing,,NOT covered,,Isardamm (32 m),,47.888299,11.468987,2907.9,1301.0,y
+node 34821458,Landgasthof Lacherdinger,food_drink,amenity=restaurant,Hauptstraße 7,3596,in_game,"#1 Landgasthof Lacherdinger (food, 0 m)",current filter,,Hauptstraße (9 m),,47.887699,11.503356,5471.4,1367.8,y
+node 2503056399,Landgasthof Lacherdinger,food_drink,amenity=biergarten,Hauptstraße 7,3597,in_game,"#55 Landgasthof Lacherdinger (food, 0 m)",current filter,,Hauptstraße (33 m),,47.887804,11.503022,5446.5,1356.1,y
+way 1227641285,Freie Waldorfschule Isartal,school_childcare,amenity=school,Malvenweg 2-4,3614,in_game,"#223 Freie Waldorfschule Isartal (school, 0 m)",current filter,,Malvenweg (30 m),,47.887764,11.463468,2496.3,1360.6,y
+way 1556775271,,sport,leisure=pitch,,3668,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",,Malvenweg (27 m),,47.888044,11.462631,2433.9,1329.4,y
+way 1083632370,,sport,leisure=pitch,,3788,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",beachvolleyball,Schloßstraße (99 m),,47.891516,11.494165,4785.9,943.3,y
+way 1083632623,,sport,leisure=pitch,,3806,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Schloßstraße (71 m),,47.891762,11.493606,4744.2,916.0,y
+way 1069594154,"Kindertagesstätte ""Isarkinder"" Ascholding",school_childcare,amenity=kindergarten,Eglinger Straße 3,3820,missing,,I-1 step 1,,Eglinger Straße (25 m),,47.889616,11.504312,5542.7,1154.6,y
+way 77992959,,sport,leisure=pitch,,3839,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",soccer,Schloßstraße (41 m),,47.891871,11.49495,4844.4,903.9,y
+way 1086044529,,sport,leisure=sports_centre,,3844,missing,,NOT covered,,Schloßstraße (87 m),,47.892014,11.494336,4798.7,888.0,y
+way 1083630817,,sport,leisure=pitch,,3857,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Schloßstraße (46 m),,47.891855,11.496121,4931.8,905.7,y
+way 1083632281,,playground,leisure=playground,,3858,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Schloßstraße (76 m),,47.892166,11.494142,4784.2,871.1,y
+way 1083631930,,sport,leisure=pitch,,3859,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Schloßstraße (27 m),,47.89228,11.493384,4727.6,858.4,y
+way 79674980,,sport,leisure=pitch,,3914,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Schloßstraße (26 m),,47.892688,11.494056,4777.8,813.1,y
+node 274623058,"Gasthaus ""Holzwirt""",food_drink,amenity=restaurant,Am Holz 22,3918,in_game,"#3 Gasthaus ""Holzwirt"" (food, 0 m)",current filter,,Am Holz (36 m),,47.893199,11.489612,4446.3,756.3,y
+way 191627272,SV Ascholding,sport,leisure=pitch,,3920,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",ice_stock,Schloßstraße (22 m),,47.892688,11.494507,4811.4,813.1,y
+way 1083630539,,sport,leisure=pitch,,3920,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Schloßstraße (82 m),private,47.892354,11.496602,4967.6,850.2,y
+way 837402292,,pool,leisure=swimming_pool,,3952,missing,,NOT covered,,Buchberg (43 m),,47.885708,11.450043,1495.0,1589.2,y
+way 541339315,,pool,leisure=swimming_pool,,4451,missing,,NOT covered,,Buchberg (67 m),,47.889206,11.445843,1181.7,1200.2,y
+way 541339324,,pool,leisure=swimming_pool,,4511,missing,,NOT covered,,Buchberg (35 m),,47.889308,11.444771,1101.7,1188.9,y
+way 905844194,,sport,leisure=pitch,,4534,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Leitenstraße (82 m),,47.888554,11.443001,969.7,1272.7,y
+way 541339303,,sport,leisure=pitch,,4555,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Buchberg (51 m),,47.890251,11.445571,1161.4,1084.0,y
+way 541339302,,sport,leisure=pitch,,4587,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,B 11 (44 m),,47.890709,11.445735,1173.7,1033.1,y
+way 541335467,,sport,leisure=pitch,,4609,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Buchberg (77 m),,47.892789,11.449539,1457.3,801.8,y
+way 541335466,,sport,leisure=pitch,,4631,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",equestrian,Buchberg (93 m),,47.893011,11.449504,1454.7,777.2,y
+way 905844200,,pool,leisure=swimming_pool,,4739,missing,,NOT covered,,B 11 (76 m),,47.892522,11.445928,1188.0,831.5,y
+way 191174811,,sport,leisure=pitch,,5354,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Leitenstraße (23 m),,47.891503,11.43176,131.3,944.8,y
+way 1547525668,,playground,leisure=playground,,5360,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Rupertstraße (45 m),,47.89847,11.4441,1051.7,170.1,y
+way 191174813,,sport,leisure=pitch,,5375,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Leitenstraße (25 m),,47.891529,11.431398,104.3,941.9,y
+way 93488466,Kart-Bahn,sport,leisure=pitch,,5398,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",karting,Buchberger Straße (64 m),,47.892324,11.432125,158.5,853.5,y
+way 179341161,,playground,leisure=playground,,5401,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Korbinianstraße (54 m),yes,47.898742,11.443725,1023.7,139.8,y
+way 191174812,,sport,leisure=pitch,,5401,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",tennis,Leitenstraße (20 m),,47.891652,11.43109,81.3,928.3,y
+way 94931931,Kindergarten Gelting,playground,leisure=playground,,5440,missing,,NOT covered (no playground area kind; import QUERY has only park|pitch),,Leitenstraße (27 m),,47.891785,11.430551,41.1,913.5,y
+way 92101829,Kindergarten Gelting,school_childcare,amenity=kindergarten,Leitenstraße 4,5473,missing,,I-1 step 1,,Leitenstraße (20 m),,47.89199,11.430237,17.7,890.6,y
+way 179417452,Zur Post,food_drink,amenity=restaurant,Faulhaberstraße 2b,5491,in_game,"#191 Zur Post (food, 0 m)",current filter,,Bettingerstraße (22 m),,47.89951,11.44326,989.0,54.5,y
+way 99010625,Skatepark Waldram,sport,leisure=pitch,,5505,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",skateboard,B 11 (50 m),,47.897429,11.438561,638.5,285.9,y
+way 1052125739,,sport,leisure=pitch,,5611,in_game_area,area kind=pitch (unnamed),"areas (no POI, no name)",archery,Buchberger Straße (120 m),,47.894194,11.430876,65.3,645.6,y
+way 97695048,Städt. Kindergarten & Kinderkrippe,school_childcare,amenity=kindergarten,Sudetenstraße 102,5723,missing,,I-1 step 1,,Sudetenstraße (23 m),,47.9001,11.439037,674.0,-11.1,y
+web,Coffeeholic Café,food_drink,web only (not in OSM),Neuer Platz 5,396,missing,toelzer-land.de,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Café Bar DUO,food_drink,web only (not in OSM),Sudetenstraße 47,483,missing,toelzer-land.de / tourismus.geretsried.de,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Indian Palace,food_drink,web only (not in OSM),Sudetenstraße 47,483,missing,gemeindeausstellung list (old? verify open),NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Club57,food_drink,web only (not in OSM),Sudetenstraße 74,1083,missing,"exa places 47.852769,11.495621",NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Boulevard Bistro,food_drink,web only (not in OSM),Jeschkenstraße 13,~1360,missing,golocal,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Asien Perle,food_drink,web only (not in OSM),Jeschkenstraße 28,~1300,missing,mappde,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Restaurant Ostasien,food_drink,web only (not in OSM),Steiner Ring 8,~1343,missing,"mappde; same address as Pho Viet #22 -> probably old name, skip",NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Restaurant Akropolis,food_drink,web only (not in OSM),Brunnenfeldweg 4-10,?,missing,tourismus.geretsried.de,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Yellow Chilli,food_drink,web only (not in OSM),?,?,missing,tourismus.geretsried.de,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Café Centrale,food_drink,web only (not in OSM),?,?,missing,exa places (search area near start),NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Hotel Gasthof Neu Wirt,food_drink,web only (not in OSM),Wolfratshauser Straße 24-26 (Gelting),~5000,missing,mappde,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Landgasthof Alter Wirth,food_drink,web only (not in OSM),Buchberger Straße 4 (Gelting),~5000,missing,mappde,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,
+web,Kulturbühne Hinterhalt,food_drink,web only (not in OSM),Leitenstraße 40 (Gelting),~5400,missing,mappde,NOT covered (not in OSM; needs hand-added entry like I-1 step 4),,,,,,,,

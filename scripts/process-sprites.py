@@ -1166,6 +1166,33 @@ if src is not None:
     im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / "isarwinkel-planter.webp", "WEBP", quality=90)
     print("isarwinkel-planter.webp", im.size)
 
+# Start-area streetscape (S-1, src/world/places/streets.ts): the grey slab pavement and the granite-sett gutter as
+# ground materials (seamless from Codex, 512 px); the white "Sudetenstraße" painted on the asphalt, keyed and stretched
+# square like a wall sign (a material on the road); the traffic signs and the zebra's flashing light as prop sprites
+# (keyed, cropped, 256 px along the long side).
+for src_name, out_name in [("paving-slab-grey", "paving-slab-grey"), ("sett-gutter-grey", "sett-gutter-grey")]:
+    src = find(src_name)
+    if src is not None:
+        make_seamless(Image.open(src).convert("RGB"), 0.06).resize((512, 512), Image.LANCZOS).save(OUT / f"{out_name}.webp", "WEBP", quality=90)
+        print(f"{out_name}.webp")
+src = find("road-name")
+if src is not None:
+    im = key_magenta_fast(Image.open(src))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (242, 242, 238, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "road-name-sudetenstrasse.webp", "WEBP", quality=92)
+    print("road-name-sudetenstrasse.webp")
+for src_name, out_name in [("vz314", "vz314-parken-links"), ("zz-time", "zz-mo-sa-8-19"), ("zz-2std", "vz1040-32-2std"), ("vz350", "vz350"), ("vz224", "vz224"), ("flash-amber", "flash-amber")]:
+    src = find(src_name)
+    if src is None:
+        continue
+    im = keep_main_shape(key_magenta_fast(Image.open(src)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    k = 256 / max(im.size)
+    im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{out_name}.webp", "WEBP", quality=90)
+    print(f"{out_name}.webp", im.size)
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

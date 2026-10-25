@@ -38,6 +38,8 @@ export const Road = Schema.Struct({
   nodes: Schema.Array(Schema.Number),
   /** A parking lot aisle (OSM service=parking_aisle): bays on both sides. */
   aisle: Schema.optionalKey(Schema.Boolean),
+  /** The OSM way: street profiles (world/places/streets.ts) name the way they dress by it. */
+  id: Schema.optionalKey(Schema.Number),
 })
 export type Road = typeof Road.Type
 
@@ -98,7 +100,8 @@ export type Crossing = typeof Crossing.Type
 /** Street furniture OSM maps as points: bus stops and glass bottle banks. */
 export const PropKind = Schema.Literals(["bus_stop", "glass"])
 export type PropKind = typeof PropKind.Type
-export const Prop = Schema.Struct({ kind: PropKind, x: Schema.Number, y: Schema.Number })
+/** `node`: the OSM node of a bus stop; `shelter: false` where OSM tags it shelter=no (see streetProps for which are honoured). */
+export const Prop = Schema.Struct({ kind: PropKind, x: Schema.Number, y: Schema.Number, node: Schema.optionalKey(Schema.Number), shelter: Schema.optionalKey(Schema.Boolean) })
 export type Prop = typeof Prop.Type
 
 /** A part of town with its own name (OSM place=suburb, village, …): where the gangs have their turf. */
