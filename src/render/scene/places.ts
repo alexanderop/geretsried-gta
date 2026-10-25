@@ -1,6 +1,6 @@
 /**
  * The parts of a dressed place (world/places/dressing.ts) as 3D geometry:
- * signs, arcades, balconies and door canopies on the footprint's walls, towers with a pyramid roof,
+ * signs, arcades, balconies, door canopies and cross gables on the footprint's walls, towers with a pyramid roof,
  * prop sprites. Drawn with the building they belong to; its walls, storeys
  * and roof colours are scene.ts's.
  */
@@ -9,7 +9,7 @@ import { boxOf, type Box } from "#/world/geometry.ts"
 import { rectRing, square, toWorld, wallFrame } from "#/world/frame.ts"
 import { towerFrame, type Part, type Place, type TowerFace } from "#/world/places/dressing.ts"
 import { SHADOW, WHITE, Z_SHADOW, box, boxShadow, face, flat, light, shade, sprite, vertex, worldDir, type Builder } from "./frame-mesh.ts"
-import { Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type SpriteBoxes } from "./mesh.ts"
+import { Material, Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type SpriteBoxes } from "./mesh.ts"
 
 /** How far a sign stands off its wall unless it says, and the glazing in an arcade's openings. */
 const SIGN_OUT = 0.04
@@ -23,6 +23,14 @@ const BALCONY_RAIL = 1
 const RAIL = 0.06
 /** A door canopy's slab. */
 const CANOPY_SLAB = 0.2
+
+/** A cross gable's front just proud of its wall, its roof's overhang past the gable and the eaves, the dark edge under the roof, and the roof tiles' size (as scene.ts's). */
+const GABLE_OUT = 0.04
+const GABLE_EAVES = 0.35
+const GABLE_EDGE = 0.15
+const ROOF_TILE = 5
+/** Roof tiles in a wall's frame: their rows along n, so they run along a cross gable's eaves. */
+const gableTiles = (u: number, n: number) => [n / ROOF_TILE, u / ROOF_TILE] as const
 
 /** A tower's quoins (square, standing proud of its walls), the cornice under its roof, the eaves' overhang. */
 const QUOIN = 0.45
@@ -108,6 +116,40 @@ const canopy = (b: Builder, p: Extract<Part, { kind: "canopy" }>) => {
     flat(b, rect, p.z, p.colour, Mode.material, material(p.texture), (u, n) => [(u - p.u0) / p.depth, -n / p.depth])
   }
   boxShadow(b, rect, p.z)
+}
+
+/**
+ * A cross gable on its wall (n = 0): the strip of wall under its eaves and the gable over it facing out, its two side
+ * walls running into the building, and its two roof planes from the eaves (overhanging) to the ridge over the middle,
+ * each lit by which way it faces and tiled like the building's roof, with a dark edge along the eaves and the gable.
+ * Whatever lies under the building's own roof is hidden by it.
+ */
+const gable = (b: Builder, p: Extract<Part, { kind: "gable" }>) => {
+  const { u0, u1, z0, z, depth } = p
+  const { wall, roof } = p.colours
+  const mid = (u0 + u1) / 2
+  const slope = Math.tan((p.pitch * Math.PI) / 180)
+  const ridge = z + (mid - u0) * slope
+  const front = -GABLE_OUT
+  face(b, u0, front, u1, front, z0, z, wall)
+  face(b, u0, depth, u0, front, z0, z, wall)
+  face(b, u1, front, u1, depth, z0, z, wall)
+  const c = shade(p.colours.gable, light(...worldDir(b.f, 0, -1)))
+  b.m.tri(vertex(b, u0, front, z, c), vertex(b, u1, front, z, c), vertex(b, mid, front, ridge, c))
+  const eave = z - GABLE_EAVES * slope
+  const n0 = front - GABLE_EAVES
+  for (const [ue, side] of [
+    [u0 - GABLE_EAVES, -1],
+    [u1 + GABLE_EAVES, 1],
+  ] as const) {
+    const [ox, oy] = worldDir(b.f, side, 0)
+    const lit = shade(roof, 0.7 + 0.3 * Math.max(0, -(ox * SHADOW_DIR[0] + oy * SHADOW_DIR[1])))
+    const v = (u: number, n: number, zz: number) => vertex(b, u, n, zz, lit, Mode.detail, Material.roofTiles, ...gableTiles(u, n))
+    b.m.quad(v(ue, n0, eave), v(mid, n0, ridge), v(mid, depth, ridge), v(ue, depth, eave))
+    const dark = shade(roof, 0.55)
+    face(b, ue, side < 0 ? depth : n0, ue, side < 0 ? n0 : depth, eave - GABLE_EDGE, eave, dark, Mode.color)
+    b.m.quad(vertex(b, ue, n0, eave - GABLE_EDGE, dark), vertex(b, mid, n0, ridge - GABLE_EDGE, dark), vertex(b, mid, n0, ridge, dark), vertex(b, ue, n0, eave, dark))
+  }
 }
 
 /** The corners of a tower's side, left to right seen from outside (see TowerFace). */
@@ -210,6 +252,7 @@ export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts
       if (part.kind === "wallSign") panel(b, part.texture, part.u0, part.u1, part.z0, part.z1, -(part.out ?? SIGN_OUT))
       else if (part.kind === "balcony") balcony(b, part)
       else if (part.kind === "canopy") canopy(b, part)
+      else if (part.kind === "gable") gable(b, part)
       else arcade(b, part)
     }
   }
@@ -227,6 +270,8 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
     if (wall === null) return []
     if (part.kind === "balcony") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), Math.max(0, ...part.z) + BALCONY_RAIL]]
     if (part.kind === "canopy") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), part.z]]
+    if (part.kind === "gable")
+      return [[rectRing(wall.frame, [part.u0 - GABLE_EAVES, part.u1 + GABLE_EAVES, -GABLE_OUT - GABLE_EAVES, part.depth]), part.z + ((part.u1 - part.u0) / 2) * Math.tan((part.pitch * Math.PI) / 180)]]
     const out = part.kind === "arcade" ? part.depth : (part.out ?? SIGN_OUT)
     return [[rectRing(wall.frame, [part.u0, part.u1, -out, 0]), part.kind === "arcade" ? part.h + ARCADE_BAND : part.z1]]
   })

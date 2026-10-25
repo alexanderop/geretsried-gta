@@ -617,7 +617,7 @@ Size: S
 - **Guesses (marked in the file):** how far the window band runs (the whole wall here), where the sign and the "4" sit,
   the logo's orange (#F07D1A, the doc's sample was unreliable) and the "4" in navy, and the logo's lettering ("Pw").
 
-### B2-4 · Aldi Süd Stein, Sudetenstraße 68 (#225, supermarket) — Size: S — status: ref-done (partial)
+### B2-4 · Aldi Süd Stein, Sudetenstraße 68 (#225, supermarket) — Size: S — status: implemented (partial: which gable carries the logo, where the doors are, that the DOP20 strip is a glass canopy and the shelter's size are guesses; no porch posts; the Packstation left out; the photos were not on disk, so not compared with 01/02)
 ```
 Goal: The Stein Aldi where the Steinböcke's VW Bus waits: a single-storey white store with a dark grey pitched
 roof, a grey clad gable with the ALDI SÜD logo on navy over a covered entrance porch, a car park with blue
@@ -635,11 +635,72 @@ Spec (via #0b):
 - Ground decals: blue disabled bays where 02 shows them. Packstation sprite optional (location from the DHL
   finder, appearance not photographed: needs reference).
 Acceptance criteria:
-- [ ] From above: dark pitched roof instead of a flat grey slab; from the car park the gable + logo + porch match 01.
-- [ ] "gartenberg-1": the VW Bus still spawns on the car-park service aisle E of the store and is reachable;
+- [x] From above: dark pitched roof instead of a flat grey slab; from the car park the gable + logo + porch match 01.
+      (Roof and cross gables from the LoD2 model and the DOP20; the logo reads above the glass canopy when the car-park
+      wall leans in at the left screen edge. Not compared with 01: the photos were not on disk.)
+- [x] "gartenberg-1": the VW Bus still spawns on the car-park service aisle E of the store and is reachable;
       porch posts don't block the aisle; pnpm test + typecheck green.
+      (Nothing new is solid and there are no posts; the bus stood on the aisle 10.7 m out from the wall, was blown up
+      and the job paid. From the real phone it is culled first: see below.)
 Size: S
 ```
+
+**B2-4 as built** (`src/world/places/aldi-sued-stein.ts`) and gotchas for later places:
+- **Public sources.** OSM way 1385213575 has `building:levels=1`, `roof:levels=0`, `roof:shape=flat` (wrong). The Aldi Süd
+  store page (`filialen.aldi-sued.de/bayern/geretsried/sudetenstrasse-68`) redirects to a generic page with no photo; a web
+  search found no picture. The **LoD2 model** (tile `686_5302.gml`, the one B2-2/B2-3 used; the store is near its S edge)
+  has it as `DEBY_LOD2_4667297`, a commercial building with roof type 3100 (gabled), ground 607.97 m: a gable roof along
+  the long axis at about 22°, eaves 5.6 m, ridge 10.7 m, 12.6 m in from the WNW wall (OSM wall 2, which matches the
+  model's eave within 0.1 m); **two cross gables**, each 15 m wide (eaves 5.6, ridges 8.6 m), side by side over the whole
+  ESE wall to the car park (OSM wall 8, u 0 at its SSW end), the wing under them standing 4.9 m out of the main block's
+  ESE eave line; and a small gabled annex at the SSW corner (walls 3, 4; ridge 7.4 m, its gable to the SSW). So the doc's
+  "cross-gable at the S end" is the two ESE gables. The **DOP20** (fetched as for Maria Hilf) shows all of it: the lit
+  WNW plane, the dark ESE plane, the cross gables' light S-facing planes, a 2 m strip of dark panes in a grid along wall
+  8 (read as a glass canopy), a light flat roof about 3 × 6 m in front of wall 6 by the corner (the trolley shelter) and
+  two blue bays in front of the SSW gable, at right angles to the wall. The car park and the aisle are on the ESE side;
+  the DHL finder's Packstation point lies against wall 8, 5.5 m from its SSW end.
+- **Levels 5.6 / 3, `facade: "plaster"`, `wallColour` [240, 240, 238], `roof: { colour: [124, 122, 130], hip: 22, eaves,
+  gables }`:** gables at walls 9, 0, 1 (the NNE end, three collinear pieces), 5 and 3 (the SSW end and the annex) and 7.
+  The trick that puts the ridge where the model has it: **wall 8 gets its own, lower eave (3.42 m)**, so its plane is
+  the model's main ESE plane extended out to the wing's wall (it passes 5.6 m where the model's eave line is), and the
+  ridge comes out 12.6 m from wall 2 at 10.7 m. Wall 6, 3.3 m further in, gets 4.72 m, a hair under that same plane, so
+  it owns its stretch without a step in the ridge; wall 7 between them is a gable. Wall 4's own plane gives the annex its
+  low ridge and wall 3 its gable, as in the model. The ESE walls are lower than in reality (3.4 m under the gables, 4.7 m
+  on wall 6, where OSM's wall lies 1.7 m outside the model's).
+- **New generic part `gable { edge, u0, u1, z0, z, pitch, depth, colours: { wall, gable, roof } }`** (dressing.ts,
+  places.ts): a cross gable on a wall, its two roof planes from the eaves (overhanging 0.35 m and continuing the slope) to
+  a ridge over the stretch's middle running `depth` m into the building, lit and tiled like the hip roof (roof-tiles detail,
+  rows along the eaves), dark edges along the eaves and the rake, the gable triangle 0.04 m proud of the wall over a strip
+  of wall from `z0` to the eaves, and two side walls. It does not cut the building's roof: whatever runs under that roof is
+  hidden by the depth test, so `depth` only has to reach it (here 13.5 m; the ridge meets the main plane about 13 m in).
+  Two gables on one wall share a side wall (same colour, so the coincident faces don't show). Here u 0.05–14.85 and
+  14.85–29.65, z0 3.32 (just under wall 8's top), z 5.6, pitch 22, grey cladding #a6a9a1. places.test checks it on a real
+  wall like the other wall parts; scene places.test the tip, the ridge, the overhang and that no other chunk changes.
+  **Every other building is unchanged:** all 2112 chunk meshes hashed identical at HEAD and with this change minus the
+  Aldi; with it only chunk 1796 (its own) differs.
+- **Parts:** `aldi-logo` (new material, Codex: the ALDI SÜD logo on its navy #303d6f panel, keyed and squared like the
+  Mühlenbäck boards) in the SSW gable, u 6.3–8.6, z 5.75–8.05, `out` 0.1; `shop-front` glazing as the entrance at u 0.4–5.6
+  (hidden by the canopy from above); a glass `canopy` along wall 8 (u 0.3–29.4, z 3.1, depth 2, `canopy-glass`); the
+  trolley shelter as a light grey canopy on wall 6 (u 10–16.4, z 2.6, depth 3.2); two `disabled-bay` props (new, Codex: a
+  blue bay with the white wheelchair, keyed, turned on its side so its length runs along the image's width) flat at z 0.12
+  (above the shadow layer at 0.1, so their own silhouette does not darken them), street u −4.1 / −1.3, n 22.25, angle −π/2,
+  4.6 m long. They overlap the edge of OSM's service aisle by about a meter: in the DOP20 the aisle runs further out.
+- **What the camera shows:** from above (`?compare=47.85315,11.49315,32`) the roof reads like the DOP20: the dark main
+  roof, the two cross gables with their light S planes and valleys, the canopy's grid, the shelter and the bays. The
+  car-park wall faces ESE; stand in the car park about (4738, 5208.4), so it is at the left screen edge: the glass canopy
+  in front, the logo over it under the gable's eave. **An opaque canopy hides a gable over it from this camera** (its
+  outer edge leans less than the gable's foot does at any lean the play camera has): the first try, a dark solid canopy,
+  hid the logo; the glass canopy shows it through the panes. The grey cladding mostly hides under the eave's overhang.
+- **"gartenberg-1", checked in the browser:** taken at the Gartenberg phone, the VW Bus is placed at (4730.7, 5215.2),
+  on the aisle's far kerb 10.7 m out from wall 8, clear of the canopy and the bays; a rocket from the car park destroyed
+  it: "Geschafft! $2000", Krachlederne +25, Steinböcke −19. **Existing bug, not changed here:** `fillTraffic` drops every
+  parked car more than `NPC_FAR` (650 m) from the player, and the job car is a parked car, so a bus placed 3.1 km from the
+  phone is gone by the time you arrive (only its red marker remains). For the check it was put back into `game.parked`.
+  The same hits any steal/destroy job whose car is over 650 m from its phone (Kaufland's BMW). A fix belongs in `game.ts`
+  (keep `jobs.active.target` out of the cull), not in a place entry.
+- **Left out:** porch posts (the canopy part has none; the doc's "white posts" were not modelled), the DHL Packstation
+  (where the finder puts it, it would stand under the canopy, and no photo shows it; the sprite was made and dropped), the
+  small blue ALDI sign over the doors.
 
 ### B2-5 · Polizeiinspektion Geretsried, Jeschkenstraße 31 (#187, police) — Size: S — status: ref-done (partial)
 ```
@@ -1092,25 +1153,161 @@ Acceptance criteria:
 Size: S
 ```
 
+### Batch 6a: start area, nearest 10 (decision)
+Same rules as batches 1–5: **exterior only** (Size S), everything plugs into **#0b** (wallSign / awning / sprite parts in the
+street frame), no interiors (#0c not needed), no new ShopKind. Rows are in the Start area section and P2–P6. Photos:
+reference/<slug>/ (gitignored by #0); docs: docs/places/<slug>.md. The first six sit in two OSM buildings right at the spawn:
+way 127604891 (Sudetenstr. 17–19: unit 17 · Angel Nails · Mühlenbäck) and way 127604887 (Sudetenstr. 11–15: VR-Bank · Bodystreet ·
+Stroblume · Dolce Gelato, NW→SE), both NE of Sudetenstraße (bearing 304°). Build B6a-1…B6a-5 as one pass so the signs line up.
+Open questions for Alex: HoangAnh vs Deliqos (B6a-2), Autohaus name (B6a-8), drop Quelle (B6a-9).
+
+### B6a-1 · Angel Nails, Sudetenstraße 19 (#154, shop) — Size: S — status: ref-done
+```
+Goal: Pink nail studio right next to the spawn: pink fascia, pink pillar by the door, NW of the Mühlenbäck front.
+Reference: docs/places/angel-nails.md; reference/angel-nails/02-street-side.png (key), 05-crop-sign.png, 01, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Angel Nails" (#154 at 4000.2, 4648.4). Way 127604891, NE frontage, immediately NW of
+  the Mühlenbäck sign (B2-1). Fascia wallSign pink #ec86a0 (~5 m) with white "Angel Nails"; pillar strip #9b4668 left of the door.
+- Wall stays as the building (#b5b7b4 white/cream). No canopy of its own.
+Acceptance criteria:
+- [ ] From the spawn the pink fascia is visible left of Mühlenbäck, matching 02. The player still spawns on the pavement.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-2 · HoangAnh, Sudetenstraße 17 (#12, food) — Size: S — status: todo (needs reference; ask Alex)
+```
+Unit 17 (NW end of way 127604891). Listings (2024–2026) and the Google pin say HoangAnh is open, but Street View (Aug 2022)
+shows the unit dressed as Deliqos Burger & Pizza (also listed at Sudetenstr. 17). No HoangAnh photo: nothing to build
+until Alex decides HoangAnh / Deliqos / both. See docs/places/hoanganh.md.
+```
+
+### B6a-3 · Dolce Gelato, Sudetenstraße 15 (#47, food) — Size: S — status: ref-done
+```
+Goal: Ice-cream café with a red awning and white chairs at the SE end of the VR-Bank row.
+Reference: docs/places/dolce-gelato.md; reference/dolce-gelato/01-street-front.png (key), 02, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Dolce Gelato" (#47 at 3980.5, 4636.4). Way 127604887, NE frontage, SE end.
+- White sign plate #d9d5da "Dolce Gelato" above a red awning #d46172 (~10 m). 4–6 white chairs + 2 small tables under it;
+  blue P-sign sprite + street tree as in 01 (only if trees/signs are already supported; else skip).
+Acceptance criteria:
+- [ ] Front matches 01; pavement stays walkable past the chairs.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-4 · Stroblume, Sudetenstraße 15 (#155, shop) — Size: S — status: ref-done
+```
+Goal: Florist with a long red awning and a table of potted flowers on the pavement.
+Reference: docs/places/stroblume.md; reference/stroblume/01-street-front.png (key), 02, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Stroblume" (#155 at 3973.7, 4631.2). Way 127604887, NE frontage, between Bodystreet (NW)
+  and Dolce Gelato (SE). Red awning #d25f5e (~10 m) with white script "Stroblume"; wall #c4bba2.
+- Props: plant table + pots + a red heart sign on a stand (keep ≥2 m clear).
+- Bodystreet (NW neighbour, not a POI yet, see G-1): black band #181718 "BODY STREET" + maroon awning in 02/05; dress it
+  only once its POI exists.
+Acceptance criteria:
+- [ ] Front matches 01 (awning, script, plants). pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-5 · VR Bank München Land, Sudetenstraße 11 (#13, bank) — Size: S — status: ref-done
+```
+Goal: The bank at the NW corner of the row: orange ground floor, blue "VR Bank München Land" letters, grey canopy.
+Reference: docs/places/vr-bank-zentrum.md; reference/vr-bank-zentrum/01-street-front.png (key), 02, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "VR-Bank" (#13 at 3957.8, 4620.3). Way 127604887, NE frontage, NW end (car park on its NW side).
+- Ground-floor band orange #e2a470 (sun) / #d68756 (shade), 0–3.5 m, only on the bank part; upper wall stays white (#e1e4e7).
+- Letters wallSign blue #5574d5 + square VR logo above a grey canopy strip #787c75.
+- ATM position: needs reference (OSM atm=yes). Do not add one.
+Acceptance criteria:
+- [ ] Front matches 01; the orange band does not bleed onto Bodystreet. pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-6 · KIND Augenoptik, Sudetenstraße 10 (#115, shop) — Size: S — status: ref-done
+```
+Goal: Optician on the corner opposite the VR-Bank: dark-blue "KIND" band wrapping the corner of a white block.
+Reference: docs/places/optik-kind.md; reference/optik-kind/01-street-front.png (key), 02, 03, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Optik Kind Geretsried-Zentrum II" (#115 at 3944.9, 4641.7). Way 538512734, SW side of
+  Sudetenstraße, Sudetenstraße/Kirchweg corner. Blue band #305499 with white "KIND" ×3, wrapping the corner; wall #b4b7c1.
+- Props: A-board sprite. Leave the NW part of the frontage free for the Bistro Malor terrace (B6a-7).
+Acceptance criteria:
+- [ ] From the VR-Bank pavement the corner matches 01/03. pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-7 · Bistro Malor, Sudetenstraße 10 (#120, food) — Size: S — status: ref-done (partial)
+```
+Goal: Bistro terrace beside the KIND corner: wood tables, rattan chairs, low hedges.
+Reference: docs/places/bistro-malor.md; reference/bistro-malor/05-web-terrace.jpg (key, website), 06-web-logo.png, 07-crop-sv-terrace.png.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Bistro Malor" (#120 at 3929.9, 4632.5). Way 538512734 (shared with KIND), NW part, street side.
+- Terrace part ~8×5 m: wood tables + brown rattan chairs, low hedge strip around it.
+- Terrace roof: website shows a dark steel frame, Street View a dark-red roof: needs reference → build no roof yet.
+- Restaurant facade sign: needs reference (logo #a82b1c / #464140 exists, but not seen on the building) → no wallSign.
+Acceptance criteria:
+- [ ] Terrace next to the KIND corner, pavement walkable. pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-8 · Autohaus Billion, Sudetenstraße 25 (#178 "Audi;Seat;Škoda;Volkswagen", shop) — Size: S — status: ref-done
+```
+Goal: VW dealer SE of the start: white block, terracotta awnings, VW pylon + flags, cars on a paved forecourt.
+Reference: docs/places/autohaus-billion.md; reference/autohaus-billion/01-street-front.png (key), 02, 03, 05-crop-side-sign.png, 04.
+Spec (via #0b):
+- Street frame "Sudetenstraße", POI "Audi;Seat;Škoda;Volkswagen" (#178 at 4071.5, 4676.3; the POI is the building centre,
+  26.5 m from the kerb). Way 120402846 street (SW) edge: segmented terracotta awnings #f5bb95, white name plate
+  #fdfdfe "Autohaus Billion"; showroom glass between grey pillars #6f7477.
+- Props at the NW end of the forecourt: VW pylon #d7d7d6 + 3 flags; 4–6 static parked cars on the forecourt.
+- Naming: the POI name is the OSM brand list (build.ts `brand ?? name`). Do NOT rename here; Alex decides (see doc).
+Acceptance criteria:
+- [ ] From Sudetenstraße the front matches 01/02; forecourt cars do not block the road. pnpm test + typecheck green.
+Size: S
+```
+
+### B6a-9 · Quelle (#11, shop) — Size: S — status: todo (needs reference; probably closed)
+```
+OSM node 370882637 (shop=electronics, no address) sits in a small house on Beethovenweg/Kirchweg. Directories list a
+"Quelle-Agentur" (mail-order agency) at Beethovenweg 2; Quelle agencies ended with the 2009 insolvency. Street View: houses,
+no sign. Nothing to build. Ask Alex whether to drop the POI. See docs/places/quelle-sudetenstrasse.md.
+```
+
+### B6a-10 · Gaststätte Isarwinkel, Richard-Wagner-Straße 14 (#177, food) — Size: S — status: ref-done (partial)
+```
+Goal: Old-style Gaststätte with its name painted on the wall, a landscape mural, a tiled porch roof and red awnings.
+Reference: docs/places/gaststaette-isarwinkel.md; reference/gaststaette-isarwinkel/01-street-front.png (key), 02, 04, 05.
+Spec (via #0b):
+- Street frame "Richard-Wagner-Straße" (not Sudetenstraße), POI "Gaststätte Isarwinkel" (#177 at 3890.5, 4793.3).
+  Way 119894071, W street edge. Wall tint #b89a86; dark lettering "GASTSTÄTTE ISARWINKEL"; mural panel upper right;
+  terracotta tile lean-to #c8886f over the door; red awnings #fbb2b0 along the ground floor.
+- Props: hedge strip + planters in front; pole sign by the car park with a plain white "Restaurant Isarwinkel" board
+  (brewery roundel unreadable → leave it out).
+Acceptance criteria:
+- [ ] Front matches 01/02. pnpm test + typecheck green.
+Size: S
+```
+
 ## Start area (everything within ~800 m of the start)
 
 Start = Sudetenstraße 19 spawn at map (3997.4, 4648.0). Radius 800 m, map metres (project.ts). Source: public/geretsried.map.json pois
-at HEAD c5af0a7, statuses from the priority list below. 64 POIs in the map are within 800 m: 41 todo, 23 already ref-done/partial/implemented.
+at HEAD c5af0a7, statuses from the priority list below. 64 POIs in the map are within 800 m: 41 todo, 23 already ref-done/partial/implemented (before 6a; after 6a: 33 todo, 31 done/partial/implemented).
 Capture order: nearest first, ~10 per batch. Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 
-### 6a (capturing now)
+### 6a (captured 2026-10-25: B6a-1…B6a-10)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 154 | Angel Nails | shop | 3 | todo |
-| 12 | HoangAnh | food | 6 | todo |
-| 47 | Dolce Gelato | food | 20 | todo |
-| 155 | Stroblume | shop | 29 | todo |
-| 13 | VR-Bank | bank | 48 | todo |
-| 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | todo |
-| 120 | Bistro Malor | food | 69 | todo |
-| 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | todo |
-| 11 | Quelle | shop | 154 | todo |
-| 177 | Gaststätte Isarwinkel | food | 180 | todo |
+| 154 | Angel Nails | shop | 3 | ref-done |
+| 12 | HoangAnh | food | 6 | todo (needs reference; unit shows Deliqos) |
+| 47 | Dolce Gelato | food | 20 | ref-done |
+| 155 | Stroblume | shop | 29 | ref-done |
+| 13 | VR-Bank | bank | 48 | ref-done |
+| 115 | Optik Kind Geretsried-Zentrum II | shop | 53 | ref-done |
+| 120 | Bistro Malor | food | 69 | ref-done (partial) |
+| 178 | Audi;Seat;Škoda;Volkswagen | shop | 79 | ref-done |
+| 11 | Quelle | shop | 154 | todo (needs reference; probably closed) |
+| 177 | Gaststätte Isarwinkel | food | 180 | ref-done (partial) |
 
 ### 6b
 | # | Name | Kind | m from start | Status |
@@ -1158,8 +1355,8 @@ Capture order: nearest first, ~10 per batch. Exterior only, same rules as batche
 ### Already done in the start area (no capture needed)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
-| 168 | Rehmaus Apotheke | pharmacy | 4018.9, 4693.8 | 47.857788, 11.483882 | 50 | implemented | courier job destination (Brezn); Sudetenstraße 14 |
+| 48 | Mühlenbäck | bakery | 8 | implemented (partial) |
+| 168 | Rehmaus Apotheke | pharmacy | 50 | implemented |
 | 170 | Spielwaren Krömer | shop | 135 | ref-done |
 | 56 | Cafe Waldmann | food | 148 | implemented |
 | 166 | Woolworth | shop | 157 | ref-done |
@@ -1180,7 +1377,7 @@ Capture order: nearest first, ~10 per batch. Exterior only, same rules as batche
 | 66 | PENNY | supermarket | 331 | ref-done |
 | 20 | Sparkasse | bank | 3550.6, 4719.7 | 47.857555, 11.477603 | 453 | implemented | Stein branch, Händelstraße (no addr in OSM; Nominatim) |
 | 204 | EDEKA | supermarket | 459 | ref-done |
-| 103 | Automobilwerkstatt Wilhelm | car_repair | 731 | ref-done (partial) |
+| 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 
 ### 6e: not in the map yet (add POI first, then capture)
 Overpass, 2026-10-25: shop/amenity/leisure/office/craft/healthcare/tourism within 800 m of lat 47.858199, lon 11.483593,
@@ -1303,7 +1500,7 @@ Done when: typecheck + tests pass, each gym above is in public/geretsried.map.js
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2 · batch 6a = start area nearest 10 (B6a-1…B6a-10)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
@@ -1318,7 +1515,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 48 | Mühlenbäck | bakery | 4005.5, 4651.6 | 47.858167, 11.483702 | 8 | implemented (partial) | B2-1. Start: Sudetenstraße 19. NOT the courier pickup (that is #46) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
-| 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | ref-done (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (pitched) |
+| 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | implemented (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (gable roof with two cross gables, LoD2) |
 | 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | ref-done (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
 | 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | ref-done (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
@@ -1333,7 +1530,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P3 — landmarks & big anchors (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | todo |  |
+| 13 | VR-Bank | bank | 3957.8, 4620.3 | 47.858449, 11.483062 | 49 | ref-done | B6a-5. Sudetenstraße 11, sign "VR Bank München Land" |
 | 82 | Denns BioMarkt | supermarket | 4208, 4747.7 | 47.857303, 11.486417 | 233 | ref-done (partial) | B3-2; NW unit of the west block; node vs sign ≈ 27 m apart, door needs reference |
 | 228 | Karl-Lederer-Grundschule Geretsried | school | 3800.4, 4825.3 | 47.856605, 11.480952 | 265 | todo |  |
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | todo |  |
@@ -1408,10 +1605,10 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P5 — food & drink (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | todo |  |
-| 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | todo |  |
-| 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | todo |  |
-| 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | todo |  |
+| 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | todo (needs reference; unit shows Deliqos) | B6a-2. Sudetenstraße 17. SV 2022 shows Deliqos at this unit; listings say HoangAnh open. Ask Alex |
+| 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | ref-done | B6a-3. Sudetenstraße 15 |
+| 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | ref-done (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
+| 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | ref-done (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
 | 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | ref-done | B3-7; crimson fascia; terrace not seen (needs reference) |
 | 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo |  |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | todo |  |
@@ -1447,12 +1644,12 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P6 — generic shops & car repair (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | todo |  |
-| 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | todo |  |
-| 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | todo |  |
-| 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | todo |  |
+| 154 | Angel Nails | shop | 4000.2, 4648.4 | 47.858196, 11.483631 | 2 | ref-done | B6a-1. Sudetenstraße 19, NW-adjacent to Mühlenbäck (3 m from the spawn) |
+| 155 | Stroblume | shop | 3973.7, 4631.2 | 47.858351, 11.483276 | 29 | ref-done | B6a-4. Sudetenstraße 15 |
+| 115 | Optik Kind Geretsried-Zentrum II | shop | 3944.9, 4641.7 | 47.858256, 11.482889 | 53 | ref-done | B6a-6. Sudetenstraße 10, sign "KIND" |
+| 178 | Audi;Seat;Škoda;Volkswagen | shop | 4071.5, 4676.3 | 47.857945, 11.484587 | 79 | ref-done | B6a-8. = Autohaus Billion, Sudetenstraße 25 (POI shows the OSM brand list). Ask Alex about the name |
 | 170 | Spielwaren Krömer | shop | 4094.6, 4741.4 | 47.85736, 11.484897 | 134 | ref-done | B4-8 |
-| 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo |  |
+| 11 | Quelle | shop | 3919.9, 4780.6 | 47.857007, 11.482554 | 154 | todo (needs reference; probably closed) | B6a-9. Quelle-Agentur, Beethovenweg 2 (directory listing); probably closed. Ask Alex: drop? |
 | 166 | Woolworth | shop | 4138.3, 4716.7 | 47.857582, 11.485482 | 156 | ref-done | B4-2 |
 | 169 | Sun Style Bodystyling Studio | shop | 4125.7, 4764.7 | 47.85715, 11.485313 | 173 | ref-done | B4-7 |
 | 114 | Nexial | shop | 4159, 4743.5 | 47.857341, 11.48576 | 187 | ref-done | B4-6; OSM shop tag wrong (IT services) |

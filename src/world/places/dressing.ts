@@ -12,7 +12,7 @@
  * Coordinates (world/frame.ts): free-standing parts (tower, sprite) are in
  * the street frame, u along the street, n from its centre line towards the
  * place (the POI, or the footprint's middle when no POI marks it). Wall
- * parts (wallSign, arcade, balcony, canopy) sit on one wall of the footprint, `edge` i
+ * parts (wallSign, arcade, balcony, canopy, gable) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
  */
@@ -61,6 +61,23 @@ export type Part =
    * `depth` meters along the wall, the image's top at the wall.
    */
   | { readonly kind: "canopy"; readonly edge: number; readonly u0: number; readonly u1: number; readonly z: number; readonly depth: number; readonly colour: Rgba; readonly texture?: MaterialName }
+  /**
+   * A cross gable on wall `edge` from u0 to u1: a gabled roof with its eaves at `z` rising at `pitch` degrees to a
+   * ridge over the stretch's middle that runs `depth` meters into the building, ending at the wall in a gable
+   * (`colours.gable`) over a strip of wall (`colours.wall`) from `z0` up to the eaves. Under the building's own roof
+   * it is hidden by it, so `depth` only has to reach that roof; the building's walls and roof stay as they are.
+   */
+  | {
+      readonly kind: "gable"
+      readonly edge: number
+      readonly u0: number
+      readonly u1: number
+      readonly z0: number
+      readonly z: number
+      readonly pitch: number
+      readonly depth: number
+      readonly colours: { readonly wall: Rgba; readonly gable: Rgba; readonly roof: Rgba }
+    }
   /**
    * A square tower on `rect` (street frame, inside the footprint): walls up
    * to `h`, a pyramid roof `roofH` high, corner quoins in `trim`, a post with

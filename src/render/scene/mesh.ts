@@ -74,6 +74,7 @@ export const Material = {
   werkstattSign: 39,
   werkstattWindows: 40,
   werkstatt4: 41,
+  aldiLogo: 42,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -120,6 +121,7 @@ export const MATERIAL_FILES = [
   "werkstatt-sign",
   "werkstatt-windows",
   "werkstatt-4",
+  "aldi-logo",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -246,6 +248,7 @@ export const PROP_FILES = [
   "bakery-board",
   "post-box",
   "litter-bin",
+  "disabled-bay",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

@@ -111,7 +111,7 @@ describe("the registry on the real map", () => {
       const pts = map.buildings[building]?.pts ?? []
       const place = { dressing, building, frame }
       return dressing.parts.flatMap((part) => {
-        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony" || part.kind === "canopy") {
+        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony" || part.kind === "canopy" || part.kind === "gable") {
           const wall = wallFrame(pts, part.edge)
           const fits = wall !== null && part.u0 >= 0 && part.u0 < part.u1 && part.u1 <= wall.length + 0.01
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
@@ -180,6 +180,25 @@ describe("the registry on the real map", () => {
     expect(Math.atan2(-(nw?.nx ?? 0), nw?.ny ?? 0) * (180 / Math.PI) + 360).toBeCloseTo(322, 0)
     const edges = new Set((hall?.dressing.parts ?? []).flatMap((p) => (p.kind === "wallSign" ? [p.edge] : [])))
     expect([...edges]).toEqual([0])
+  })
+
+  it("dresses the Stein Aldi, not the northern one, with its cross gables on the car-park wall, clear of the aisle the VW Bus parks on", () => {
+    const aldi = places.find((p) => p.dressing.osmBuildingId === 1385213575)
+    // "gartenberg-1" finds the store as the "Aldi Süd" with y > 5000; the other one is 2.9 km north.
+    const poi = map.pois.find((p) => p.name === "Aldi Süd" && p.y > 5000)
+    expect(Math.hypot((aldi?.frame.ox ?? 0) - (poi?.x ?? 0), (aldi?.frame.oy ?? 0) - (poi?.y ?? 0))).toBeLessThan(50)
+    // The LoD2 eaves at 5.6 m.
+    expect((dressed.buildings[aldi?.building ?? -1]?.levels ?? 0) * 3).toBeCloseTo(5.6)
+    const pts = map.buildings[aldi?.building ?? -1]?.pts ?? []
+    const front = wallFrame(pts, 8)?.frame
+    // Wall 8 faces ESE, out of the building towards the car park.
+    expect((Math.atan2(-(front?.nx ?? 0), front?.ny ?? 0) * (180 / Math.PI) + 360) % 360).toBeCloseTo(124, 0)
+    const parts = aldi?.dressing.parts ?? []
+    expect(parts.filter((p) => p.kind === "gable" && p.edge === 8)).toHaveLength(2)
+    // The service aisle's centre line runs about 7.7 m out from wall 8 and is 4 m wide: the canopies stop short of it.
+    const depths = parts.flatMap((p) => (p.kind === "canopy" ? [p.depth] : []))
+    expect(depths.length).toBeGreaterThan(0)
+    for (const d of depths) expect(d).toBeLessThan(5.7)
   })
 
   it("gives St. Ursula its four storeys", () => {

@@ -65,7 +65,8 @@ rising from every wall with hips, valleys and a ridge per wing (`src/render/scen
 roof at the eaves. Parts are drawn on top and never solid
 (`src/render/scene/places.ts`): signs, ground-floor arcades and balcony stacks on a wall of the footprint, square towers
 with a pyramid roof (kept inside the footprint by a test, square to the street or to one wall), prop sprites on poles, door canopies
-(plain, or with an awning's fabric on top). With `roof.hip`, `roof.eaves` gives some walls their own eave height and
+(plain, or with an awning's fabric on top), cross gables (a gabled roof from one wall into the building, hidden where it runs
+under the building's own roof, its gable at the wall: the Aldi). With `roof.hip`, `roof.eaves` gives some walls their own eave height and
 `roof.gables` ends the roof in a gable at others; the walls' tops then follow the roof (Maria Hilf). Pflegeheim St. Ursula
 (`st-ursula.ts`) is the first entry: four storeys, its ochre and cream facade and the brown fascia.
 `facade: "render"` is the block's windows on a neutral off-white render (`scripts/facade-render.py`), so
@@ -267,6 +268,13 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   4.8 m high as in the Bavarian LoD2 model; on its long NW wall towards the car park the navy "AUTO MOBIL robert
   wilhelm" board with the orange round logo and the EINGANG arrow at the NE end, then a frosted window band in white
   frames with a big "4" on the glass. The band's length, where the sign sits and the logo's orange are guesses.
+- **Aldi Süd Stein** (`src/world/places/aldi-sued-stein.ts`), Sudetenstraße 68, where the Steinböcke's VW Bus waits for the
+  Krachlederne's job: a white store 5.6 m to its eaves under a dark grey gable roof along its length (not the flat roof
+  OSM tags), two cross gables in grey cladding ending at the car-park wall, the ALDI SÜD logo on its navy panel in the
+  south one over the entrance, a glass canopy along that front, the trolley shelter's light roof by the corner and two
+  blue disabled bays in front. Roof, gables and heights follow the Bavarian LoD2 model and the DOP20 aerial; which gable
+  carries the logo, where the doors are and that the canopy is glass are guesses. A new generic part, `gable`, puts a
+  cross gable on any wall.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
 `pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).

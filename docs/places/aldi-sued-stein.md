@@ -10,7 +10,7 @@
 | Footprint | 1414 m², 50.8 × 30.6 m, 11 nodes, long axis 34°/214° (parallel to Bunsenweg); a small step/notch at the S corner |
 | Engine | levels **1**; **flat**; DOP roof `#939389` (single grey) |
 | Street frame | **Bunsenweg** (residential, 6.5 m), SE of the store: closest point (4743.8, 5224.2), 43.4 m; street bearing 34°, n bearing 304°. Sudetenstraße is 66 m NE (car park between). An unnamed service aisle (4 m) runs in the car park parallel to Bunsenweg, 24 m E of the POI |
-| Status | **ref-done (partial)**: exact porch corner + roof shape need checking against the aerial |
+| Status | **implemented (partial)** (B2-4, `src/world/places/aldi-sued-stein.ts`): roof settled by the Bavarian LoD2 model `DEBY_LOD2_4667297` and the DOP20: a gable roof along the long axis (eaves 5.6 m, ridge 10.7 m, 22°) with **two cross gables** ending at the ESE car-park wall (OSM wall 8) and a small gabled annex in the SSW corner; a glass canopy along wall 8, the trolley shelter by wall 6 and two blue bays in front of the SSW gable from the DOP20. Still guesses: which gable carries the logo (the SSW one here), where the doors are, the canopy being glass. Left out: porch posts, the Packstation |
 
 ## Images
 | File | What | Source |

@@ -178,3 +178,36 @@ describe("walls under a roof with eaves of their own, a gable and a door canopy"
     expect(tvs).toHaveLength(vs.length)
   })
 })
+
+describe("a cross gable on a wall", () => {
+  // The shop's wall 0 runs along y = 60, seen from the north: left end (50, 60), u west, out north (-y). A gable on
+  // u 10..20 (x 40..30) with its eaves at 6 m and 45°: the ridge 5 m higher over x = 35, running 6 m into the shop.
+  const shop: PlaceDressing = {
+    poi: "Shop",
+    street: "Main",
+    osmBuildingId: 1,
+    parts: [{ kind: "gable", edge: 0, u0: 10, u1: 20, z0: 4, z: 6, pitch: 45, depth: 6, colours: { wall: [240, 240, 238, 255], gable: [166, 169, 161, 255], roof: [124, 122, 130, 255] } }],
+  }
+  const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
+  const vs = vertices(scene.build(0))
+  // Its roof's tiles, not the shop's own roof at the 6 m eaves.
+  const roof = vs.filter((v) => v.mode === Mode.detail && v.layer === material("roof-tiles") && !near(v.z, 6))
+
+  it("ends in a gable just proud of the wall, its tip over the stretch's middle", () => {
+    expect(vs.some((v) => near(v.x, 35) && near(v.y, 59.96) && near(v.z, 11))).toBe(true)
+    expect(vs.some((v) => near(v.x, 40) && near(v.y, 59.96) && near(v.z, 4))).toBe(true)
+  })
+
+  it("runs its ridge into the building and its eaves past the gable, and changes no other chunk", () => {
+    const ridge = roof.filter((v) => near(v.z, 11))
+    expect(ridge.length).toBeGreaterThan(0)
+    for (const v of ridge) expect(near(v.x, 35)).toBe(true)
+    expect(Math.max(...ridge.map((v) => v.y))).toBeCloseTo(66)
+    expect(Math.min(...roof.map((v) => v.y))).toBeCloseTo(60 - 0.04 - 0.35)
+    // The eaves overhang 0.35 m either side, continuing the slope down.
+    expect(Math.min(...roof.map((v) => v.x))).toBeCloseTo(30 - 0.35)
+    expect(Math.max(...roof.map((v) => v.x))).toBeCloseTo(40 + 0.35)
+    expect(Math.min(...roof.map((v) => v.z))).toBeCloseTo(6 - 0.35)
+    for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
+  })
+})

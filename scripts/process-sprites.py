@@ -487,6 +487,27 @@ if band is not None:
     Image.open(band).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "werkstatt-windows.webp", "WEBP", quality=90)
     print("werkstatt-windows.webp")
 
+# Aldi Süd Stein (Sudetenstraße 68): the ALDI SÜD logo on its navy panel in the gable (keyed and squared like the
+# Mühlenbäck boards, its own colours kept inside), and a blue disabled bay painted on the car park, a prop sprite seen
+# from above: painted portrait and turned on its side, since a prop's length runs along the image's width.
+lettering = find("aldi-logo")
+if lettering is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(lettering))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(lettering).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (48, 61, 111, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "aldi-logo.webp", "WEBP", quality=92)
+    print("aldi-logo.webp")
+bay = find("disabled-bay")
+if bay is not None:
+    im = keep_main_shape(key_magenta_fast(Image.open(bay)))
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox()).transpose(Image.Transpose.ROTATE_90)
+    im.resize((256, round(im.height * 256 / im.width)), Image.LANCZOS).save(OUT / "disabled-bay.webp", "WEBP", quality=90)
+    print("disabled-bay.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)
