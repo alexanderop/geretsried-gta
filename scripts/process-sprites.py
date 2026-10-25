@@ -932,6 +932,39 @@ for name in ["petrus-glass", "petrus-louvre", "petrus-window", "petrus-door"]:
         Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp")
 
+# Metzgerei Länger (Amselweg 9): the black cow painted on the wall and the crest sign, keyed and cropped to the shape,
+# stretched square (the wall shows round them); the shop window, the entrance with the pig board and the house door, the
+# menu boards, an upper-floor window and the roof board (opaque). The awning's red and white stripes (a canopy texture:
+# the wall at the top, the stripes running out from it, a darker valance at the bottom) and the red-brown pilaster
+# render are drawn here, not painted.
+for name in ["metz-cow", "metz-crest"]:
+    src = find(name)
+    if src is not None:
+        keyed = np.asarray(key_magenta_fast(Image.open(src))).copy()
+        solid = keyed[..., 3] > 160
+        keyed[solid, :3] = np.asarray(Image.open(src).convert("RGB"))[solid]
+        im = Image.fromarray(keyed)
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        print(f"{name} aspect", round(im.width / im.height, 2))
+        im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+for name in ["metz-window", "metz-door", "metz-boards", "metz-upwin", "metz-board"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+if find("metz-cow") is not None:
+    rng = np.random.default_rng(219)
+    stripes = np.zeros((512, 512, 3), dtype=np.float32)
+    red = (np.arange(512) // 64) % 2 == 0
+    stripes[:, red] = (196, 38, 42)
+    stripes[:, ~red] = (246, 244, 238)
+    stripes[440:] *= 0.86
+    stripes += rng.normal(0, 4, (512, 512, 1))
+    Image.fromarray(np.clip(stripes, 0, 255).astype(np.uint8)).save(OUT / "metz-awning.webp", "WEBP", quality=90)
+    pilaster = np.full((512, 512, 3), (140, 102, 108), dtype=np.float32) + rng.normal(0, 5, (512, 512, 1))
+    Image.fromarray(np.clip(pilaster, 0, 255).astype(np.uint8)).save(OUT / "metz-pilaster.webp", "WEBP", quality=88)
+    print("metz-awning.webp metz-pilaster.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

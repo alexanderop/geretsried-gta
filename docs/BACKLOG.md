@@ -1641,7 +1641,7 @@ across(): nearest Mühlenbäck > 300 m from home. STOP_REACH 9 m: point 0.4 m in
 Need: a Street View/photo of the front on Fasanenweg or Egerlandstraße 54.
 ```
 
-### B5-4 · Metzgerei Länger, Amselweg 9 (#219, shop) — Size: S — status: ref-done
+### B5-4 · Metzgerei Länger, Amselweg 9 (#219, shop) — Size: S — status: implemented (partial: part spots and sizes, pilasters, wing roof, roof colours, roof board and forecourt props are guesses)
 ```
 Goal: Family butcher on Amselweg: white house with red-brown pilasters, a big black cow painted on the wall,
   an old crest sign with ram, cow and pig heads, a red/white awning. Where the mayor's Weißwürste come from.
@@ -1657,9 +1657,32 @@ Spec (via #0b):
 In-game: pickup of job "weisswurst" (Rathaus phone; → Gasthof Geiger #181). STOP_REACH 9 m: point 5.8 m
   inside the wall → reachable at the shop front, not from Amselweg (17 m). Kind shop → no map label.
 Acceptance criteria:
-- [ ] From the forecourt the front matches 01 (cow, crest, awning, green fascia). Forecourt walkable.
+- [x] From the forecourt the front matches 01 (cow, crest, awning, green fascia). Forecourt walkable.
 - [ ] The weisswurst pickup still triggers at the shop front.
-- [ ] pnpm test + typecheck green.
+- [x] pnpm test + typecheck green.
+As built (places-only batch, src/world/places/metzgerei-laenger.ts):
+- Job part out of scope (places-only batch): the weisswurst criterion is left unticked. No solid, outline, levels, POI or
+  src/sim change; the dressing is masses (drawn only), wall signs, two canopies, roof sign, non-solid pylons and sprites.
+- LoD2 (tile 684_5304): DEBY_LOD2_4533034 = hipped block, eaves 8.36 m, ridge 9.42 m, plus a lower shop house on its
+  N/NW sides under a shallow gable (ridge 6.65 m square to the shop front, eaves 5.06/5.72 m); DEBY_LOD2_4533949 = the
+  low wing on the E (4.3–4.9 m) and S (2.5–3.5 m). Built as four masses tiling OSM's outline (the model's cut lines
+  carried out to OSM's walls, which sit up to 3 m further W): block 8.36 m hipped at 12.7° (OSM makes it 9.4 m deep;
+  gives the model's ridge), shop house 5.4 m with gables on the shop front and its E end at 12°, E strip 4.6 m and S
+  wing 3.2 m flat (guess: the model has a very low gable). Roofs red-brown #a06852 (block, shop), wing tan #b28c6e (DOP20).
+- Shop front = wall 2 (faces NW, 13.76 m): slim dark green fascia canopy #2d3537 over the ground floor, red/white
+  striped awning over the shop window (metz-awning, drawn in process-sprites.py), the open entrance with the pig board,
+  menu and white house door (metz-door), dark menu boards (metz-boards); upstairs the black cow (metz-cow), two windows
+  (metz-upwin) and the crest (metz-crest, after 05). Shop house walls plain white render (a plain band hides the facade
+  grid); two windows on wall 1, one on wall 3. Block front = wall 4: three red-brown pilasters (metz-pilaster) and a
+  red-brown band under the eaves, the second crest under the middle pilaster; render windows elsewhere.
+- Forecourt: two benches (seat + backrest pylons) and two planters (cafe-planter) along walls 4 and 6. Roof board
+  "Metzgerei Länger" with the cow (metz-board) on the S wing's flat roof, reading WNW–ESE from above.
+- Guesses: every part's u/z, window count, the pilasters, wing roof form, roof colours, roof board, bench/planter
+  spots. Not built: the paved forecourt colour (map ground), garage doors on the wing, the block's balcony, the AC unit,
+  N/E/S details (no reference).
+- Chunk hashes: with vs without the place only chunk 857 (the building's) differs. pnpm -s check green.
+- Screenshots (local scratchpad `b5-4/`): `play.png` (forecourt, block front with benches), `play-front.png` +
+  `crop-front.png` (shop front: awning, cow, windows, fascia), `overhead.png`, `overhead-close.png`.
 Size: S
 ```
 
@@ -2244,7 +2267,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | implemented (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
 | 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | implemented (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
-| 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | ref-done | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
+| 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | implemented (partial) | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |
 | 195 | Orterer Getränkemarkt | shop | 2306.5, 2063.1 | 47.881446, 11.460923 | 3089 | ref-done | B5-5. Banater Str. 3. "gelting-1" pickup; ⚠ point 14 m inside the hall (STOP_REACH 9): likely unreachable. Engine roof flat/2 lv wrong (1 storey, pitched + solar) |
 | 180 | Kaufland | supermarket | 2244.3, 1880.5 | 47.883088, 11.460089 | 3276 | ref-done (partial) | B5-6. Bayerwaldstraße 2. "kaufland" destroy-BMW (Rathaus job, not a gang job); entrance needs reference |
 | 220 | Huber GmbH, Karosserie-Lack-Center | car_repair | 2353.1, 1757.6 | 47.884194, 11.461548 | 3326 | todo | spray shop |

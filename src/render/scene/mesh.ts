@@ -202,6 +202,15 @@ export const MATERIAL_FILES = [
   "petrus-emblem",
   "petrus-window",
   "petrus-door",
+  "metz-cow",
+  "metz-crest",
+  "metz-window",
+  "metz-door",
+  "metz-boards",
+  "metz-upwin",
+  "metz-board",
+  "metz-awning",
+  "metz-pilaster",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

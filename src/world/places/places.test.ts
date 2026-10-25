@@ -1025,6 +1025,39 @@ describe("the registry on the real map", () => {
     }
   })
 
+  it("dresses Metzgerei Länger: the LoD2 block over the low shop house and wing, the cow, crest and awning on the NW shop front", () => {
+    const metz = at(858188287)
+    if (metz === undefined) throw new Error("no Metzgerei Länger")
+    const pts = map.buildings[metz.building]?.pts ?? []
+    const parts = metz.dressing.parts
+    // The weisswurst pickup is the POI itself: it stays where it was, inside the footprint, and the footprint keeps its storeys.
+    const poi = map.pois.find((p) => p.name === "Metzgerei Länger")
+    expect(poi).toMatchObject({ x: 2659, y: 2499.5 })
+    expect(pointInPolygon(poi?.x ?? 0, poi?.y ?? 0, pts)).toBe(true)
+    expect(metz.dressing.levels).toBeUndefined()
+    // The hipped block at the model's eaves stands over the shop house and the wing.
+    const heights = (metz.dressing.masses ?? []).map((m) => m.levels * 3)
+    expect(heights[1]).toBeCloseTo(8.36, 2)
+    expect(Math.max(...heights)).toBe(heights[1])
+    expect(Math.min(...heights)).toBeLessThan(3.5)
+    // Wall 2 faces NW onto the forecourt and carries the shop front; nothing on it overlaps (it would flicker).
+    const w2 = wallFrame(pts, 2)
+    if (w2 === null) throw new Error("no wall 2")
+    expect(Math.abs(((Math.atan2(-w2.frame.nx, w2.frame.ny) * 180) / Math.PI + 360) % 360 - 303)).toBeLessThan(5)
+    const signs = parts.flatMap((p) => (p.kind === "wallSign" && p.edge === 2 ? [p] : []))
+    for (const t of ["metz-cow", "metz-crest", "metz-window", "metz-door", "metz-boards"] as const) expect(signs.map((s) => s.texture)).toContain(t)
+    for (const [i, a] of signs.entries()) {
+      expect(a.z1).toBeLessThanOrEqual(5.4)
+      for (const b of signs.slice(i + 1)) expect(a.u0 < b.u1 && b.u0 < a.u1 && a.z0 < b.z1 && b.z0 < a.z1).toBe(false)
+    }
+    expect(parts.some((p) => p.kind === "canopy" && p.edge === 2 && p.texture === "metz-awning")).toBe(true)
+    // The benches stand out on the forecourt, off the footprint; the name lies on the wing's roof.
+    const pylons = parts.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    expect(pylons.length).toBeGreaterThan(0)
+    for (const p of pylons) expect(pointInPolygon(...toWorld(metz.frame, p.u, p.n), pts)).toBe(false)
+    expect(parts.filter((p) => p.kind === "roofSign").map((p) => (p.kind === "roofSign" ? p.texture : ""))).toEqual(["metz-board"])
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })
