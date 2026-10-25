@@ -508,6 +508,26 @@ if bay is not None:
     im.resize((256, round(im.height * 256 / im.width)), Image.LANCZOS).save(OUT / "disabled-bay.webp", "WEBP", quality=90)
     print("disabled-bay.webp")
 
+# Polizeiinspektion Geretsried (Jeschkenstraße 31): the "civic" facade (white render, two tall small-pane windows per
+# storey, painted seamless, so only resized), one field of the solar canopy's panels seen from above (a deck part's
+# texture, opaque), and the blue POLIZEI star sign on the N gable (keyed and squared like the Post board).
+for name in ["facade-civic", "solar-field"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+sign = find("polizei-sign")
+if sign is not None:
+    keyed = np.asarray(key_magenta_fast(Image.open(sign))).copy()
+    solid = keyed[..., 3] > 160
+    keyed[solid, :3] = np.asarray(Image.open(sign).convert("RGB"))[solid]
+    im = Image.fromarray(keyed)
+    im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+    square_ = Image.new("RGBA", (512, 512), (32, 49, 113, 0))
+    square_.alpha_composite(im.resize((504, 504), Image.LANCZOS), (4, 4))
+    square_.save(OUT / "polizei-sign.webp", "WEBP", quality=92)
+    print("polizei-sign.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

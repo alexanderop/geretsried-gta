@@ -1,7 +1,7 @@
 /**
  * The parts of a dressed place (world/places/dressing.ts) as 3D geometry:
- * signs, arcades, balconies, door canopies and cross gables on the footprint's walls, towers with a pyramid roof,
- * prop sprites. Drawn with the building they belong to; its walls, storeys
+ * signs, arcades, balconies, door canopies, cross gables, stairs and ramps on the footprint's walls, towers with a
+ * pyramid roof, a roof deck on posts, prop sprites. Drawn with the building they belong to; its walls, storeys
  * and roof colours are scene.ts's.
  */
 import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
@@ -9,7 +9,7 @@ import { boxOf, type Box } from "#/world/geometry.ts"
 import { rectRing, square, toWorld, wallFrame } from "#/world/frame.ts"
 import { towerFrame, type Part, type Place, type TowerFace } from "#/world/places/dressing.ts"
 import { SHADOW, WHITE, Z_SHADOW, box, boxShadow, face, flat, light, shade, sprite, vertex, worldDir, type Builder } from "./frame-mesh.ts"
-import { Material, Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type SpriteBoxes } from "./mesh.ts"
+import { Material, Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
 /** How far a sign stands off its wall unless it says, and the glazing in an arcade's openings. */
 const SIGN_OUT = 0.04
@@ -23,6 +23,12 @@ const BALCONY_RAIL = 1
 const RAIL = 0.06
 /** A door canopy's slab. */
 const CANOPY_SLAB = 0.2
+
+/** A roof deck's posts (half their side), how far in from the wall's face they stand; a ramp's rail height and bar. */
+const POST = 0.07
+const POST_IN = 0.15
+const RAIL_H = 0.95
+const RAIL_BAR = 0.06
 
 /** A cross gable's front just proud of its wall, its roof's overhang past the gable and the eaves, the dark edge under the roof, and the roof tiles' size (as scene.ts's). */
 const GABLE_OUT = 0.04
@@ -152,6 +158,61 @@ const gable = (b: Builder, p: Extract<Part, { kind: "gable" }>) => {
   }
 }
 
+/**
+ * A roof deck on its rectangle (wall frame): the slab's edges, its top in the texture repeated over it (or plain), its
+ * shadow; and posts on every wall of the footprint `pts` up from `posts.z0` to the slab's underside.
+ */
+const deck = (b: Builder, p: Extract<Part, { kind: "deck" }>, pts: ReadonlyArray<number>) => {
+  const [u0, u1, n0, n1] = p.rect
+  const z0 = p.z - p.thickness
+  face(b, u0, n1, u0, n0, z0, p.z, p.colour)
+  face(b, u0, n0, u1, n0, z0, p.z, p.colour)
+  face(b, u1, n0, u1, n1, z0, p.z, p.colour)
+  face(b, u1, n1, u0, n1, z0, p.z, p.colour)
+  const [ru, rn] = p.repeat ?? [1, 1]
+  if (p.texture === undefined) flat(b, p.rect, p.z, p.colour)
+  else flat(b, p.rect, p.z, p.top ?? WHITE, Mode.material, material(p.texture), (u, n) => [((u - u0) / (u1 - u0)) * ru, ((n - n0) / (n1 - n0)) * rn])
+  boxShadow(b, p.rect, p.z)
+  const posts = p.posts
+  if (posts === undefined) return
+  for (let e = 0; ; e++) {
+    const wall = wallFrame(pts, e)
+    if (wall === null) break
+    const count = Math.max(1, Math.round(wall.length / posts.every))
+    const wb = { ...b, f: wall.frame }
+    for (let k = 0; k < count; k++) {
+      const u = Math.min(Math.max((wall.length * k) / count, POST_IN), wall.length - POST_IN)
+      box(wb, square(u, POST_IN, POST), posts.z0, z0, posts.colour)
+    }
+  }
+}
+
+/** A flight of steps standing out from the wall (n = 0), each a box one riser higher than the one in front of it. */
+const stairs = (b: Builder, p: Extract<Part, { kind: "stairs" }>) => {
+  const tread = p.depth / p.steps
+  for (let i = 0; i < p.steps; i++) box(b, [p.u0, p.u1, -p.depth + i * tread, 0], 0, (p.h * (i + 1)) / p.steps, p.colour)
+}
+
+/** A ramp along the wall (n = 0): its sloping top, its outer face and high end, and a rail along its outer edge. */
+const ramp = (b: Builder, p: Extract<Part, { kind: "ramp" }>) => {
+  const { u0, u1, h, colour } = p
+  const out = -p.depth
+  const z = (u: number) => ((p.low === "u0" ? u - u0 : u1 - u) / (u1 - u0)) * h
+  const top = shade(colour, 0.95)
+  const v = (u: number, n: number, zz: number, c: Rgba) => vertex(b, u, n, zz, c)
+  b.m.quad(v(u0, out, z(u0), top), v(u1, out, z(u1), top), v(u1, 0, z(u1), top), v(u0, 0, z(u0), top))
+  const side = shade(colour, light(...worldDir(b.f, 0, -1)))
+  b.m.quad(v(u0, out, 0, side), v(u1, out, 0, side), v(u1, out, z(u1), side), v(u0, out, z(u0), side))
+  const [hi, hn] = p.low === "u0" ? [u1, 1] : [u0, -1]
+  face(b, hi, hn > 0 ? out : 0, hi, hn > 0 ? 0 : out, 0, h, colour)
+  const rail = p.rail
+  if (rail === undefined) return
+  const n = out + RAIL_BAR
+  for (const u of [u0 + RAIL_BAR, (u0 + u1) / 2, u1 - RAIL_BAR]) box(b, square(u, n, RAIL_BAR / 2), z(u), z(u) + RAIL_H, rail)
+  const r = shade(rail, 0.9)
+  b.m.quad(v(u0, n, z(u0) + RAIL_H - RAIL_BAR, r), v(u1, n, z(u1) + RAIL_H - RAIL_BAR, r), v(u1, n, z(u1) + RAIL_H, r), v(u0, n, z(u0) + RAIL_H, r))
+}
+
 /** The corners of a tower's side, left to right seen from outside (see TowerFace). */
 const sideOf = (r: readonly [number, number, number, number], side: TowerFace["side"]) => {
   const [u0, u1, n0, n1] = r
@@ -249,7 +310,10 @@ export const placeParts = (m: MeshBuilder, boxes: SpriteBoxes, place: Place, pts
       const wall = wallFrame(pts, part.edge)
       if (wall === null) continue
       const b = { m, f: wall.frame, boxes }
-      if (part.kind === "wallSign") panel(b, part.texture, part.u0, part.u1, part.z0, part.z1, -(part.out ?? SIGN_OUT))
+      if (part.kind === "deck") deck(b, part, pts)
+      else if (part.kind === "stairs") stairs(b, part)
+      else if (part.kind === "ramp") ramp(b, part)
+      else if (part.kind === "wallSign") panel(b, part.texture, part.u0, part.u1, part.z0, part.z1, -(part.out ?? SIGN_OUT))
       else if (part.kind === "balcony") balcony(b, part)
       else if (part.kind === "canopy") canopy(b, part)
       else if (part.kind === "gable") gable(b, part)
@@ -270,6 +334,8 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
     if (wall === null) return []
     if (part.kind === "balcony") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), Math.max(0, ...part.z) + BALCONY_RAIL]]
     if (part.kind === "canopy") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), part.z]]
+    if (part.kind === "deck") return [[rectRing(wall.frame, part.rect), part.z]]
+    if (part.kind === "stairs" || part.kind === "ramp") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), part.h + (part.kind === "ramp" ? RAIL_H : 0)]]
     if (part.kind === "gable")
       return [[rectRing(wall.frame, [part.u0 - GABLE_EAVES, part.u1 + GABLE_EAVES, -GABLE_OUT - GABLE_EAVES, part.depth]), part.z + ((part.u1 - part.u0) / 2) * Math.tan((part.pitch * Math.PI) / 180)]]
     const out = part.kind === "arcade" ? part.depth : (part.out ?? SIGN_OUT)

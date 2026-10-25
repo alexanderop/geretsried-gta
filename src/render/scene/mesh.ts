@@ -75,6 +75,9 @@ export const Material = {
   werkstattWindows: 40,
   werkstatt4: 41,
   aldiLogo: 42,
+  facadeCivic: 43,
+  solarField: 44,
+  polizeiSign: 45,
 } as const
 export type Material = (typeof Material)[keyof typeof Material]
 
@@ -122,6 +125,9 @@ export const MATERIAL_FILES = [
   "werkstatt-windows",
   "werkstatt-4",
   "aldi-logo",
+  "facade-civic",
+  "solar-field",
+  "polizei-sign",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */

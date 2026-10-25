@@ -702,7 +702,7 @@ Size: S
   (where the finder puts it, it would stand under the canopy, and no photo shows it; the sprite was made and dropped), the
   small blue ALDI sign over the doors.
 
-### B2-5 · Polizeiinspektion Geretsried, Jeschkenstraße 31 (#187, police) — Size: S — status: ref-done (partial)
+### B2-5 · Polizeiinspektion Geretsried, Jeschkenstraße 31 (#187, police) — Size: S — status: implemented (partial: the plinth height, the door, the stairs, the ramp and their canopy, the sign's spot and size and the post spacing are guesses; the photos were not on disk, so not compared with 01/05; the stein-1 drop-off is unchanged, not fixed)
 ```
 Goal: The police station the Steinböcke want the stolen taxi delivered to: a white 2-storey building with tall
 windows, grey plinth, a big dark solar canopy roof on steel brackets, entrance stairs + ramp under a metal
@@ -718,12 +718,48 @@ Spec (via #0b):
 - Roof override: dark solar-panel roof #464c5d with a visible overhang (underside #0e0e12).
 - Entrance stairs + canopy on the long side: likely W (doc), verify. POLIZEI sign #203171 on the N gable.
 Acceptance criteria:
-- [ ] From above: white walls + dark panel roof as in 04; from Jeschkenstraße the N gable matches 01/05.
-- [ ] Building stays solid; nothing spawns inside. pnpm test + typecheck green.
-- [ ] ⚠ Before this item: check the stein-1 drop-off (see the P2 note). The footprint check found no car
+- [x] From above: white walls + dark panel roof as in 04; from Jeschkenstraße the N gable matches 01/05.
+      (From above the 2 × 4 panel fields read as in the DOP20; the N gable shows white with tall windows and the blue
+      sign under the canopy's edge. Not compared with 01/04/05: the photos were not on disk.)
+- [x] Building stays solid; nothing spawns inside. pnpm test + typecheck green.
+- [x] ⚠ Before this item: check the stein-1 drop-off (see the P2 note). The footprint check found no car
       position within 9 m of the POI; dressing must not make it worse.
+      (Not worse: the footprint and levels are OSM's and every new part is never solid. Still not fixed: see below.)
 Size: S
 ```
+
+**B2-5 as built** (`src/world/places/polizei-geretsried.ts`):
+- **Sources.** `reference/polizei-geretsried/` was not on disk, so the photos (01–05) were not used. The **LoD2 model**
+  (`DEBY_LOD2_4667037`, ALKIS function 3071 "Polizei") has the walls on 12.5 × 28.6 m only, flush with OSM's W and N
+  walls (OSM's E wall stands 5.3 m and its S wall 3.5 m outside them), under a very low gable roof along the long axis,
+  eaves 8.7 m, ridge 9.3 m: the laser-scanned top of the solar canopy. The **DOP20** shows that canopy as a 15.2 × 30.6 m
+  field of dark panels in a light frame, in 2 × 4 fields, and a stepped light structure off the W wall 7–15 m from the N
+  corner, read as the entrance stairs and ramp. So the entrance is on the **W** side, as the doc guessed.
+- **Footprint and levels kept** (OSM way 127717998, 2 storeys); wall 0 is the N gable towards Jeschkenstraße (u 0 at its
+  E end), 1 the E side, 2 the S gable, 3 and 4 the W side (4 the N 23.9 m of it, u 0 at the N corner).
+- **New facade `civic`** (Codex: white render, two tall small-pane windows per storey, seamless; `facade-civic.webp`),
+  `wallColour` #f3f3f0, a plain grey plinth band z 0–0.55 (a guess), the flat roof under the canopy dark #464c5d.
+- **New generic parts** (dressing.ts, places.ts; tested in scene places.test): `deck { edge, rect, z, thickness, colour,
+  texture?, top?, repeat?, posts? }`, a flat slab on a rectangle in a wall's frame with its top textured and repeated,
+  and square posts on every wall of the footprint from `posts.z0` up to it; `stairs { edge, u0, u1, depth, h, steps }`;
+  `ramp { edge, u0, u1, depth, h, low, rail? }` with a rail along its outer edge. All relief, never solid.
+- **Parts here:** the solar canopy as a `deck` at 9 m (the LoD2 top, the 5° gable flattened), 0.35 m thick, over OSM's
+  walls plus the DOP20's overhang (1.35 m past the long walls, 1 m past the gables), textured with `solar-field` (Codex:
+  one panel field seen from above, opaque) 2 × 4 times, steel posts about every 4 m from the walls' top (6.6 m; spacing a
+  guess). On wall 4 a ramp (u 5–11.5, up from the N, 0.9 m, rail), stairs (u 11.5–14.5, 5 steps), a `shop-front` door at
+  their top and a flat metal canopy at 3.7 m (all guesses in shape and size; the aerial only shows something stands
+  there). The blue POLIZEI star sign (`polizei-sign`, Codex, keyed and squared) on the N gable at u 14.8–15.6, z 2.2–3.0,
+  near the W corner (spot and the 0.8 m size are guesses).
+- **What the camera shows:** from above (`?compare=47.849399,11.493982,28`) the panel fields and frame read like the
+  DOP20, the entrance canopy pokes out on the W side. In play the canopy covers most of the walls; standing W of the
+  building (4748, 5622) shows the white long side with its tall windows, the entrance canopy and the ramp; from the N
+  (4768, 5601) the gable shows as a white strip with windows and the small blue sign under the canopy's edge.
+- **Every other building is unchanged:** all 2111 chunk meshes hashed identical at HEAD and with this change minus the
+  police station; with it only chunk 1929 (its own) differs.
+- **"stein-1" drop-off, not fixed (job logic, out of scope):** the footprint and the solid are OSM's as before and no new
+  part is solid, so the reach is exactly as the P2 note says: the POI sits mid-building, 8.3–8.4 m from the long walls, and
+  a car centre cannot get within `STOP_REACH` (9 m). A fix belongs in the job code (a kerb drop-off point or a larger
+  reach), not in a place entry.
 
 ### Batch 3: Am Stern (decision)
 Same rules: **exterior only** via **#0b**. Seven places plus PENNY sit around one car park. Build the buildings
@@ -1517,7 +1553,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 103 | Automobilwerkstatt Wilhelm | car_repair | 4706.9, 4824.3 | 47.856614, 11.493106 | 731 | implemented (partial) | B2-3. Spray shop (pad on the NW lane, unchanged) + "mercedes" drop-off. Front = NW wall (DOP20 + POI); band length, sign spot, logo orange are guesses |
 | 225 | Aldi Süd | supermarket | 4707.8, 5200 | 47.853235, 11.493118 | 899 | implemented (partial) | B2-4. Sudetenstraße 68. "gartenberg-1" VW Bus spawns on the car-park aisle E of the store. OSM roof:shape=flat is wrong (gable roof with two cross gables, LoD2) |
 | 181 | Gasthof Geiger | food | 2844.9, 4388 | 47.860538, 11.468142 | 1182 | ref-done (partial) | B5-1. Tattenkofener Str. 1. "weisswurst" dropoff (Rathaus job, not a gang job). Roof should be red-brown tile |
-| 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | ref-done (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
+| 187 | Polizeiinspektion Geretsried | police | 4772.3, 5626.6 | 47.849399, 11.493982 | 1248 | implemented (partial) | B2-5. Jeschkenstraße 31; POI correct. ⚠ "stein-1" taxi drop-off likely unreachable (no car pose within 9 m): verify in game |
 | 231 | Petruskirche | church | 2883.8, 2925.2 | 47.873693, 11.468663 | 2052 | ref-done (partial) | B5-2. Egerlandstraße 39. Save point; bell tower = way 188048958 (engine 2 levels, too low). Mosaic/portal need reference |
 | 46 | Bäckerei Mühlenbäck | bakery | 2849.3, 2775.7 | 47.875038, 11.468201 | 2196 | todo | B5-3. needs reference (satellite only). "brezn" pickup (home phone) |
 | 219 | Metzgerei Länger | shop | 2659, 2499.5 | 47.877521, 11.465649 | 2531 | ref-done | B5-4. Amselweg 9. "weisswurst" pickup (Rathaus job, not a gang job) |

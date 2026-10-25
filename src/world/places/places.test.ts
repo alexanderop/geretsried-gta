@@ -111,7 +111,8 @@ describe("the registry on the real map", () => {
       const pts = map.buildings[building]?.pts ?? []
       const place = { dressing, building, frame }
       return dressing.parts.flatMap((part) => {
-        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony" || part.kind === "canopy" || part.kind === "gable") {
+        if (part.kind === "deck") return wallFrame(pts, part.edge) === null ? [`${dressing.poi}: deck on wall ${part.edge}`] : []
+        if (part.kind === "wallSign" || part.kind === "arcade" || part.kind === "balcony" || part.kind === "canopy" || part.kind === "gable" || part.kind === "stairs" || part.kind === "ramp") {
           const wall = wallFrame(pts, part.edge)
           const fits = wall !== null && part.u0 >= 0 && part.u0 < part.u1 && part.u1 <= wall.length + 0.01
           return fits ? [] : [`${dressing.poi}: ${part.kind} on wall ${part.edge}`]
@@ -129,7 +130,7 @@ describe("the registry on the real map", () => {
   it("hangs balconies and door canopies above head height, so people and cars pass under them", () => {
     const low = PLACES.flatMap((d) =>
       d.parts.flatMap((part) => {
-        const z = part.kind === "balcony" ? Math.min(...part.z) : part.kind === "canopy" ? part.z : Infinity
+        const z = part.kind === "balcony" ? Math.min(...part.z) : part.kind === "canopy" ? part.z : part.kind === "deck" ? part.z - part.thickness : Infinity
         return z < 2.5 ? [`${d.poi}: ${part.kind} at ${z}`] : []
       }),
     )
@@ -199,6 +200,36 @@ describe("the registry on the real map", () => {
     const depths = parts.flatMap((p) => (p.kind === "canopy" ? [p.depth] : []))
     expect(depths.length).toBeGreaterThan(0)
     for (const d of depths) expect(d).toBeLessThan(5.7)
+  })
+
+  it("dresses the police station as two storeys under a solar canopy over every wall, the entrance on the W side", () => {
+    const police = places.find((p) => p.dressing.osmBuildingId === 127717998)
+    // "stein-1" finds the drop-off by this exact name; the POI lies inside the footprint.
+    const poi = map.pois.find((p) => p.name === "Polizeiinspektion Geretsried")
+    const pts = map.buildings[police?.building ?? -1]?.pts ?? []
+    expect(police?.dressing.poi).toBe("Polizeiinspektion Geretsried")
+    expect(pointInPolygon(poi?.x ?? 0, poi?.y ?? 0, pts)).toBe(true)
+    expect(dressed.buildings[police?.building ?? -1]?.levels).toBe(2)
+    const parts = police?.dressing.parts ?? []
+    // The canopy's rectangle (wall 0's frame) holds every corner of the footprint at least a meter in from its edge.
+    const deck = parts.find((p) => p.kind === "deck")
+    const f = wallFrame(pts, deck?.kind === "deck" ? deck.edge : -1)?.frame
+    expect(deck?.kind === "deck" && f !== undefined).toBe(true)
+    if (deck?.kind !== "deck" || f === undefined) return
+    const [u0, u1, n0, n1] = deck.rect
+    for (let i = 0; i + 1 < pts.length; i += 2) {
+      const [u, n] = toLocal(f, pts[i] ?? 0, pts[i + 1] ?? 0)
+      expect(Math.min(u - u0, u1 - u, n - n0, n1 - n)).toBeGreaterThan(0.99)
+    }
+    // Wall 0 faces N (Jeschkenstraße) and carries the sign; wall 4 faces W and has the stairs, the ramp and the door.
+    const out = (e: number) => {
+      const w = wallFrame(pts, e)?.frame
+      return (Math.atan2(-(w?.nx ?? 0), w?.ny ?? 0) * (180 / Math.PI) + 360) % 360
+    }
+    expect(Math.abs(out(0) - 180)).toBeGreaterThan(170)
+    expect(out(4)).toBeCloseTo(269, 0)
+    expect(parts.some((p) => p.kind === "wallSign" && p.texture === "polizei-sign" && p.edge === 0)).toBe(true)
+    expect(new Set(parts.flatMap((p) => (p.kind === "stairs" || p.kind === "ramp" ? [p.edge] : [])))).toEqual(new Set([4]))
   })
 
   it("gives St. Ursula its four storeys", () => {

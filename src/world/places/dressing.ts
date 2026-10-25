@@ -12,7 +12,7 @@
  * Coordinates (world/frame.ts): free-standing parts (tower, sprite) are in
  * the street frame, u along the street, n from its centre line towards the
  * place (the POI, or the footprint's middle when no POI marks it). Wall
- * parts (wallSign, arcade, balcony, canopy, gable) sit on one wall of the footprint, `edge` i
+ * parts (wallSign, arcade, balcony, canopy, gable, stairs, ramp) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
  */
@@ -95,6 +95,35 @@ export type Part =
       readonly colours: { readonly wall: Rgba; readonly roof: Rgba; readonly trim?: Rgba; readonly finial?: Rgba }
       readonly faces?: ReadonlyArray<TowerFace>
     }
+  /**
+   * A flat roof on posts over the building (a solar canopy): a slab on `rect` in wall `edge`'s frame (u from its left
+   * end, n into the building, so negative n overhangs that wall), its top at `z`, `thickness` deep, the edges in
+   * `colour`. Its top shows `texture` (times `colour`'s tint `top`, white without) repeated `repeat` [along u, along n]
+   * times over the slab. With `posts`, square steel posts stand on the footprint's walls (one at each corner and about
+   * every `every` meters between) from `z0` up to the slab. Overhead and never solid.
+   */
+  | {
+      readonly kind: "deck"
+      readonly edge: number
+      readonly rect: Rect
+      readonly z: number
+      readonly thickness: number
+      readonly colour: Rgba
+      readonly texture?: MaterialName
+      readonly top?: Rgba
+      readonly repeat?: readonly [number, number]
+      readonly posts?: { readonly z0: number; readonly every: number; readonly colour: Rgba }
+    }
+  /**
+   * A flight of `steps` steps on wall `edge` from u0 to u1, climbing from the ground `depth` meters out to `h` at the
+   * wall, the top step a landing. Relief only: walked and driven through like an arcade.
+   */
+  | { readonly kind: "stairs"; readonly edge: number; readonly u0: number; readonly u1: number; readonly depth: number; readonly h: number; readonly steps: number; readonly colour: Rgba }
+  /**
+   * A ramp along wall `edge` from u0 to u1, `depth` meters out from it: a slab whose top rises from the ground at the
+   * `low` end (u0 or u1) to `h` at the other, with a rail along its outer edge in `rail`. Relief only, like stairs.
+   */
+  | { readonly kind: "ramp"; readonly edge: number; readonly u0: number; readonly u1: number; readonly depth: number; readonly h: number; readonly low: "u0" | "u1"; readonly colour: Rgba; readonly rail?: Rgba }
   /** A prop sprite lying flat at (u, n) and height z, its long side `len` meters along frame angle `angle` (radians, 0 = +u), on a pole from the ground when `pole` gives its colour. */
   | { readonly kind: "sprite"; readonly name: PropName; readonly u: number; readonly n: number; readonly z: number; readonly angle: number; readonly len: number; readonly pole?: Rgba }
 

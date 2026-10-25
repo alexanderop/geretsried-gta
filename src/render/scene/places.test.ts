@@ -211,3 +211,44 @@ describe("a cross gable on a wall", () => {
     for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
   })
 })
+
+describe("a roof deck on posts, stairs and a ramp", () => {
+  // The shop's wall 0 runs along y = 60, seen from the north: left end (50, 60), u west, n into the shop (+y). The deck
+  // overhangs every wall by a meter (x 19..51, y 59..76) with its top at 9 m; the walls are 6 m high.
+  const steel = [96, 100, 108, 255] as const
+  const shop: PlaceDressing = {
+    poi: "Shop",
+    street: "Main",
+    osmBuildingId: 1,
+    parts: [
+      { kind: "deck", edge: 0, rect: [-1, 31, -1, 16], z: 9, thickness: 0.3, colour: [62, 64, 70, 255], texture: "solar-field", repeat: [2, 1], posts: { z0: 6, every: 10, colour: steel } },
+      { kind: "stairs", edge: 0, u0: 10, u1: 14, depth: 2, h: 1, steps: 4, colour: [196, 194, 188, 255] },
+      { kind: "ramp", edge: 0, u0: 16, u1: 22, depth: 1.4, h: 0.9, low: "u0", colour: [196, 194, 188, 255], rail: steel },
+    ],
+  }
+  const scene = new Scene(makeWorld(map, [shop]), noCrowns, [])
+  const vs = vertices(scene.build(0))
+
+  it("lays the deck's textured top over the whole rectangle at 9 m, its posts standing from the walls' top", () => {
+    const top = vs.filter((v) => v.mode === Mode.material && v.layer === material("solar-field"))
+    expect(top).toHaveLength(4)
+    expect(top.every((v) => near(v.z, 9))).toBe(true)
+    expect(Math.min(...top.map((v) => v.x))).toBeCloseTo(19)
+    expect(Math.max(...top.map((v) => v.x))).toBeCloseTo(51)
+    expect(Math.min(...top.map((v) => v.y))).toBeCloseTo(59)
+    expect(Math.max(...top.map((v) => v.y))).toBeCloseTo(76)
+    expect(vs.some((v) => near(v.z, 6) && Math.abs(v.y - 60.15) < 0.1)).toBe(true)
+    expect(vs.some((v) => near(v.z, 8.7) && Math.abs(v.y - 60.15) < 0.1)).toBe(true)
+  })
+
+  it("steps the stairs up to the wall and slopes the ramp from the ground at u0 to its height at u1, and changes no other chunk", () => {
+    // The stairs' last step (u 10..14 = x 40..36) at 1 m against the wall, the first one 0.25 m high 2 m out.
+    expect(vs.some((v) => near(v.x, 40) && near(v.y, 60) && near(v.z, 1))).toBe(true)
+    expect(vs.some((v) => near(v.x, 36) && near(v.y, 58) && near(v.z, 0.25))).toBe(true)
+    // The ramp (u 16..22 = x 34..28) at the ground at x 34 and 0.9 m at x 28, 1.4 m out; its rail 0.95 m over it.
+    expect(vs.some((v) => near(v.x, 34) && near(v.y, 58.6) && near(v.z, 0))).toBe(true)
+    expect(vs.some((v) => near(v.x, 28) && near(v.y, 58.6) && near(v.z, 0.9))).toBe(true)
+    expect(vs.some((v) => near(v.x, 28) && near(v.z, 1.85))).toBe(true)
+    for (const key of [1, 2, 3]) expect(bytes(scene.build(key)), `chunk ${key}`).toBe(bytes(plain.build(key)))
+  })
+})
