@@ -191,6 +191,8 @@ export type Game = {
   /** The bus lines (legs and halts); the buses themselves are `npcs` with a `bus` trip. */
   readonly transit: Transit
   readonly random: () => number
+  /** The dice for traffic pulling in to the kerb and out (manoeuvre.ts): a stream of its own, so the rest of the game rolls as before. */
+  readonly kerbRandom: () => number
   /** The traffic light junction the car is in, so running a red counts once. */
   junction: object | null
   /** Seconds until ramming another car counts as a new crash. */

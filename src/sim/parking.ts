@@ -12,8 +12,12 @@ import type { Game } from "./state.ts"
  * looks the same each time you come back.
  */
 
-/** A place at the kerb: the car's centre and heading. `id` is its index in `kerbSlots`, the same for the same map. */
-export type Slot = { readonly id: number; readonly x: number; readonly y: number; readonly angle: number }
+/**
+ * A place at the kerb: the car's centre and heading. `id` is its index in `kerbSlots`, the same for the same map.
+ * It lies beside segment `seg` of road `road` (from vertex `seg` to `seg + 1`), right of its way (`side` 1) or left (-1).
+ */
+export type Slot = { readonly id: number; readonly x: number; readonly y: number; readonly angle: number; readonly road: number; readonly seg: number; readonly side: 1 | -1 }
+export type SlotId = Slot["id"]
 
 /** Streets people park along. Main roads keep their kerbs clear; service ways are yards and lots. */
 const KINDS: ReadonlySet<string> = new Set(["residential", "living_street", "tertiary"])
@@ -124,11 +128,11 @@ const makeSlots = (world: World): Array<Slot> => {
         const s = (station[i] ?? 0) + t
         // The whole car, not just its centre, clear of the free stretches.
         if (keepFree.some(([s0, s1]) => s + CAR_LENGTH / 2 > s0 && s - CAR_LENGTH / 2 < s1)) continue
-        for (const side of [1, -1]) {
+        for (const side of [1, -1] as const) {
           // Right of the way's direction is +, as traffic keeps right.
           const x = ax + dx * t - dy * offset * side
           const y = ay + dy * t + dx * offset * side
-          const slot: Slot = { id: out.length, x, y, angle: side === 1 ? angle : angle + Math.PI }
+          const slot: Slot = { id: out.length, x, y, angle: side === 1 ? angle : angle + Math.PI, road: ri, seg: i, side }
           if (nearPoint(x, y) || nearOwnRoad(road, i, x, y, offset)) continue
           if (!clear(world, slot, ri)) continue
           out.push(slot)
@@ -137,6 +141,32 @@ const makeSlots = (world: World): Array<Slot> => {
     }
   })
   return out
+}
+
+/**
+ * The lane a slot's car drives off into, and pulls in from: the segment beside it in the way it faces (its kerb on
+ * the lane's right).
+ */
+export const laneFor = (slot: Slot): { readonly road: number; readonly from: number; readonly dir: 1 | -1 } =>
+  slot.side === 1 ? { road: slot.road, from: slot.seg, dir: 1 } : { road: slot.road, from: slot.seg + 1, dir: -1 }
+
+const byLane = new WeakMap<World, Map<number, Array<Slot>>>()
+const laneKey = (road: number, from: number, dir: 1 | -1) => (road * 8192 + from) * 2 + (dir === 1 ? 1 : 0)
+
+/** The slots at the right-hand kerb of the lane from vertex `from` of `road` toward `from + dir`. */
+export const slotsBeside = (world: World, road: number, from: number, dir: 1 | -1): ReadonlyArray<Slot> => {
+  let index = byLane.get(world)
+  if (index === undefined) {
+    byLane.set(world, (index = new Map()))
+    for (const slot of kerbSlots(world)) {
+      const lane = laneFor(slot)
+      const key = laneKey(lane.road, lane.from, lane.dir)
+      const list = index.get(key)
+      if (list === undefined) index.set(key, [slot])
+      else list.push(slot)
+    }
+  }
+  return index.get(laneKey(road, from, dir)) ?? []
 }
 
 /** Does another stretch of the slot's own street (one that bends back on itself) come closer than the kerb offset? */
@@ -191,12 +221,52 @@ const OUT_OF_VIEW_M = 140
 const inSlot = (car: Car, slot: Slot) => Math.abs(car.x - slot.x) < 0.5 && Math.abs(car.y - slot.y) < 0.5
 
 /** Is something with its centre at (x, y) where a car in this slot would stand? */
-const inSlotRect = (slot: Slot, x: number, y: number) => {
+export const inSlotRect = (slot: Slot, x: number, y: number): boolean => {
   const fx = Math.cos(slot.angle)
   const fy = Math.sin(slot.angle)
   const along = (x - slot.x) * fx + (y - slot.y) * fy
   const across = -(x - slot.x) * fy + (y - slot.y) * fx
   return Math.abs(along) < CAR_LENGTH + 0.4 && Math.abs(across) < CAR_WIDTH + 0.2
+}
+
+/** The slots traffic is pulling in to (manoeuvre.ts): nobody else parks there. */
+export const claimedSlots = (game: Game): Set<SlotId> => {
+  const out = new Set<SlotId>()
+  for (const n of game.npcs) if (n.mode.kind === "pullingIn") out.add(n.mode.slot)
+  return out
+}
+
+/** Is nothing standing or driving where a car in this slot would stand, `self` apart? */
+export const slotFree = (game: Game, slot: Slot, self?: object): boolean => {
+  const car = game.kerb.get(slot.id)
+  if (car !== undefined && inSlot(car, slot) && game.parked.includes(car)) return false
+  const at = (c: { readonly x: number; readonly y: number }) => c !== self && Math.abs(c.x - slot.x) < 8 && Math.abs(c.y - slot.y) < 8 && inSlotRect(slot, c.x, c.y)
+  const p = game.player.car ?? game.player
+  return !(at(p) || game.parked.some(at) || game.npcs.some(at) || game.cops.some((c) => at(c.car)) || game.wrecks.some(at))
+}
+
+/**
+ * Room at the kerb for one more car near (x, y): fewer than PARKED_COUNT stand, or the farthest of them is out of
+ * view and goes (when `make`) to make room, as `fillKerbs` gives way.
+ */
+export const kerbRoom = (world: World, game: Game, x: number, y: number, make: boolean): boolean => {
+  const standing = [...kerbCars(world, game)]
+  if (standing.length < PARKED_COUNT) return true
+  const target = game.jobs.active?.target
+  let far: Car | null = null
+  let farD = OUT_OF_VIEW_M
+  for (const c of standing) {
+    const d = Math.hypot(c.x - x, c.y - y)
+    if (c !== target && d >= farD) {
+      far = c
+      farD = d
+    }
+  }
+  if (far === null) return false
+  if (!make) return true
+  for (const [id, c] of game.kerb) if (c === far) game.kerb.delete(id)
+  game.parked = game.parked.filter((c) => c !== far)
+  return true
 }
 
 /** The kerbside cars still standing in their slots. */
@@ -234,8 +304,9 @@ export const fillKerbs = (world: World, game: Game, x: number, y: number, minR: 
   // Farthest last, to give way first.
   standing.sort((a, b) => dist(a[1]) - dist(b[1]))
   const near: Array<{ readonly slot: Slot; readonly d: number }> = []
+  const claimed = claimedSlots(game)
   for (const slot of slots) {
-    if (Math.abs(slot.x - x) > PARK_FAR || Math.abs(slot.y - y) > PARK_FAR || !isFilled(slot) || game.kerb.has(slot.id)) continue
+    if (Math.abs(slot.x - x) > PARK_FAR || Math.abs(slot.y - y) > PARK_FAR || !isFilled(slot) || game.kerb.has(slot.id) || claimed.has(slot.id)) continue
     const d = dist(slot)
     if (d >= minR && d < PARK_FAR) near.push({ slot, d })
   }

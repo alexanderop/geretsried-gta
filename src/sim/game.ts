@@ -23,6 +23,7 @@ import { PACKAGE_REWARD, collect, placePackages, placePickups, stepPickups, type
 import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
 import { clearKerb, fillKerbs, kerbCars } from "./parking.ts"
+import { parkArrived, startManoeuvres, stepPullIn, stepPullOut } from "./manoeuvre.ts"
 import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
 import type { Game, Input, Spawn } from "./state.ts"
 
@@ -151,6 +152,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     signals: makeSignals(world),
     transit: planTransit(world),
     random,
+    kerbRandom: makeRandom(seed ^ 0x6b65_7262),
     junction: null,
     crashCooldown: 0,
     wallCooldown: 0,
@@ -292,6 +294,9 @@ const leaderAhead = (game: Game, npc: Npc, paths: ReadonlyMap<Npc, ReadonlyArray
   return best
 }
 
+/** Driving on its lane: also a car braking for the slot it parks in, not one curving in or out. */
+const onLane = (npc: Npc) => npc.mode.kind === "driving" || (npc.mode.kind === "pullingIn" && npc.mode.path === null)
+
 /** Push the car out of a circle round (x, y); returns the speed it hit with, or 0 if it did not touch. */
 const pushApart = (car: Car, x: number, y: number, radius: number) => {
   const dx = car.x - x
@@ -376,9 +381,25 @@ export const step = (world: World, game: Game, input: Input): void => {
   }
   game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
   stepArrivals(world, game, playerPos(game), DT)
-  // Everyone's road ahead as it is at the start of the step, so two cars can tell whether they see each other.
-  const paths = new Map(game.npcs.map((n) => [n, roadAhead(world, n)]))
-  for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, leaderAhead(game, npc, paths), DT, game.random)
+  // Everyone's road ahead as it is at the start of the step, so two cars can tell whether they see each other. A car
+  // off its lane (into a slot, out of one) has none: it is only in others' way.
+  const paths = new Map(game.npcs.map((n) => [n, onLane(n) ? roadAhead(world, n) : [n.x, n.y, 0]]))
+  for (const npc of game.npcs) {
+    const mode = npc.mode
+    switch (mode.kind) {
+      case "driving":
+        stepNpc(world, game.signals, game.time, npc, leaderAhead(game, npc, paths), DT, game.random)
+        break
+      case "pullingIn":
+        stepPullIn(world, game, npc, mode, mode.path === null ? leaderAhead(game, npc, paths) : null, DT)
+        break
+      case "pullingOut":
+        stepPullOut(world, game, npc, mode, DT)
+        break
+    }
+  }
+  parkArrived(world, game)
+  startManoeuvres(world, game)
   // A passenger moves with the bus, this frame, so the camera and the HUD do not trail it.
   const ride = player.ride?.bus
   if (ride !== undefined) Object.assign(player, { x: ride.x, y: ride.y, angle: ride.angle })

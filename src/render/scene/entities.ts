@@ -207,6 +207,18 @@ const flashers = (m: MeshBuilder, boxes: SpriteBoxes, time: number, px: number, 
   }
 }
 
+/** A car pulling in to the kerb blinks on its right, one pulling out on its left: front and back corner, 1.5 times a second. */
+const indicator = (m: MeshBuilder, boxes: SpriteBoxes, c: Placed, side: 1 | -1, time: number) => {
+  if ((time * 1.5) % 1 >= 0.5) return
+  for (const end of [-1, 1]) {
+    const along = end * (CAR_LENGTH / 2 - 0.35)
+    const x = c.x + Math.cos(c.angle) * along - Math.sin(c.angle) * side * 0.8
+    const y = c.y + Math.sin(c.angle) * along + Math.cos(c.angle) * side * 0.8
+    spriteQuad(m, { x, y, z: CAR_Z + 0.06, angle: c.angle, length: 0.4, width: 0.4 }, Sprite.lamp, box(boxes, Sprite.lamp), AMBER, Mode.sprite)
+    spriteQuad(m, { x, y, z: CAR_Z + 0.04, angle: 0, length: 1.4, width: 1.4 }, Sprite.glow, box(boxes, Sprite.glow), [AMBER[0], AMBER[1], AMBER[2], 150], Mode.sprite)
+  }
+}
+
 const BLUE: Rgba = [40, 110, 255, 255]
 const RED: Rgba = [255, 40, 40, 255]
 
@@ -383,6 +395,7 @@ export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): vo
     // The buses drive the whole town; draw the ones in view.
     if (Math.abs(n.x - player.x) > VIEW_M || Math.abs(n.y - player.y) > VIEW_M) continue
     car(m, boxes, n)
+    if (n.mode.kind !== "driving") indicator(m, boxes, n, n.mode.kind === "pullingIn" ? 1 : -1, time)
     damaged(m, boxes, n, time, n.id)
   }
   for (const w of game.walkers) walker(m, boxes, w, time)
