@@ -626,6 +626,36 @@ describe("the registry on the real map", () => {
     for (const g of glass) expect(g.z1).toBeLessThanOrEqual(letters.z0)
   })
 
+  it("dresses B&L Hairstyling's street front: the black board over its door in the cream NW house, the white SE houses", () => {
+    const bl = at(119921782)
+    const pts = map.buildings[bl?.building ?? -1]?.pts ?? []
+    const dressing = bl?.dressing
+    expect(dressing).toBeDefined()
+    if (!dressing) return
+    // Wall 3 faces Sudetenstraße (NE, bearing about 33°).
+    const w = wallFrame(pts, 3)
+    expect(w).toBeTruthy()
+    if (!w) return
+    expect(Math.abs(((Math.atan2(-w.frame.nx, w.frame.ny) * 180) / Math.PI + 360) % 360 - 33)).toBeLessThan(10)
+    // Two masses at the LoD2 eaves (9.8 m): the white SE houses and the cream NW house.
+    expect(dressing.masses?.map((m) => m.levels * 3)).toEqual([9.8, 9.8])
+    expect(dressing.masses?.[0]?.wallColour).not.toEqual(dressing.masses?.[1]?.wallColour)
+    // The board over the shop door in the NW house, above every bay of glazing and under the first-floor windows.
+    const board = dressing.parts.find((p) => p.kind === "wallSign" && p.texture === "bl-board")
+    const door = dressing.parts.find((p) => p.kind === "wallSign" && p.texture === "shop-front" && p.u0 > 45)
+    expect(board?.kind).toBe("wallSign")
+    expect(door?.kind).toBe("wallSign")
+    if (board?.kind !== "wallSign" || door?.kind !== "wallSign") return
+    expect(board.edge).toBe(3)
+    expect(board.u0).toBeGreaterThan(35.2)
+    expect(board.u0).toBeLessThan(door.u0)
+    expect(board.u1).toBeGreaterThan(door.u1)
+    expect(board.z1).toBeLessThan(4.5)
+    const glazing = dressing.parts.flatMap((p) => (p.kind === "wallSign" && p.texture !== "bl-board" && p.texture !== "georgiadis-board" ? [p.z1] : []))
+    expect(Math.max(...glazing)).toBeLessThanOrEqual(board.z0)
+    expect(dressing.parts.filter((p) => p.kind === "wallSign" && p.texture === "bl-window")).toHaveLength(2)
+  })
+
   it("gives St. Ursula its four storeys", () => {
     expect(makeWorld(map).map.buildings.find((b) => b.id === 127604847)?.levels).toBe(4)
   })

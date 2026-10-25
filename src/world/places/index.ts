@@ -4,6 +4,7 @@
  */
 import { ALDI_SUED_STEIN } from "./aldi-sued-stein.ts"
 import { AM_STERN_WEST } from "./am-stern-west.ts"
+import { BL_HAIRSTYLING } from "./bl-hairstyling.ts"
 import type { PlaceDressing } from "./dressing.ts"
 import { EDEKA_AM_STERN } from "./edeka-am-stern.ts"
 import { MARIA_HILF } from "./maria-hilf.ts"
@@ -20,4 +21,4 @@ import { TEDI_SUDETENSTRASSE } from "./tedi-sudetenstrasse.ts"
 import { WERKSTATT_WILHELM } from "./werkstatt-wilhelm.ts"
 import { WOOLWORTH_AM_STERN } from "./woolworth-am-stern.ts"
 
-export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE, SPARKASSE_STEIN, RATHAUS, MARIA_HILF, MUEHLENBAECK, POST_FILIALE_571, WERKSTATT_WILHELM, ALDI_SUED_STEIN, POLIZEI_GERETSRIED, AM_STERN_WEST, ROSSMANN_AM_STERN, PENNY_SUDETENSTRASSE, EDEKA_AM_STERN, TEDI_SUDETENSTRASSE, WOOLWORTH_AM_STERN]
+export const PLACES: ReadonlyArray<PlaceDressing> = [ST_URSULA, REHMAUS_APOTHEKE, SPARKASSE_STEIN, RATHAUS, MARIA_HILF, MUEHLENBAECK, POST_FILIALE_571, WERKSTATT_WILHELM, ALDI_SUED_STEIN, POLIZEI_GERETSRIED, AM_STERN_WEST, ROSSMANN_AM_STERN, PENNY_SUDETENSTRASSE, EDEKA_AM_STERN, TEDI_SUDETENSTRASSE, WOOLWORTH_AM_STERN, BL_HAIRSTYLING]

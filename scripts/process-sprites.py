@@ -777,6 +777,14 @@ if front is not None:
     Image.open(front).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "woolworth-front.webp", "WEBP", quality=90)
     print("woolworth-front.webp")
 
+# B&L Hairstyling (Sudetenstraße 28): the black fascia board, its logo-panel window and glazed bay, and the
+# neighbour's (Versicherungsmakler Georgiadis) grey board and blue "GE" window; all opaque, stretched square.
+for name in ["bl-board", "bl-window", "bl-glass", "georgiadis-board", "ge-window"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+
 canopy = find("fuel-canopy")
 if canopy is not None:
     Image.open(canopy).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / "canopy.webp", "WEBP", quality=88)

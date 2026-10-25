@@ -1260,7 +1260,7 @@ Size: S
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1616
   (the building's).
 
-### B4-3 · B&L Hairstyling, Sudetenstraße 28 (#134, shop) — Size: S — status: ref-done
+### B4-3 · B&L Hairstyling, Sudetenstraße 28 (#134, shop) — Size: S — status: implemented (partial: the white/cream split, every bay's, pier's and sign's spot and size, the board's and ledge's heights, the steps, the roof pitch and the roof sign are guesses)
 ```
 Goal: Hair salon opposite the Am Stern car park: black board with white "B&L HAIRSTYLING", logo panels in the
 windows, next to an insurance broker with blue "GE" window graphics.
@@ -1271,9 +1271,35 @@ Spec (via #0b):
 - Optional neighbour sign "Versicherungsmakler Dimitrios Georgiadis". White vs cream wall parts inside one
   outline: ask first. Photos: 4 storeys (engine 3).
 Acceptance criteria:
-- [ ] From the street the board + window panels match 01. pnpm test + typecheck green.
+- [x] From the street the board + window panels match 01. pnpm test + typecheck green.
 Size: S
 ```
+
+**B4-3 as built** (`src/world/places/bl-hairstyling.ts`, a new place for way 119921782; no other place had it):
+- **Sources.** `reference/bl-hairstyling/01–04` + `SOURCES.md` on disk and used (01 for the front, 03 for the white/cream
+  split, 04 for which end the shops are at; 02 context only). Heights and roof from the Bavarian LoD2 model (tile
+  684_5302: three gabled houses `DEBY_LOD2_4602788` / `4602787` / `4602786`, on wall 3 at u 0–16.6 / 16.6–35.2 /
+  35.2–55, eaves 9.7–9.9 m, ridges 11.85–12.0 m, ridges along the street) and the DOP20 (brown tiles: sunlit SW planes
+  #d2beb4, NE planes in shade #6a6155). Wall 3 (54.9 m) is the Sudetenstraße front, u 0 at its SE end by the Post block.
+- **Correction to the spec:** Georgiadis is SE of B&L (left in 01, facing the front), not NW; the satellite pins agree.
+  The "white part" is the two SE houses (no shops), not Georgiadis' unit: his window sits in the cream NW house.
+- **Masses** (cut on the model's seam at wall 3 u 35.2, which runs on to wall 1): the white SE houses and the cream NW
+  house with the shops, both at the model's 9.8 m eaves under one gable roof each (gables at the ends and on the seam).
+  The model's houses are only 9.6 m deep while OSM's outline is 12.3–13.6 m (the aerial shows the back plane running on
+  to OSM's back wall), so the roof is drawn over OSM's depth at 18°, which meets the model's 12 m ridge.
+- **Front** (NW house): a white ground-floor surround under a thin dark-red ledge (`bands`, z 0–3.1); Georgiadis' glass
+  door (`shop-front`), his "GE" window (`ge-window`) and grey board (`georgiadis-board`); B&L's two logo-panel windows
+  (`bl-window`), a glazed bay (`bl-glass`), the door up two steps (`shop-front` + `stairs`) under the black
+  B&L HAIRSTYLING board (`bl-board`, 3.3 × 0.93 m), two more glazed bays to the NW end; the board painted on the NW
+  house's street-side roof plane (`roofSign`, 9 × 3 m, its top towards the street so it reads nearly level north-up).
+  The roof is pitched, so the engine puts no vents on it (nothing sits on the roof sign).
+- **Sprites:** Codex (five images), processed by `scripts/process-sprites.py` (all opaque, stretched square).
+- **Guesses:** the white/cream split on the model's seam (03 shows it under the kerb tree), every bay's, pier's and
+  sign's spot and size along the front, the board's and ledge's heights, the steps, the roof pitch (fitted to the
+  model's ridge), the roof sign (no photo of the roof), the cream (01's #9e937f is shaded; drawn lighter). Not built:
+  the solar panels on the middle house (DOP20), the two blank light boxes beside Georgiadis' board.
+- **Every other chunk unchanged:** all 2111 chunk meshes hash identical with and without the place except chunk 1661
+  (the building's).
 
 ### B4-4 · GG Radsport, Marienburgweg 25 (#116, shop) — Size: S — status: ref-done
 ```
@@ -1822,7 +1848,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 80 | Orterer Getränkemarkt | shop | 221 | implemented (partial) |
 | 81 | Takko Fashion | shop | 223 | implemented (partial) |
 | 82 | Denns BioMarkt | supermarket | 233 | implemented (partial) |
-| 134 | B&L Hairstyling | shop | 253 | ref-done |
+| 134 | B&L Hairstyling | shop | 253 | implemented (partial) |
 | 65 | Rossmann | drugstore | 283 | implemented (partial) |
 | 150 | Deutsche Post Filiale 571 | post | 4238.7, 4832.4 | 47.856541, 11.486828 | 303 | implemented (partial) | B2-2. Job "post": van spawns on Sudetenstraße (far kerb). Yellow Post board a guess (no photo) |
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
@@ -2169,7 +2195,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 80 | Orterer Getränkemarkt | shop | 4184.1, 4765.8 | 47.85714, 11.486096 | 220 | implemented (partial) | B3-5; S corner + arcade; not the job's Orterer (#195) |
 | 81 | Takko Fashion | shop | 4195.3, 4751.3 | 47.857271, 11.486247 | 223 | implemented (partial) | B3-4; middle unit of the west block |
 | 138 | miwomo | shop | 4126.5, 4435.7 | 47.860109, 11.485324 | 248 | todo (needs facade reference) | B6b-1. Breslauer Weg 9; rental closes end 2026, THOMA Reisemobile stays (ask Alex) |
-| 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | ref-done | B4-3 |
+| 134 | B&L Hairstyling | shop | 4196.7, 4804.3 | 47.856794, 11.486265 | 253 | implemented (partial) | B4-3 |
 | 54 | Haar Genau Friseurteam | shop | 3734.1, 4574 | 47.858865, 11.480063 | 274 | todo (needs facade reference) | B6b-3. C.-M.-v.-Weber-Weg 34; LoD2 16.2 m → levels 5 |
 | 159 | Bellini | shop | 3668.4, 4674.7 | 47.857959, 11.479182 | 331 | todo (needs facade reference) | B6b-5. Hair & Style Bellini, Neuer Platz 22 (not Ammos); LoD2 → levels 4 |
 | 152 | Flamingo Damenmode | shop | 4258.4, 4867.9 | 47.856222, 11.487093 | 341 | todo | needs reference: no photo (B4-10) |

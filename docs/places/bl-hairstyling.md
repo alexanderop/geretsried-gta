@@ -10,7 +10,7 @@
 | Engine | levels 3, pitched, DOP roof `#cab9ad` / `#6b6155` |
 | Street frame | **Sudetenstraße** (tertiary, 8 m): kerb point (4201.7, 4796.6), 9.2 m; street bearing 303°, n bearing 213° (SW side, opposite the Am Stern car park) |
 | Position | NE frontage, NW part; neighbour unit to the left (NW) is "Versicherungsmakler Dimitrios Georgiadis" |
-| Status | **ref-done** |
+| Status | **implemented (partial)** (B4-3, `src/world/places/bl-hairstyling.ts`): white SE houses and the cream NW house at the LoD2 9.8 m eaves, Georgiadis' GE window and board, B&L's logo-panel windows, glazing and black board over the door, the board on the roof. Guesses: see BACKLOG B4-3 "As built" |
 
 ## Images
 | File | What | Source |

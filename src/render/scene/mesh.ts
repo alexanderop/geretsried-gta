@@ -165,6 +165,11 @@ export const MATERIAL_FILES = [
   "tedi-front",
   "woolworth-letters",
   "woolworth-front",
+  "bl-board",
+  "bl-window",
+  "bl-glass",
+  "georgiadis-board",
+  "ge-window",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
