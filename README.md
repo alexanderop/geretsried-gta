@@ -142,6 +142,19 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
 - **Spray shops**: real car repair shops (Huber's Karosserie-Lack-Center, Werkstatt Wilhelm, Auto Stapf)
   have a glowing spray-can pad; drive onto it for $300 and the car gets a new colour (the sprite's hue
   turned in the shader) and the wanted level drops to zero, so the police lose you.
+- **Cafe Waldmann** (`src/world/cafe.ts` the layout, `src/render/scene/cafe.ts` the geometry): OSM has only its node at
+  Sudetenstraße 3, so the pavilion from the photos is laid out on the lawn in front of the block, in meters along the
+  street: the optician under a red and white awning at its left end, the cafe at its right with a glass front, a dark
+  fascia and the script sign on the roof, a terrace under purple umbrellas and the memorial obelisk. Walk in through the
+  glass door at the right: the roof fades away completely, so you see the room from above. The layout follows a sketch
+  of the real one: the cake counter across the right-hand room (two displays, the espresso machine on the back counter,
+  the woman behind it), and through a green-framed doorway the dining room with purple benches, six walnut tables in two
+  rows with chairs, and the WC at the back. The walls and furniture are solid (`World.cafe`). Guests
+  (`src/sim/guests.ts`) come up the path from the sidewalk, buy a slice at the counter, carry it to a free chair and eat
+  it, sometimes use the WC, and walk out to carry on along Sudetenstraße (no free chair: they take it away); a shot sends
+  them running out. They are ordinary walkers with a `visit`, so bullets and cars treat them like anyone. Step onto the
+  pink heart in front of the display for a slice of cake
+  (Schwarzwälder Kirschtorte, Käsekuchen, … from the real menu): $15, full health.
 - **Gangs** (`src/sim/gangs.ts`): three gangs with their turf round the OSM places Gartenberg (the
   Gartenberger Krachlederne, green), Stein (the Steiner Steinböcke, blue) and Gelting (the Geltinger
   Bauernmafia, orange, placed between Gelting's town signs, its node lies outside the map); the town

@@ -31,6 +31,8 @@ TEXTURES = {
     "forest": ("forest", 0.95, 0.85),
     "water": ("water", 0.85, 0.85),
     "farmland": ("farmland", 0.95, 0.85),
+    # Cafe Waldmann's laminate is a pale, greyish oak: Codex painted it honey-orange.
+    "floor-wood": ("floor-wood", 1.12, 0.5),
 }
 
 
@@ -278,6 +280,23 @@ if ringing.exists():
     print("prop-phone-quiet.webp", quiet.size)
 # People in poses: cops on foot, a tough guy, the armed player, the knocked out.
 save_blobs("people", [f"pose-{n}" for n in ["cop-aim", "cop-run", "thug-punch", "player-pistol", "player-smg", "player-throw", "body-man", "body-cop"]], 160, 16)
+
+# Cafe Waldmann: its furniture seen from above, and the shop sign (a material, 4:1 at the top of its layer, sharper than a sprite).
+save_blobs("cafe-props", [f"cafe-{n}" for n in ["cakes", "planter", "umbrella", "table", "espresso", "bistro"]], 256, 12)
+save_blobs("cafe-extras", ["cafe-slice", "cafe-toilet"], 160, 12)
+# The umbrellas' aubergine reads as brown from 54 m up: lighter, a touch more purple.
+umbrella = OUT / "cafe-umbrella.webp"
+if find("cafe-props") is not None and umbrella.exists():
+    im = Image.open(umbrella).convert("RGBA")
+    alpha = im.getchannel("A")
+    im = ImageEnhance.Color(ImageEnhance.Brightness(im.convert("RGB")).enhance(1.45)).enhance(1.25).convert("RGBA")
+    im.putalpha(alpha)
+    im.save(umbrella, "WEBP", quality=90)
+    print("cafe-umbrella.webp brightened")
+sign = find("cafe-sign")
+if sign is not None:
+    Image.open(sign).convert("RGB").resize((512, 128), Image.LANCZOS).save(OUT / "cafe-sign.webp", "WEBP", quality=92)
+    print("cafe-sign.webp")
 
 canopy = find("fuel-canopy")
 if canopy is not None:

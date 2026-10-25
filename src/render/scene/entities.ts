@@ -20,7 +20,7 @@ import type { Shop } from "#/sim/shops.ts"
 import { GANGS, type GangId } from "#/sim/gangs.ts"
 import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
-import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, WALK_M, prop, spriteQuad, walkFrame, type Rgba, type SpriteBoxes, type WalkSet } from "./mesh.ts"
+import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, WALK_M, prop, spriteQuad, walkFrame, type PropName, type Rgba, type SpriteBoxes, type WalkSet } from "./mesh.ts"
 import type { WeaponId } from "#/sim/weapons.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
@@ -88,7 +88,16 @@ const gangRing = (m: MeshBuilder, boxes: SpriteBoxes, x: number, y: number, g: G
   spriteQuad(m, { x, y, z: 0.13, angle: 0, length: 2.2, width: 2.2 }, Sprite.glow, box(boxes, Sprite.glow), [r, gg, b, 230], Mode.sprite)
 }
 
+/** A cafe guest's slice of cake: in their hands on the way to a chair, on the table while they eat. */
+const plate = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker) => {
+  const p = w.visit?.plate
+  if (p == null || w.down > 0 || w.dead) return
+  const layer = prop("cafe-slice")
+  spriteQuad(m, { x: p.x, y: p.y, z: p.z, angle: w.angle, length: 0.34, width: 0.34 }, layer, box(boxes, layer), WHITE, Mode.sprite)
+}
+
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => {
+  plate(m, boxes, w)
   if (w.gang !== undefined && w.down <= 0) gangRing(m, boxes, w.x, w.y, w.gang)
   if (w.down > 0) body(m, boxes, prop("pose-body-man"), w, bodyAlpha(w, CORPSE_FADE_S))
   else running(m, boxes, pedSet(w.sprite), w, w.stride, PED_Z, 1, w.gang === undefined ? WHITE : gangTint(w.gang))
@@ -216,12 +225,20 @@ const mission = (m: MeshBuilder, boxes: SpriteBoxes, game: Game) => {
   spriteQuad(m, { x: target.x, y: target.y, z: 0.15, angle: 0, length: onCar ? pulse * 0.9 : pulse, width: onCar ? pulse * 0.9 : pulse }, Sprite.glow, box(boxes, Sprite.glow), onCar ? CAR_MARK : MARKER, Mode.sprite)
 }
 
-/** A save point's glowing cross or a spray shop's spray can, on a pad that pulses on the ground. */
+/** How each shop's pad looks: its sign, how big, and its glow. The cake counter's is a small pink heart in front of the display. */
+const PADS: Readonly<Record<Shop["kind"], { readonly sign: PropName; readonly size: number; readonly glow: Rgba }>> = {
+  save: { sign: "prop-church", size: 2.4, glow: [255, 210, 60, 150] },
+  spray: { sign: "prop-spray", size: 4.2, glow: [60, 170, 255, 150] },
+  cake: { sign: "prop-heart", size: 0.8, glow: [255, 120, 180, 170] },
+}
+
+/** A save point's glowing cross, a spray shop's spray can or the cake counter's heart, on a pad that pulses on the ground. */
 const shopPad = (m: MeshBuilder, boxes: SpriteBoxes, sh: Shop, time: number) => {
-  const layer = prop(sh.kind === "save" ? "prop-church" : "prop-spray")
-  const size = (sh.kind === "save" ? 2.4 : 4.2) * (1 + Math.sin(time * 3) * 0.04)
-  const glow: Rgba = sh.kind === "save" ? [255, 210, 60, 150] : [60, 170, 255, 150]
-  spriteQuad(m, { x: sh.x, y: sh.y, z: 0.14, angle: 0, length: size * 2.2, width: size * 2.2 }, Sprite.glow, box(boxes, Sprite.glow), glow, Mode.sprite)
+  const look = PADS[sh.kind]
+  const layer = prop(look.sign)
+  const size = look.size * (1 + Math.sin(time * 3) * 0.04)
+  // Indoors the pad lies on the cafe's floor (0.12 up).
+  spriteQuad(m, { x: sh.x, y: sh.y, z: 0.14, angle: 0, length: size * 2.2, width: size * 2.2 }, Sprite.glow, box(boxes, Sprite.glow), look.glow, Mode.sprite)
   spriteQuad(m, { x: sh.x, y: sh.y, z: 0.16, angle: 0, length: size, width: size }, layer, box(boxes, layer), WHITE, Mode.sprite)
 }
 

@@ -22,6 +22,8 @@ import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, s
 import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
 import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/stations.ts"
 import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
+import { cafe as cafeMesh } from "./cafe.ts"
+import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
 import { signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, zebra, type StreetLamp, type StreetProp } from "./street.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
@@ -90,8 +92,17 @@ type Chunk = {
   readonly crowns: Array<number>
   readonly street: Array<number>
   readonly canopies: Array<number>
+  /** Cafe Waldmann's pavilion and terrace are drawn with this chunk. */
+  cafe: boolean
   bounds: Box
 }
+
+/**
+ * A roof that fades away while you are under it, as a rectangle in its own
+ * frame (origin, axis u; n is u turned a quarter clockwise, see world/cafe.ts),
+ * and how far it fades: canopies to a third, the cafe's roof all the way.
+ */
+export type RoofOver = { readonly frame: readonly [number, number, number, number]; readonly rect: Rect; readonly floor: number }
 
 /** A piece of street furniture, drawn by street.ts. */
 type StreetItem =
@@ -179,7 +190,7 @@ export class Scene {
     this.chunks = Array.from({ length: this.cols * this.rows }, (_, key) => {
       const x = (key % this.cols) * CHUNK_M
       const y = Math.floor(key / this.cols) * CHUNK_M
-      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
+      return { buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], cafe: false, bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
     })
     const own = (x: number, y: number, box: Box): Chunk | undefined => {
       const cx = Math.min(this.cols - 1, Math.max(0, Math.floor(x / CHUNK_M)))
@@ -212,6 +223,12 @@ export class Scene {
       const box = boxOf(c.ring, CANOPY_Z * SHADOW_PER_M + 4)
       own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.canopies.push(i)
     })
+    const cafe = world.cafe
+    if (cafe !== null) {
+      const box = boxOf([...rectRing(cafe.frame, PAVILION), ...rectRing(cafe.frame, TERRACE), ...rectRing(cafe.frame, [OBELISK.u, OBELISK.u, OBELISK.n, OBELISK.n])], PAVILION_H * SHADOW_PER_M + 2)
+      const chunk = own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)
+      if (chunk !== undefined) chunk.cafe = true
+    }
     map.buildings.forEach((b, i) => {
       if (b.canopy === true) return
       const box = boxOf(b.pts, wallHeight(b.levels) * SHADOW_PER_M)
@@ -249,6 +266,11 @@ export class Scene {
       // Streets stay readable: no crown over the asphalt.
       const road = world.roadAt(x, y, 1)
       if (road !== null && road.road.kind !== "footway" && road.road.kind !== "track") continue
+      // Nor over the cafe and its terrace: you look in from above.
+      if (cafe !== null) {
+        const [u, n] = toLocal(cafe.frame, x, y)
+        if (inRect(PAVILION, u, n, 1) || inRect(TERRACE, u, n, 0.5)) continue
+      }
       const reach = r * 1.2 + crownHeight(r) * SHADOW_PER_M
       own(x, y, { minX: x - reach, minY: y - reach, maxX: x + reach, maxY: y + reach })?.crowns.push(i)
     }
@@ -271,11 +293,21 @@ export class Scene {
     this.chunks.forEach((c, key) => this.grid.insert(key, c.bounds))
   }
 
-  /** The box round the canopy over (x, y), padded by its fascia, or null in the open. */
-  canopyAt(x: number, y: number): Box | null {
+  /** The roof over (x, y) that fades while you are under it: a petrol station canopy (padded by its fascia), the cafe's; or null in the open. */
+  roofAt(x: number, y: number): RoofOver | null {
+    const cafe = this.world.cafe
+    if (cafe !== null) {
+      const [u, n] = toLocal(cafe.frame, x, y)
+      if (inRect(ROOM, u, n)) {
+        const f = cafe.frame
+        return { frame: [f.ox, f.oy, f.ux, f.uy], rect: [ROOM[0] - 1, PAVILION[1] + 1, PAVILION[2] - 1, PAVILION[3] + 1], floor: 0 }
+      }
+    }
     for (const c of this.canopies) {
       if (!pointInPolygon(x, y, c.ring)) continue
-      return boxOf(c.ring, 1)
+      const b = boxOf(c.ring, 1)
+      // Frame u = +x, so n = -y.
+      return { frame: [0, 0, 1, 0], rect: [b.minX, b.maxX, -b.maxY, -b.minY], floor: 0.3 }
     }
     return null
   }
@@ -325,6 +357,7 @@ export class Scene {
       const c = this.canopies[i]
       if (c !== undefined) canopy(m, this.sprites, c)
     }
+    if (chunk.cafe && this.world.cafe !== null) cafeMesh(m, this.sprites, this.world.cafe.frame)
     for (const i of chunk.street) {
       const item = this.street[i]
       if (item?.kind === "stop") stopLine(m, this.sprites, item.stop)

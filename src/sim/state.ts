@@ -184,4 +184,6 @@ export type Game = {
   /** Seconds until shooting in front of the police counts again, and until the next scream. */
   gunfireCooldown: number
   screamCooldown: number
+  /** Seconds until the next guest walks up to Cafe Waldmann. */
+  guestCooldown: number
 }

@@ -6,12 +6,13 @@ import { CAR_LENGTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepC
 import { spawnNpc, stepNpc, type Npc } from "./traffic.ts"
 import { lightFor, makeSignals } from "./signals.ts"
 import { spawnWalker, stepWalker } from "./pedestrians.ts"
+import { stepArrivals, stepGuest } from "./guests.ts"
 import { carName, POLICE_MODEL } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
 import { drift, nearMiss, newScore, tickScore } from "./score.ts"
 import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
 import { planJobs } from "./town-jobs.ts"
-import { SAVE_COST, SPRAY_COST, planShops, spotNear, stepShop } from "./shops.ts"
+import { CAKES, CAKE_COST, COST, SAVE_COST, planShops, spotNear, stepShop } from "./shops.ts"
 import { toSave } from "./save.ts"
 import { gangJobDone, isHostile, newRespect, turfAt, turfs } from "./gangs.ts"
 import { isStuck, spawnCop, stepCop } from "./police.ts"
@@ -151,6 +152,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     wallCooldown: 0,
     gunfireCooldown: 0,
     screamCooldown: 0,
+    guestCooldown: 2,
   }
   fillTraffic(world, game, 40)
   return game
@@ -269,13 +271,16 @@ export const step = (world: World, game: Game, input: Input): void => {
   for (const w of game.walkers) {
     const wasDown = w.down > 0
     const wasDead = w.dead
-    stepWalker(world, w, threat, DT, game.random)
+    // Cafe guests follow their visit until something knocks them down.
+    if (w.visit !== undefined && !w.dead && w.down <= 0) stepGuest(world, w, game.walkers, DT, game.random)
+    else stepWalker(world, w, threat, DT, game.random)
     // Knocked over by the car (no gore: they get up again, or just lie there), and the police care.
     if (!wasDown && w.down > 0 && threat !== null && w.vitals.lastHit === "car") commit(game.wanted, "pedestrian")
     // Burnt to death: the player lit the fire.
     else if (!wasDead && w.dead && w.vitals.lastHit === "fire") commit(game.wanted, "kill")
   }
   game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
+  stepArrivals(world, game, playerPos(game), DT)
   for (const npc of game.npcs) stepNpc(world, game.signals, game.time, npc, blockedAhead(game, npc), DT, game.random)
   police(world, game)
   stepCombat(world, game, wantedLevel(game.wanted), DT, () => {
@@ -600,7 +605,10 @@ const gangsStep = (game: Game) => {
   }
 }
 
-/** Save points and spray shops: pay, then save the game or respray the car and lose the police. */
+/** What the HUD says when you cannot pay. */
+const BROKE: Readonly<Record<"save" | "spray" | "cake", string>> = { save: "Speichern kostet", spray: "Neu lackieren kostet", cake: "Ein Stück Kuchen kostet" }
+
+/** Save points, spray shops and the cake counter: pay, then save the game, respray the car and lose the police, or eat cake and heal. */
 const shopsStep = (game: Game) => {
   if (game.wasted > 0) return
   const { player } = game
@@ -608,7 +616,15 @@ const shopsStep = (game: Game) => {
     const event = stepShop(shop, playerPos(game), player.car !== null, game.score.money)
     if (event === null) continue
     if (event.kind === "broke") {
-      game.messages.push({ kind: "mission", text: shop.kind === "save" ? `Speichern kostet $${SAVE_COST}.` : `Neu lackieren kostet $${SPRAY_COST}.` })
+      game.messages.push({ kind: "mission", text: `${BROKE[event.shop.kind]} $${COST[event.shop.kind]}.` })
+      continue
+    }
+    if (event.kind === "cake") {
+      game.score.money -= CAKE_COST
+      player.vitals.hp = PERSON_HP
+      const cake = CAKES[Math.floor(game.time) % CAKES.length] ?? CAKES[0]
+      game.messages.push({ kind: "pickup", text: `${cake} bei ${shop.name}: volle Gesundheit!` }, { kind: "cash", amount: -CAKE_COST })
+      game.sounds.push({ id: "pickup", x: shop.x, y: shop.y })
       continue
     }
     if (event.kind === "save") {
@@ -618,12 +634,12 @@ const shopsStep = (game: Game) => {
     }
     const car = player.car
     if (car === null) continue
-    game.score.money -= SPRAY_COST
+    game.score.money -= COST.spray
     car.paint = ((car.paint ?? 0) % (PAINTS - 1)) + 1
     // A new colour: nobody is looking for this car any more.
     Object.assign(game.wanted, noHeat())
     game.bust = 0
-    game.messages.push({ kind: "mission", text: `Frisch lackiert bei ${shop.name}! Die Polizei sucht ein anderes Auto.` }, { kind: "cash", amount: -SPRAY_COST })
+    game.messages.push({ kind: "mission", text: `Frisch lackiert bei ${shop.name}! Die Polizei sucht ein anderes Auto.` }, { kind: "cash", amount: -COST.spray })
   }
 }
 

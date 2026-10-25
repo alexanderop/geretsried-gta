@@ -2,6 +2,7 @@ import type { Road } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
 import { WALKABLE } from "#/world/world.ts"
 import type { GangId } from "./gangs.ts"
+import type { Visit } from "./guests.ts"
 import { PERSON_HP, burnPerson, hurt, isDead, vitals, type Vitals } from "./damage.ts"
 
 /** Someone walking the footpath and sidewalk network. */
@@ -35,6 +36,8 @@ export type Walker = {
   readonly sprite: number
   /** A gang member, in their gang's colours, on their turf. */
   gang?: GangId
+  /** A guest in Cafe Waldmann, off the network until they come back out (guests.ts). */
+  visit?: Visit
 }
 
 /** Seconds a body stays on the ground, fading over the last of them. */
@@ -149,6 +152,36 @@ const nextLeg = (world: World, w: Walker, random: () => number): Pick<Walker, "r
     if (j.vertex > 0 && !(back && w.dir === 1)) options.push({ road: j.road, from: j.vertex, dir: -1 })
   }
   return options[Math.floor(random() * options.length)] ?? { road: w.road, from: at, dir: w.dir === 1 ? -1 : 1 }
+}
+
+/**
+ * Put someone who walked off the network (a cafe guest coming back out) onto
+ * the nearest way where they stand, so they walk on from there; false when
+ * no way is near.
+ */
+export const rejoin = (world: World, w: Walker): boolean => {
+  const hit = world.roadAt(w.x, w.y, 15)
+  if (hit === null || !WALKABLE.has(hit.road.kind)) return false
+  const { pts } = hit.road
+  let best = { d: Infinity, k: 0, t: 0, len: 1, dx: 1, dy: 0 }
+  for (let k = 0; k + 1 < pts.length / 2; k++) {
+    const [ax, ay] = vertex(pts, k)
+    const [bx, by] = vertex(pts, k + 1)
+    const len = Math.hypot(bx - ax, by - ay)
+    if (len < 1e-6) continue
+    const dx = (bx - ax) / len
+    const dy = (by - ay) / len
+    const t = Math.max(0, Math.min(len, (w.x - ax) * dx + (w.y - ay) * dy))
+    const d = Math.hypot(ax + dx * t - w.x, ay + dy * t - w.y)
+    if (d < best.d) best = { d, k, t, len, dx, dy }
+  }
+  const [ax, ay] = vertex(pts, best.k)
+  // Heading the way they face; `place` turns the side offset with the direction, so it is the same either way.
+  const dir: 1 | -1 = Math.cos(w.angle) * best.dx + Math.sin(w.angle) * best.dy >= 0 ? 1 : -1
+  const offset = (w.x - ax) * -best.dy + (w.y - ay) * best.dx
+  Object.assign(w, { road: hit.index, from: dir === 1 ? best.k : best.k + 1, dir, s: dir === 1 ? best.t : best.len - best.t, leg: best.len, side: offset })
+  delete w.visit
+  return true
 }
 
 /** A car that may run someone over: position, velocity. */

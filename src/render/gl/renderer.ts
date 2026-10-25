@@ -12,8 +12,7 @@ import { GROUND_M_PER_PX } from "#/map/types.ts"
 import type { Assets } from "../assets.ts"
 import { groundBox, project, viewMatrix, type View } from "../camera.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
-import { CHUNK_M, Scene } from "../scene/scene.ts"
-import type { Box } from "#/world/geometry.ts"
+import { CHUNK_M, Scene, type RoofOver } from "../scene/scene.ts"
 import { MeshBuilder, STRIDE, type Mesh } from "../scene/mesh.ts"
 import { drawEntities } from "../scene/entities.ts"
 import { program, type Program } from "./program.ts"
@@ -48,9 +47,12 @@ uniform sampler2D u_mask;
 uniform vec2 u_maskScale;
 // Where the player is on screen (device pixels, from the bottom) and how wide the see-through hole is.
 uniform vec3 u_focus;
-// The canopy over the player (world box) and how far it has faded so far: all of it goes see-through.
+// The roof over the player (a rectangle u0, u1, n0, n1 in the frame origin.xy, axis u.zw), how far it has faded so far
+// and how far it goes: all of it goes see-through, a canopy to a third, the cafe's roof away.
 uniform vec4 u_under;
+uniform vec4 u_underFrame;
 uniform float u_underFade;
+uniform float u_underFloor;
 in vec2 v_uv;
 in vec2 v_xy;
 in vec4 v_color;
@@ -99,12 +101,15 @@ void main() {
   if ((v_mode & 128u) != 0u && u_focus.z > 0.0) {
     float d = length(gl_FragCoord.xy - u_focus.xy);
     c.a *= mix(0.25, 1.0, smoothstep(u_focus.z * 0.55, u_focus.z, d));
-    if (all(greaterThanEqual(v_xy, u_under.xy)) && all(lessThanEqual(v_xy, u_under.zw))) c.a *= mix(1.0, 0.3, u_underFade);
+    vec2 rel = v_xy - u_underFrame.xy;
+    vec2 un = vec2(dot(rel, u_underFrame.zw), dot(rel, vec2(u_underFrame.w, -u_underFrame.z)));
+    if (un.x >= u_under.x && un.x <= u_under.y && un.y >= u_under.z && un.y <= u_under.w) c.a *= mix(1.0, u_underFloor, u_underFade);
+    if (c.a < 0.01) discard;
   }
   o = c;
 }`
 
-type Uniform = "u_view" | "u_mat" | "u_spr" | "u_mask" | "u_maskScale" | "u_focus" | "u_under" | "u_underFade"
+type Uniform = "u_view" | "u_mat" | "u_spr" | "u_mask" | "u_maskScale" | "u_focus" | "u_under" | "u_underFrame" | "u_underFade" | "u_underFloor"
 
 type GpuChunk = { readonly vao: WebGLVertexArrayObject; readonly opaque: number; readonly shadow: number }
 
@@ -121,7 +126,7 @@ export class Renderer {
   private readonly entities = new MeshBuilder()
   private readonly dynamic: { readonly vao: WebGLVertexArrayObject; readonly vbo: WebGLBuffer }
   readonly stats: RenderStats = { chunks: 0, triangles: 0, buildMs: 0 }
-  private under: Box = { minX: 0, minY: 0, maxX: 0, maxY: 0 }
+  private under: RoofOver = { frame: [0, 0, 1, 0], rect: [0, 0, 0, 0], floor: 1 }
   private underFade = 0
 
   constructor(
@@ -129,7 +134,7 @@ export class Renderer {
     world: World,
     assets: Assets,
   ) {
-    this.prog = program(gl, VS, FS, ["u_view", "u_mat", "u_spr", "u_mask", "u_maskScale", "u_focus", "u_under", "u_underFade"])
+    this.prog = program(gl, VS, FS, ["u_view", "u_mat", "u_spr", "u_mask", "u_maskScale", "u_focus", "u_under", "u_underFrame", "u_underFade", "u_underFloor"])
     this.tex = uploadTextures(gl, assets)
     this.scene = new Scene(world, assets.crowns, this.tex.boxes)
     const vbo = gl.createBuffer()
@@ -158,13 +163,16 @@ export class Renderer {
     gl.uniformMatrix4fv(u.u_view, false, matrix)
     const focus = game === null ? null : focusOf(matrix, game, gl.drawingBufferWidth, gl.drawingBufferHeight)
     gl.uniform3f(u.u_focus, focus?.[0] ?? 0, focus?.[1] ?? 0, focus?.[2] ?? 0)
-    // Under a canopy the whole roof fades out over a few frames, and back when you leave.
+    // Under a canopy or in the cafe the whole roof fades out over a few frames, and back when you leave.
     const p = game === null ? null : playerPos(game)
-    const under = p === null ? null : this.scene.canopyAt(p.x, p.y)
+    const under = p === null ? null : this.scene.roofAt(p.x, p.y)
     if (under !== null) this.under = under
     this.underFade += ((under === null ? 0 : 1) - this.underFade) * 0.12
-    gl.uniform4f(u.u_under, this.under.minX, this.under.minY, this.under.maxX, this.under.maxY)
+    const { frame, rect, floor } = this.under
+    gl.uniform4f(u.u_under, rect[0], rect[1], rect[2], rect[3])
+    gl.uniform4f(u.u_underFrame, frame[0], frame[1], frame[2], frame[3])
     gl.uniform1f(u.u_underFade, this.underFade)
+    gl.uniform1f(u.u_underFloor, floor)
     gl.uniform2f(u.u_maskScale, 1 / (GROUND_M_PER_PX * this.tex.maskSize[0]), 1 / (GROUND_M_PER_PX * this.tex.maskSize[1]))
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex.materials)

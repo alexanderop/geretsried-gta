@@ -2,12 +2,13 @@
  * GTA 2's save points and spray shops at real places: a glowing cross by
  * Geretsried's churches ("Jesus Saves": walk in, pay, the game is saved) and a
  * glowing spray can at the car repair shops (drive in, pay, the car gets a
- * new colour and the police lose you). Pure: it says what happened; game.ts
+ * new colour and the police lose you), and Cafe Waldmann's cake counter
+ * (walk up, pay, eat: full health). Pure: it says what happened; game.ts
  * takes the money and does it.
  */
 import type { World } from "#/world/world.ts"
 
-export type ShopKind = "save" | "spray"
+export type ShopKind = "save" | "spray" | "cake"
 
 export type Shop = {
   readonly kind: ShopKind
@@ -20,9 +21,14 @@ export type Shop = {
 
 export const SAVE_COST = 500
 export const SPRAY_COST = 300
-/** How close to the pad's middle counts as on it: on foot, and in a car. */
-const PAD = { foot: 1.8, car: 3.2 } as const
-const LEAVE_M = 8
+export const CAKE_COST = 15
+/** How close to the pad's middle counts as on it: on foot, in a car, and at the cake counter (a small room). */
+const PAD = { foot: 1.8, car: 3.2, counter: 0.9 } as const
+/** How far you step away before it works again: the counter sells the next slice soon. */
+const LEAVE_M: Readonly<Record<ShopKind, number>> = { save: 8, spray: 8, cake: 2.2 }
+
+/** What Cafe Waldmann's display holds (its menu), one after the other. */
+export const CAKES = ["Schwarzwälder Kirschtorte", "Käsekuchen", "Erdbeer-Sahnetorte", "Apfelstrudel", "Schokoladentorte", "Zwetschgendatschi"] as const
 
 /** The churches with a save point, and the workshops that respray (Huber's is a paint shop). */
 const SAVE_AT = ["Maria Hilf", "Petruskirche"]
@@ -44,7 +50,7 @@ export const spotNear = (world: World, x: number, y: number, kinds?: ReadonlySet
 
 const DRIVEWAYS: ReadonlySet<string> = new Set(["service", "residential", "living_street", "tertiary", "secondary", "primary"])
 
-/** `hidden` keeps the pads out from under tree crowns, where the camera cannot see them. */
+/** `hidden` keeps the pads out from under tree crowns, where the camera cannot see them. The cake pad is inside the cafe, so it is never hidden. */
 export const planShops = (world: World, hidden: (x: number, y: number) => boolean = () => false): Array<Shop> => {
   const out: Array<Shop> = []
   const add = (kind: ShopKind, names: ReadonlyArray<string>, kinds?: ReadonlySet<string>) => {
@@ -57,8 +63,11 @@ export const planShops = (world: World, hidden: (x: number, y: number) => boolea
   add("save", SAVE_AT)
   // A spray shop's pad must be somewhere a car gets to.
   add("spray", SPRAY_AT, DRIVEWAYS)
+  if (world.cafe !== null) out.push({ kind: "cake", name: "Cafe Waldmann", ...world.cafe.cake, armed: true })
   return out
 }
+
+export const COST: Readonly<Record<ShopKind, number>> = { save: SAVE_COST, spray: SPRAY_COST, cake: CAKE_COST }
 
 export type ShopEvent = { readonly kind: ShopKind; readonly shop: Shop } | { readonly kind: "broke"; readonly shop: Shop }
 
@@ -66,12 +75,12 @@ export type ShopEvent = { readonly kind: ShopKind; readonly shop: Shop } | { rea
 export const stepShop = (shop: Shop, player: { readonly x: number; readonly y: number }, inCar: boolean, money: number): ShopEvent | null => {
   const d = Math.hypot(player.x - shop.x, player.y - shop.y)
   if (!shop.armed) {
-    if (d > LEAVE_M) shop.armed = true
+    if (d > LEAVE_M[shop.kind]) shop.armed = true
     return null
   }
-  const on = shop.kind === "save" ? !inCar && d < PAD.foot : inCar && d < PAD.car
+  const on = shop.kind === "spray" ? inCar && d < PAD.car : !inCar && d < (shop.kind === "cake" ? PAD.counter : PAD.foot)
   if (!on) return null
   shop.armed = false
-  const cost = shop.kind === "save" ? SAVE_COST : SPRAY_COST
+  const cost = COST[shop.kind]
   return money < cost ? { kind: "broke", shop } : { kind: shop.kind, shop }
 }
