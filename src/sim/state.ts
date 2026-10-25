@@ -137,6 +137,11 @@ export type Game = {
   player: Player
   /** Cars standing around that the player can take, and the burning ones nobody drives. */
   parked: Array<Car>
+  /**
+   * Kerbside slots (parking.ts) in range that were filled: slot id → the car parked there. The entry stays while the
+   * slot is in range even when its car is gone (taken, burnt), so the slot is not filled again under the player's eyes.
+   */
+  readonly kerb: Map<number, Car>
   /** Burnt-out cars: in the way of nobody, enterable by nobody. */
   wrecks: Array<Car>
   npcs: Array<Npc>

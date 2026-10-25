@@ -2,7 +2,7 @@ import type { World } from "#/world/world.ts"
 import { makeProjection } from "#/map/project.ts"
 import { distToSegmentSq } from "#/world/geometry.ts"
 import { DRIVABLE } from "#/world/world.ts"
-import { CAR_LENGTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
+import { CAR_LENGTH, CAR_WIDTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardSpeed, stepCar, type Car, type Surface } from "./car.ts"
 import { roadAhead, spawnBus, spawnNpc, stepNpc, type Leader, type Npc } from "./traffic.ts"
 import { atTerminus, direction, nextStop, planTransit } from "./transit.ts"
 import { lightFor, makeSignals } from "./signals.ts"
@@ -22,6 +22,7 @@ import { WEAPONS, cycle, disarm, give, newArsenal, pull, tickArsenal } from "./w
 import { PACKAGE_REWARD, collect, placePackages, placePickups, stepPickups, type Hidden, type PickupKind } from "./pickups.ts"
 import { enrage, fire, leaveCar, stepCombat } from "./combat.ts"
 import { makeRandom } from "./random.ts"
+import { clearKerb, fillKerbs, kerbCars } from "./parking.ts"
 import { hurtPump, nearestOnIsland, planStations, pumpsOf } from "./stations.ts"
 import type { Game, Input, Spawn } from "./state.ts"
 
@@ -116,6 +117,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
   const game: Game = {
     player: { x: home.x, y: home.y, angle: home.angle, car: null, ride: null, vitals: vitals(PERSON_HP), arsenal: newArsenal(), stride: 0, moving: false },
     parked: [car],
+    kerb: new Map(),
     wrecks: [],
     npcs: [],
     cops: [],
@@ -183,6 +185,9 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   // The active job's car stays wherever it is: you are on your way to it.
   const target = game.jobs.active?.target
   game.parked = game.parked.filter((c) => c === target || Math.hypot(c.x - x, c.y - y) < NPC_FAR)
+  // Cars along the kerbs, like the moving traffic: none pop up in view after the start.
+  fillKerbs(world, game, x, y, minR === 0 ? 0 : 60)
+  const kerb = kerbCars(world, game)
   for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
     const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
     if (walker === null) continue
@@ -194,8 +199,10 @@ const fillTraffic = (world: World, game: Game, minR: number) => {
   for (let attempt = 0; game.npcs.filter((n) => n.bus === undefined).length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
     const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
     if (npc === null) return
-    // Never spawn on top of another car.
-    const taken = [...game.parked, ...game.npcs].some((c) => Math.hypot(c.x - npc.x, c.y - npc.y) < 10)
+    // Never spawn on top of another car; one at the kerb is only in the way if it stands in the lane.
+    const near = (c: { readonly x: number; readonly y: number }) => Math.hypot(c.x - npc.x, c.y - npc.y) < 10
+    const inLane = (c: Car) => Math.abs(-(c.x - npc.x) * Math.sin(npc.angle) + (c.y - npc.y) * Math.cos(npc.angle)) < PATH_HALF.car
+    const taken = game.npcs.some(near) || game.parked.some((c) => near(c) && (!kerb.has(c) || inLane(c)))
     if (!taken) game.npcs.push(npc)
   }
 }
@@ -303,6 +310,14 @@ const pushApart = (car: Car, x: number, y: number, radius: number) => {
 const pushBus = (car: Car, bus: Npc) => {
   let hit = 0
   for (const off of [-BUS_LENGTH / 2.8, 0, BUS_LENGTH / 2.8]) hit = Math.max(hit, pushApart(car, bus.x + Math.cos(bus.angle) * off, bus.y + Math.sin(bus.angle) * off, 3.4))
+  return hit
+}
+
+/** A parked car is a row of three circles too, so you can drive past one at the kerb without scraping it. */
+const pushParked = (car: Car, parked: Car) => {
+  if (Math.abs(parked.x - car.x) > 6 || Math.abs(parked.y - car.y) > 6) return 0
+  let hit = 0
+  for (const off of [-CAR_LENGTH / 3.4, 0, CAR_LENGTH / 3.4]) hit = Math.max(hit, pushApart(car, parked.x + Math.cos(parked.angle) * off, parked.y + Math.sin(parked.angle) * off, CAR_WIDTH))
   return hit
 }
 
@@ -509,7 +524,7 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
       }
     } else pay(game, nearMiss(game.score, npc.id, dist, speed, game.time))
   }
-  for (const parked of game.parked) crash(car, pushApart(car, parked.x, parked.y, CAR_LENGTH * 0.75), DAMAGE.car, "car")
+  for (const parked of game.parked) crash(car, pushParked(car, parked), DAMAGE.car, "car")
   for (const wreck of game.wrecks) pushApart(car, wreck.x, wreck.y, CAR_LENGTH * 0.75)
   // Petrol station pillars and pump islands: ramming an island hard sets it off.
   for (const p of game.pillars) if (Math.abs(p.x - car.x) < 4 && Math.abs(p.y - car.y) < 4) crash(car, pushApart(car, p.x, p.y, PILLAR_REACH), DAMAGE.wall, "wall")
@@ -758,6 +773,8 @@ const jobCar = (world: World, game: Game, job: Job): Car | null => {
   for (const lane of [half + 1, half - 1, 0, -(half - 1)]) {
     const car: Car = { x: best.x - Math.sin(best.angle) * lane, y: best.y + Math.cos(best.angle) * lane, angle: best.angle, vx: 0, vy: 0, model: goal.model, vitals: vitals(CAR_HP) }
     if (carHitsWall(world, car)) continue
+    // It takes the place of whoever had parked there.
+    clearKerb(world, game, car.x, car.y, CAR_LENGTH + 1)
     game.parked.push(car)
     return car
   }
