@@ -143,6 +143,7 @@ export const MATERIAL_FILES = [
   "edeka-boards",
   "edeka-panels",
   "edeka-pylon",
+  "edeka-113",
   "denns-letters",
   "denns-front",
   "denns-cladding",
@@ -235,6 +236,11 @@ export const MATERIAL_FILES = [
   "paving-slab-grey",
   "sett-gutter-grey",
   "road-name-sudetenstrasse",
+  "seitz-sign",
+  "seitz-window",
+  "seitz-shop",
+  "seitz-pkw",
+  "seitz-door",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -385,6 +391,8 @@ export const PROP_FILES = [
   "vz350",
   "vz224",
   "flash-amber",
+  "seitz-tent",
+  "seitz-bikes",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

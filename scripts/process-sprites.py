@@ -614,6 +614,45 @@ if band is not None:
     out.resize((512, 512), Image.LANCZOS).save(OUT / "edeka-band.webp", "WEBP", quality=92)
     print("edeka-band.webp")
 
+# EDEKA's yellow is the dark ochre of Alex's overcast photo (reference/edeka-am-stern/40, band #5b4900, pylon #6e5901),
+# not the brand yellow Codex painted: every bright yellow pixel of the four signs is pulled to that ochre (its own
+# brightness kept, the blue ink and the white left as they are). In place and idempotent: once a sign holds no bright
+# yellow any more it is skipped, so this runs after the Codex steps above or alone (`python3 scripts/process-sprites.py`).
+OCHRE = {"edeka-band": (91, 73, 0), "roof-edeka": (91, 73, 0), "edeka-logo": (110, 89, 1), "edeka-pylon": (110, 89, 1)}
+for name, ochre in OCHRE.items():
+    path = OUT / f"{name}.webp"
+    if not path.exists():
+        continue
+    im = Image.open(path).convert("RGBA")
+    a = np.asarray(im, np.float32)
+    rgb = a[..., :3]
+    # How yellow a pixel is, as the share of yellow in a yellow/blue mix: red high and blue low (white and the grey
+    # rails give none, nor do dark pixels). The edge pixels are mixes of the yellow and the ink: only the yellow part of them is replaced.
+    yel = np.minimum(np.clip(rgb[..., 0] / 240, 0, 1), np.clip((190 - rgb[..., 2]) / 164, 0, 1))
+    yel = (yel * np.clip((np.maximum(rgb[..., 0], rgb[..., 1]) - 90) / 40, 0, 1))[..., None]
+    pure = yel[..., 0] > 0.95
+    if (pure & (np.maximum(rgb[..., 0], rgb[..., 1]) > 150)).mean() < 0.01:
+        continue
+    yellow = np.median(rgb[pure], axis=0)
+    lit = np.clip(np.maximum(rgb[..., 0], rgb[..., 1]) / yellow.max(), 0.5, 1.1)[..., None]
+    out = a.copy()
+    out[..., :3] = rgb + yel * (np.asarray(ochre, np.float32) * lit - yellow)
+    Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)).save(path, "WEBP", quality=92)
+    print(f"{name}.webp ochre")
+
+# The house number "113" on the entrance corner's grey wall: a small white plate with dark digits (drawn here, not
+# Codex: no photo shows more than the plate), stored square and stretched to the plate's 36 x 26 cm by the wallSign.
+for font in ["/System/Library/Fonts/Supplemental/Arial Bold.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]:
+    if Path(font).exists():
+        from PIL import ImageDraw, ImageFont
+        plate = Image.new("RGBA", (720, 520), (232, 232, 230, 255))
+        draw = ImageDraw.Draw(plate)
+        draw.rectangle((10, 10, 709, 509), outline=(40, 42, 46, 255), width=14)
+        draw.text((360, 270), "113", font=ImageFont.truetype(font, 330), fill=(30, 32, 36, 255), anchor="mm")
+        plate.resize((512, 512), Image.LANCZOS).save(OUT / "edeka-113.webp", "WEBP", quality=92)
+        print("edeka-113.webp")
+        break
+
 # denns BioMarkt (Sudetenstraße 29 C): the green "denns BioMarkt" letters keyed and cropped tight to the ink, then
 # stretched square (the wallSign's rectangle gives them back their aspect); one 4 x 3 m bay of the dark-framed shop
 # front with posters and one 4 x 3 m piece of the striped cladding at the NW end with its window (opaque, square).
@@ -1233,3 +1272,29 @@ def save_walk(name: str) -> None:
 
 for name in WALK_SETS:
     save_walk(name)
+
+# Fahrzeugtechnik Seitz (Breslauer Weg 75): the black "Fahrzeug technik SEITZ" board with its car and motorbike logos
+# (keyed, cropped to the board and stretched to the 7.3:1 of the sign rectangle, opaque, stored square); the upper
+# storey's window with its half-down grey roller shutter, the motorbike dealer's shop window with the brand lettering,
+# the "PKW SERVICE" window with the blinds and the glass door (opaque, stored square); the party tent seen from above
+# and a row of parked motorbikes (keyed, cropped).
+src = find("seitz-sign")
+if src is not None:
+    im = key_magenta_fast(Image.open(src))
+    box = im.getchannel("A").point(lambda a: 255 if a > 200 else 0).getbbox()
+    board = Image.open(src).convert("RGB").crop((box[0] + 4, box[1] + 4, box[2] - 4, box[3] - 4))
+    board.resize((512, 512), Image.LANCZOS).save(OUT / "seitz-sign.webp", "WEBP", quality=92)
+    print("seitz-sign.webp", board.size, f"{board.width / board.height:.2f}:1")
+for name in ["seitz-window", "seitz-shop", "seitz-pkw", "seitz-door"]:
+    src = find(name)
+    if src is not None:
+        Image.open(src).convert("RGB").resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp")
+for name in ["seitz-tent", "seitz-bikes"]:
+    src = find(name)
+    if src is not None:
+        im = key_magenta_fast(Image.open(src))
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp", im.size)

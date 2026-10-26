@@ -349,7 +349,7 @@ describe("the registry on the real map", () => {
     for (const n of free) expect(n).toBeGreaterThan(half + 2.6)
   })
 
-  it("dresses EDEKA's SW front with the yellow band, the logo and the boards, its pylon and canopy off the car park", () => {
+  it("dresses EDEKA's SW front with the ochre fascia box on a dark canopy, the corner's roof box and boards, its pylon at the car-park entrance off the carriageway", () => {
     const edeka = at(189042651)
     const pts = map.buildings[edeka?.building ?? -1]?.pts ?? []
     const parts = edeka?.dressing.parts ?? []
@@ -359,26 +359,56 @@ describe("the registry on the real map", () => {
     expect(w1).toBeDefined()
     if (w1 === undefined) return
     expect(Math.abs(((Math.atan2(-w1.nx, w1.ny) * 180) / Math.PI + 360) % 360 - 230)).toBeLessThan(10)
-    for (const t of ["edeka-band", "edeka-logo", "edeka-boards", "edeka-panels", "shop-front"] as const) expect(signs(1)).toContain(t)
-    // The band and the logo sit over the canopy, which stays under head height's clearance and short of the car park.
+    for (const t of ["edeka-boards", "edeka-panels", "shop-front"] as const) expect(signs(1)).toContain(t)
+    // The house number is on the corner's Breslauer Weg wall (wall 2).
+    expect(signs(2)).toContain("edeka-113")
+    // The canopy is dark, under head height's clearance and short of the car park.
     const canopy = parts.find((p) => p.kind === "canopy")
-    const band = parts.find((p) => p.kind === "wallSign" && p.texture === "edeka-band")
-    expect(canopy?.kind === "canopy" && band?.kind === "wallSign" && band.z0 > canopy.z).toBe(true)
+    expect(canopy?.kind === "canopy" && Math.max(...canopy.colour.slice(0, 3)) < 40).toBe(true)
     const park = map.areas.find((a) => a.kind === "parking" && pointInPolygon(4400, 4840, a.pts))?.pts ?? []
     expect(park.length).toBeGreaterThan(6)
     if (canopy?.kind !== "canopy") return
     for (const u of [canopy.u0, (canopy.u0 + canopy.u1) / 2, canopy.u1]) expect(pointInPolygon(...toWorld(w1, u, -canopy.depth), park)).toBe(false)
-    // The pylon stands outside the hall, in front of the corner, not on the car park.
-    const pylon = parts.find((p) => p.kind === "pylon")
+    // The "Heininger & Dietz" fascia is a box standing on the canopy's top at its front edge, its lettering the band's.
+    const [fx, fy] = (() => {
+      const f = parts.find((p) => p.kind === "pylon" && p.texture === "edeka-band")
+      return f?.kind === "pylon" && edeka !== undefined ? toWorld(edeka.frame, f.u, f.n) : [0, 0]
+    })()
+    const fascia = parts.find((p) => p.kind === "pylon" && p.texture === "edeka-band")
+    expect(fascia?.kind === "pylon" && fascia.base === canopy.z && fascia.h > canopy.z).toBe(true)
+    expect(toLocal(w1, fx, fy)[1]).toBeCloseTo(-canopy.depth + 0.15, 0)
+    // The roof box on the corner: a box over the lower roof with the E logo on it, standing in the footprint on wall 2's last 3.4 m.
+    const logo = parts.find((p) => p.kind === "pylon" && p.texture === "edeka-logo")
+    expect(logo?.kind === "pylon" && logo.base !== undefined && logo.base > 5).toBe(true)
+    if (logo?.kind !== "pylon" || edeka === undefined) return
+    expect(pointInPolygon(...toWorld(edeka.frame, logo.u, logo.n), pts)).toBe(true)
+    // The pylon stands at the car-park entrance from the street (the service road off Breslauer Weg's bend), right of the
+    // lane, off its carriageway, off the street's carriageway and sidewalk, and outside the hall and the parking area.
+    const pylon = parts.find((p) => p.kind === "pylon" && p.texture === "edeka-pylon")
     expect(pylon?.kind === "pylon" && pylon.texture === "edeka-pylon").toBe(true)
-    if (pylon?.kind !== "pylon" || edeka === undefined) return
+    if (pylon?.kind !== "pylon") return
     const [x, y] = toWorld(edeka.frame, pylon.u, pylon.n)
-    const [u, n] = toLocal(w1, x, y)
-    expect(u).toBeGreaterThan(3)
-    expect(u).toBeLessThan(9)
-    expect(n).toBeLessThan(-2)
     expect(pointInPolygon(x, y, pts)).toBe(false)
     expect(pointInPolygon(x, y, park)).toBe(false)
+    const lane = map.roads.find((r) => r.kind === "service" && r.pts[0] === 4386.6 && r.pts[1] === 4791.8)
+    expect(lane).toBeDefined()
+    const reach = (r: Road | undefined) => {
+      let best = Infinity
+      for (let k = 0; k + 3 < (r?.pts.length ?? 0); k += 2) {
+        const [ax, ay, bx, by] = [r?.pts[k] ?? 0, r?.pts[k + 1] ?? 0, r?.pts[k + 2] ?? 0, r?.pts[k + 3] ?? 0]
+        const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2)))
+        best = Math.min(best, Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay)))
+      }
+      return best
+    }
+    // Within 6 m of the lane's middle (it is the entrance), at least its half width and the pylon's own half off it.
+    expect(reach(lane)).toBeLessThan(6)
+    expect(reach(lane)).toBeGreaterThan((lane?.width ?? 0) / 2 + pylon.w / 2 + 0.5)
+    // Breslauer Weg: off the carriageway and its sidewalk.
+    const street = map.roads.find((r) => r.name === "Breslauer Weg")
+    expect(reach(street)).toBeGreaterThan((street?.width ?? 0) / 2 + 2.6)
+    // Not on any other way the cars drive.
+    expect(map.roads.filter((r) => r !== lane && r !== street && reach(r) < r.width / 2 + 0.5)).toEqual([])
   })
 
   it("dresses denns BioMarkt at the NW end of the west block's Sudetenstraße front, under the balconies", () => {
@@ -1471,6 +1501,27 @@ describe("the registry on the real map", () => {
       expect(pointInPolygon(...toWorld(inn.frame, p.u, p.n), slab?.pts ?? [])).toBe(true)
       expect(p.z).toBeGreaterThan((slab?.levels ?? 1) * 3 + 0.6)
     }
+  })
+
+  it("dresses Fahrzeugtechnik Seitz on its hand-added POI (I-2, inside the footprint): two storeys of LoD2 height, every part on the S wall facing Breslauer Weg, the sign centred over the shop windows", () => {
+    const seitz = places.find((p) => p.dressing.osmBuildingId === 128503556)
+    expect(seitz).toBeDefined()
+    const poi = map.pois.find((p) => p.name === seitz?.dressing.poi)
+    expect(pointInPolygon(poi?.x ?? 0, poi?.y ?? 0, map.buildings[seitz?.building ?? -1]?.pts ?? [])).toBe(true)
+    // 8.5 m of wall and the 0.6 m parapet: the LoD2 model's 9.1 m.
+    expect((dressed.buildings[seitz?.building ?? -1]?.levels ?? 0) * 3 + 0.6).toBeCloseTo(9.1, 1)
+    const pts = map.buildings[seitz?.building ?? -1]?.pts ?? []
+    // Wall 3 runs SE to SW: the outward normal points south (+y) to the street.
+    const front = wallFrame(pts, 3)?.frame
+    expect(front?.ny).toBeLessThan(-0.9)
+    const parts = seitz?.dressing.parts ?? []
+    const signs = parts.flatMap((p) => (p.kind === "wallSign" ? [p] : []))
+    expect(new Set(signs.map((p) => p.edge))).toEqual(new Set([3]))
+    const board = signs.find((p) => p.texture === "seitz-sign")
+    const windows = signs.filter((p) => p.texture === "seitz-shop" || p.texture === "seitz-pkw")
+    const lo = Math.min(...windows.map((w) => w.u0))
+    const hi = Math.max(...windows.map((w) => w.u1))
+    expect(((board?.u0 ?? 0) + (board?.u1 ?? 0)) / 2).toBeCloseTo((lo + hi) / 2, 0)
   })
 
   it("gives St. Ursula its four storeys", () => {
