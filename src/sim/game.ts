@@ -10,7 +10,7 @@ import { spawnWalker, stepWalker } from "./pedestrians.ts"
 import { stepArrivals, stepGuest } from "./guests.ts"
 import { BUS_LENGTH, BUS_MODEL, carName, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
-import { drift, nearMiss, newScore, tickScore } from "./score.ts"
+import { KILL, awardAt, drift, nearMiss, newScore, tickScore } from "./score.ts"
 import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
 import { planJobs } from "./town-jobs.ts"
 import { CAKES, CAKE_COST, COST, SAVE_COST, planShops, spotNear, stepShop } from "./shops.ts"
@@ -379,6 +379,8 @@ export const step = (world: World, game: Game, input: Input): void => {
     if (!wasDown && w.down > 0 && threat !== null && w.vitals.lastHit === "car") commit(game.wanted, "pedestrian")
     // Burnt to death: the player lit the fire.
     else if (!wasDead && w.dead && w.vitals.lastHit === "fire") commit(game.wanted, "kill")
+    // Run over or burnt: either is the player's kill, paid on the spot.
+    if (!wasDead && w.dead && (w.vitals.lastHit === "fire" || (threat !== null && w.vitals.lastHit === "car"))) awardAt(game.score, game.messages, KILL, w.x, w.y)
   }
   game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
   stepArrivals(world, game, playerPos(game), DT)
@@ -445,7 +447,7 @@ const pickUp = (game: Game) => {
     found.found = true
     game.score.money += PACKAGE_REWARD
     const n = game.packages.filter((p) => p.found).length
-    game.messages.push({ kind: "mission", text: `Geheimpaket gefunden! ${n} von ${game.packages.length}` }, { kind: "cash", amount: PACKAGE_REWARD })
+    game.messages.push({ kind: "mission", text: `Geheimpaket gefunden! ${n} von ${game.packages.length}` }, { kind: "cash", amount: PACKAGE_REWARD, at: { kind: "player", times: 1 } })
     game.sounds.push({ id: "pickup", x: player.x, y: player.y })
   }
   const got = collect(game.pickups, player.x, player.y, wants(game))
@@ -576,8 +578,9 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   player.y = car.y
 }
 
+/** A near miss or drift paid: its number shows over the player's car. */
 const pay = (game: Game, amount: number) => {
-  if (amount > 0) game.messages.push({ kind: "cash", amount })
+  if (amount > 0) game.messages.push({ kind: "cash", amount, at: { kind: "player", times: game.score.times } })
 }
 
 /** Entering a junction while its light shows red to you. */
@@ -717,7 +720,7 @@ const jobsStep = (world: World, game: Game) => {
     if (car !== null && jobs.active !== null) jobs.active.target = car
   } else if (event.kind === "passed") {
     game.score.money += event.reward
-    game.messages.push({ kind: "cash", amount: event.reward })
+    game.messages.push({ kind: "cash", amount: event.reward, at: { kind: "player", times: 1 } })
     const g = event.job.gang
     if (g !== undefined) gangJobDone(game.respect, g.for, g.against)
   }
@@ -751,13 +754,13 @@ const shopsStep = (game: Game) => {
       game.score.money -= CAKE_COST
       player.vitals.hp = PERSON_HP
       const cake = CAKES[Math.floor(game.time) % CAKES.length] ?? CAKES[0]
-      game.messages.push({ kind: "pickup", text: `${cake} bei ${shop.name}: volle Gesundheit!` }, { kind: "cash", amount: -CAKE_COST })
+      game.messages.push({ kind: "pickup", text: `${cake} bei ${shop.name}: volle Gesundheit!` }, { kind: "cash", amount: -CAKE_COST, at: null })
       game.sounds.push({ id: "pickup", x: shop.x, y: shop.y })
       continue
     }
     if (event.kind === "save") {
       game.score.money -= SAVE_COST
-      game.messages.push({ kind: "saved", data: toSave(game) }, { kind: "cash", amount: -SAVE_COST })
+      game.messages.push({ kind: "saved", data: toSave(game) }, { kind: "cash", amount: -SAVE_COST, at: null })
       continue
     }
     const car = player.car
@@ -767,7 +770,7 @@ const shopsStep = (game: Game) => {
     // A new colour: nobody is looking for this car any more.
     Object.assign(game.wanted, noHeat())
     game.bust = 0
-    game.messages.push({ kind: "mission", text: `Frisch lackiert bei ${shop.name}! Die Polizei sucht ein anderes Auto.` }, { kind: "cash", amount: -COST.spray })
+    game.messages.push({ kind: "mission", text: `Frisch lackiert bei ${shop.name}! Die Polizei sucht ein anderes Auto.` }, { kind: "cash", amount: -COST.spray, at: null })
   }
 }
 

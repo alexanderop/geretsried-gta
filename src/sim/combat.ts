@@ -18,6 +18,7 @@ import { commit, tactics } from "./wanted.ts"
 import { POLICE_MODEL } from "./vehicles.ts"
 import { FRIENDLY, memberKilled } from "./gangs.ts"
 import { ISLAND_M, ISLAND_W, hurtPump, type Pump } from "./stations.ts"
+import { COP_KILL, KILL, WRECK, awardAt } from "./score.ts"
 
 /** Anything with a body a shot can hit. */
 type Target =
@@ -180,7 +181,10 @@ const killFighter = (game: Game, f: Fighter, from: Shooter) => {
   f.dead = true
   f.down = CORPSE_S
   f.vitals.fire = 0
-  if (from === "player") commit(game.wanted, f.kind === "cop" ? "copKill" : "kill")
+  if (from === "player") {
+    commit(game.wanted, f.kind === "cop" ? "copKill" : "kill")
+    awardAt(game.score, game.messages, f.kind === "cop" ? COP_KILL : KILL, f.x, f.y)
+  }
   if (f.gang !== undefined) memberKilled(game.respect, f.gang)
 }
 
@@ -211,7 +215,10 @@ const damage = (game: Game, target: Target, amount: number, source: DamageSource
   hurt(w.vitals, amount, source)
   if (isDead(w.vitals)) {
     kill(w)
-    if (from === "player") commit(game.wanted, "kill")
+    if (from === "player") {
+      commit(game.wanted, "kill")
+      awardAt(game.score, game.messages, KILL, w.x, w.y)
+    }
     if (w.gang !== undefined && from === "player") memberKilled(game.respect, w.gang)
     return
   }
@@ -503,6 +510,7 @@ const burnDown = (world: World, game: Game, dt: number, onPlayerCar: () => void)
     game.wrecks.push({ ...car, vx: 0, vy: 0 })
     // Whoever lit it, a chain of burning cars is the player's doing as far as the police are concerned.
     explode(world, game, car.x, car.y, "player", CAR_BLAST_R, CAR_BLAST_MAX)
+    if (car !== own) awardAt(game.score, game.messages, WRECK, car.x, car.y)
   }
 }
 

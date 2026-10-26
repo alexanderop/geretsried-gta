@@ -128,8 +128,13 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   5er, Taxi, Audi A3, Mercedes G, Polizei, VW Bus, Post-Transporter; the Linienbus you ride, not drive), BUSTED / WASTED banners, the
   mission text and clock. H toggles the controls help.
 - **Money** (`src/sim/score.ts`): a near miss (passing a car at over 50 km/h with centres 3.4–4.6 m
-  apart) pays $50, a drift (sliding over a third sideways at speed) $20 every half second. Awards within
-  5 s of each other build a multiplier up to ×4.
+  apart) pays $50, a drift (sliding over a third sideways at speed) $20 every half second, a kill $10 (an
+  officer $50), a car blown up $100. Awards within 5 s of each other build a multiplier up to ×4.
+- **Score popups** (`src/render/popups.ts`): every payout puts its number up big like GTA 2: 72 px chunky
+  italic digits with a dark outline, rising a meter and fading over 1.2 s, white at ×1, yellow ×2, orange ×3,
+  red ×4. Kills and wrecks show on their spot (lifted above the player if it would land on them); near
+  misses, drifts and job pay ride just above the player, so they stay readable at top speed. A new one
+  stacks above those still standing.
 - **Wanted level** (`src/sim/wanted.ts`): ramming cars, knocking people down, entering a junction on red
   and taking a car in front of the police add heat; each whole point is a cop head and one police car.
   Heat cools only after 8 s out of police sight.

@@ -7,7 +7,7 @@ import type { Npc } from "./traffic.ts"
 import type { Signals } from "./signals.ts"
 import type { Walker } from "./pedestrians.ts"
 import type { Wanted } from "./wanted.ts"
-import type { Score } from "./score.ts"
+import type { Payout, Score } from "./score.ts"
 import type { Jobs } from "./mission.ts"
 import type { GangId, Respect, Turf } from "./gangs.ts"
 import type { Cop } from "./police.ts"
@@ -66,7 +66,8 @@ export type Message =
   | { readonly kind: "saved"; readonly data: SaveData }
   | { readonly kind: "car"; readonly text: string }
   | { readonly kind: "mission"; readonly text: string }
-  | { readonly kind: "cash"; readonly amount: number }
+  /** Money paid (or spent, negative): `at` is where its big number shows, null for a price. */
+  | { readonly kind: "cash"; readonly amount: number; readonly at: Payout | null }
   | { readonly kind: "pickup"; readonly text: string }
 
 /** Someone on foot who leaves the sidewalk to come at you: a police officer with a pistol, or a tough guy with his fists. */

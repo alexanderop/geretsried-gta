@@ -6,6 +6,7 @@ import { findSpot, spotNames } from "#/world/teleport.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
 import { districtAt } from "#/map/districts.ts"
+import { addPopup, agePopups, drawPopups, type Popup } from "#/render/popups.ts"
 import { bakeMinimap, drawMinimap, drawPlaces, drawPlayerMarker, drawTargetArrow, poiIcon } from "#/render/overlay.ts"
 import { isRinging, jobTarget } from "#/sim/mission.ts"
 import { multiplier } from "#/sim/score.ts"
@@ -174,12 +175,14 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     let shown: HudState = emptyHud
     let bigUntil = 0
     let missionUntil = 0
+    const popups: Array<Popup> = []
     let raf = 0
     let last = performance.now()
     let acc = 0
     let hudTimer = 0
     const frame = (now: number) => {
-      acc += Math.min(0.1, (now - last) / 1000)
+      const elapsed = Math.min(0.1, (now - last) / 1000)
+      acc += elapsed
       last = now
       const aspect = canvas.width / canvas.height
       if (compare !== null) {
@@ -201,6 +204,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       ctx.clearRect(0, 0, overlay.width, overlay.height)
       drawPlayerMarker(ctx, matrix, game, devicePixelRatio)
       drawPlaces(ctx, world.map, matrix, devicePixelRatio)
+      agePopups(popups, elapsed)
       const target = jobTarget(game.jobs, playerPos(game))
       if (target !== null) drawTargetArrow(ctx, matrix, target, game.time, devicePixelRatio)
       const p = playerPos(game)
@@ -214,7 +218,10 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       for (const m of game.messages.splice(0)) {
         if (m.kind === "car") shown = { ...shown, vehicle: { name: m.text, key: ++keys } }
         else if (m.kind === "pickup") shown = { ...shown, pickup: { name: m.text, key: ++keys } }
-        else if (m.kind === "cash") shown = { ...shown, paid: { amount: m.amount, key: ++keys } }
+        else if (m.kind === "cash") {
+          shown = { ...shown, paid: { amount: m.amount, key: ++keys } }
+          if (m.at !== null && m.amount > 0) addPopup(popups, m.amount, m.at)
+        }
         else if (m.kind === "mission") {
           shown = { ...shown, mission: m.text }
           missionUntil = game.time + MISSION_S
@@ -224,6 +231,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           bigUntil = game.time + BIG_S
         }
       }
+      drawPopups(ctx, matrix, game, popups, devicePixelRatio)
       if ((hudTimer += 1) % 6 === 0) {
         const name = world.roadAt(p.x, p.y, 15)?.road.name ?? ""
         // GTA 2 announces each street as you turn into it.

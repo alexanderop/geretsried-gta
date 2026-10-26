@@ -1,8 +1,10 @@
 /**
  * Money for driving like GTA 2, two cheap rules: a near miss (passing another
  * car fast, close, without touching it) and a drift (sliding sideways at
- * speed). Scoring again soon after builds the multiplier.
+ * speed); and for mayhem: a kill, a car blown up. Scoring again soon after
+ * builds the multiplier.
  */
+import type { Message } from "./state.ts"
 
 export type Score = {
   money: number
@@ -10,18 +12,24 @@ export type Score = {
   chain: number
   /** Seconds since the last award. */
   since: number
+  /** The multiplier the last award paid at. */
+  times: number
   /** Seconds of the current slide not yet paid. */
   drift: number
   /** When each NPC last paid a near miss (game time), so one pass pays once. */
   readonly missed: Map<number, number>
 }
 
-export const newScore = (): Score => ({ money: 0, chain: 0, since: 0, drift: 0, missed: new Map() })
+export const newScore = (): Score => ({ money: 0, chain: 0, since: 0, times: 1, drift: 0, missed: new Map() })
 
 const CHAIN_S = 5
 const MAX_MULTIPLIER = 4
 export const NEAR_MISS = 50
 export const DRIFT = 20
+/** A person killed (an officer is worth more), a car blown up: GTA 2's "10", "50" and "100" over the spot. */
+export const KILL = 10
+export const COP_KILL = 50
+export const WRECK = 100
 /** Faster than 50 km/h, centres 3.4 to 4.6 m apart: the cars nearly touched. */
 const MISS_SPEED = 14
 const MISS_NEAR = 3.4
@@ -34,7 +42,8 @@ export const multiplier = (s: Score) => Math.min(MAX_MULTIPLIER, 1 + Math.floor(
 
 /** Pay `base` times the multiplier; returns what was paid. */
 export const award = (s: Score, base: number): number => {
-  const paid = base * multiplier(s)
+  s.times = multiplier(s)
+  const paid = base * s.times
   s.money += paid
   s.chain++
   s.since = 0
@@ -65,4 +74,13 @@ export const drift = (s: Score, speed: number, slip: number, dt: number): number
   if (s.drift < DRIFT_PAY_S) return 0
   s.drift -= DRIFT_PAY_S
   return award(s, DRIFT)
+}
+
+/** Where a payout's big number shows: over the player (a near miss, a drift, job pay), or on a spot in town (a kill, a wreck); `times` is its multiplier. */
+export type Payout = { readonly kind: "player"; readonly times: number } | { readonly kind: "spot"; readonly x: number; readonly y: number; readonly times: number }
+
+/** Pay `base` times the multiplier for mayhem at (x, y), and tell the HUD and the number over the spot. */
+export const awardAt = (s: Score, messages: Array<Message>, base: number, x: number, y: number): void => {
+  const amount = award(s, base)
+  messages.push({ kind: "cash", amount, at: { kind: "spot", x, y, times: s.times } })
 }

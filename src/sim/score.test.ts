@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { DRIFT, NEAR_MISS, drift, multiplier, nearMiss, newScore, tickScore } from "./score.ts"
+import type { Message } from "./state.ts"
+import { DRIFT, KILL, NEAR_MISS, awardAt, drift, multiplier, nearMiss, newScore, tickScore } from "./score.ts"
 
 describe("scoring", () => {
   it("pays a fast, close pass once, not a crawl or a crash", () => {
@@ -25,5 +26,13 @@ describe("scoring", () => {
     expect(multiplier(s)).toBe(3)
     for (let i = 0; i < 60 * 6; i++) tickScore(s, 1 / 60)
     expect(multiplier(s)).toBe(1)
+  })
+
+  it("pays a kill on its spot at the multiplier in force, and says which for the popup's colour", () => {
+    const s = newScore()
+    for (let id = 0; id < 4; id++) nearMiss(s, id, 4, 20, 0)
+    const messages: Array<Message> = []
+    awardAt(s, messages, KILL, 12, 34)
+    expect(messages).toEqual([{ kind: "cash", amount: 2 * KILL, at: { kind: "spot", x: 12, y: 34, times: 2 } }])
   })
 })
