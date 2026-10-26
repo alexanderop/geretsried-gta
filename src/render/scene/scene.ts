@@ -25,6 +25,7 @@ import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
 import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
 import { bollard, signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, streetSign, zebra, type StreetLamp, type StreetProp } from "./street.ts"
+import { overheadLines, POLE_Z, roadWord, roadWords, wire, wirePole, type RoadWord, type Wire, type WirePole } from "./road-paint.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, material as materialLayer, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 import { BOLLARD_M, type ParkedCar, type StreetLayout, type StreetSign, type Strip } from "#/world/street-profile.ts"
 import { CAR_LENGTH } from "#/sim/car.ts"
@@ -58,6 +59,8 @@ const FACADE_LAYER: Readonly<Record<Facade, Material>> = {
 
 const STREETS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "living_street"])
 const MARKED: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary"])
+/** Streets with solid edge lines: the main roads and the residential ones (not the Spielstraßen, lanes and drives). */
+const EDGED: ReadonlySet<string> = new Set([...MARKED, "residential"])
 /** Sidewalk width on each side of a street. */
 const SIDEWALK_M = 2.6
 const KERB_M = 0.3
@@ -160,6 +163,9 @@ type StreetItem =
   | { readonly kind: "zebra"; readonly zebra: Zebra }
   | { readonly kind: "lamp"; readonly lamp: StreetLamp }
   | { readonly kind: "prop"; readonly prop: StreetProp }
+  | { readonly kind: "word"; readonly word: RoadWord }
+  | { readonly kind: "pole"; readonly pole: WirePole }
+  | { readonly kind: "wire"; readonly wire: Wire }
 
 /** Deterministic 0..1 hash. */
 export const hash2 = (x: number, y: number, salt: number) => {
@@ -388,9 +394,21 @@ export class Scene {
     const furniture = [...signals.stops.map((st) => signalHead(st).pole), ...signals.zebras]
     items.push(...streetLamps(world, furniture).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
     items.push(...world.streets.flatMap((l) => l.lamps).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
-    items.push(...streetProps(world, furniture).map((p): StreetItem => ({ kind: "prop", prop: p })))
+    const props = streetProps(world, furniture)
+    items.push(...props.map((p): StreetItem => ({ kind: "prop", prop: p })))
+    const busStops = props.flatMap((p) => (p.kind === "shelter" ? [{ ...p.pole, angle: p.angle }] : p.kind === "pole" ? [p] : []))
+    items.push(...roadWords(world, signals.stops, signals.zebras, busStops).map((word): StreetItem => ({ kind: "word", word })))
+    const lines = overheadLines(world, [...furniture, ...items.flatMap((i) => (i.kind === "lamp" ? [i.lamp] : i.kind === "prop" ? [i.prop] : []))])
+    items.push(...lines.poles.map((pole): StreetItem => ({ kind: "pole", pole })), ...lines.wires.map((w): StreetItem => ({ kind: "wire", wire: w })))
     for (const item of items) {
-      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.prop
+      // A line spans its poles (and leans out from the camera at its height); the rest stand at a point.
+      if (item.kind === "wire") {
+        const { a, b } = item.wire
+        own((a.x + b.x) / 2, (a.y + b.y) / 2, boxOf([a.x, a.y, b.x, b.y], POLE_Z * SHADOW_PER_M + 1))?.street.push(this.street.length)
+        this.street.push(item)
+        continue
+      }
+      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.kind === "word" ? item.word : item.kind === "pole" ? item.pole : item.prop
       // Room for an arm over the road and a shadow 7 m long.
       const reach = 14
       own(at.x, at.y, { minX: at.x - reach, minY: at.y - reach, maxX: at.x + reach, maxY: at.y + reach })?.street.push(this.street.length)
@@ -483,6 +501,9 @@ export class Scene {
       else if (item?.kind === "zebra") zebra(m, this.sprites, this.profiledZebra(item.zebra), ZEBRA_M)
       else if (item?.kind === "lamp") streetLamp(m, this.sprites, item.lamp)
       else if (item?.kind === "prop") streetProp(m, this.sprites, item.prop)
+      else if (item?.kind === "word") roadWord(m, item.word)
+      else if (item?.kind === "pole") wirePole(m, item.pole)
+      else if (item?.kind === "wire") wire(m, item.wire)
     }
     this.forest(m, cx, cy)
     for (const i of chunk.crowns) {
@@ -688,10 +709,11 @@ export class Scene {
 
   /**
    * Lane markings of one road as polylines: a dashed centre line on two-way
-   * main roads and solid edge lines on wide ones, cut out where other streets join.
+   * main roads and, as GTA 2 paints every street, solid edge lines on them and
+   * the residential streets, cut out where other streets join.
    */
   private markings(r: Road, index: number): Array<{ readonly pts: Array<number>; readonly edge: boolean }> {
-    if (!MARKED.has(r.kind)) return []
+    if (!EDGED.has(r.kind)) return []
     const { map, junctions } = this.world
     const cuts: Array<readonly [number, number]> = []
     let at = 0
@@ -710,15 +732,13 @@ export class Scene {
     const length = polylineLength(r.pts)
     const keep = keepIntervals(length, cuts)
     const out: Array<{ readonly pts: Array<number>; readonly edge: boolean }> = []
-    if (!r.oneway) for (const [a, b] of keep) out.push(...dashes(r.pts, a, b, 3, 6).map((pts) => ({ pts, edge: false })))
-    if (r.width >= 7) {
-      const inset = r.width / 2 - 0.45
-      for (const [a, b] of keep) {
-        const piece = subPolyline(r.pts, a, b)
-        if (piece.length < 4) continue
-        const { left, right } = band(piece, inset)
-        out.push({ pts: left, edge: true }, { pts: right, edge: true })
-      }
+    if (!r.oneway && MARKED.has(r.kind)) for (const [a, b] of keep) out.push(...dashes(r.pts, a, b, 3, 6).map((pts) => ({ pts, edge: false })))
+    const inset = r.width / 2 - 0.45
+    for (const [a, b] of keep) {
+      const piece = subPolyline(r.pts, a, b)
+      if (piece.length < 4) continue
+      const { left, right } = band(piece, inset)
+      out.push({ pts: left, edge: true }, { pts: right, edge: true })
     }
     return out
   }

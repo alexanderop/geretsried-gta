@@ -4,6 +4,7 @@
  */
 import type { Assets } from "../assets.ts"
 import { SPRITE_LAYERS, Sprite, type SpriteBoxes } from "../scene/mesh.ts"
+import { ROAD_WORDS, WORD_ROWS } from "../scene/road-paint.ts"
 
 const MATERIAL_PX = 512
 const SPRITE_PX = 256
@@ -43,6 +44,29 @@ const lightParts = (): ReadonlyArray<HTMLCanvasElement> => {
   }
   return [housing, lamp, glow]
 }
+
+/**
+ * The words painted on the lanes, white on clear, one material layer each after the files: tall condensed capitals
+ * filling the layer, which road-paint.ts stretches along the lane like real road lettering.
+ */
+const roadWords = (): ReadonlyArray<HTMLCanvasElement> =>
+  ROAD_WORDS.map((word) => {
+    const [c, ctx] = canvas2d(MATERIAL_PX)
+    if (ctx === null) return c
+    const rows = WORD_ROWS[word]
+    const pad = MATERIAL_PX * 0.04
+    // Each row fills the width and its share of the height, a gap between rows.
+    const rowH = (MATERIAL_PX - 2 * pad) / (rows.length + (rows.length - 1) * 0.25)
+    ctx.font = `900 ${MATERIAL_PX}px "Arial Black", "Arial Bold", Impact, sans-serif`
+    ctx.fillStyle = "#fff"
+    rows.forEach((row, i) => {
+      const m = ctx.measureText(row)
+      const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
+      ctx.setTransform((MATERIAL_PX - 2 * pad) / m.width, 0, 0, rowH / h, pad, pad + i * rowH * 1.25)
+      ctx.fillText(row, 0, m.actualBoundingBoxAscent)
+    })
+    return c
+  })
 
 const array = (gl: WebGL2RenderingContext, size: number, images: ReadonlyArray<Source>, wrap: number): WebGLTexture => {
   const tex = gl.createTexture()
@@ -113,7 +137,7 @@ export const uploadTextures = (gl: WebGL2RenderingContext, assets: Assets): Text
     return [img.width * k, img.height * k]
   })
   return {
-    materials: array(gl, MATERIAL_PX, assets.materials, gl.REPEAT),
+    materials: array(gl, MATERIAL_PX, [...assets.materials, ...roadWords()], gl.REPEAT),
     sprites: array(gl, SPRITE_PX, spriteImages, gl.CLAMP_TO_EDGE),
     mask: mask(gl, assets.ground),
     maskSize: [assets.ground.width, assets.ground.height],

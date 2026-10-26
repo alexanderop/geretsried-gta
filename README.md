@@ -50,8 +50,8 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
 - **Chunks** (`src/render/scene/scene.ts`): every 128 m chunk is built once into a static vertex buffer
   (about 1 ms, 60 KB) as it comes near the view: lawn and paving (the photo's paved mask, given a one
   pixel hard edge in the shader), land use and water, streets as polygons from the OSM centre lines
-  (sidewalk slabs, kerb, asphalt, dashed centre and solid edge lines on main roads, cut out at
-  junctions), buildings extruded from their footprints (storeys × 3 m), tree crowns at the photo's
+  (sidewalk slabs, kerb, asphalt, a dashed centre line on main roads and solid edge lines on them and
+  every residential street, cut out at junctions), buildings extruded from their footprints (storeys × 3 m), tree crowns at the photo's
   positions, and shadows. Ground layers lie a few centimetres apart, so the depth test layers them.
 - **Facades** (`src/render/scene/facade.ts`): a shop front where a shop is inside or at the wall,
   corrugated metal for halls over 800 m² of up to two storeys, an apartment block from three storeys, a
@@ -242,6 +242,15 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   both kerbs, and at the zebra and marked crossings OSM maps. NPC cars stop with their bumper behind the
   line; a test drives 60 s of traffic and fails on any car crossing a line at red. Main roads have street
   lamps every 38 m.
+- **Street paint and overhead lines** (`src/render/scene/road-paint.ts`): GTA 2's busy streets, in German.
+  Words in tall white capitals on the lanes, read by the driver coming up to them: STOP before every stop
+  line at the lights, BUS where the bus waits at each stop, 30 12 m into each residential street off a main
+  road (the Wohngebiete are Tempo-30 zones; the map has no `maxspeed`, so this is where a zone sign would
+  stand), LANGSAM on both lanes 25 m either side of each school and kindergarten (in two rows, LANG first).
+  The letters are drawn once into material layers after the texture files (`textures.ts`). Power and phone
+  lines hang on poles every 34 m along the residential streets, two dark lines at 8.1 and 8.3 m from pole
+  to pole and across each junction, never over a house; being real 3D at that height they lean out from
+  the camera and slide against the ground as you drive, with a faint shadow below.
 - **Petrol stations** (`src/sim/stations.ts`, `src/render/scene/canopy.ts`): at the four real `amenity=fuel`
   places, a flat sheet-metal canopy at 5 m on pillars (OSM's `building=roof` where mapped, otherwise one
   laid out between the station and its street, clear of buildings) with a coloured band round its edge and
