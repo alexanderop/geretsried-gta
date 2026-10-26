@@ -46,6 +46,24 @@ export const distToSegmentSq = (px: number, py: number, ax: number, ay: number, 
   return cx * cx + cy * cy
 }
 
+/** The segment of polyline `pts` nearest (px, py): its index, how far along it the nearest point lies (0 to 1), and its length. */
+export const nearestSegment = (pts: ReadonlyArray<number>, px: number, py: number): { readonly seg: number; readonly t: number; readonly len: number } => {
+  let best = { seg: 0, t: 0, len: 0 }
+  let bestD = Infinity
+  for (let i = 0; i + 3 < pts.length; i += 2) {
+    const ax = pts[i] ?? 0
+    const ay = pts[i + 1] ?? 0
+    const dx = (pts[i + 2] ?? 0) - ax
+    const dy = (pts[i + 3] ?? 0) - ay
+    const d = distToSegmentSq(px, py, ax, ay, ax + dx, ay + dy)
+    if (d >= bestD) continue
+    const lenSq = dx * dx + dy * dy
+    bestD = d
+    best = { seg: i / 2, t: lenSq === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq)), len: Math.sqrt(lenSq) }
+  }
+  return best
+}
+
 /** Average of a polygon's vertices. */
 export const centroid = (pts: ReadonlyArray<number>): readonly [number, number] => {
   let x = 0

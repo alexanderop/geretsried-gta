@@ -5,6 +5,7 @@ import { BUS_MODEL, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { CAR_LENGTH } from "./car.ts"
 import { DWELL_S, along, distanceToHalt, dropPassedHalts, legsAfter, nextBusLeg, type BusTrip, type Line } from "./transit.ts"
 import { CAR_HP, vitals, type Vitals } from "./damage.ts"
+import { nearestSegment } from "#/world/geometry.ts"
 
 /** One segment of a road as traffic drives it: from vertex `from` toward `from + dir`. */
 export type Segment = { readonly road: number; readonly from: number; readonly dir: 1 | -1 }
@@ -477,23 +478,31 @@ export const npcOn = (world: World, id: number, seg: Segment, s: number, model: 
   return npc
 }
 
-/** Put an NPC on a random drivable segment whose midpoint is within `[minR, maxR]` of (cx, cy). */
-export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number): Npc | null => {
+/**
+ * Put an NPC on the drivable road nearest a random point `minR` to `maxR` meters from (cx, cy), where it passes that
+ * point; `inbound`, it drives towards (cx, cy) where the road lets it (GTA 2's traffic comes into view).
+ */
+export const spawnNpc = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number, inbound = false): Npc | null => {
   for (let attempt = 0; attempt < 60; attempt++) {
     const angle = random() * Math.PI * 2
     const r = minR + random() * (maxR - minR)
-    const hit = world.roadAt(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 20)
+    const px = cx + Math.cos(angle) * r
+    const py = cy + Math.sin(angle) * r
+    const hit = world.roadAt(px, py, 20)
     if (hit === null || !DRIVABLE.has(hit.road.kind)) continue
-    const count = hit.road.pts.length / 2
-    const from = Math.floor(random() * (count - 1))
-    const dir: 1 | -1 = hit.road.oneway || random() < 0.5 ? 1 : -1
+    const { seg: from, t, len } = nearestSegment(hit.road.pts, px, py)
+    const [ax, ay, bx, by] = hit.road.pts.slice(from * 2, from * 2 + 4)
+    const towards = (cx - px) * ((bx ?? 0) - (ax ?? 0)) + (cy - py) * ((by ?? 0) - (ay ?? 0)) >= 0
+    const dir: 1 | -1 = hit.road.oneway || (inbound ? towards : random() < 0.5) ? 1 : -1
     const npc: Npc = {
       id,
       road: hit.index,
       from: dir === 1 ? from : from + 1,
       dir,
-      s: 0,
-      speed: 0,
+      // Short of the segment's far end, so it starts on its lane rather than in the bend.
+      s: Math.max(0, Math.min(len - 6, (dir === 1 ? t : 1 - t) * len)),
+      // Coming into view already at speed, not crawling out of a standstill.
+      speed: inbound ? (CRUISE[hit.road.kind] ?? 8) * 0.7 : 0,
       x: 0,
       y: 0,
       angle: 0,

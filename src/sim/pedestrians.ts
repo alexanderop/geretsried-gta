@@ -5,6 +5,7 @@ import type { Visit } from "./guests.ts"
 import { CAR_LENGTH, CAR_WIDTH } from "./car.ts"
 import { PERSON_HP, burnPerson, hurt, isDead, vitals, type Vitals } from "./damage.ts"
 import { kerbOffset, parksAlong } from "./parking.ts"
+import { nearestSegment } from "#/world/geometry.ts"
 
 /** Someone walking the footpath and sidewalk network. */
 export type Walker = {
@@ -170,7 +171,7 @@ const homeSide = (world: World, w: Walker): number => {
 /** A parked car: where it stands and which way it faces. */
 export type Obstacle = { readonly x: number; readonly y: number; readonly angle: number }
 
-const inCar = (c: Obstacle, x: number, y: number) => {
+export const inCar = (c: Obstacle, x: number, y: number) => {
   if (Math.abs(c.x - x) > CAR_LENGTH || Math.abs(c.y - y) > CAR_LENGTH) return false
   const along = (x - c.x) * Math.cos(c.angle) + (y - c.y) * Math.sin(c.angle)
   const across = -(x - c.x) * Math.sin(c.angle) + (y - c.y) * Math.cos(c.angle)
@@ -239,22 +240,26 @@ const place = (world: World, w: Walker) => {
   w.angle += Math.atan2(Math.sin(target - w.angle), Math.cos(target - w.angle)) * 0.2
 }
 
-export const spawnWalker = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number): Walker | null => {
+/** Someone on the way nearest a random point `minR` to `maxR` meters from (cx, cy), walking either way, or towards (cx, cy) when `inbound`. */
+export const spawnWalker = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number, inbound = false): Walker | null => {
   for (let attempt = 0; attempt < 40; attempt++) {
     const a = random() * Math.PI * 2
     const r = minR + random() * (maxR - minR)
-    const hit = world.roadAt(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 15)
+    const px = cx + Math.cos(a) * r
+    const py = cy + Math.sin(a) * r
+    const hit = world.roadAt(px, py, 15)
     if (hit === null || !WALKABLE.has(hit.road.kind)) continue
-    const count = hit.road.pts.length / 2
-    const from = Math.floor(random() * (count - 1))
-    const dir: 1 | -1 = random() < 0.5 ? 1 : -1
+    const { seg: from, t, len } = nearestSegment(hit.road.pts, px, py)
+    const [sx, sy, ex, ey] = hit.road.pts.slice(from * 2, from * 2 + 4)
+    const towards = (cx - px) * ((ex ?? 0) - (sx ?? 0)) + (cy - py) * ((ey ?? 0) - (sy ?? 0)) >= 0
+    const dir: 1 | -1 = (inbound ? towards : random() < 0.5) ? 1 : -1
     const curb: 1 | -1 = random() < 0.5 ? 1 : -1
     const w: Walker = {
       id,
       road: hit.index,
       from: dir === 1 ? from : from + 1,
       dir,
-      s: 0,
+      s: (dir === 1 ? t : 1 - t) * len,
       side: lineAt(world, hit.index, from, dir === 1 ? 0 : 1, 1, curb * dir),
       curb,
       pace: 1.1 + random() * 0.6,
@@ -278,6 +283,25 @@ export const spawnWalker = (world: World, id: number, cx: number, cy: number, mi
     return w
   }
   return null
+}
+
+/**
+ * Walking with `leader`: `k` places behind them on the same sidewalk, a little to the side, at their pace, so a group
+ * keeps together like GTA 2's crowds. Null where that spot is inside a wall.
+ */
+export const companion = (world: World, leader: Walker, id: number, k: number, random: () => number): Walker | null => {
+  const w: Walker = {
+    ...leader,
+    id,
+    s: leader.s >= k * 1.1 ? leader.s - k * 1.1 : leader.s + k * 1.1,
+    side: leader.side + (k % 2 === 0 ? 0.35 : -0.35) * (0.5 + random()),
+    stride: random() * 10,
+    tough: id % TOUGH === 0,
+    vitals: vitals(PERSON_HP),
+    sprite: PED_SPRITES[id % PED_SPRITES.length] ?? 1,
+  }
+  place(world, w)
+  return world.isSolid(w.x, w.y) ? null : w
 }
 
 const nextLeg = (world: World, w: Walker, random: () => number): Pick<Walker, "road" | "from" | "dir"> => {

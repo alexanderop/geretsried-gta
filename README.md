@@ -295,6 +295,15 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   carries the logo, where the doors are and that the canopy is glass are guesses. A new generic part, `gable`, puts a
   cross gable on any wall.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
+- **Crowd** (`fillCrowd` in `src/sim/game.ts`): like GTA 2, people and moving traffic live only round the camera, so
+  every screen has a crowd: about 40 people (on a shop street, a POI within 50 m; 60 % of that in the Wohngebiete) and
+  up to 26 cars at the walking view, more as the car camera opens up, capped at the old town-wide 120 people and 70
+  cars. Four times a second, new ones come in heading towards you from a ring just out of sight (1.05–1.4 views out
+  for people, 1.05–1.7 for cars, a view being the screen's centre to its corner on the ground, `game.view`), and those
+  past 1.7 / 2.1 views, or out of sight and on their way out, go. People often walk in twos to fours. After a teleport
+  the whole circle is filled at once. Parked cars, buses, cafe guests and cars parking or pulling out keep their own
+  rules. Measured 2026-10-26 at ten shop streets 10 s after `__gta.teleport`: 12–32 people and 1–6 moving cars on
+  screen, 3 or more cars at eight of ten.
 
 `pnpm map:fetch` downloads every cache: `data/raw.json` (ways), `data/places.json` (shops, lights), `data/places-more.json`
 (gyms, health, offices, …), `data/places-next.json` (schools, driving schools, stadiums), `data/areas-more.json`

@@ -6,7 +6,7 @@ import { CAR_LENGTH, CAR_WIDTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardS
 import { roadAhead, spawnBus, spawnNpc, stepNpc, type Leader, type Npc } from "./traffic.ts"
 import { atTerminus, direction, nextStop, planTransit } from "./transit.ts"
 import { lightFor, makeSignals } from "./signals.ts"
-import { spawnWalker, stepWalker } from "./pedestrians.ts"
+import { companion, inCar, spawnWalker, stepWalker } from "./pedestrians.ts"
 import { stepArrivals, stepGuest } from "./guests.ts"
 import { BUS_LENGTH, BUS_MODEL, carName, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
@@ -35,15 +35,30 @@ export const DT = 1 / 60
 const WALK = 4
 const SPRINT = 7.5
 const PLAYER_RADIUS = 0.4
+/** Most traffic cars and people at once, anywhere: the cap for performance. */
 const NPC_COUNT = 70
 /** Every GANG_EVERY-th pedestrian is in the gang whose turf they walk. */
 const GANG_EVERY = 4
 /** A gang that hates you sends the members this close at you. */
 const GANG_SIGHT = 16
-const NPC_NEAR = 120
 const NPC_FAR = 650
 const WALKER_COUNT = 120
-const WALKER_FAR = 220
+/**
+ * GTA 2 keeps people and cars only round the camera, so every screen has a crowd and traffic: about CROWD.walkers
+ * people (on a shop street; a share of that in the Wohngebiete) and CROWD.cars cars round the player at the walking
+ * view, more as the car camera opens up. New ones appear in a ring just out of sight (`from` to `to` views from the
+ * player, a view being `game.view`, the screen's centre to its corner), those beyond `gone` views go. People are slow,
+ * so theirs is a tighter ring than the cars'; at 16:10 the cars' is 1.25 to 2 half-widths out, gone past 2.5.
+ */
+const CROWD = { walkers: 40, cars: 26 } as const
+const RING = { walkers: { from: 1.05, to: 1.4, gone: 1.7 }, cars: { from: 1.05, to: 1.7, gone: 2.1 } } as const
+/** The walking view's reach on a 16:10 screen: 12.5 m to the top edge, 20 m to the side. */
+export const FOOT_VIEW = Math.hypot(12.5, 20)
+/** A shop street: a POI this close. Off them (the Wohngebiete) only RESIDENTIAL of the crowd walks. */
+const SHOP_M = 50
+const RESIDENTIAL = 0.6
+/** People walk in twos to fours this often, like GTA 2's groups on the pavement. */
+const GROUP_CHANCE = 0.45
 const ENTER_RANGE = 4
 export const LIVES = 5
 /** A police car within this many meters sees you. */
@@ -160,12 +175,13 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     gunfireCooldown: 0,
     screamCooldown: 0,
     guestCooldown: 2,
+    view: FOOT_VIEW,
   }
   // The first buses are spread round each line's loop, a little out of step between lines (before the traffic, which tops lines up).
   game.transit.forEach((line, li) => {
     for (let k = 0; k < line.buses; k++) game.npcs.push(spawnBus(world, game.nextId++, line, k / line.buses + li * 0.137))
   })
-  fillTraffic(world, game, 40)
+  fillTraffic(world, game)
   return game
 }
 
@@ -178,34 +194,88 @@ const surfaceAt = (world: World, x: number, y: number): Surface => {
 export const carHitsWall = (world: World, car: Car) =>
   carOutline(car).some(([x, y]) => x < 0 || y < 0 || x > world.map.width || y > world.map.height || world.isSolid(x, y))
 
-/** Keep about NPC_COUNT cars around the player; recycle the ones left far behind. */
-const fillTraffic = (world: World, game: Game, minR: number) => {
+/** Once a second: the cars along the kerbs round the player, the buses, and what is left far behind (wrecks, parked cars). */
+const fillTraffic = (world: World, game: Game) => {
   const { x, y } = playerPos(game)
-  game.npcs = game.npcs.filter((n) => n.bus !== undefined || Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
   topUpBuses(world, game, x, y)
-  game.walkers = game.walkers.filter((w) => Math.hypot(w.x - x, w.y - y) < WALKER_FAR + 50)
   game.wrecks = game.wrecks.filter((w) => Math.hypot(w.x - x, w.y - y) < NPC_FAR)
   // The active job's car stays wherever it is: you are on your way to it.
   const target = game.jobs.active?.target
   game.parked = game.parked.filter((c) => c === target || Math.hypot(c.x - x, c.y - y) < NPC_FAR)
   // Cars along the kerbs, like the moving traffic: none pop up in view after the start.
-  fillKerbs(world, game, x, y, minR === 0 ? 0 : 60)
-  const kerb = kerbCars(world, game)
-  for (let attempt = 0; game.walkers.length < WALKER_COUNT && attempt < WALKER_COUNT * 3; attempt++) {
-    const walker = spawnWalker(world, game.nextId++, x, y, minR === 0 ? 0 : 60, WALKER_FAR, game.random)
+  fillKerbs(world, game, x, y, 60)
+  fillCrowd(world, game)
+}
+
+/** Is (x, y) on a shop street: a POI within SHOP_M? */
+const onShopStreet = (world: World, x: number, y: number) => world.map.pois.some((p) => Math.abs(p.x - x) < SHOP_M && Math.abs(p.y - y) < SHOP_M && Math.hypot(p.x - x, p.y - y) < SHOP_M)
+
+/** How many people and moving cars to keep round the player now: CROWD at the walking view, growing with the view, fewer off the shop streets. */
+export const crowdTarget = (world: World, game: Game): { readonly walkers: number; readonly cars: number } => {
+  const { x, y } = playerPos(game)
+  const scale = game.view / FOOT_VIEW
+  const share = onShopStreet(world, x, y) ? 1 : RESIDENTIAL
+  return { walkers: Math.min(WALKER_COUNT, Math.round(CROWD.walkers * scale * share)), cars: Math.min(NPC_COUNT, Math.round(CROWD.cars * scale)) }
+}
+
+/**
+ * GTA 2's crowd: people and traffic beyond their RING go, and so do those out of sight and on their way out; new
+ * ones come in from the ring just out of sight, heading in, until the targets are met. So what is round the player
+ * is mostly coming into view. With nobody near (the start, a teleport) the whole circle round the player is filled
+ * at once, in view too. People on shop streets are always taken, elsewhere only RESIDENTIAL of them; some walk in
+ * groups. Cafe guests, the dead and buses are left alone: they keep their own counts.
+ */
+export const fillCrowd = (world: World, game: Game): void => {
+  const { x, y } = playerPos(game)
+  const within = (o: { readonly x: number; readonly y: number }, r: number) => Math.hypot(o.x - x, o.y - y) < r * game.view
+  const leaving = (o: { readonly x: number; readonly y: number; readonly angle: number }) => !within(o, 1) && Math.cos(o.angle) * (o.x - x) + Math.sin(o.angle) * (o.y - y) > 0
+  // A car parking or pulling out finishes that first: it goes only from far off, as before the crowd.
+  const keep = (n: Npc) => (n.mode.kind === "driving" ? within(n, RING.cars.gone) && !leaving(n) : Math.hypot(n.x - x, n.y - y) < NPC_FAR + 100)
+  game.npcs = game.npcs.filter((n) => n.bus !== undefined || keep(n))
+  game.walkers = game.walkers.filter((w) => w.visit !== undefined || (within(w, RING.walkers.gone) && (w.dead || w.down > 0 || !leaving(w))))
+  const crowd = () => game.walkers.filter((w) => w.visit === undefined && !w.dead).length
+  const cars = () => game.npcs.filter((n) => n.bus === undefined).length
+  const fresh = crowd() === 0 && cars() === 0
+  // Fresh: the whole circle at once, in view too, with more tries.
+  const band = (ring: { readonly from: number; readonly to: number; readonly gone: number }): readonly [number, number] => (fresh ? [0, ring.gone * game.view] : [ring.from * game.view, ring.to * game.view])
+  const tries = fresh ? 8 : 1
+  const want = crowdTarget(world, game)
+  const [wMin, wMax] = band(RING.walkers)
+  for (let attempt = 0; crowd() < want.walkers && attempt < 24 * tries; attempt++) {
+    const walker = spawnWalker(world, game.nextId++, x, y, wMin, wMax, game.random, !fresh)
     if (walker === null) continue
-    // Every few people on a gang's turf wear its colours.
-    const gang = walker.id % GANG_EVERY === 0 ? turfAt(game.turf, walker.x, walker.y) : null
-    if (gang !== null) walker.gang = gang
-    game.walkers.push(walker)
+    const d = Math.hypot(walker.x - x, walker.y - y)
+    if (d < wMin || d > wMax) continue
+    if (!onShopStreet(world, walker.x, walker.y) && game.random() > RESIDENTIAL) continue
+    const group = [walker]
+    if (game.random() < GROUP_CHANCE) {
+      const size = 1 + Math.floor(game.random() * 3)
+      for (let k = 1; k <= size; k++) {
+        const mate = companion(world, walker, game.nextId++, k, game.random)
+        if (mate !== null) group.push(mate)
+      }
+    }
+    for (const w of group) {
+      // Nobody starts inside a parked car: they walk round them.
+      if (game.parked.some((c) => inCar(c, w.x, w.y)) || world.streets.some((st) => st.parked.some((c) => inCar(c, w.x, w.y)))) continue
+      // Every few people on a gang's turf wear its colours.
+      const gang = w.id % GANG_EVERY === 0 ? turfAt(game.turf, w.x, w.y) : null
+      if (gang !== null) w.gang = gang
+      game.walkers.push(w)
+    }
   }
-  for (let attempt = 0; game.npcs.filter((n) => n.bus === undefined).length < NPC_COUNT && attempt < NPC_COUNT * 4; attempt++) {
-    const npc = spawnNpc(world, game.nextId++, x, y, minR, NPC_FAR, game.random)
+  const [cMin, cMax] = band(RING.cars)
+  const kerb = kerbCars(world, game)
+  for (let attempt = 0; cars() < want.cars && attempt < 16 * tries; attempt++) {
+    const npc = spawnNpc(world, game.nextId++, x, y, cMin, cMax, game.random, !fresh)
     if (npc === null) return
+    const d = Math.hypot(npc.x - x, npc.y - y)
+    if (d < cMin || d > cMax) continue
     // Never spawn on top of another car; one at the kerb is only in the way if it stands in the lane.
-    const near = (c: { readonly x: number; readonly y: number }) => Math.hypot(c.x - npc.x, c.y - npc.y) < 10
+    const close = (c: { readonly x: number; readonly y: number }) => Math.hypot(c.x - npc.x, c.y - npc.y) < 10
     const inLane = (c: Car) => Math.abs(-(c.x - npc.x) * Math.sin(npc.angle) + (c.y - npc.y) * Math.cos(npc.angle)) < PATH_HALF.car
-    const taken = game.npcs.some(near) || game.parked.some((c) => near(c) && (!kerb.has(c) || inLane(c)))
+    // Nor right at the player, which a fresh fill could.
+    const taken = Math.hypot(npc.x - x, npc.y - y) < 12 || game.npcs.some(close) || game.cops.some((c) => close(c.car)) || game.parked.some((c) => close(c) && (!kerb.has(c) || inLane(c)))
     if (!taken) game.npcs.push(npc)
   }
 }
@@ -421,7 +491,8 @@ export const step = (world: World, game: Game, input: Input): void => {
   shopsStep(game)
   if (Math.round(game.time * 60) % 30 === 0) gangsStep(game)
   tickScore(game.score, DT)
-  if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game, NPC_NEAR * 2)
+  if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game)
+  else if (Math.round(game.time * 60) % 15 === 0) fillCrowd(world, game)
 }
 
 /** Ctrl (or Space on foot): the weapon in hand, if it has reloaded. */

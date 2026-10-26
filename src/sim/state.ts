@@ -205,4 +205,9 @@ export type Game = {
   screamCooldown: number
   /** Seconds until the next guest walks up to Cafe Waldmann. */
   guestCooldown: number
+  /**
+   * Meters from the screen's centre to its corner on the ground, as the camera shows it now (the UI sets it every
+   * frame; the walking view on a 16:10 screen until then): the crowd and the traffic are kept round it.
+   */
+  view: number
 }

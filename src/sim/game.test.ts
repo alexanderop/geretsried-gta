@@ -8,7 +8,7 @@ import { DT, newGame, step, type Game, type Input } from "./game.ts"
 import { CAR_HP, vitals } from "./damage.ts"
 import { rayWall } from "./hitscan.ts"
 import { give, type Gun } from "./weapons.ts"
-import { stepWalker } from "./pedestrians.ts"
+import { stepWalker, type Walker } from "./pedestrians.ts"
 import { polygonArea } from "#/map/build.ts"
 import { centroid, pointInPolygon } from "#/world/geometry.ts"
 import { bridgeHoles, openRing, signedArea, triangulate } from "#/render/scene/geometry.ts"
@@ -94,8 +94,16 @@ describe("a new game", () => {
   it("never drives through a building, whatever you hold", () => {
     const game = newGame(world, 3)
     step(world, game, { ...idle, use: true })
-    run(game, { ...idle, up: true, right: true }, 20)
-    expect(carOutline(must(game.player.car)).some(([x, y]) => world.isSolid(x, y))).toBe(false)
+    // Every step while you are in it: circling through the crowd can bring the police, who may wreck it before the end.
+    let driven = 0
+    for (let t = 0; t < 20 / DT; t++) {
+      step(world, game, { ...idle, up: true, right: true })
+      const car = game.player.car
+      if (car === null) continue
+      driven++
+      expect(carOutline(car).some(([x, y]) => world.isSolid(x, y))).toBe(false)
+    }
+    expect(driven).toBeGreaterThan(5 / DT)
   })
 
   it("fills the streets with moving traffic that stays on drivable roads", () => {
@@ -117,12 +125,13 @@ describe("pedestrians", () => {
     const game = newGame(world, 21)
     const start = new Map(game.walkers.map((w) => [w.id, { x: w.x, y: w.y }]))
     run(game, idle, 15)
-    expect(game.walkers.length).toBeGreaterThan(50)
+    expect(game.walkers.length).toBeGreaterThan(25)
     const moved = game.walkers.filter((w) => {
       const s = start.get(w.id)
       return s !== undefined && Math.hypot(w.x - s.x, w.y - s.y) > 8
     })
-    expect(moved.length).toBeGreaterThan(30)
+    // Of those still round the player: the ones that walked out of sight were let go (fillCrowd).
+    expect(moved.length).toBeGreaterThan(12)
     const inside = game.walkers.filter((w) => world.isSolid(w.x, w.y))
     expect(inside.length).toBeLessThan(game.walkers.length * 0.05)
     for (const w of game.walkers) expect(world.roadAt(w.x, w.y, 4)).not.toBeNull()
@@ -259,7 +268,9 @@ const shoot = (game: Game, seconds: number) => run(game, { ...idle, attack: true
 describe("guns", () => {
   it("kill a pedestrian with a few pistol shots and send the people round running", () => {
     const game = armed(21, "pistol")
-    const w = must(game.walkers.find((o) => faceFrom(game, o.x, o.y, 6)))
+    // Someone walking alone, so nobody in their group takes the bullets.
+    const alone = (o: Walker) => !game.walkers.some((other) => other !== o && Math.hypot(other.x - o.x, other.y - o.y) < 8)
+    const w = must(game.walkers.find((o) => alone(o) && faceFrom(game, o.x, o.y, 6)))
     shoot(game, 1.5)
     expect(w.dead || !game.walkers.includes(w)).toBe(true)
     expect(game.walkers.some((o) => o !== w && o.panic > 0)).toBe(true)
@@ -270,6 +281,8 @@ describe("guns", () => {
     const game = armed(4, "smg")
     const car = must(game.parked[0])
     expect(faceFrom(game, car.x, car.y, 7)).toBe(true)
+    // Nobody walking through the line of fire.
+    game.walkers = game.walkers.filter((w) => Math.hypot(w.x - car.x, w.y - car.y) > 15)
     shoot(game, 2)
     expect(car.vitals.hp).toBeLessThan(25)
     run(game, idle, 6)

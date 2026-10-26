@@ -16,7 +16,7 @@ import { GANGS } from "#/sim/gangs.ts"
 import { SAVE_KEY, applySave, decodeSave, encodeSave, type SaveData } from "#/sim/save.ts"
 import { GameAudio } from "./audio.ts"
 import { Hud, emptyHud, type HudState } from "./Hud.tsx"
-import { followCamera, startCamera, towersOf, viewMatrix, type View } from "#/render/camera.ts"
+import { followCamera, groundReach, startCamera, towersOf, viewMatrix, type View } from "#/render/camera.ts"
 import { Renderer, openGl } from "#/render/gl/renderer.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
@@ -198,6 +198,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       }
       followCamera(camera, game, towers)
       const view: View = { camera, aspect, ortho: null }
+      // The crowd and traffic live round what the camera shows (game.ts fillCrowd).
+      game.view = groundReach(view)
       renderer.frame(view, game, BUILD_BUDGET_MS)
       const matrix = viewMatrix(view)
       ctx.setTransform(1, 0, 0, 1, 0, 0)

@@ -153,3 +153,6 @@ export const groundBox = ({ camera, aspect, ortho }: View, margin: number): Box 
 
 /** Screen px per ground meter at the centre: how close the view is. */
 export const groundScale = (view: View, screenHeight: number) => screenHeight / 2 / (view.ortho ?? view.camera.height / FOCAL)
+
+/** Meters from the screen's centre to its corner on the ground: how far out something can be and still show. */
+export const groundReach = (view: View) => (view.ortho ?? view.camera.height / FOCAL) * Math.hypot(1, view.aspect)

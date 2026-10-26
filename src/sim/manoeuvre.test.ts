@@ -68,6 +68,8 @@ describe("kerbside cars pulling out", () => {
   it("wait while a car comes along the lane, then pull out behind it and drive on", () => {
     const game = newGame(world, 3)
     game.npcs = []
+    // A view as wide as the scene, so the crowd (fillCrowd) keeps the car coming out of sight of the player.
+    game.view = 400
     const standing = kerbCars(world, game)
     const slot = slotsNear(game, 45, 12).find((s) => {
       const c = game.kerb.get(s.id)
@@ -115,6 +117,8 @@ describe("kerbside cars pulling out", () => {
 /** A run of the game, with what traffic did at the kerb: who started pulling in or out, and when. */
 const watch = (seed: number, seconds: number) => {
   const game = newGame(world, seed)
+  // The town's traffic as a whole, not only the crowd round one screen: a view a few hundred meters across.
+  game.view = 120
   const events: Array<string> = []
   let modes = new Map<number, string>()
   let doubleClaims = 0
