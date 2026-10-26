@@ -8,6 +8,7 @@ import type { Signals } from "./signals.ts"
 import type { Walker } from "./pedestrians.ts"
 import type { Wanted } from "./wanted.ts"
 import type { Payout, Score } from "./score.ts"
+import type { Skids } from "./skids.ts"
 import type { Jobs } from "./mission.ts"
 import type { GangId, Respect, Turf } from "./gangs.ts"
 import type { Cop } from "./police.ts"
@@ -153,6 +154,8 @@ export type Game = {
   fires: Array<FirePatch>
   effects: Array<Effect>
   decals: Array<Decal>
+  /** Tyre marks where the player's car slid or braked hard. */
+  readonly skids: Skids
   readonly pickups: ReadonlyArray<Pickup>
   /** Hidden packages round town. */
   readonly packages: ReadonlyArray<Package>

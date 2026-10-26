@@ -11,6 +11,7 @@ import { stepArrivals, stepGuest } from "./guests.ts"
 import { BUS_LENGTH, BUS_MODEL, carName, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
 import { KILL, awardAt, drift, nearMiss, newScore, tickScore } from "./score.ts"
+import { fadeSkids, isSkidding, markSkids, newSkids } from "./skids.ts"
 import { cancelJob, isRinging, stepJobs, type Job } from "./mission.ts"
 import { planJobs } from "./town-jobs.ts"
 import { CAKES, CAKE_COST, COST, SAVE_COST, planShops, spotNear, stepShop } from "./shops.ts"
@@ -144,6 +145,7 @@ export const newGame = (world: World, seed = 1, hidden?: Hidden): Game => {
     fires: [],
     effects: [],
     decals: [],
+    skids: newSkids(),
     pickups,
     packages: placePackages(world, pickups, hidden),
     pumps: pumpsOf(stations),
@@ -491,6 +493,8 @@ export const step = (world: World, game: Game, input: Input): void => {
   shopsStep(game)
   if (Math.round(game.time * 60) % 30 === 0) gangsStep(game)
   tickScore(game.score, DT)
+  if (player.car === null) game.skids.from = null
+  if (Math.round(game.time * 60) % 30 === 0) fadeSkids(game.skids, game.time)
   if (Math.round(game.time * 60) % 60 === 0) fillTraffic(world, game)
   else if (Math.round(game.time * 60) % 15 === 0) fillCrowd(world, game)
 }
@@ -644,6 +648,8 @@ const driveCar = (world: World, game: Game, car: Car, input: Input) => {
   const forward = forwardSpeed(car)
   const slip = speed > 0 ? Math.sqrt(Math.max(0, speed * speed - forward * forward)) / speed : 0
   pay(game, drift(game.score, speed, slip, DT))
+  // Black marks behind a slide, a handbrake turn or a hard stop.
+  markSkids(game.skids, car, isSkidding(speed, slip, input.handbrake || (input.down && forward > 2)), game.time)
   redLight(game, car)
   player.x = car.x
   player.y = car.y

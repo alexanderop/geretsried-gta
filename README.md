@@ -43,6 +43,14 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
   the tallest top in view, so no roof clips the lens. At this zoom a ground meter is
   about 70 device pixels, so ground tiles cover at most 6 m of their 512 px. `?compare=` uses an
   orthographic view of the same square instead.
+- **Retro pixels and grime**: the town is drawn at half the CSS size and scaled up with
+  `image-rendering: pixelated` (`src/ui/Game.tsx`), so it shows GTA 2's chunky pixels while the HUD,
+  markers and score popups stay sharp; `?retro=0` draws it at full resolution, `?compare=` always does.
+  The streets get dirt (`src/render/scene/grime.ts`): oil stains in the middle of the lanes, cracks along
+  the kerbs and a worn dark patch in each junction, drawn with the ground (their alpha dithers in) under
+  the shadows. Darker only and sparse: the average frame lightness at the six V spots moved under 1 %.
+  A slide, a handbrake turn or a hard stop over 6 m/s leaves two black tyre marks from the rear wheels
+  (`src/sim/skids.ts`) that fade out over 30 s.
 - **Teleport** (`src/world/teleport.ts`): `?at=edeka`, `?at=fahrzeugtechnik-seitz` (a dressed place or POI by
   name, umlauts spelled out, a prefix is enough), `?at=47.859149,11.490211` (lat,lon) or `?at=4491,4542` (map meters)
   starts you there, on free ground in front of the building. In the console: `__gta.teleport("rathaus")`,

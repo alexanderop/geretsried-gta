@@ -71,6 +71,14 @@ const BIG_S = 3
 const MISSION_S = 7
 const BIG_TEXT = { busted: "BUSTED", wasted: "WASTED", gameOver: "GAME OVER", saved: "SAVED" } as const
 
+/**
+ * GTA 2's chunky pixels: the town is drawn at RETRO_SCALE of the CSS size and the canvas scaled up with
+ * `image-rendering: pixelated`; the HUD and the overlay stay sharp. `?retro=0` draws it at full resolution, and
+ * `?compare=` always does (it must line up with the aerial photo).
+ */
+const RETRO_SCALE = 0.5
+const retro = (comparing: boolean) => !comparing && new URLSearchParams(location.search).get("retro") !== "0"
+
 /** localStorage can be missing, full or blocked (private windows): a save that cannot be read is no save. */
 const readSave = (): SaveData | null => {
   try {
@@ -160,10 +168,12 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     const keyboard = listenKeyboard(window, { onHelp: () => setHelp((h) => !h), onMute: () => setMuted((m) => !m), onAnyKey: () => audio.start() })
 
     const resize = () => {
-      for (const c of [canvas, overlay]) {
-        c.width = Math.round(window.innerWidth * devicePixelRatio)
-        c.height = Math.round(window.innerHeight * devicePixelRatio)
-      }
+      overlay.width = Math.round(window.innerWidth * devicePixelRatio)
+      overlay.height = Math.round(window.innerHeight * devicePixelRatio)
+      // The town in GTA 2's chunky pixels: half the CSS size, scaled up without smoothing (the canvas's CSS).
+      const scale = retro(compare !== null) ? RETRO_SCALE : devicePixelRatio
+      canvas.width = Math.round(window.innerWidth * scale)
+      canvas.height = Math.round(window.innerHeight * scale)
     }
     resize()
     window.addEventListener("resize", resize)
@@ -289,7 +299,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     )
   return (
     <div className="relative h-dvh w-dvw overflow-hidden bg-black text-white select-none">
-      <canvas ref={glRef} className="block h-full w-full" />
+      <canvas ref={glRef} className={`block h-full w-full ${retro(false) ? "[image-rendering:pixelated]" : ""}`} />
       <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
       <Hud hud={hud} help={help} muted={muted} onMute={() => setMuted((m) => !m)} />
       <div className="absolute right-2 bottom-1 text-[10px] text-white/70">

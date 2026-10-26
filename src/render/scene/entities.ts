@@ -23,6 +23,7 @@ import { isBurning } from "#/sim/damage.ts"
 import { bodyAlpha } from "#/sim/combat.ts"
 import { Fx, MeshBuilder, Mode, PICKUP_SPRITES, Sprite, WALK_M, prop, spriteQuad, walkFrame, type PropName, type Rgba, type SpriteBoxes, type WalkSet } from "./mesh.ts"
 import type { WeaponId } from "#/sim/weapons.ts"
+import { SKID_S } from "#/sim/skids.ts"
 
 const WHITE: Rgba = [255, 255, 255, 255]
 const SHADOW: Rgba = [14, 22, 40, 100]
@@ -368,9 +369,25 @@ const projectile = (m: MeshBuilder, boxes: SpriteBoxes, p: Projectile) => {
   spriteQuad(m, { x: p.x + Math.cos(p.t * 14) * 0.3, y: p.y + Math.sin(p.t * 14) * 0.3, z: z + 0.02, angle: 0, length: 0.7, width: 0.7 }, Sprite.glow, box(boxes, Sprite.glow), [255, 160, 40, 255], Mode.sprite)
 }
 
+const SKID_HALF = 0.15
+
+/** The tyre marks, blended over the ground (and over the shadows on it), before the cars, fading out over SKID_S. */
+const skidMarks = (m: MeshBuilder, game: Game) => {
+  for (const s of game.skids.marks) {
+    if (Math.abs(s.ax - game.player.x) > VIEW_M || Math.abs(s.ay - game.player.y) > VIEW_M) continue
+    const color: Rgba = [6, 6, 8, Math.round(200 * Math.max(0, 1 - (game.time - s.t) / SKID_S))]
+    const len = Math.hypot(s.bx - s.ax, s.by - s.ay) || 1
+    const nx = (-(s.by - s.ay) / len) * SKID_HALF
+    const ny = ((s.bx - s.ax) / len) * SKID_HALF
+    const v = (x: number, y: number) => m.vertex(x, y, 0.1, 0, 0, color, Mode.color, 0)
+    m.quad(v(s.ax + nx, s.ay + ny), v(s.bx + nx, s.by + ny), v(s.bx - nx, s.by - ny), v(s.ax - nx, s.ay - ny))
+  }
+}
+
 /** Every moving thing of `game`, drawn into `m`: sprites in its opaque list, shadows in its shadow list. */
 export const drawEntities = (m: MeshBuilder, game: Game, boxes: SpriteBoxes): void => {
   const { time, player } = game
+  skidMarks(m, game)
   for (const d of game.decals) fx(m, boxes, Fx.scorch, { x: d.x, y: d.y, z: 0.12, angle: d.angle, length: d.size, width: d.size }, 0.85)
   mission(m, boxes, game)
   for (const p of game.pickups) pickup(m, boxes, p, time)

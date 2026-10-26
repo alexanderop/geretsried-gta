@@ -26,6 +26,7 @@ import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
 import { bollard, signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, streetSign, zebra, type StreetLamp, type StreetProp } from "./street.ts"
 import { overheadLines, POLE_Z, roadWord, roadWords, wire, wirePole, type RoadWord, type Wire, type WirePole } from "./road-paint.ts"
+import { grime, grimeOf, type Grime } from "./grime.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, material as materialLayer, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 import { BOLLARD_M, type ParkedCar, type StreetLayout, type StreetSign, type Strip } from "#/world/street-profile.ts"
 import { CAR_LENGTH } from "#/sim/car.ts"
@@ -166,6 +167,7 @@ type StreetItem =
   | { readonly kind: "word"; readonly word: RoadWord }
   | { readonly kind: "pole"; readonly pole: WirePole }
   | { readonly kind: "wire"; readonly wire: Wire }
+  | { readonly kind: "grime"; readonly grime: Grime }
 
 /** Deterministic 0..1 hash. */
 export const hash2 = (x: number, y: number, salt: number) => {
@@ -400,6 +402,7 @@ export class Scene {
     items.push(...roadWords(world, signals.stops, signals.zebras, busStops).map((word): StreetItem => ({ kind: "word", word })))
     const lines = overheadLines(world, [...furniture, ...items.flatMap((i) => (i.kind === "lamp" ? [i.lamp] : i.kind === "prop" ? [i.prop] : []))])
     items.push(...lines.poles.map((pole): StreetItem => ({ kind: "pole", pole })), ...lines.wires.map((w): StreetItem => ({ kind: "wire", wire: w })))
+    items.push(...grimeOf(world).map((g): StreetItem => ({ kind: "grime", grime: g })))
     for (const item of items) {
       // A line spans its poles (and leans out from the camera at its height); the rest stand at a point.
       if (item.kind === "wire") {
@@ -408,7 +411,7 @@ export class Scene {
         this.street.push(item)
         continue
       }
-      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.kind === "word" ? item.word : item.kind === "pole" ? item.pole : item.prop
+      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.kind === "word" ? item.word : item.kind === "pole" ? item.pole : item.kind === "grime" ? item.grime : item.prop
       // Room for an arm over the road and a shadow 7 m long.
       const reach = 14
       own(at.x, at.y, { minX: at.x - reach, minY: at.y - reach, maxX: at.x + reach, maxY: at.y + reach })?.street.push(this.street.length)
@@ -504,6 +507,7 @@ export class Scene {
       else if (item?.kind === "word") roadWord(m, item.word)
       else if (item?.kind === "pole") wirePole(m, item.pole)
       else if (item?.kind === "wire") wire(m, item.wire)
+      else if (item?.kind === "grime") grime(m, item.grime)
     }
     this.forest(m, cx, cy)
     for (const i of chunk.crowns) {
