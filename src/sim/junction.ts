@@ -248,7 +248,7 @@ export const giveWay = (world: World, signals: Signals, npcs: ReadonlyArray<Npc>
     if (list === undefined) at.set(hit.rule.node, [hit.entry])
     else list.push(hit.entry)
   }
-  const ahead: Array<{ rule: Rule; entry: Entry }> = []
+  const ahead: Array<{ rule: Rule; entry: Entry; behind: number }> = []
   for (const npc of npcs) {
     if (npc.mode.kind !== "driving") continue
     const { ahead: next, behind } = passages(world, all, npc)
@@ -260,17 +260,18 @@ export const giveWay = (world: World, signals: Signals, npcs: ReadonlyArray<Npc>
     }
     const hit = { rule: next.rule, entry: { npc, in: next.in, out: next.out, toNode, exit: false } }
     add(hit)
-    ahead.push(hit)
+    ahead.push({ ...hit, behind: behind === null ? 0 : behind.rule.box - npc.s })
   }
   const holds = new Map<Npc, Hold>()
-  for (const { rule, entry } of ahead) {
+  for (const { rule, entry, behind } of ahead) {
     const { npc } = entry
     const give = stateAt(npc, rule.node) ?? (npc.give = { node: rule.node, committed: false, waiting: false, waited: 0 })
     if (give.committed) continue
     const arm = rule.arms[entry.in]
     const stopAt = entry.toNode - (arm?.line ?? 0) - STOP_GAP - (vehicleLength(npc.model) - CAR_LENGTH) / 2
-    // In the box already, or too far over the line to stop: through.
-    if (entry.toNode < rule.box || stopAt < -1) {
+    // In the box already, too far over the line to stop, or a line so close to the junction behind that waiting at
+    // it would block that one's box (where a car on its way out may be the one this car waits for): through.
+    if (entry.toNode < rule.box || stopAt < -1 || stopAt < behind) {
       Object.assign(give, { committed: true, waiting: false })
       continue
     }

@@ -8,7 +8,7 @@ import { vitals } from "./damage.ts"
 import { DT, newGame, step, type Input } from "./game.ts"
 import { DEADLOCK_S, giveWay, junctionRules } from "./junction.ts"
 import { makeRandom } from "./random.ts"
-import { makeSignals } from "./signals.ts"
+import { lightFor, makeSignals, stopKey } from "./signals.ts"
 import { stepNpc, type Npc, type Segment } from "./traffic.ts"
 import { BUS_MODEL, vehicleLength } from "./vehicles.ts"
 
@@ -90,6 +90,9 @@ const closest = (cars: ReadonlyArray<Npc>) => {
   for (let i = 0; i < cars.length; i++) for (let k = i + 1; k < cars.length; k++) best = Math.min(best, dist(cars[i] ?? JUNCTION, cars[k] ?? JUNCTION))
   return best
 }
+
+/** A car standing 3 m into `seg`, having come from `prev`, going on along `next`. */
+const between = (id: number, seg: Segment, prev: Segment, next: Segment): Npc => ({ ...car(id, "west", "east", 0, 0), ...seg, s: 3, prev, route: [next] })
 
 describe("unsignalled junctions", () => {
   it("are found once per world: the crossroads, with its four arms", () => {
@@ -220,6 +223,39 @@ describe("unsignalled junctions", () => {
     expect(allOut).toBeLessThan(25)
     expect(nearest).toBeGreaterThan(CAR_WIDTH + 1)
   })
+  it("two junctions closer than their give-way lines do not lock: a car on its way out of one never waits inside its box for the other", () => {
+    // Crossroads A (node 99) at (300, 300) and B (node 98) 10.5 m south: the line before B lies inside A's box, and the other way round.
+    const map: GameMap = {
+      width: 600,
+      height: 600,
+      bbox: { south: 47.85, west: 11.48, north: 47.86, east: 11.49 },
+      roads: [
+        road("residential", [100, 300, 300, 300, 500, 300], [1, 99, 2]),
+        road("residential", [300, 100, 300, 300, 300, 310.5, 300, 500], [3, 99, 98, 4]),
+        road("residential", [100, 310.5, 300, 310.5, 500, 310.5], [5, 98, 6]),
+      ],
+      buildings: [],
+      areas: [],
+      waterways: [],
+      pois: [],
+      signals: [],
+      crossings: [],
+      props: [],
+      districts: [],
+      covered: [],
+      buses: [],
+    }
+    const world = makeWorld(map, [], [])
+    const town = { world, signals: makeSignals(world) }
+    // One turned left out of A towards B, where it turns left across the other's way; that one came through B and goes on through A, across the first one's way.
+    const south = between(1, { road: 1, from: 1, dir: 1 }, { road: 0, from: 2, dir: -1 }, { road: 2, from: 1, dir: 1 })
+    const north = between(2, { road: 1, from: 2, dir: -1 }, { road: 1, from: 3, dir: -1 }, { road: 1, from: 1, dir: -1 })
+    let out = Infinity
+    drive(town, [south, north], 20, (t) => {
+      if (out === Infinity && through(south) && through(north)) out = t
+    })
+    expect(out).toBeLessThan(10)
+  })
 })
 
 describe("Geretsried traffic at junctions without lights", () => {
@@ -283,4 +319,33 @@ describe("Geretsried traffic at junctions without lights", () => {
     }
     expect(pairs).toBe(0)
   }, 30_000)
+
+  it("nothing stands still for over ten seconds in two minutes of town with the player off the road, but at a red light, a bus stop or pulling out", () => {
+    const stuck: Array<string> = []
+    // Seeds where cars locked at two junctions a few meters apart (Altvaterstraße, Arberweg), and the bus jam's seed.
+    for (const seed of [2, 4, 9]) {
+      const game = newGame(world, seed)
+      // On the pavement beyond the parked car, not in the lane where traffic (rightly) waits for you.
+      const home = game.parked[0] ?? game.player
+      game.player.x = home.x + (home.x - game.home.x) * 0.64
+      game.player.y = home.y + (home.y - game.home.y) * 0.64
+      expect(world.roadAt(game.player.x, game.player.y, 0)).toBeNull()
+      const still = new Map<number, number>()
+      const red = (n: Npc) =>
+        [n, ...n.route.slice(0, 2)].some((seg) => {
+          const stop = game.signals.stopFor.get(stopKey(seg.road, seg.from + seg.dir, seg.dir))
+          return stop !== undefined && lightFor(stop.light.junction, stop.heading, game.time) !== "green"
+        })
+      for (let t = 0; t < 120 / DT; t++) {
+        step(world, game, idle)
+        for (const n of game.npcs) {
+          const excused = (n.bus?.dwell ?? 0) > 0 || n.mode.kind === "pullingOut" || red(n)
+          const s = n.speed < 0.3 && !excused ? (still.get(n.id) ?? 0) + DT : 0
+          still.set(n.id, s)
+          if (s > 10 && s <= 10 + DT) stuck.push(`seed ${seed}: ${n.id} at (${n.x.toFixed(0)}, ${n.y.toFixed(0)})`)
+        }
+      }
+    }
+    expect(stuck).toEqual([])
+  }, 60_000)
 })
