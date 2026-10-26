@@ -15,7 +15,7 @@ import { GANGS } from "#/sim/gangs.ts"
 import { SAVE_KEY, applySave, decodeSave, encodeSave, type SaveData } from "#/sim/save.ts"
 import { GameAudio } from "./audio.ts"
 import { Hud, emptyHud, type HudState } from "./Hud.tsx"
-import { followCamera, startCamera, viewMatrix, type View } from "#/render/camera.ts"
+import { followCamera, startCamera, towersOf, viewMatrix, type View } from "#/render/camera.ts"
 import { Renderer, openGl } from "#/render/gl/renderer.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
@@ -150,6 +150,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     window.__gta = { game, world, renderer, teleport, spots: () => spotNames(world) }
     const minimap = bakeMinimap(world.map, assets.overview)
     const camera = startCamera(game)
+    const towers = towersOf(world)
     const compare = compareSpot(world)
     if (compare !== null) Object.assign(camera, { x: compare.x, y: compare.y, height: 100 })
     const audio = new GameAudio()
@@ -192,7 +193,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         step(world, game, keyboard.take())
         acc -= DT
       }
-      followCamera(camera, game)
+      followCamera(camera, game, towers)
       const view: View = { camera, aspect, ortho: null }
       renderer.frame(view, game, BUILD_BUDGET_MS)
       const matrix = viewMatrix(view)

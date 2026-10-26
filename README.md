@@ -35,10 +35,12 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 
 The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no dependencies), like GTA 2:
 
-- **Camera** (`src/render/camera.ts`): GTA 2 close, straight down through a narrow 26° lens: about 40 m
-  across a 16:10 screen on foot (54 m up), 50 m in a standing car, 90 m at top speed. It trails the
-  player and eases its look-ahead (0.55 s of travel) into the driving direction. Houses lean out about
-  2.5 m at the screen edge, so walls show without wide-angle stretch. At this zoom a ground meter is
+- **Camera** (`src/render/camera.ts`): GTA 2 close, straight down through a wide 45° lens: about 40 m
+  across a 16:10 screen on foot (30 m up), 50 m in a standing car, 90 m at top speed. It trails the
+  player and eases its look-ahead (0.55 s of travel) into the driving direction. A 9 m house leans out
+  about 5 m at the screen edge, so every block shows tall walls towards the edges like GTA 2. Near the
+  few towers (the high-rises, Maria Hilf's and Petruskirche's bell towers) it climbs to stay 12 m above
+  the tallest top in view, so no roof clips the lens. At this zoom a ground meter is
   about 70 device pixels, so ground tiles cover at most 6 m of their 512 px. `?compare=` uses an
   orthographic view of the same square instead.
 - **Teleport** (`src/world/teleport.ts`): `?at=edeka`, `?at=fahrzeugtechnik-seitz` (a dressed place or POI by

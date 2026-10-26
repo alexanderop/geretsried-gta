@@ -1,22 +1,24 @@
 /**
- * The GTA 2 camera: straight down from a height, with a narrow perspective,
+ * The GTA 2 camera: straight down from a height, with a wide perspective,
  * so roofs come towards you and walls show towards the screen edges. It
  * climbs as the car speeds up and drops when you walk. Map space is x east,
  * y south, z up, in meters; the screen shows north up.
  */
 import { forwardSpeed } from "#/sim/car.ts"
 import { playerPos, type Game } from "#/sim/game.ts"
-import type { Box } from "#/world/geometry.ts"
+import { boxOf, type Box } from "#/world/geometry.ts"
+import type { World } from "#/world/world.ts"
+import { wallHeight } from "./scene/scene.ts"
 
 /** Where the camera is, and the look-ahead it is easing towards the travel direction. */
 export type Camera = { x: number; y: number; height: number; leadX: number; leadY: number }
 
 /**
- * Vertical field of view: narrow, from high up, like GTA 2. Walls show
- * clearly towards the screen edges (a house leans out about 2.5 m there on
- * foot) without the near-wide-angle stretch a low camera would give.
+ * Vertical field of view: wide and fairly low, like GTA 2, so every block
+ * shows tall walls towards the screen edges (a 9 m house leans out about 5 m
+ * at the top edge on foot) while the ground the view covers stays the same.
  */
-const FOV = (26 * Math.PI) / 180
+const FOV = (45 * Math.PI) / 180
 const FOCAL = 1 / Math.tan(FOV / 2)
 const NEAR = 2
 
@@ -47,6 +49,30 @@ const halfFor = (game: Game) => {
 
 export const heightFor = (half: number) => half * FOCAL
 
+/** A building tall enough to come near the lens: its footprint's box and its roof's top. */
+export type Tower = { readonly box: Box; readonly top: number }
+
+/** Meters the lens stays above the tallest roof near the view, so a high-rise never clips into it or swells over the screen. */
+const ROOF_CLEAR = 12
+
+/** The buildings and church towers whose tops would come within `ROOF_CLEAR` of the lens on foot: the camera climbs over them. */
+export const towersOf = ({ map, places }: World): ReadonlyArray<Tower> => {
+  const tops = map.buildings.map((b) => wallHeight(b.levels) + 1)
+  for (const place of places)
+    for (const part of place.dressing.parts ?? []) if (part.kind === "tower") tops[place.building] = Math.max(tops[place.building] ?? 0, part.h + part.roofH)
+  return map.buildings.flatMap((b, i) => {
+    const top = tops[i] ?? 0
+    return top + ROOF_CLEAR > heightFor(ON_FOOT_HALF) ? [{ box: boxOf(b.pts), top }] : []
+  })
+}
+
+/** The highest roof of `towers` within `r` meters (a square) of (x, y), or 0. */
+const skyline = (towers: ReadonlyArray<Tower>, x: number, y: number, r: number) => {
+  let top = 0
+  for (const { box, top: t } of towers) if (box.maxX > x - r && box.minX < x + r && box.maxY > y - r && box.minY < y + r) top = Math.max(top, t)
+  return top
+}
+
 /** Seconds of travel the camera looks ahead, and how far at most (share of the half view). */
 const LEAD_S = 0.55
 const MAX_LEAD = 0.6
@@ -54,9 +80,10 @@ const MAX_LEAD = 0.6
 /**
  * GTA 2's camera: it trails the player a little, looks ahead in the
  * direction of travel, and climbs and sinks slowly with speed. The look-ahead
- * eases on its own, so a sharp turn swings the view round smoothly.
+ * eases on its own, so a sharp turn swings the view round smoothly. Near a
+ * high-rise it climbs to stay `ROOF_CLEAR` above its roof.
  */
-export const followCamera = (camera: Camera, game: Game): void => {
+export const followCamera = (camera: Camera, game: Game, towers: ReadonlyArray<Tower> = []): void => {
   const p = playerPos(game)
   const car = carrier(game)
   const half = camera.height / FOCAL
@@ -71,7 +98,10 @@ export const followCamera = (camera: Camera, game: Game): void => {
   camera.leadY += (ly - camera.leadY) * 0.05
   camera.x += (p.x + camera.leadX - camera.x) * 0.15
   camera.y += (p.y + camera.leadY - camera.y) * 0.15
-  camera.height += (heightFor(halfFor(game)) - camera.height) * 0.03
+  // Towers as far out as a 2:1 screen shows, plus a margin for their lean.
+  const want = heightFor(halfFor(game))
+  const height = Math.max(want, skyline(towers, camera.x, camera.y, (want / FOCAL) * 2.5) + ROOF_CLEAR)
+  camera.height += (height - camera.height) * 0.03
 }
 
 export const startCamera = (game: Game): Camera => ({ x: playerPos(game).x, y: playerPos(game).y, height: heightFor(ON_FOOT_HALF), leadX: 0, leadY: 0 })
