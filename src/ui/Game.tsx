@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { DT, busNear, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import { direction, nextStop } from "#/sim/transit.ts"
 import type { World } from "#/world/world.ts"
+import { findSpot, spotNames } from "#/world/teleport.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
 import { districtAt } from "#/map/districts.ts"
@@ -21,8 +22,8 @@ import { listenKeyboard } from "./input.ts"
 
 declare global {
   interface Window {
-    /** Debug handle for agent-browser checks. */
-    __gta?: { game: GameState; world: World; renderer: Renderer }
+    /** Debug handle for agent-browser checks; `teleport("edeka")` takes the same names as `?at=`. */
+    __gta?: { game: GameState; world: World; renderer: Renderer; teleport: (query: string) => string; spots: () => ReadonlyArray<string> }
   }
 }
 
@@ -136,8 +137,17 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       const church = game.shops.find((sh) => sh.kind === "save") ?? null
       applySave(game, saved, church === null ? null : { x: church.x + 3, y: church.y })
     }
+    // `?at=edeka` (or lat,lon or map x,y): start there instead, for checking a place (teleport.ts).
+    const teleport = (query: string): string => {
+      const spot = findSpot(world, query)
+      if (spot === null) return `?at=${query}: nothing matches. Try one of __gta.spots().`
+      Object.assign(game.player, { x: spot.x, y: spot.y, car: null, ride: null })
+      return `at ${spot.label} (${spot.x.toFixed(1)}, ${spot.y.toFixed(1)})`
+    }
+    const at = new URLSearchParams(location.search).get("at")
+    if (at !== null) console.info(teleport(at))
     const renderer = new Renderer(gl, world, assets)
-    window.__gta = { game, world, renderer }
+    window.__gta = { game, world, renderer, teleport, spots: () => spotNames(world) }
     const minimap = bakeMinimap(world.map, assets.overview)
     const camera = startCamera(game)
     const compare = compareSpot(world)
