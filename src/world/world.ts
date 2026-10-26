@@ -1,5 +1,5 @@
 import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
-import { boxOf, distToSegmentSq, pointInPolygon } from "./geometry.ts"
+import { boxOf, distToSegmentSq, inFootprint, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
 import { planCafe, type Cafe } from "./cafe.ts"
 import { dressMap, resolvePlaces, type Place, type PlaceDressing } from "./places/dressing.ts"
@@ -46,9 +46,10 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
   const map = dressMap(osm, dressings)
   // Buildings are solid: nothing drives or walks through them. Canopies (petrol stations) stand on pillars: you drive under them.
   const cafe = planCafe(map)
-  const solids = [...map.buildings.map((b) => b.pts), ...(cafe?.solids ?? [])]
+  // A courtyard (a building's `holes`) is open ground.
+  const solids: ReadonlyArray<{ readonly pts: ReadonlyArray<number>; readonly holes?: ReadonlyArray<ReadonlyArray<number>> }> = [...map.buildings, ...(cafe?.solids ?? []).map((pts) => ({ pts }))]
   const buildingGrid = new Grid(map.width, map.height, CELL)
-  const buildingBoxes = solids.map((pts, i) => {
+  const buildingBoxes = solids.map(({ pts }, i) => {
     const box = boxOf(pts)
     if (map.buildings[i]?.canopy !== true) buildingGrid.insert(i, box)
     return box
@@ -69,7 +70,8 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
     let best = -1
     for (const i of areaGrid.at(x, y)) {
       const a = map.areas[i]
-      if (i > best && a !== undefined && pointInPolygon(x, y, a.pts)) best = i
+      // A line area (track lanes) is no polygon to stand in.
+      if (i > best && a !== undefined && a.width === undefined && pointInPolygon(x, y, a.pts)) best = i
     }
     return map.areas[best]?.kind ?? null
   }
@@ -77,10 +79,10 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
   const inBuilding = (x: number, y: number) => {
     for (const i of buildingGrid.at(x, y)) {
       const box = buildingBoxes[i]
-      const pts = solids[i]
-      if (box === undefined || pts === undefined) continue
+      const solid = solids[i]
+      if (box === undefined || solid === undefined) continue
       if (x < box.minX || x > box.maxX || y < box.minY || y > box.maxY) continue
-      if (pointInPolygon(x, y, pts)) return true
+      if (inFootprint(x, y, solid)) return true
     }
     return false
   }

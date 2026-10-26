@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
+import { pointInPolygon } from "#/world/geometry.ts"
+import { band, bridgeHoles, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
 
 /** Total area of triangles given as index triples into a ring. */
 const trianglesArea = (ring: ReadonlyArray<number>, tris: ReadonlyArray<number>) => {
@@ -10,6 +11,21 @@ const trianglesArea = (ring: ReadonlyArray<number>, tris: ReadonlyArray<number>)
   }
   return sum
 }
+
+describe("bridgeHoles", () => {
+  it("roofs a block round a courtyard and leaves the courtyard open, whichever way the rings run", () => {
+    const outline = [0, 0, 20, 0, 20, 20, 0, 20]
+    for (const hole of [[6, 6, 14, 6, 14, 14, 6, 14], [6, 14, 14, 14, 14, 6, 6, 6]]) {
+      const ring = bridgeHoles(outline, [hole])
+      const tris = triangulate(ring, true)
+      expect(trianglesArea(ring, tris)).toBeCloseTo(400 - 64)
+      for (let t = 0; t + 2 < tris.length; t += 3) {
+        const [cx, cy] = [0, 1].map((k) => [tris[t], tris[t + 1], tris[t + 2]].reduce<number>((s, i) => s + (ring[(i ?? 0) * 2 + k] ?? 0) / 3, 0))
+        expect(pointInPolygon(cx ?? 0, cy ?? 0, hole)).toBe(false)
+      }
+    }
+  })
+})
 
 describe("triangulate", () => {
   it("covers a convex footprint exactly, in either winding", () => {

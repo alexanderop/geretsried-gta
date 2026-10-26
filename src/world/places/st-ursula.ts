@@ -1,8 +1,8 @@
 import type { PlaceDressing } from "./dressing.ts"
 
 /**
- * Pflegeheim St. Ursula, Sudetenstraße 5, next to Cafe Waldmann (no POI: OSM
- * maps only the building). Four storeys on Street View (OSM has no
+ * Pflegeheim St. Ursula, Sudetenstraße 5, next to Cafe Waldmann (OSM tags the building way
+ * amenity=social_facility: a care_home POI since I-1). Four storeys on Street View (OSM has no
  * `building:levels`), its own facade of ochre and cream vertical bands
  * (scripts/facade-ursula.py), and the brown timber fascia under the eaves.
  */

@@ -47,6 +47,8 @@ Fotos einfach in den Chat schicken. Der Scout legt sie in `reference/<slug>/` ab
 Abhaken hier, sobald das Foto im Chat ist. Nicht mehr gebraucht: HoangAnh, Ammos, Bistro Malor (Web-Fotos reichen).
 Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links dazu stehen unter jeder Runde.
 
+**Stand 2026-10-26:** 2 Orte der Liste fertig (Spielplatz Breslauer Weg, EDEKA Band + Pylon) + 2 Extras (Seitz, Königsberger Weg). Offen: Backhupferl und der Rest.
+
 **Runde 1: Start → Am Stern → Ost → Süd (≈ 3,5 km)**
 
 *G1 · Start, Sudetenstraße Mitte (0–210 m)*
@@ -60,7 +62,8 @@ Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links daz
 
 *G2 · Breslauer Weg Nord (250–320 m)*
 - [ ] miwomo / THOMA Reisemobile — Breslauer Weg 9 — Front + Schild, falls vorhanden (B6b-1)
-- [ ] Spielplatz Breslauer Weg — Breslauer Weg — Geräte + Belag, Übersicht über den Zaun (B6d-13)
+- [x] Spielplatz Breslauer Weg — Breslauer Weg — Geräte + Belag, Übersicht über den Zaun (B6d-13) — Foto 2026-10-26 → `reference/spielplatz-breslauer-weg/40`
+- [x] Extra (von Alex geliefert): Fahrzeugtechnik Seitz — Breslauer Weg 75 — Front + Schild (B6d-17) — Foto 2026-10-26 → `reference/fahrzeugtechnik-seitz/40`
 
 *G3 · Am Stern: Sudetenstr. 20–43, Marienburgweg, Altvaterstraße, EDEKA (150–460 m)*
 - [ ] Flamingo Damenmode — Altvaterstr. 61 — Front + Schild (B4-10)
@@ -70,7 +73,9 @@ Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links daz
 - [ ] PENNY · Rossmann · denns (Detail) — Sudetenstr. 43 / 33 / 29 C — jeweils die Eingangstür (B1-5, B3-3, B3-2)
 - [ ] Orterer · Takko · TEDi · Woolworth (Detail) — Sudetenstr. 29a / 29b / 26 / 27 — Plakat an der Orterer-Glasfront + was das Ding im Durchgang ist; Takko-Schriftzug nah; TEDi orange Wand unten; Woolworth-Logo nah (B3-5, B3-4, B4-1, B4-2)
 - [ ] Sun Style · Aphrodite · Spielwaren Krömer (Detail) — Sudetenstr. 24 / Marienburgweg 25 / Sudetenstr. 20 — Schilder nah für die Goldtöne/das Blau (B4-7, B4-5, B4-8)
-- [ ] EDEKA + Backhupferl — Breslauer Weg 113 — gelbes Band + Pylon am Parkplatz; Backhupferl-Theke drinnen nur, wenn's ohne Leute geht (B3-1, B4-9)
+- [x] EDEKA — Breslauer Weg 113 — gelbes Band + Pylon am Parkplatz (B3-1) — Foto 2026-10-26 → `reference/edeka-am-stern/40` (Ecke "113", Dachschild, Pylon an der Einfahrt)
+- [ ] Backhupferl (in der EDEKA) — Theke drinnen nur, wenn's ohne Leute geht (B4-9)
+- [x] Extra (von Alex geliefert): Wohnblöcke Königsberger Weg — Hof, Müllhaus, Hochhaus, Straße (V-2, V-11) — Fotos 2026-10-26 → `reference/wohnblock-koenigsberger-weg/40–43`
 
 *G4 · Ost: Breslauer Weg 103, Lausitzer Str., Sudetenstr. 47–50, Wallensteinstr. (500–790 m)*
 - [ ] Fitness Forum & Squash — Breslauer Weg 103 — Eingang + Schild; Biergarten (B6d-5)
@@ -1159,6 +1164,24 @@ Size: S
   (photo clipped); the roof board (B3-0). Not built: bakery Backhupferl, "Hahn im Korb" (no sign seen), the yellow
   cabinet in 03 (not identified), the seasonal pallets.
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1662 (EDEKA's).
+
+**B3-1 follow-up (Alex's photo 2026-10-26, `reference/edeka-am-stern/40-alex-ecke-pylon.jpg`) — built 2026-10-26:** dark ochre
+(`process-sprites.py` re-tints edeka-band/logo/pylon/roof-edeka), grey corner `#464a4d` with a "113" plate (`edeka-113`,
+PIL) and a white pillar, dark canopy `#17181b` with the Heininger & Dietz box on its edge, the ochre roof box with the E logo on
+the corner's roof edge, the pylon moved to the car-park entrance (9 m in from Breslauer Weg, right of the lane) with a plain blue
+P board. Guesses: box sizes, the pylon's exact metres. Not built: gabion wall, ad boards, Feuerwehrzufahrt sign. Notes:
+- **Pylon spot:** at the **car-park entrance from the street**, right of the entry lane, with a blue "P" board
+  ("Privatparkplatz – 120 Min. pro Tag", "min. 30 Euro") and a "Feuerwehrzufahrt" sign beside it; a row of advertising
+  boards on rails and a **gabion wall** in front, at the car-park edge. Today's pylon (3 m in front of wall 1 at u 5.5) is
+  next to the store, not at the entrance → compare in game; move only if Alex wants it.
+- **Roof board:** a yellow **box sign on the roof edge at the corner** (yellow panels, blue bottom stripe, square logo
+  with a blue "E" and "EDEKA"), not a painted roof logo.
+- **Corner:** grey plaster `#464a4d` with house number "113", a white plaster pillar, then the glass front under a dark
+  canopy `#17181b`; the "Heininger & Dietz" fascia runs along the canopy edge.
+- **Yellow:** overcast phone samples band `#5b4900`, pylon `#6e5901` (unclipped but under-exposed). Not the brand hex.
+  **Alex 2026-10-26: dunkles Ocker behalten** → band, roof box and pylon use the dark photo ochre ~`#5b4900`
+  (pylon `#6e5901`) instead of the built `#ffe31a`-ish brand yellow (to fit the dark palette).
+- Backhupferl: still needs reference (B4-9).
 
 ### B3-2 · denns BioMarkt, Sudetenstraße 29 C (#82, supermarket) — Size: S — status: implemented (partial: where the cladding ends and the glazing starts, how far the glazing runs, the letters' spot and size, the ledge, the cladding's windows and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
@@ -2697,7 +2720,7 @@ Note: it is BSZ GmbH (direct marketing + logistics, B2B); OSM tags it shop=stati
 Acceptance: only way 191461638 changes; pnpm test + typecheck green. See docs/places/bsz-direktmarketing.md.
 ```
 
-### B6d-12 · Centrale Geretsried + Café Bar DUO (hand-added POIs) — Size: S — status: blocked by I-2 (Centrale sign + DUO need reference)
+### B6d-12 · Centrale Geretsried + Café Bar DUO (hand-added POIs) — Size: S — status: todo (I-2 done 2026-10-26: POIs #369 Centrale Geretsried, #370 Café Bar DUO, both inside their buildings; Centrale sign + DUO need reference)
 ```
 Depends on: I-2 step 3 (both POIs are hand-added there) and B6c-1 (Centrale's building 127604896 gets its flat roof there).
 Correction (2026-10-25): the pavilion in centrale-geretsried/01 is **Feinkost Christos**. Centrale is the neighbouring terrace
@@ -2710,16 +2733,25 @@ Signs: Centrale (no name sign in 30–32) and DUO (no SV) need reference.
 See docs/places/centrale-geretsried.md, cafe-bar-duo.md.
 ```
 
-### B6d-13 · Playgrounds Breslauer Weg + J.-S.-Bach-Straße — Size: S — status: blocked by I-2 (equipment needs reference)
+### B6d-13 · Playgrounds Breslauer Weg + J.-S.-Bach-Straße — Size: S — status: todo (I-2 done 2026-10-26: both are playground areas, Breslauer Weg #424e35, J.-S.-Bach #9e8d70 (photo #a39274, darkened to the palette); only the optional sprites/fence are left; Breslauer Weg ref-done 2026-10-26; J.-S.-Bach equipment needs reference)
 ```
 Depends on: I-2 step 1 (playground AreaKind, DOP centroid tint).
 After I-2, check the two tints: Breslauer Weg (way 1271723892) lies under canopy → dark green (#44512e range, fine);
 J.-S.-Bach-Straße (way 122032725) → sand (#a8896b range): keep it inside the dark palette (V rule; the patch is small).
-Optional later (needs Alex's photo for positions): Breslauer Weg fence (dark metal, gate) and sprites for the light-yellow
-slide + wooden frame (SV 01–02); J.-S.-Bach equipment unknown. See docs/places/spielplatz-*.md.
+Reference: docs/places/spielplatz-breslauer-weg.md; reference/spielplatz-breslauer-weg/40-alex-spielplatz.jpg (key, Alex
+2026-10-26: whole layout from the street fence), 01–02 (SV), 10–11 (DOP20).
+Optional later: Breslauer Weg fence (dark metal bars + green sign on the street side, brown wooden privacy fence at the back)
+and sprites, left → right as seen from the street in 40: wooden A-frame hut + bench (back left), spring rider (middle),
+wooden tower with yellow slide (middle right), seesaw with yellow beam (right), bench (front left), green bin on a pole;
+ground = earth under brown beech leaves (no sand pit), many beech trunks. Exact metres not measured (no GPS).
+J.-S.-Bach equipment unknown. See docs/places/spielplatz-*.md.
+Acceptance criteria:
+- [x] Breslauer Weg patch stays the dark canopy tint (#44512e range), not sand: 40 shows leaf-covered earth. (I-2: #424e35)
+- [ ] If sprites are added: their order matches 40 (A-frame left, tower + slide and seesaw right) and none sits on the road.
+- [ ] pnpm test + typecheck green.
 ```
 
-### B6d-14 · Verkehrsübungsplatz Franz-Marc-Schule (ex "Laufbahnen") — Size: S — status: blocked by I-2
+### B6d-14 · Verkehrsübungsplatz Franz-Marc-Schule (ex "Laufbahnen") — Size: S — status: implemented (I-2, 2026-10-26: the 5 ways are 4 m grey asphalt lanes round the lawn islands; optional white markings and signs left)
 ```
 Depends on: I-2 step 1 (track AreaKind). The 5 track ways (258497399–402, 269909762, surface asphalt) are a children's traffic
 training course in recreation_ground 258497403 "Verkehrsübungsplatz", not running tracks. I-2 already paints asphalt tracks
@@ -2727,7 +2759,7 @@ grey → right. After I-2: screenshot vs reference/verkehrsuebungsplatz-franz-ma
 islands. Optional later: white lane/stop markings. See docs/places/verkehrsuebungsplatz-franz-marc-schule.md.
 ```
 
-### B6d-15 · Fitness-Stations ways 574767212 + 497511384 (Stadtwald) — Size: S — status: blocked by I-2 (needs reference)
+### B6d-15 · Fitness-Stations ways 574767212 + 497511384 (Stadtwald) — Size: S — status: todo (needs reference; I-2 done 2026-10-26: all 3 fitness stations are pitch areas in the pitch lawn tint, so 497511384's bark/sand look is still to do)
 ```
 Depends on: I-2 step 1 (fitness_station → pitch). 574767212 is under canopy (DOP #262e23) → stays dark; 497511384 is a light
 bark/sand patch (DOP #e0c5a4): don't use that raw hex (lighter than the lightest ground tone), pick the nearest muted
@@ -2743,6 +2775,22 @@ z 2.6–3.2 lime green #8b954b (plain, between the window rows); wallColour engi
 Jeschkenstraße). Banner over the recessed lime-green entrance (E end): white banner, "CHAMPINI" in multicoloured letters
 (subtitle illegible) → optional small wallSign "CHAMPINI"; letter colours are a guess, subtitle left out.
 Acceptance: only way 524105770 changes; pnpm test + typecheck green; places.test passes. See docs/places/champini-kita.md.
+```
+
+### B6d-17 · Fahrzeugtechnik Seitz, Breslauer Weg 75 (hand-added POI) — Size: S — status: implemented (partial: building dressing on way 128503556 built 2026-10-26, `src/world/places/fahrzeugtechnik-seitz.ts`; POI #371 added by I-2 2026-10-26 at the footprint's centre, the dressing anchors on it; the Orchidee stretch ~5 m W of OSM's outline not drawn; positions read off photo 40)
+```
+Depends on: I-2 step 3 (POI hand-added there: "Fahrzeugtechnik Seitz", car_repair, 47.859149, 11.490211 = map 4491.0, 4542.4).
+Goal: The motorbike/car workshop on Breslauer Weg reads as the 2-storey flat block with the black "Fahrzeugtechnik SEITZ" sign.
+Reference: docs/places/fahrzeugtechnik-seitz.md; reference/fahrzeugtechnik-seitz/40-alex-front.jpg (Alex 2026-10-26, key).
+Spec (via #0b): building probably way 128503556 (312 m², S edge faces Breslauer Weg; the photo's front looks wider →
+check against DOP20 first and say which way you used). Levels 2, flat (LoD2 9.1 m). Bands: grey ground storey #8b8f8f to
+~3.3 m, white upper storey #cbcacf with grey roller shutters, brown fascia #73543f on the roof edge. wallSign "Fahrzeugtechnik
+SEITZ" (black board, "technik" red) over the shop windows; small red "PKW SERVICE" panel; glass door under a small dark grey
+canopy #3b3c43 left of the sign. Optional sprites on the right: white tent with motorbikes, tyre stack.
+Not seen / unknown: the side and back walls, the yard layout. The "Kosmetikstudio Orchidee" unit left of Seitz: mention only.
+Acceptance criteria:
+- [ ] From Breslauer Weg the front matches 40 (sign centred over the windows, white upper storey, brown fascia).
+- [ ] Only the chosen building way changes; pnpm test + typecheck green; places.test passes.
 ```
 
 ## Start area (everything within ~800 m of the start)
@@ -2813,8 +2861,9 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 DOP20, B6d-12…16); the #id comes from docs/poi-id-map.csv once imported.
 | # | Name | Kind | lat, lon | map x, y | m from start | Status |
 |---|---|---|---|---|---|---|
-| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | ref-done (partial: B6d-13; fence/slide seen, surface under canopy) |
+| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | ref-done (B6d-13; layout + surface from Alex's photo 2026-10-26) |
 | — | Centrale Geretsried (ex Coffeeholic), Neuer Platz 5 | food (hand-added, I-2) | 47.8577969, 11.4785523 | 3621.4, 4692.7 | 379 | ref-done (partial: B6d-12; terrace from web photos, the 01 pavilion is Feinkost Christos; sign/name needs reference) |
+| — | Fahrzeugtechnik Seitz, Breslauer Weg 75 (web; not in OSM; building prob. way 128503556) | car_repair (hand-added, I-2) | 47.859149, 11.490211 | 4491.0, 4542.4 | 505 | ref-done (B6d-17; front from Alex's photo 2026-10-26) |
 | — | Café Bar DUO, Sudetenstraße 47a | bar (hand-added, I-2) | 47.8561907, 11.4897066 | 4453.4, 4871.3 | 508 | todo (needs reference: no SV; B6d-12; same block as Takt Tanz, no. 47) |
 | — | Verkehrsübungsplatz Franz-Marc-Schule (was "Laufbahnen"; ways 258497399–402, 269909762, asphalt, in recreation_ground 258497403) | track area (I-2) | 47.8579, 11.4746 | 3330, 4680 | 660–690 | ref-done (B6d-14; layout from DOP20) |
 | — | Spielplatz J.-S.-Bach-Straße (way 122032725, public) | playground area (I-2) | 47.858685, 11.474506 | 3319.6, 4594.0 | 680 | todo (needs reference: SV sees only trees; B6d-13) |
@@ -2937,7 +2986,7 @@ has the wrong kind. No Kieser in Geretsried.
 | Elements Yoga und Pilates Studio | Blumenstraße 19 (EG | 3484 | no | not in OSM |
 | Fitness-Studio imPuls in- + Outdoor | Bürgermeister-Graf-Ring 13 (Gelting) | 4746 | no | not in OSM |
 
-### I-1 · Import all missing places: start area 6e + every gym (whole town) — Size: L — status: todo
+### I-1 · Import all missing places: start area 6e + every gym (whole town) — Size: L — status: implemented
 Supersedes G-1: G-1's gym kind, the #128 fix and the hand-added studios are folded in below (step 3, 4, 5), so do NOT run G-1 separately.
 Alex: "füg mal alle hinzu". This is a whole-town import (the query runs over the full map bbox), not only the start area;
 the 6e table (Start area section) and gyms.csv are the CHECK LIST it must satisfy.
@@ -3032,7 +3081,73 @@ Done when:
 Report: counts per new kind, the whole-town POI count before/after, the check-list table, any OSM POIs that changed.
 ```
 
-### I-2 · Import leisure areas, schools, sport venues + verified web restaurants (whole town) — Size: L — status: todo
+**I-1 as built** (`scripts/import-osm.ts`, `src/map/build.ts`, `src/map/extra-pois.ts`, `src/map/types.ts`,
+`scripts/poi-id-map.ts`, `docs/poi-id-map.csv`; renderer/collision: `src/render/scene/{scene,geometry,facade}.ts`,
+`src/world/{world,geometry}.ts`, `src/map/photo.ts`, `src/sim/pickups.ts`, `src/render/overlay.ts`):
+- **Fetch: a separate query after all** (`PLACES_MORE_QUERY` → `data/places-more.json`, gitignored). Re-fetching the old
+  `PLACES_QUERY` on 2026-10-26 gave the same 273 elements as the cache (no OSM edit), so step 1 allowed one query; the
+  separate one was chosen anyway: (a) its POIs are appended after the old ones, so **no id renumbers** (1–234 stay,
+  new are 235–360) and `data/places.json` stays byte-identical; (b) the twin rule can then apply to the newer sources
+  only, which keeps the three old same-name pairs (#1/#55 Landgasthof Lacherdinger, #88/#89 Auto Stapf, #192/#205
+  Ratsstuben) that a general rule would have merged. Elements both queries return (16 pharmacies/doctors with
+  `healthcare=*`) are dropped from the second by type/id. To refresh one cache alone: delete it, run `pnpm map`.
+- **Kinds** (types.ts, `poiKind` exported from build.ts, order as step 2): `gym` (fitness_centre, dojo, sports_centre
+  only with `fitness` in `sport`), `health` (dentist, veterinary, healthcare=*; never `doctor`), `kindergarten`,
+  `care_home`, `bar`, `parcel_locker`, `office` (office=*, craft=*). Icons (overlay.ts): 🏋️ ⚕️ 🧸 🧓 🍸 📦 💼.
+  SHOP_FRONTS + gym, bar; IMPORTANT unchanged. pickups.ts `NO_PICKUPS`: school, police, kindergarten, care_home,
+  parcel_locker.
+- **Twin rule** (`addPoi`): a newer place with the name of a POI within 50 m stays that one POI, in its slot and at its
+  position, and takes the newcomer's kind if its own is food. Fired twice: #128 Fitness Forum & Squash (pub node →
+  gym; it stays at the pub node, 26.6 m from the centre of way 188648201 but about 2 m outside that way's east wall, so
+  within 10 m of the element itself) and the `office=company` node "Premio" (merged into the old shop POI "Premio",
+  26 m away; kind stays shop).
+- **Hand-added** (`src/map/extra-pois.ts`, `EXTRA_POIS`, `{ name, kind, lat, lon }`, appended last, same projection
+  and twin rule): the 8 studios of step 4 (#353–#360). I-2 appends its restaurants there.
+- **Building relations** (`BUILDINGS_REL_QUERY` → `data/buildings-rel.json`, gitignored; `relationBuildings` +
+  `joinRings` in build.ts, appended after the way buildings): outer ways joined into rings, inner rings inside an
+  outer become the new optional `Building.holes`. The importer prints every one: 2014408 Karl-Lederer-Grundschule
+  2080 m² new, 1 courtyard; 2979379 Seniorendomizil Haus Elisabeth 1946 m² new, 1 courtyard; 7730164 and 7730165
+  (unnamed, Graslitzer Straße 40a/42, 50 and 49 m², outline split over two ways) new; 9506009 Loxxess Pharma
+  14141 m² new. None was a duplicate. The cache came from the overpass.openstreetmap.fr mirror (OSM base 2026-08-10;
+  the main server answered 502): delete it and run `pnpm map` for a fresh copy. Courtyards: `inFootprint` (collision,
+  facade), the photo footprint mask and roof sample skip them, scene.ts walls and parapets each courtyard (walls
+  facing in) and roofs the outline joined to its holes (`bridgeHoles` + `triangulate(ring, true)`).
+- **Map before → after:** POIs 234 → 360 (+118 OSM, +8 hand-added); per new kind gym 16 (15 new + #128), health 18,
+  kindergarten 14, care_home 8, bar 3, parcel_locker 8, office 60; food 37 → 36 (#128). Buildings 5749 → 5754: the 5523
+  way buildings and the 226 photo sheds are identical, the 5 relations are added. Trees 148251 → 148241 and one fewer
+  `covered` road stretch (the new roofs' footprint and shadow). Pickup candidates 407 → 490 (518 without the new
+  exclusions). Old POIs: all 234 at the same id and position; only #128's kind changed (`docs/poi-id-map.csv`,
+  written by `node scripts/poi-id-map.ts <old map.json> <new map.json>`, which exits 1 if an old POI is lost).
+- **Names as built** (brand ?? name): Clever fit, ClubVital, Tina´s Fitnesstreff Geretsried, Bodystreet,
+  Selbstverteidigungsschule PT-Kubis, BaseFit Gesundheitszentrum, HUK-Coburg, Caritas (way 533111661, OSM name
+  "Caritas Altenheim St. Hedwig"), every Packstation "DHL Packstation" (brand; names carry the number), LVM.
+- **Check list** (all 65 rows: 49 of 6e, 16 gyms; distance to the OSM element's centre / listed lat-lon): 2 skipped
+  (way 127872149, dada ATELIER), the other 63 found, 62 at ≤ 0.1 m, #128 as above. 6e: #237 Bodystreet gym; #340
+  Sonnengarten, #313 Pflegeheim St. Ursula, #338 Caritas, #296 ambulantex, #352 Seniorendomizil Haus Elisabeth, #342
+  Haus Elisabeth, Betreutes Wohnen care_home; #302 Rechtsanwalt Stevan Krnjaic, #301 Beautydate, #303 FMDienste, #236
+  Versicherungmakler Kafka, #260 Taxiunternehmen Kottysch, #254 Starke Bedachungen, #246 Schlüsseldienst Geyer, #295
+  Fuch & Fuchs, #298 Weidinger, #299 Vermas, #273 HUK-Coburg, #315 Fullhouse IT-Services, #336 CHT Geretsried, #261
+  DMG MORI Spare Parts office; #304 PT-Kubis, #292 Athletik Delta, #353 Sportstudio Innings gym; #341 Caritas
+  Kindergarten, #253 Kinderland Geretsried, #300 Erle Elebnis Lernen, #351 Blechkiste, #350 Kita Blechkiste
+  kindergarten; #314 Classic ShishaBar, #247 M1 Lounge, #248 Vegas Casino bar; #238 Dr. Marta Thum, #293 Tierärztin
+  C. Schedel, #294 Christopherus Hospitzverein, #297 Augentierarztpraxis Rogge, #305 Tierärztliche Praxis Buschmann,
+  #267 Wirth Steffen, #274 TherapierBar, #252 Physio Geretsried health; #306 (node 12474160939), #244 (2820202651),
+  #284 (11871707114) DHL Packstation; web: #354 BeaFit, #355 Lu Jong Yoga Studio, #356 Takt Tanz, #357 Carsten Schwarz
+  Tanzstudio. Gyms: the above plus #128 Fitness Forum & Squash, #240 Tina´s, #235 ClubVital, #241 Clever fit, #358
+  Muscle & Mind, #310 BaseFit, #359 Elements Yoga und Pilates, #360 Fitness-Studio imPuls.
+- **Dropped by the rules** (for I-2): Sport Center Hahn (sports_centre, no sport), Turnhalle Mittelschule / Gymnasium
+  (sport=multi), Interkommunales Hallenbad (swimming); 9 unnamed elements; and two whose centre lies just outside the
+  bbox like any other place: **Städt. Kindergarten & Kinderkrippe (way 97695048, lat 47.90010 > north 47.9)**, an I-2
+  check-list row, and Pfarrheim (way 242857616, lon 11.50501 > east 11.505).
+- **Side effects:** Pflegeheim St. Ursula now has its POI (way centre), so its dressing's street frame anchors there
+  (4 m along Sudetenstraße from the footprint mean); it has no parts, so nothing it draws moves (only `?at=` lands
+  4 m over). Cafe Waldmann, findHospital (still Dr. Schmucker) and every other dressed place unchanged.
+- **Checks:** `pnpm check` (311 tests; new: poiKind, twins, relations/joinRings, bridgeHoles, Karl-Lederer courtyard
+  and hospital on the real map) and `pnpm build` pass. In game: the school's ring block lines up with the DOP40, its
+  courtyard is open lawn with walls round it and the school POI in it; the Seniorendomizil courtyard likewise; the game
+  starts on Sudetenstraße and drives.
+
+### I-2 · Import leisure areas, schools, sport venues + verified web restaurants (whole town) — Size: L — status: implemented (2026-10-26; see "I-2 as built" below the item)
 Run AFTER I-1 (needs its new kinds, extra-pois list, relation fetch and poi-id-map.csv). Alex 2026-10-25: "füge die alle
 hinzu" (gap check: docs/work/gap-check-food-play-school.md + .csv, Overpass 2026-10-25, map bbox).
 ```
@@ -3098,6 +3213,9 @@ Change:
                                                                                          Formerly "Coffeeholic Café/Bistro": same
                                                                                          address + phone, posts as Centrale May 2026
      Café Bar DUO                  bar   47.8561907, 11.4897066   4453.4, 4871.3   508  Sudetenstraße 47a (Nominatim building)
+     Fahrzeugtechnik Seitz    car_repair  47.859149, 11.490211     4491.0, 4542.4   505  Breslauer Weg 75 (motorradseitz.de; Alex's
+                                                                                         photo 2026-10-26; centroid of way 128503556,
+                                                                                         the web geocode lands on the street)
      Asien Perle                   food  47.8511639, 11.4898048   4460.7, 5430.3   909  Jeschkenstraße 28 (listing pin; OSM has no
                                                                                          no. 28, DLRG 28a is 45 m N). Sign may read
                                                                                          "Perle des Ostens"
@@ -3127,7 +3245,7 @@ Check list (acceptance data; positions ±10 m of the OSM element / lat-lon):
   sport: Interkommunales Hallenbad Geretsried (way 772881803), Heinz-Schneider-Eisstadion (way 172282411),
          Isarau Stadion (way 981957335), Sport Center Hahn (node 2716650515, tennis).
   civic: Kulturbühne Hinterhalt (way 191174401).
-  hand-added: the 5 restaurants of step 3.
+  hand-added: the 5 restaurants of step 3 + Fahrzeugtechnik Seitz (added 2026-10-26, B6d-17).
   NOT POIs: Turnhalle Mittelschule, Turnhalle Gymnasium (skipped), no swimming pools.
   Areas: playground = 20 (all leisure=playground ways in bbox on 2026-10-25, incl. way 1271723892 Breslauer Weg and
   way 122032725 J.-S.-Bach-Straße; OSM may have changed: print the list, explain any difference); track = 8 (ways 258497399,
@@ -3147,6 +3265,65 @@ Done when:
 Report: POI count before/after per kind, area counts per kind before/after, sampled playground tints, skipped list,
 pickup candidate count before/after.
 ```
+
+**I-2 as built** (`scripts/import-osm.ts`, `src/map/{build,types,photo,extra-pois}.ts`, `scripts/poi-id-map.ts`,
+`docs/poi-id-map.csv`; renderer/sim: `src/render/scene/scene.ts`, `src/render/overlay.ts`, `src/world/world.ts`,
+`src/sim/pickups.ts`; tests in `src/map/{build,photo}.test.ts`, `src/world/places/places.test.ts`):
+- **Fetch: two more queries, own caches** (both gitignored under `data/`): `PLACES_NEXT_QUERY` → `data/places-next.json`
+  (college, driving_school, arts_centre, named stadiums; came from the overpass.openstreetmap.fr mirror, OSM base
+  2026-08-10, the main server answered 502) and `AREAS_MORE_QUERY` → `data/areas-more.json` (playground/track/
+  fitness_station ways, playground/track multipolygons, `out geom`; main server, base 2026-10-26). `data/raw.json` and
+  the older caches are untouched. Named sports centres were in I-1's cache already: `buildMap` holds the sport ones back
+  from I-1's batch and adds them first in I-2's batch (`MoreSources.next`), so I-1's ids do not shift for them.
+- **POI kinds:** new `sport` (🏟️, blue, labelled like `civic`: in `IMPORTANT`, not in SHOP_FRONTS) = leisure=stadium, or a
+  sports centre that is no gym; `sportSkip` drops school gyms (name starts with "Turnhalle", or building=sports_hall).
+  college → school, driving_school → office, arts_centre → civic. The step 2 rule "centroid inside an amenity=school
+  area" was **not** built: the importer has no school outlines, the two school gyms are caught by name anyway, and the
+  Hallenbad (Adalbert-Stifter-Straße 22, next to the Schulzentrum) could have been dropped by it.
+- **Twin rule extended** (`addPoi`): a newer place within 50 m whose name equals, starts with or is the start of a POI's
+  name is that POI; it keeps its slot and position and takes the longer name. It fired once: "Champini" (way
+  1271723889, I-1 #349) merged into #337 Champini Sport- & Bewegungskita Geretsried. **So I-1's #350–#360 are now
+  #349–#359** (Kita Blechkiste #349, Blechkiste #350, Seniorendomizil #351, Sportstudio Innings #352 … imPuls #359);
+  ids 1–348 are unchanged. `docs/poi-id-map.csv` now maps after-I-1 → after-I-2 (`poi-id-map.ts` matches a merged
+  prefix twin too; old ids 1–234 are still the pre-I-1 ids, #128's pre-I-1 kind food is in "I-1 as built").
+- **Hand-added** (`EXTRA_POIS_NEXT`, appended last): Centrale Geretsried #369, Café Bar DUO #370, Fahrzeugtechnik Seitz
+  #371, Asien Perle #372, Club57 #373, Restaurant Akropolis #374; each projects within 0.1 m of the listed x/y.
+- **POIs 360 → 374:** sport 0 → 4, school 9 → 10, office 60 → 63, civic 2 → 3, food 36 → 40, bar 3 → 4, car_repair
+  14 → 15, kindergarten 14 → 13 (Champini); all other kinds unchanged. Old POIs: 359 at their name and position
+  (≤ 1 m), the 360th merged as above; no old kind changed.
+- **Areas 743 → 774:** playground 0 → 20 (exactly the 20 ways of the check list, incl. 1271723892 and 122032725), track
+  0 → 8, pitch 57 → 60 (fitness stations 497511384, 574767212, 574767217); every other kind and every old area is
+  unchanged. `Area` got two optional fields: `width` (a leisure=track way without area=yes is a line: the 5 Franz-Marc
+  lanes, 4 m wide where OSM has no `width`, drawn as round-jointed strips) and `tint` (#rrggbb). The tartan
+  relation 16929053 is its outer ring (the D-zones are tartan on the DOP too); its pitch paints on top (track lift
+  0.0075 < pitch 0.01 < playground 0.0125).
+- **Look:** surface asphalt/paved/concrete/paving_stones/sett → the car-park paving (Franz-Marc lanes, playground
+  833472869 `surface=paved`); anything else takes `tint` from the DOP40 (the photo the importer already loads; DOP20 is
+  not in the pipeline) drawn on the gravel texture (`Mode.detail`). The tint is the **median of the whole area** (a
+  ring's infield left out), not one centroid pixel: centres fall on crowns, shadows or, for the running track, the
+  lawn infield. `groundTint` darkens it to luma 143 at most (`GROUND_MAX_LUMA`, the paved ground tone: dark palette).
+  Sampled photo → used: 94931931 #4e5c48, 122032725 #a39274 → #9e8d70, 169270686 #596646, 169271318 #68744f,
+  177622024 #3a4032, 179341161 #92937c → #91927b, 496090149 #404b34, 539824773 #435439, 540027380 #505c49, 758742552
+  #71755c, 803229236 #7f7f62, 1083632281 #4d573e, 1194996431 #536864, 1271723887 #6a7d55, 1271723888 #4f5c45,
+  1271723892 #424e35, 1283274019 #636f56, 1486499368 #57624e, 1547525668 #ccc0a6 → #978e7b; long-jump 1236727141
+  #41483f, 1236727142 #4e4c45; tartan 16929053 #bd856f → #b7816c. Of the six V spots only Rathaus (half 120 m) holds a
+  new area, the paved playground 833472869 (paving, like the ground there).
+- **Skipped (printed by the importer):** Turnhalle Mittelschule (way 188593099), Turnhalle Gymnasium (way 188593876):
+  school gym; the 12 unnamed amenity=school ways: no name. The unnamed sports centres (Karl-Lederer hall 127872149, tennis
+  halls 188632620/188632640, 1086044529) never reach the importer: both sports-centre queries ask for a name. No
+  swimming pools, no stadium areas, no playground nodes.
+- **Not a POI:** Städt. Kindergarten & Kinderkrippe (way 97695048): its centre (lat 47.90010) is north of the box like
+  in I-1; the bbox was not changed.
+- **Pickups:** track areas (polygons only) are pickup ground, playgrounds are not; candidates 479 → 496 (counted with no
+  hidden mask; the new POIs' back yards and the 3 fitness-station pitches add most of them).
+- **Unchanged:** buildings (all 5754, incl. photo sheds), roads, trees (148241), covered roads, props, buses;
+  findHospital still Dr. Schmucker (game.test). Seitz's dressing now anchors on POI #371 (the footprint centre): its
+  parts are wall-relative, so nothing it draws moves; places.test now asserts the POI lies in the footprint.
+- **Checks:** `pnpm check` (317 tests) and `pnpm build` pass. In game: Breslauer Weg playground a dark olive patch under
+  the beeches, J.-S.-Bach a sand patch, Franz-Marc grey lanes round three lawn islands, the tartan ring red-brown with the
+  pitch on top, "🏟️ Isarau Stadion" labelled on its track, DUO's and Centrale's POIs inside their buildings, the game
+  starts on Sudetenstraße and drives. The Hallenbad shows its 🏟️ name in the HUD and its dot on the minimap, but its map
+  label was not caught on screen: the POI sits 26 m inside the 87 × 53 m hall, out of the close camera's view.
 
 ### G-1 · Gyms: add POIs (import change) — Size: M — status: superseded by I-1
 Folded into I-1 (gym kind, #128 dedupe, hand-added studios). Do not run separately.
@@ -3203,6 +3380,11 @@ Credit line for LoD2 next to the DOP credit in the HUD/README.
 Done when:
 - [ ] Of the 120 >= 12 m buildings above, <= 10 remain at 2 levels; houses (LoD2 < 9 m) stay 1-2 levels.
 - [ ] puls G 7 levels; Neuer Platz blocks 3-4 levels; compare pairs at Rathaus + Neuer Platz show the height.
+- [ ] Königsberger Weg high-rise way 127872287 (LoD2 26.05 m, hip) gets 9 levels; its 3-storey neighbour blocks (LoD2
+      ~11.2 m, gable) 3 levels. Photo check: reference/wohnblock-koenigsberger-weg/42 + 43 (Alex 2026-10-26).
+      Done early 2026-10-26 as a place (`src/world/places/hochhaus-koenigsberger-weg.ts`): 9 storeys, eaves 25 m, hip 10°,
+      beige with a dark grey base (storeys 1–2) and light-grey bands on storeys 6–8 (all walls; the photo has them on
+      the corner bays only). V-2 must keep this override.
 - [ ] Re-import is deterministic (same json twice); README credits LoD2; pnpm test + typecheck green.
 ```
 
@@ -3341,6 +3523,8 @@ recycling 62 (50 nodes + 12 ways), bicycle_parking 26, shelter 6, drinking_water
 don't derive from OSM.
 Change: EXTRA_QUERY adds these nodes (ways: centroid); props kinds bench, bin, recycling (reuse glass sprite as a row of
 3 containers: glass/paper/can), bike_rack (bike-rack.webp exists). Snap to the nearest footway edge, face the path.
+Reference (Alex 2026-10-26): reference/wohnblock-koenigsberger-weg/41 — a grey perforated-metal bin/bike shed with 3–4
+green 1100 L bins and a red-white bollard on a block footpath (docs/places/wohnblock-koenigsberger-weg.md).
 Done when:
 - [ ] props counts ~ bench 166, bin 80, recycling 62, bike_rack 26; none inside a building or on a carriageway.
 - [ ] Pairs at Rathaus + Neuer Platz show them; pnpm test + typecheck green.

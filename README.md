@@ -22,6 +22,14 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
 - The bus lines come from OSM's `route=bus` relations through the bbox, with their ways and stops, cached in
   `data/routes.json` (by `pnpm map:fetch`, or when missing). `src/map/bus.ts` turns them into
   `buses` in the map JSON (see **Buses** below).
+- Places come from three queries with their own caches: `data/places.json` (shops, a fixed amenity list, traffic lights),
+  `data/places-more.json` (gyms, dojos, health care, kindergartens, care homes, bars, parcel lockers, offices,
+  craft, named sports centres) and `data/places-next.json` (colleges, driving schools, arts centres, stadiums). Each
+  one's POIs come after the one before, so the older POI ids stay; a place already on the map within 50 m under its
+  name (or a name one starts with the other) stays one POI. Playgrounds, tracks and fitness stations come from
+  `data/areas-more.json`; their ground colour is read from the aerial photo unless OSM says they are paved. Places OSM lacks are listed by hand in `src/map/extra-pois.ts`. Multipolygon
+  buildings (a ring round a courtyard, `holes` in the map JSON) come from `data/buildings-rel.json`. Delete one cache
+  and run `pnpm map` to refresh only it; docs/poi-id-map.csv maps POI ids across an import that renumbers them.
 
 ### The picture: WebGL2, GTA 2 style
 
@@ -33,6 +41,10 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
   2.5 m at the screen edge, so walls show without wide-angle stretch. At this zoom a ground meter is
   about 70 device pixels, so ground tiles cover at most 6 m of their 512 px. `?compare=` uses an
   orthographic view of the same square instead.
+- **Teleport** (`src/world/teleport.ts`): `?at=edeka`, `?at=fahrzeugtechnik-seitz` (a dressed place or POI by
+  name, umlauts spelled out, a prefix is enough), `?at=47.859149,11.490211` (lat,lon) or `?at=4491,4542` (map meters)
+  starts you there, on free ground in front of the building. In the console: `__gta.teleport("rathaus")`,
+  `__gta.spots()` lists every name.
 - **Chunks** (`src/render/scene/scene.ts`): every 128 m chunk is built once into a static vertex buffer
   (about 1 ms, 60 KB) as it comes near the view: lawn and paving (the photo's paved mask, given a one
   pixel hard edge in the shader), land use and water, streets as polygons from the OSM centre lines
@@ -277,7 +289,9 @@ Tree crowns over the asphalt of a street are left out, so roads stay readable.
   cross gable on any wall.
 - **Pedestrians**: walk footpaths and the sidewalks along streets (`src/sim/pedestrians.ts`), dodge fast cars, fall over when hit; NPC cars brake for them.
 
-`pnpm map:fetch` downloads both `data/raw.json` (ways) and `data/places.json` (shops, lights).
+`pnpm map:fetch` downloads every cache: `data/raw.json` (ways), `data/places.json` (shops, lights), `data/places-more.json`
+(gyms, health, offices, …), `data/places-next.json` (schools, driving schools, stadiums), `data/areas-more.json`
+(playgrounds, tracks), `data/buildings-rel.json` (multipolygon buildings), `data/extra.json` and `data/routes.json`.
 
 ## Sprites
 

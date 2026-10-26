@@ -18,7 +18,7 @@ import { boxOf, centroid, longestEdgeAngle, pointInPolygon, type Box } from "#/w
 import { Grid } from "#/world/grid.ts"
 import { facadeFor, type Facade } from "./facade.ts"
 import { roofTone } from "./roof-tone.ts"
-import { band, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
+import { band, bridgeHoles, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
 import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
 import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/stations.ts"
 import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
@@ -76,10 +76,17 @@ const TREE_TINTS: ReadonlyArray<Rgba> = [
   [190, 215, 205, 255],
 ]
 
+/**
+ * Material, meters per tile, tint, lift over Z.area. Playgrounds and tracks on a paved surface look like a car park; with
+ * a `tint` from the photo (sand, bark, tartan) they are that colour on the gravel texture instead. A track lies under the
+ * pitches (a stadium's pitch sits inside its ring), a playground over them.
+ */
 const AREA_LOOK: Partial<Record<AreaKind, readonly [Material, number, Rgba, number]>> = {
   farmland: [Material.farmland, TILE.farmland, [235, 230, 215, 255], 0],
   forest: [Material.forest, TILE.forest, WHITE, 0.005],
+  track: [Material.paving, TILE.paving, WHITE, 0.0075],
   pitch: [Material.lawn, TILE.lawn, [175, 215, 160, 255], 0.01],
+  playground: [Material.paving, TILE.paving, WHITE, 0.0125],
   parking: [Material.paving, TILE.paving, WHITE, 0.015],
   water: [Material.water, TILE.water, [150, 175, 200, 255], Z.water - Z.area],
 }
@@ -314,7 +321,7 @@ export class Scene {
     })
     map.areas.forEach((a, i) => {
       if (AREA_LOOK[a.kind] === undefined) return
-      const box = boxOf(a.pts)
+      const box = boxOf(a.pts, (a.width ?? 0) / 2)
       own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.areas.push(i)
     })
     const segments = (pts: ReadonlyArray<number>, pad: number, add: (chunk: Chunk, k: number) => void) => {
@@ -435,7 +442,9 @@ export class Scene {
       const look = a === undefined ? undefined : AREA_LOOK[a.kind]
       if (a === undefined || look === undefined) continue
       const [material, tile, tint, lift] = look
-      polygon(m, openRing(a.pts), Z.area + lift, (x, y) => [x / tile, y / tile], tint, Mode.material, material)
+      const [layer, size, color, mode] = a.tint === undefined ? [material, tile, tint, Mode.material] : [Material.roofGravel, TILE.gravel, [...parseHex(a.tint), 255] as const, Mode.detail]
+      if (a.width === undefined) polygon(m, openRing(a.pts), Z.area + lift, (x, y) => [x / size, y / size], color, mode, layer)
+      else for (let k = 0; k + 3 < a.pts.length; k += 2) this.segment(m, a.pts, k, a.width / 2, Z.area + lift, layer, size, false, color, mode)
     }
     for (const [i, k] of chunk.rivers) {
       const w = map.waterways[i]
@@ -655,7 +664,7 @@ export class Scene {
    * junctions close. Texture in world space, or along the segment (`along`)
    * for slabs that follow the street. Material -1: plain colour.
    */
-  private segment(m: MeshBuilder, pts: ReadonlyArray<number>, k: number, half: number, z: number, material: number, tile: number, along: boolean, color: Rgba) {
+  private segment(m: MeshBuilder, pts: ReadonlyArray<number>, k: number, half: number, z: number, material: number, tile: number, along: boolean, color: Rgba, mode: Mode = material < 0 ? Mode.color : Mode.material) {
     const ax = pts[k] ?? 0
     const ay = pts[k + 1] ?? 0
     const bx = pts[k + 2] ?? 0
@@ -664,7 +673,6 @@ export class Scene {
     if (len < 1e-3) return
     const dx = (bx - ax) / len
     const dy = (by - ay) / len
-    const mode = material < 0 ? Mode.color : Mode.material
     const layer = Math.max(0, material)
     // Slabs keep their grid along the street; the offset to each segment's start makes them meet on bends.
     const uv = (x: number, y: number): readonly [number, number] =>
@@ -728,6 +736,9 @@ export class Scene {
     if (n < 3) return
     const h = wallHeight(b.levels)
     const orient = signedArea(ring) >= 0 ? 1 : -1
+    // Courtyards: open rings, each walled round; the roof is the outline joined to them (bridgeHoles).
+    const holes = (b.holes ?? []).map(openRing).filter((hr) => hr.length >= 6)
+    const roof = holes.length === 0 ? ring : bridgeHoles(ring, holes)
     const angle = longestEdgeAngle(b.pts)
     const [mx, my] = centroid(ring)
     const rx = Math.cos(angle)
@@ -750,64 +761,68 @@ export class Scene {
     const bands = dress?.bands ?? []
     const cuts = [...new Set([0, ...pieces.map((p) => p.z1), ...bands.flatMap((bd) => [bd.z0, bd.z1]).filter((z) => z > 0 && z < high)])].toSorted((a, z) => a - z)
     let u = hash2(b.id, 0, 2) * FACADE_W[facade]
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n
-      const ax = ring[i * 2] ?? 0
-      const ay = ring[i * 2 + 1] ?? 0
-      const bx = ring[j * 2] ?? 0
-      const by = ring[j * 2 + 1] ?? 0
-      const len = Math.hypot(bx - ax, by - ay)
-      if (len < 1e-3) continue
-      // Outward normal; walls facing the sun (away from the shadows) are lit.
-      const wx = (orient * (by - ay)) / len
-      const wy = (orient * -(bx - ax)) / len
-      const light = 0.62 + 0.38 * Math.max(0, -(wx * SHADOW_DIR[0] + wy * SHADOW_DIR[1]))
-      const c = dress?.wallColour === undefined ? scale(WHITE, tint * light) : scale(dress.wallColour, light)
-      const u0 = u / FACADE_W[facade]
-      const u1 = (u + len) / FACADE_W[facade]
-      const profile = tops?.[i]
-      for (let k = 0; k + 1 < cuts.length; k++) {
-        const z0 = cuts[k] ?? 0
-        const z1 = cuts[k + 1] ?? top
-        const mid = (z0 + z1) / 2
-        const piece = pieces.find((p) => mid < p.z1) ?? pieces[pieces.length - 1]
-        const over = bands.findLast((bd) => mid > bd.z0 && mid < bd.z1)
-        if (piece === undefined) continue
-        if (profile !== undefined) {
-          // Under a wall top that follows the roof: the slab cut below each stretch of it, a fan in (along, up).
-          const dx = (bx - ax) / len
-          const dy = (by - ay) / len
-          const plain = over?.plain === true
-          const col = plain ? scale(over.colour, light) : over === undefined ? c : scale(over.colour, light)
-          for (let q = 0; q + 1 < profile.length; q++) {
-            const [ta, za] = profile[q] ?? [0, h]
-            const [tb, zb] = profile[q + 1] ?? [len, h]
-            if (tb - ta < 1e-6) continue
-            const rise = (zb - za) / (tb - ta)
-            const slab = clipHalfPlane([ta, z0, tb, z0, tb, z1, ta, z1], rise, -1, rise * ta - za)
-            fan(m, slab, (t, z) =>
-              plain
-                ? m.vertex(ax + dx * t, ay + dy * t, z, 0, 0, col, Mode.color, 0)
-                : m.vertex(ax + dx * t, ay + dy * t, z, (u + t) / FACADE_W[facade], 1 - (z - piece.base) / piece.span, col, Mode.material, piece.layer),
-            )
+    // The outline's walls, then each courtyard's, facing into the courtyard. Only the outline's carry the roof's eave profile.
+    for (const [wr, wo] of [[ring, orient] as const, ...holes.map((hr) => [hr, signedArea(hr) >= 0 ? -1 : 1] as const)]) {
+      const wn = wr.length / 2
+      for (let i = 0; i < wn; i++) {
+        const j = (i + 1) % wn
+        const ax = wr[i * 2] ?? 0
+        const ay = wr[i * 2 + 1] ?? 0
+        const bx = wr[j * 2] ?? 0
+        const by = wr[j * 2 + 1] ?? 0
+        const len = Math.hypot(bx - ax, by - ay)
+        if (len < 1e-3) continue
+        // Outward normal; walls facing the sun (away from the shadows) are lit.
+        const wx = (wo * (by - ay)) / len
+        const wy = (wo * -(bx - ax)) / len
+        const light = 0.62 + 0.38 * Math.max(0, -(wx * SHADOW_DIR[0] + wy * SHADOW_DIR[1]))
+        const c = dress?.wallColour === undefined ? scale(WHITE, tint * light) : scale(dress.wallColour, light)
+        const u0 = u / FACADE_W[facade]
+        const u1 = (u + len) / FACADE_W[facade]
+        const profile = wr === ring ? tops?.[i] : undefined
+        for (let k = 0; k + 1 < cuts.length; k++) {
+          const z0 = cuts[k] ?? 0
+          const z1 = cuts[k + 1] ?? top
+          const mid = (z0 + z1) / 2
+          const piece = pieces.find((p) => mid < p.z1) ?? pieces[pieces.length - 1]
+          const over = bands.findLast((bd) => mid > bd.z0 && mid < bd.z1)
+          if (piece === undefined) continue
+          if (profile !== undefined) {
+            // Under a wall top that follows the roof: the slab cut below each stretch of it, a fan in (along, up).
+            const dx = (bx - ax) / len
+            const dy = (by - ay) / len
+            const plain = over?.plain === true
+            const col = plain ? scale(over.colour, light) : over === undefined ? c : scale(over.colour, light)
+            for (let q = 0; q + 1 < profile.length; q++) {
+              const [ta, za] = profile[q] ?? [0, h]
+              const [tb, zb] = profile[q + 1] ?? [len, h]
+              if (tb - ta < 1e-6) continue
+              const rise = (zb - za) / (tb - ta)
+              const slab = clipHalfPlane([ta, z0, tb, z0, tb, z1, ta, z1], rise, -1, rise * ta - za)
+              fan(m, slab, (t, z) =>
+                plain
+                  ? m.vertex(ax + dx * t, ay + dy * t, z, 0, 0, col, Mode.color, 0)
+                  : m.vertex(ax + dx * t, ay + dy * t, z, (u + t) / FACADE_W[facade], 1 - (z - piece.base) / piece.span, col, Mode.material, piece.layer),
+              )
+            }
+            continue
           }
-          continue
+          if (over?.plain === true) {
+            const f = scale(over.colour, light)
+            m.quad(m.vertex(ax, ay, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z1, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, z1, 0, 0, f, Mode.color, 0))
+            continue
+          }
+          const col = over === undefined ? c : scale(over.colour, light)
+          // The texture's bottom row is the ground floor; image rows run down, so v falls as z rises.
+          const v0 = 1 - (z0 - piece.base) / piece.span
+          const v1 = 1 - (z1 - piece.base) / piece.span
+          m.quad(m.vertex(ax, ay, z0, u0, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z0, u1, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z1, u1, v1, col, Mode.material, piece.layer), m.vertex(ax, ay, z1, u0, v1, col, Mode.material, piece.layer))
         }
-        if (over?.plain === true) {
-          const f = scale(over.colour, light)
-          m.quad(m.vertex(ax, ay, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z0, 0, 0, f, Mode.color, 0), m.vertex(bx, by, z1, 0, 0, f, Mode.color, 0), m.vertex(ax, ay, z1, 0, 0, f, Mode.color, 0))
-          continue
-        }
-        const col = over === undefined ? c : scale(over.colour, light)
-        // The texture's bottom row is the ground floor; image rows run down, so v falls as z rises.
-        const v0 = 1 - (z0 - piece.base) / piece.span
-        const v1 = 1 - (z1 - piece.base) / piece.span
-        m.quad(m.vertex(ax, ay, z0, u0, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z0, u1, v0, col, Mode.material, piece.layer), m.vertex(bx, by, z1, u1, v1, col, Mode.material, piece.layer), m.vertex(ax, ay, z1, u0, v1, col, Mode.material, piece.layer))
+        u += len
       }
-      u += len
     }
 
-    const tris = triangulate(ring)
+    const tris = holes.length === 0 ? triangulate(ring) : triangulate(roof, true)
     const tile = pitched ? TILE.roof : TILE.gravel
     const layer = pitched ? Material.roofTiles : Material.roofGravel
     const vertex = (x: number, y: number, z: number, c: Rgba, mode: Mode) => m.vertex(x, y, z, (x * rx + y * ry) / tile, (x * nx + y * ny) / tile, c, mode, layer)
@@ -824,7 +839,7 @@ export class Scene {
     // Otherwise the roof at the eaves, split along the ridge.
     const flatTris = hip === undefined ? tris : []
     for (let t = 0; t + 2 < flatTris.length; t += 3) {
-      const tri = [flatTris[t], flatTris[t + 1], flatTris[t + 2]].flatMap((i) => [ring[(i ?? 0) * 2] ?? 0, ring[(i ?? 0) * 2 + 1] ?? 0])
+      const tri = [flatTris[t], flatTris[t + 1], flatTris[t + 2]].flatMap((i) => [roof[(i ?? 0) * 2] ?? 0, roof[(i ?? 0) * 2 + 1] ?? 0])
       if (sides[0] === sides[1]) {
         fan(m, tri, (x, y) => vertex(x, y, h, sides[0], Mode.detail))
         continue
@@ -838,23 +853,31 @@ export class Scene {
     else if (pitched) strip(m, closed, 0.14, h + 0.02, scale(sides[0], 0.55))
     else {
       parapet(m, closed, orient, h, top)
-      vents(m, b, ring, h)
+      vents(m, b, roof, h)
+    }
+    for (const hr of holes) {
+      const round = [...hr, hr[0] ?? 0, hr[1] ?? 0]
+      if (pitched) strip(m, round, 0.14, h + 0.02, scale(sides[0], 0.55))
+      else parapet(m, round, signedArea(hr) >= 0 ? -1 : 1, h, top)
     }
 
     m.target = "shadow"
     const ox = SHADOW_DIR[0] * shadowH * SHADOW_PER_M
     const oy = SHADOW_DIR[1] * shadowH * SHADOW_PER_M
     const s = (x: number, y: number) => m.vertex(x, y, Z.shadow, 0, 0, SHADOW, Mode.color, 0)
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n
-      const ax = ring[i * 2] ?? 0
-      const ay = ring[i * 2 + 1] ?? 0
-      const bx = ring[j * 2] ?? 0
-      const by = ring[j * 2 + 1] ?? 0
-      m.quad(s(ax, ay), s(bx, by), s(bx + ox, by + oy), s(ax + ox, ay + oy))
+    for (const wr of [ring, ...holes]) {
+      const wn = wr.length / 2
+      for (let i = 0; i < wn; i++) {
+        const j = (i + 1) % wn
+        const ax = wr[i * 2] ?? 0
+        const ay = wr[i * 2 + 1] ?? 0
+        const bx = wr[j * 2] ?? 0
+        const by = wr[j * 2 + 1] ?? 0
+        m.quad(s(ax, ay), s(bx, by), s(bx + ox, by + oy), s(ax + ox, ay + oy))
+      }
     }
     for (let t = 0; t + 2 < tris.length; t += 3) {
-      const [a, bb, c] = [tris[t] ?? 0, tris[t + 1] ?? 0, tris[t + 2] ?? 0].map((i) => s((ring[i * 2] ?? 0) + ox, (ring[i * 2 + 1] ?? 0) + oy))
+      const [a, bb, c] = [tris[t] ?? 0, tris[t + 1] ?? 0, tris[t + 2] ?? 0].map((i) => s((roof[i * 2] ?? 0) + ox, (roof[i * 2 + 1] ?? 0) + oy))
       m.tri(a ?? 0, bb ?? 0, c ?? 0)
     }
     m.target = "opaque"

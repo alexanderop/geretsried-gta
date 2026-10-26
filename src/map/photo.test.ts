@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildingMasks, classifyGround, cleanPaved, findCoveredRoads, findCrowns, findMissingBuildings, Ground, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
+import { buildingMasks, classifyGround, cleanPaved, findCoveredRoads, findCrowns, findMissingBuildings, Ground, GROUND_MAX_LUMA, groundTint, pavedMask, sampleRoof, type Raster, type Rgb } from "./photo.ts"
 import { eaves } from "./roof.ts"
 import { decodePng, encodePng } from "./png.ts"
 import { decodeCrowns, encodeCrowns } from "./crowns.ts"
@@ -210,5 +210,29 @@ describe("findCoveredRoads", () => {
     expect(findCoveredRoads([road("residential")], photo, new Uint8Array(60 * 20))).toHaveLength(1)
     const shade = raster(60, 20, () => TREE)
     expect(findCoveredRoads([road("residential")], shade, new Uint8Array(60 * 20).fill(1))).toEqual([])
+  })
+})
+
+const square = (a: number, b: number) => [a, a, b, a, b, b, a, b]
+
+describe("groundTint", () => {
+  // A red-brown ring round a lawn infield, on a light sand ground.
+  const photo = raster(30, 30, (x, y) => (x >= 10 && x < 20 && y >= 10 && y < 20 ? [80, 120, 60] : x >= 5 && x < 25 && y >= 5 && y < 25 ? [150, 100, 80] : [230, 210, 170]))
+
+  it("is the median of the area, holes left out", () => {
+    expect(groundTint(photo, square(5, 25), [square(10, 20)])).toEqual({ photo: "#966450", tint: "#966450" })
+    expect(groundTint(photo, square(10, 20))?.tint).toBe("#50783c")
+  })
+
+  it("is darkened to the lightest ground tone at most, keeping its hue", () => {
+    const sand = groundTint(photo, square(26, 30))
+    expect(sand?.photo).toBe("#e6d2aa")
+    const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(sand?.tint.slice(i, i + 2) ?? "", 16))
+    expect(0.3 * (r ?? 0) + 0.59 * (g ?? 0) + 0.11 * (b ?? 0)).toBeLessThanOrEqual(GROUND_MAX_LUMA + 1)
+    expect((r ?? 0) / (b ?? 1)).toBeCloseTo(230 / 170, 1)
+  })
+
+  it("is null outside the photo", () => {
+    expect(groundTint(photo, square(40, 50))).toBeNull()
   })
 })

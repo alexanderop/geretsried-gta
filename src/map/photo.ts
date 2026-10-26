@@ -51,6 +51,14 @@ export const polygonPixels = (raster: Raster, pts: ReadonlyArray<number>, inset 
   return out
 }
 
+/** A footprint's pixels (as polygonPixels) without its courtyards. */
+const roofPixels = (raster: Raster, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>, inset: number): Array<number> => {
+  const all = polygonPixels(raster, pts, inset)
+  if (holes.length === 0) return all
+  const open = new Set(holes.flatMap((h) => polygonPixels(raster, h)))
+  return all.filter((i) => !open.has(i))
+}
+
 const nearEdge = (x: number, y: number, pts: ReadonlyArray<number>, distSq: number) => {
   const n = pts.length / 2
   for (let i = 0; i < n; i++) {
@@ -89,9 +97,9 @@ const MIN_PLANE_PX = 3
  * footprint for small sheds. Null when the roof is too small to read or only
  * shows green (a tree over it, or a footprint off the photo).
  */
-export const sampleRoof = (raster: Raster, pts: ReadonlyArray<number>): RoofSample | null => {
+export const sampleRoof = (raster: Raster, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>> = []): RoofSample | null => {
   if (wallCount(pts) < 3) return null
-  const all = polygonPixels(raster, pts, 0)
+  const all = roofPixels(raster, pts, holes, 0)
   const centre = (i: number): readonly [number, number] => [
     ((i % raster.width) + 0.5) / PHOTO_PX_PER_M,
     (Math.floor(i / raster.width) + 0.5) / PHOTO_PX_PER_M,
@@ -105,7 +113,7 @@ export const sampleRoof = (raster: Raster, pts: ReadonlyArray<number>): RoofSamp
   }
   const isEave = eaves(pts, deepest * 2 + 1 / PHOTO_PX_PER_M)
   for (const inset of [1, 0.4, 0]) {
-    const inside = inset === 0 ? all : polygonPixels(raster, pts, inset)
+    const inside = inset === 0 ? all : roofPixels(raster, pts, holes, inset)
     // Leaves over the roof are not roof: read only the rest, if enough is left.
     const pixels = inside.filter((i) => !isLeaf(rgbAt(raster, i)))
     if (inside.length < MIN_PLANE_PX * 2) continue
@@ -190,13 +198,13 @@ export const Ground = { lawn: 0, tree: 1, paved: 2, building: 3, forest: 4 } as 
 export const buildingMasks = (
   width: number,
   height: number,
-  buildings: ReadonlyArray<{ readonly levels: number; readonly pts: ReadonlyArray<number> }>,
+  buildings: ReadonlyArray<{ readonly levels: number; readonly pts: ReadonlyArray<number>; readonly holes?: ReadonlyArray<ReadonlyArray<number>> }>,
 ): { readonly footprint: Uint8Array; readonly shadow: Uint8Array } => {
   const raster = { width, height, rgba: new Uint8Array() }
   const footprint = new Uint8Array(width * height)
   const shadow = new Uint8Array(width * height)
   for (const b of buildings) {
-    const pixels = polygonPixels(raster, b.pts)
+    const pixels = roofPixels(raster, b.pts, b.holes ?? [], 0)
     for (const i of pixels) footprint[i] = 1
     const reach = buildingHeight(b.levels) * SHADOW_PER_M * PHOTO_PX_PER_M
     for (let d = 1; d <= reach; d++) {
@@ -444,6 +452,25 @@ const tidyIslands = (ground: Uint8Array, width: number, height: number) => {
 const hex = ([r, g, b]: Rgb) => `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`
 
 /**
+ * The lightest ground the game draws, as luma: paved ground (pavement.webp's mean #989188 times the ground shader's
+ * (1, 0.98, 0.95)). A ground colour read from the photo is darkened to it at most: the dark GTA palette (BACKLOG, V-items).
+ */
+export const GROUND_MAX_LUMA = 143
+
+/**
+ * The ground colour of an area as the photo shows it: the median of its pixels, `holes` left out (a running track's
+ * infield). The whole area, not one pixel at its centre: a centre can fall on a crown, a shadow or a ring's infield.
+ * `photo` is that colour, `tint` the same darkened to GROUND_MAX_LUMA at most; null without a pixel inside.
+ */
+export const groundTint = (raster: Raster, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>> = []): { readonly photo: string; readonly tint: string } | null => {
+  const pixels = roofPixels(raster, pts, holes, 0)
+  if (pixels.length === 0) return null
+  const rgb = medianRgb(raster, pixels)
+  const scale = Math.min(1, GROUND_MAX_LUMA / Math.max(1, luma(rgb)))
+  return { photo: hex(rgb), tint: hex([rgb[0] * scale, rgb[1] * scale, rgb[2] * scale]) }
+}
+
+/**
  * Everything the importer reads from the photo: each building's roof colours,
  * the tree crowns outside forests and fields, and the paved-ground mask (an
  * RGBA image, `GROUND_M_PER_PX` meters per pixel, paved share in alpha).
@@ -454,7 +481,7 @@ export const readPhoto = (
 ): { readonly map: GameMap; readonly crowns: ReadonlyArray<Crown>; readonly paved: Raster } => {
   const { width, height } = raster
   const buildings = map.buildings.map((b) => {
-    const roof = sampleRoof(raster, b.pts)
+    const roof = sampleRoof(raster, b.pts, b.holes)
     return roof === null ? b : { ...b, roof: { colors: roof.planes.map((p) => (p === null ? null : hex(p))), pitched: roof.pitched } }
   })
   const skip = new Uint8Array(width * height)

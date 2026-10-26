@@ -52,10 +52,18 @@ const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
   church: ["⛪", "#a16207"],
   car_repair: ["🔧", "#7c2d12"],
   shop: ["🛍️", "#6b7280"],
+  gym: ["🏋️", "#be123c"],
+  health: ["⚕️", "#0f766e"],
+  kindergarten: ["🧸", "#db2777"],
+  care_home: ["🧓", "#9a3412"],
+  bar: ["🍸", "#6d28d9"],
+  parcel_locker: ["📦", "#a16207"],
+  office: ["💼", "#57534e"],
+  sport: ["🏟️", "#0369a1"],
 }
 
 /** Labelled on the map; the HUD names the rest when you are near. */
-const IMPORTANT: ReadonlySet<PoiKind> = new Set(["supermarket", "drugstore", "fuel", "police", "pharmacy", "post", "civic"])
+const IMPORTANT: ReadonlySet<PoiKind> = new Set(["supermarket", "drugstore", "fuel", "police", "pharmacy", "post", "civic", "sport"])
 
 export const poiIcon = (kind: PoiKind) => POI_STYLE[kind][0]
 

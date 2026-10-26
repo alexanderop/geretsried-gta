@@ -23,6 +23,8 @@ export const AreaKind = Schema.Literals([
   "park",
   "pitch",
   "parking",
+  "playground",
+  "track",
 ])
 export type AreaKind = typeof AreaKind.Type
 
@@ -51,11 +53,26 @@ export type Road = typeof Road.Type
 export const Roof = Schema.Struct({ colors: Schema.Array(Schema.NullOr(Schema.String)), pitched: Schema.Boolean })
 export type Roof = typeof Roof.Type
 
-/** `canopy`: OSM building=roof, a roof on pillars (petrol stations): no walls, nothing solid underneath. */
-export const Building = Schema.Struct({ id: Schema.Number, levels: Schema.Number, pts: Points, roof: Schema.optionalKey(Roof), canopy: Schema.optionalKey(Schema.Boolean) })
+/**
+ * `canopy`: OSM building=roof, a roof on pillars (petrol stations): no walls, nothing solid underneath.
+ * `holes`: closed rings of open ground inside `pts`, the courtyards of an OSM multipolygon building (relation inner ways).
+ */
+export const Building = Schema.Struct({
+  id: Schema.Number,
+  levels: Schema.Number,
+  pts: Points,
+  roof: Schema.optionalKey(Roof),
+  canopy: Schema.optionalKey(Schema.Boolean),
+  holes: Schema.optionalKey(Schema.Array(Points)),
+})
 export type Building = typeof Building.Type
 
-export const Area = Schema.Struct({ kind: AreaKind, pts: Points })
+/**
+ * `width`: the area is a line (`pts` a polyline) drawn this many meters wide, not a polygon: the lanes of a
+ * leisure=track way without area=yes. `tint`: #rrggbb ground colour read from the aerial photo, for a playground or
+ * track whose surface OSM does not give as paved (sand, bark, tartan, or no surface at all).
+ */
+export const Area = Schema.Struct({ kind: AreaKind, pts: Points, width: Schema.optionalKey(Schema.Number), tint: Schema.optionalKey(Schema.String) })
 export type Area = typeof Area.Type
 
 export const Waterway = Schema.Struct({ width: Schema.Number, pts: Points })
@@ -77,6 +94,14 @@ export const PoiKind = Schema.Literals([
   "church",
   "car_repair",
   "shop",
+  "gym",
+  "health",
+  "kindergarten",
+  "care_home",
+  "bar",
+  "parcel_locker",
+  "office",
+  "sport",
 ])
 export type PoiKind = typeof PoiKind.Type
 

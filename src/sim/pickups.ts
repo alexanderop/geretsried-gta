@@ -3,6 +3,7 @@
  * you walk over to collect, back a minute later. The spots come from the map
  * alone (behind shops, in parks, on parking lots), so every game has the same.
  */
+import type { AreaKind, PoiKind } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
 import { pointInPolygon } from "#/world/geometry.ts"
 import type { Gun } from "./weapons.ts"
@@ -83,16 +84,22 @@ const centroid = (pts: ReadonlyArray<number>): Spot => {
   return { x: x / n, y: y / n }
 }
 
-/** Candidate spots: behind shops and places, inside parks and pitches, on parking lots. */
+/** No weapons behind these: schools, the police, a Kita yard, a care home, a parcel locker on the pavement. */
+const NO_PICKUPS: ReadonlySet<PoiKind> = new Set(["school", "police", "kindergarten", "care_home", "parcel_locker"])
+
+/** Areas whose middle may hold a pickup; a track's lanes (a line area) have no middle to stand in. */
+const PICKUP_GROUND: ReadonlySet<AreaKind> = new Set(["park", "pitch", "parking", "track"])
+
+/** Candidate spots: behind shops and places, inside parks, pitches and tracks, on parking lots; never on a playground. */
 const candidates = (world: World, hidden: Hidden): Array<Spot> => {
   const out: Array<Spot> = []
   for (const poi of world.map.pois) {
-    if (poi.kind === "school" || poi.kind === "police") continue
+    if (NO_PICKUPS.has(poi.kind)) continue
     const s = behindShop(world, poi.x, poi.y, hidden)
     if (s !== null) out.push(s)
   }
   for (const area of world.map.areas) {
-    if (area.kind !== "park" && area.kind !== "pitch" && area.kind !== "parking") continue
+    if (!PICKUP_GROUND.has(area.kind) || area.width !== undefined) continue
     const c = centroid(area.pts)
     // An L-shaped lot's centroid may lie outside it.
     if (!pointInPolygon(c.x, c.y, area.pts)) continue

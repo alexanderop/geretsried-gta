@@ -28,8 +28,10 @@ const cross = (ax: number, ay: number, bx: number, by: number, cx: number, cy: n
  * Ear clipping: triangles of an open ring as vertex index triples. Works for
  * either winding and any simple polygon; a self-touching ring that runs out
  * of ears is finished as a fan, so every footprint still gets a roof.
+ * `bridged`: the ring comes from bridgeHoles, whose bridge ends appear twice; a
+ * copy of an ear's own corner then does not block the ear.
  */
-export const triangulate = (ring: ReadonlyArray<number>): Array<number> => {
+export const triangulate = (ring: ReadonlyArray<number>, bridged = false): Array<number> => {
   const n = ring.length / 2
   if (n < 3) return []
   const sign = signedArea(ring) >= 0 ? 1 : -1
@@ -45,6 +47,7 @@ export const triangulate = (ring: ReadonlyArray<number>): Array<number> => {
     if (cross(x(a), y(a), x(b), y(b), x(c), y(c)) * sign <= 0) return false
     for (const p of left) {
       if (p === a || p === b || p === c) continue
+      if (bridged && [a, b, c].some((q) => x(q) === x(p) && y(q) === y(p))) continue
       // A point on the ear's edge counts as inside: clipping there would cross the outline.
       if (
         cross(x(a), y(a), x(b), y(b), x(p), y(p)) * sign >= 0 &&
@@ -69,6 +72,65 @@ export const triangulate = (ring: ReadonlyArray<number>): Array<number> => {
     left.splice(found, 1)
   }
   for (let k = 1; k + 1 < left.length; k++) out.push(left[0] ?? 0, left[k] ?? 0, left[k + 1] ?? 0)
+  return out
+}
+
+const segmentsCross = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number) => {
+  const d1 = cross(ax, ay, bx, by, cx, cy)
+  const d2 = cross(ax, ay, bx, by, dx, dy)
+  const d3 = cross(cx, cy, dx, dy, ax, ay)
+  const d4 = cross(cx, cy, dx, dy, bx, by)
+  return d1 * d2 < 0 && d3 * d4 < 0
+}
+
+/**
+ * One open ring for an outline with holes (open rings too): each hole joined to
+ * the outline by a bridge there and back, from its easternmost corner to the
+ * nearest outline corner the bridge reaches without crossing an edge. Triangulate
+ * it with `bridged`; its even-odd inside is the outline less the holes.
+ */
+export const bridgeHoles = (ring: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>): Array<number> => {
+  const outer = signedArea(ring) >= 0 ? 1 : -1
+  let out = [...ring]
+  const sorted = holes.filter((h) => h.length >= 6).toSorted((a, b) => Math.max(...b.filter((_, i) => i % 2 === 0)) - Math.max(...a.filter((_, i) => i % 2 === 0)))
+  for (const raw of sorted) {
+    // The hole runs the other way round than the outline.
+    const hole: Array<number> = []
+    const n = raw.length / 2
+    for (let i = 0; i < n; i++) {
+      const k = (signedArea(raw) >= 0 ? 1 : -1) === outer ? n - 1 - i : i
+      hole.push(raw[k * 2] ?? 0, raw[k * 2 + 1] ?? 0)
+    }
+    let h = 0
+    for (let i = 1; i < n; i++) if ((hole[i * 2] ?? 0) > (hole[h * 2] ?? 0)) h = i
+    const hx = hole[h * 2] ?? 0
+    const hy = hole[h * 2 + 1] ?? 0
+    const edges = [out, ...sorted]
+    const clear = (mx: number, my: number) =>
+      edges.every((e) => {
+        const m = e.length / 2
+        for (let i = 0; i < m; i++) {
+          const j = (i + 1) % m
+          if (segmentsCross(hx, hy, mx, my, e[i * 2] ?? 0, e[i * 2 + 1] ?? 0, e[j * 2] ?? 0, e[j * 2 + 1] ?? 0)) return false
+        }
+        return true
+      })
+    let best = -1
+    let bestD = Infinity
+    for (let i = 0; i < out.length / 2; i++) {
+      const mx = out[i * 2] ?? 0
+      const my = out[i * 2 + 1] ?? 0
+      const d = Math.hypot(mx - hx, my - hy)
+      if (d < bestD && clear(mx, my)) {
+        best = i
+        bestD = d
+      }
+    }
+    if (best < 0) continue
+    const around: Array<number> = []
+    for (let i = 0; i <= n; i++) around.push(hole[((h + i) % n) * 2] ?? 0, hole[((h + i) % n) * 2 + 1] ?? 0)
+    out = [...out.slice(0, best * 2 + 2), ...around, out[best * 2] ?? 0, out[best * 2 + 1] ?? 0, ...out.slice(best * 2 + 2)]
+  }
   return out
 }
 

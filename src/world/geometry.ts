@@ -31,6 +31,10 @@ export const pointInPolygon = (x: number, y: number, pts: ReadonlyArray<number>)
   return inside
 }
 
+/** Inside a building's footprint and not in one of its courtyards (`holes`). */
+export const inFootprint = (x: number, y: number, b: { readonly pts: ReadonlyArray<number>; readonly holes?: ReadonlyArray<ReadonlyArray<number>> }): boolean =>
+  pointInPolygon(x, y, b.pts) && !(b.holes ?? []).some((h) => pointInPolygon(x, y, h))
+
 /** Squared distance from a point to segment ab. */
 export const distToSegmentSq = (px: number, py: number, ax: number, ay: number, bx: number, by: number): number => {
   const dx = bx - ax

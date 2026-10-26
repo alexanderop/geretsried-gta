@@ -1,6 +1,8 @@
 import type { Area, AreaKind, Building, Crossing, District, GameMap, Poi, PoiKind, Prop, Road, RoadKind, Signal, Waterway } from "./types.ts"
 import { makeProjection, type Bbox, type LatLon } from "./project.ts"
 import { buildBusLines, type OsmElement } from "./bus.ts"
+import type { ExtraPoi } from "./extra-pois.ts"
+import { pointInPolygon } from "#/world/geometry.ts"
 
 /** One `way` as Overpass returns it with `out geom`. */
 export type OsmWay = {
@@ -95,12 +97,154 @@ const POI_KINDS: Readonly<Record<string, PoiKind>> = {
   car_repair: "car_repair",
 }
 
-const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null => {
-  const amenity = tags.amenity === undefined ? undefined : POI_KINDS[tags.amenity]
-  if (amenity !== undefined) return amenity
-  if (tags.shop === undefined || tags.shop === "vacant") return null
-  return POI_KINDS[tags.shop] ?? "shop"
+/** Amenities the later places queries (PLACES_MORE_QUERY, PLACES_NEXT_QUERY) bring; looked up after POI_KINDS, and never for shops. */
+const MORE_AMENITY_KINDS: Readonly<Record<string, PoiKind>> = {
+  dojo: "gym",
+  dentist: "health",
+  veterinary: "health",
+  kindergarten: "kindergarten",
+  childcare: "kindergarten",
+  social_facility: "care_home",
+  bar: "bar",
+  nightclub: "bar",
+  parcel_locker: "parcel_locker",
+  // The Feuerwehrschule is a school campus; a driving school is a small business with a sign; the Kulturbühne is a stage.
+  college: "school",
+  driving_school: "office",
+  arts_centre: "civic",
 }
+
+/** Gyms: every fitness centre; a sports centre only when fitness is one of its sports (the others are pools, halls, tennis). */
+const isGym = (tags: Readonly<Record<string, string>>) =>
+  tags.leisure === "fitness_centre" || (tags.leisure === "sports_centre" && (tags.sport ?? "").split(";").includes("fitness"))
+
+/** Why a sports venue that is no gym is no POI either: a school's gym hall. Null for a public or club venue. */
+export const sportSkip = (tags: Readonly<Record<string, string>>): string | null => {
+  if (tags.name?.startsWith("Turnhalle") === true) return "school gym (name Turnhalle)"
+  if (tags.building === "sports_hall") return "school gym (building=sports_hall)"
+  return null
+}
+
+/** Public and club sports venues: stadiums, and sports centres that are no gym (pool, tennis), except school gyms. */
+const isSport = (tags: Readonly<Record<string, string>>) => (tags.leisure === "stadium" || tags.leisure === "sports_centre") && sportSkip(tags) === null
+
+/**
+ * What a place is: its amenity, else a gym, else a sports venue, else health care (healthcare=*: not "doctor", so a dentist never
+ * becomes the respawn hospital), else its shop, else an office or craft business; null for anything else.
+ */
+export const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null => {
+  const amenity = tags.amenity === undefined ? undefined : (POI_KINDS[tags.amenity] ?? MORE_AMENITY_KINDS[tags.amenity])
+  if (amenity !== undefined) return amenity
+  if (isGym(tags)) return "gym"
+  if (isSport(tags)) return "sport"
+  if (tags.healthcare !== undefined) return "health"
+  if (tags.shop !== undefined) return tags.shop === "vacant" ? null : (POI_KINDS[tags.shop] ?? "shop")
+  if (tags.office !== undefined || tags.craft !== undefined) return "office"
+  return null
+}
+
+/**
+ * A later place this close to a POI whose name equals its own or starts with it, or the other way round, is the same
+ * place (a pub node inside a gym's building way; "Champini" grounds round "Champini Sport- & Bewegungskita").
+ */
+const TWIN_M = 50
+
+const twins = (a: Poi, b: Poi) => (a.name.startsWith(b.name) || b.name.startsWith(a.name)) && Math.hypot(a.x - b.x, a.y - b.y) <= TWIN_M
+
+/**
+ * Add `poi` unless a twin (TWIN_M) is on the map: then that one stays (its slot and position, so ids and dressings
+ * keep it), takes the longer of the two names, and takes the newcomer's kind if its own is food and the newcomer's is not.
+ */
+const addPoi = (pois: Array<Poi>, poi: Poi) => {
+  const twin = pois.findIndex((p) => twins(p, poi))
+  const old = pois[twin]
+  if (old === undefined) {
+    pois.push(poi)
+    return
+  }
+  const name = poi.name.length > old.name.length ? poi.name : old.name
+  const kind = old.kind === "food" && poi.kind !== "food" ? poi.kind : old.kind
+  if (name !== old.name || kind !== old.kind) pois[twin] = { ...old, name, kind }
+}
+
+/** One relation as Overpass returns it with `out geom`: its way members carry their geometry. */
+export type OsmRelation = {
+  readonly id: number
+  readonly tags: Readonly<Record<string, string>>
+  readonly members: ReadonlyArray<{ readonly type: string; readonly ref: number; readonly role: string; readonly geometry?: ReadonlyArray<LatLon> }>
+}
+
+const samePoint = (a: LatLon | undefined, b: LatLon | undefined) => a !== undefined && b !== undefined && a.lat === b.lat && a.lon === b.lon
+
+/** Join ways end to end into closed rings (a multipolygon may split one ring over several ways); open leftovers are dropped. */
+export const joinRings = (ways: ReadonlyArray<ReadonlyArray<LatLon>>): Array<Array<LatLon>> => {
+  const left = ways.filter((w) => w.length >= 2).map((w) => [...w])
+  const rings: Array<Array<LatLon>> = []
+  while (left.length > 0) {
+    const ring = left.shift() ?? []
+    for (;;) {
+      if (ring.length >= 4 && samePoint(ring[0], ring[ring.length - 1])) {
+        rings.push(ring)
+        break
+      }
+      const end = ring[ring.length - 1]
+      const k = left.findIndex((w) => samePoint(w[0], end) || samePoint(w[w.length - 1], end))
+      const next = left[k]
+      if (next === undefined) break
+      left.splice(k, 1)
+      ring.push(...(samePoint(next[0], end) ? next : next.toReversed()).slice(1))
+    }
+  }
+  return rings
+}
+
+/** A multipolygon building (OSM relation): its footprints, or "duplicate" when an outer way is a building of its own already. */
+export type RelationBuilding = {
+  readonly id: number
+  readonly name: string
+  /** m², the outer rings less the courtyards. */
+  readonly area: number
+  readonly status: "new" | "duplicate"
+  readonly buildings: ReadonlyArray<Building>
+}
+
+/**
+ * The building relations in the box as buildings: each outer ring a footprint (id = the relation's), the inner
+ * rings inside it its `holes`. `wayBuildings` are the ids of the way buildings already on the map.
+ */
+export const relationBuildings = (relations: ReadonlyArray<OsmRelation>, wayBuildings: ReadonlySet<number>, bbox: Bbox): Array<RelationBuilding> => {
+  const projection = makeProjection(bbox)
+  const inside = (p: LatLon) => p.lat >= bbox.south && p.lat <= bbox.north && p.lon >= bbox.west && p.lon <= bbox.east
+  const flat = (ring: ReadonlyArray<LatLon>) => ring.flatMap((p) => projection.toMeters(p).map(round))
+  return relations.flatMap((rel) => {
+    if (rel.tags.building === undefined || rel.tags.type !== "multipolygon") return []
+    const ways = (role: string) => rel.members.flatMap((m) => (m.type === "way" && m.role === role && m.geometry !== undefined ? [m.geometry] : []))
+    const outers = joinRings(ways("outer")).filter((r) => r.some(inside)).map(flat)
+    if (outers.length === 0) return []
+    const inners = joinRings(ways("inner")).map(flat)
+    const duplicate = rel.members.some((m) => m.type === "way" && m.role === "outer" && wayBuildings.has(m.ref))
+    const buildings = outers.map((pts): Building => {
+      const holes = inners.filter((h) => pointInPolygon(h[0] ?? 0, h[1] ?? 0, pts))
+      return { id: rel.id, levels: buildingLevels(rel.tags), pts, ...(rel.tags.building === "roof" ? { canopy: true } : {}), ...(holes.length > 0 ? { holes } : {}) }
+    })
+    const area = buildings.reduce((s, b) => s + polygonArea(b.pts) - (b.holes ?? []).reduce((h, r) => h + polygonArea(r), 0), 0)
+    return [{ id: rel.id, name: rel.tags.name ?? "", area: Math.round(area), status: duplicate ? "duplicate" : "new", buildings }]
+  })
+}
+
+/** The leisure areas of the later area query: playgrounds, tracks, and fitness stations (small outdoor exercise patches, drawn as pitches). */
+const leisureKind = (tags: Readonly<Record<string, string>>): AreaKind | null => {
+  if (tags.leisure === "playground") return "playground"
+  if (tags.leisure === "track") return "track"
+  if (tags.leisure === "fitness_station") return "pitch"
+  return null
+}
+
+/** Surfaces drawn as plain paving (the car park look); any other surface, or none, takes its colour from the aerial photo. */
+const PAVED_SURFACES: ReadonlySet<string> = new Set(["asphalt", "paved", "concrete", "paving_stones", "sett"])
+
+/** Width of a track mapped as a line when OSM gives none: the Franz-Marc-Schule's lanes measure about 4 m on the DOP20. */
+const LANE_M = 4
 
 /** Storeys a building type has when OSM does not say (most do not): the walls the renderer extrudes. */
 const TYPICAL_LEVELS: Readonly<Record<string, number>> = {
@@ -129,10 +273,38 @@ export const buildingLevels = (tags: Readonly<Record<string, string>>): number =
 const round = (n: number) => Math.round(n * 10) / 10
 
 /**
+ * Sources fetched apart from the first ones (each with its own cache), so adding them leaves every older
+ * feature as it was: their POIs and buildings come after the older ones.
+ */
+export type MoreSources = {
+  /** Places of the second places query: gyms, health care, kindergartens, offices, … (see MORE_AMENITY_KINDS, poiKind). */
+  readonly places?: ReadonlyArray<OsmPlace>
+  /** Places OSM lacks, appended last. */
+  readonly extraPois?: ReadonlyArray<ExtraPoi>
+  /** Building relations (multipolygons with courtyards), appended after the way buildings. */
+  readonly buildingRelations?: ReadonlyArray<OsmRelation>
+  /**
+   * The next import step's places (I-2: colleges, driving schools, arts centres, stadiums; then restaurants and a
+   * workshop added by hand), appended after all of the above. The sports venues among `places` come with them too.
+   */
+  readonly next?: { readonly places?: ReadonlyArray<OsmPlace>; readonly extraPois?: ReadonlyArray<ExtraPoi> }
+  /** Leisure areas (see leisureKind): ways, and multipolygon relations whose outer rings become the areas. */
+  readonly leisureAreas?: { readonly ways: ReadonlyArray<OsmWay>; readonly relations: ReadonlyArray<OsmRelation> }
+  /** The ground colour (#rrggbb) of an area from the aerial photo, `holes` left out (null: none); `id` is its OSM way or relation. */
+  readonly groundTint?: (id: number, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>) => string | null
+}
+
+/**
  * Turn raw Overpass ways into the compact map the game loads.
  * Keeps every feature that touches the bbox; the renderer clips the rest.
  */
-export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmPlace>, bbox: Bbox, routes: ReadonlyArray<OsmElement> = []): GameMap => {
+export const buildMap = (
+  ways: ReadonlyArray<OsmWay>,
+  places: ReadonlyArray<OsmPlace>,
+  bbox: Bbox,
+  routes: ReadonlyArray<OsmElement> = [],
+  more: MoreSources = {},
+): GameMap => {
   const projection = makeProjection(bbox)
   const inside = (p: LatLon) => p.lat >= bbox.south && p.lat <= bbox.north && p.lon >= bbox.west && p.lon <= bbox.east
   const flat = (geometry: ReadonlyArray<LatLon>) =>
@@ -218,10 +390,63 @@ export const buildMap = (ways: ReadonlyArray<OsmWay>, places: ReadonlyArray<OsmP
     if (kind !== null && name !== undefined) pois.push({ name, kind, x, y })
   }
 
+  // The newer sources, each after the one before so older ids stay: a place already on the map stays one POI (addPoi).
+  const addPlaces = (batch: ReadonlyArray<OsmPlace>) => {
+    for (const place of batch) {
+      if (!inside(place)) continue
+      const kind = poiKind(place.tags)
+      const name = place.tags.brand ?? place.tags.name
+      if (kind === null || name === undefined) continue
+      const [x, y] = projection.toMeters(place).map(round)
+      addPoi(pois, { name, kind, x: x ?? 0, y: y ?? 0 })
+    }
+  }
+  const addExtras = (batch: ReadonlyArray<ExtraPoi>) => {
+    for (const extra of batch) {
+      if (!inside(extra)) continue
+      const [x, y] = projection.toMeters(extra).map(round)
+      addPoi(pois, { name: extra.name, kind: extra.kind, x: x ?? 0, y: y ?? 0 })
+    }
+  }
+  // Sports venues came with the second query but are a kind of the next step: they join its batch.
+  const isVenue = (place: OsmPlace) => poiKind(place.tags) === "sport"
+  addPlaces((more.places ?? []).filter((p) => !isVenue(p)))
+  addExtras(more.extraPois ?? [])
+  addPlaces([...(more.places ?? []).filter(isVenue), ...(more.next?.places ?? [])])
+  addExtras(more.next?.extraPois ?? [])
+  const wayBuildings = new Set(buildings.map((b) => b.id))
+  for (const rel of relationBuildings(more.buildingRelations ?? [], wayBuildings, bbox)) if (rel.status === "new") buildings.push(...rel.buildings)
+
   for (const [name, at] of signs) {
     if (districts.some((d) => d.name === name) || at.length < 2) continue
     const [px, py] = projection.toMeters({ lat: at.reduce((s, p) => s + p.lat, 0) / at.length, lon: at.reduce((s, p) => s + p.lon, 0) / at.length })
     if (px > -500 && py > 0 && py < projection.height) districts.push({ name, x: round(Math.max(0, px)), y: round(py) })
+  }
+
+  // Leisure areas: their surface says paving, else the photo gives their colour; a track way without area=yes is lanes.
+  const tint = (kind: AreaKind, tags: Readonly<Record<string, string>>, id: number, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>) => {
+    const photo = kind === "pitch" || PAVED_SURFACES.has(tags.surface ?? "") ? null : (more.groundTint?.(id, pts, holes) ?? null)
+    return photo === null ? {} : { tint: photo }
+  }
+  for (const way of more.leisureAreas?.ways ?? []) {
+    const kind = leisureKind(way.tags)
+    if (kind === null || !way.geometry.some(inside)) continue
+    const pts = flat(way.geometry)
+    if (kind === "track" && way.tags.area !== "yes") {
+      const width = Number.parseFloat(way.tags.width ?? "")
+      if (way.geometry.length >= 2) areas.push({ kind, pts, width: Number.isFinite(width) && width > 0 ? width : LANE_M, ...tint(kind, way.tags, way.id, pts, []) })
+    } else if (way.geometry.length >= 3) areas.push({ kind, pts, ...tint(kind, way.tags, way.id, pts, []) })
+  }
+  for (const rel of more.leisureAreas?.relations ?? []) {
+    const kind = leisureKind(rel.tags)
+    if (kind === null || rel.tags.type !== "multipolygon") continue
+    const members = (role: string) => rel.members.flatMap((m) => (m.type === "way" && m.role === role && m.geometry !== undefined ? [m.geometry] : []))
+    const inners = joinRings(members("inner")).map(flat)
+    // The outer rings only: what lies in a ring (a stadium's pitch) is an area of its own and paints on top.
+    for (const ring of joinRings(members("outer")).filter((r) => r.some(inside))) {
+      const pts = flat(ring)
+      areas.push({ kind, pts, ...tint(kind, rel.tags, rel.id, pts, inners.filter((h) => pointInPolygon(h[0] ?? 0, h[1] ?? 0, pts))) })
+    }
   }
 
   // Big areas first so small ones (ponds, parks) paint on top.

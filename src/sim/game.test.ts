@@ -9,6 +9,9 @@ import { CAR_HP, vitals } from "./damage.ts"
 import { rayWall } from "./hitscan.ts"
 import { give, type Gun } from "./weapons.ts"
 import { stepWalker } from "./pedestrians.ts"
+import { polygonArea } from "#/map/build.ts"
+import { centroid, pointInPolygon } from "#/world/geometry.ts"
+import { bridgeHoles, openRing, signedArea, triangulate } from "#/render/scene/geometry.ts"
 
 const map = Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8")))
 const world = makeWorld(map)
@@ -31,6 +34,42 @@ describe("Geretsried map", () => {
   it("has the town's streets and buildings", () => {
     expect(map.buildings.length).toBeGreaterThan(4000)
     expect(map.roads.some((r) => r.name === "Egerlandstraße")).toBe(true)
+  })
+})
+
+describe("the Karl-Lederer-Grundschule (OSM relation 2014408, a ring round a courtyard)", () => {
+  const school = must(map.buildings.find((b) => b.id === 2014408))
+  const poi = must(map.pois.find((p) => p.name === "Karl-Lederer-Grundschule Geretsried"))
+
+  it("is one building with the courtyard as a hole, and its POI stands in the courtyard on open ground", () => {
+    expect(school.holes).toHaveLength(1)
+    const court = must(school.holes?.[0])
+    expect(pointInPolygon(poi.x, poi.y, court)).toBe(true)
+    expect(world.isSolid(poi.x, poi.y)).toBe(false)
+  })
+
+  it("is solid in its wings", () => {
+    // Four fifths of the way from the courtyard's middle to an outline corner is inside the ring block.
+    const [cx, cy] = centroid(openRing(must(school.holes?.[0])))
+    const ring = openRing(school.pts)
+    const inWing = ring.flatMap((x, i) => (i % 2 === 0 ? [[cx + (x - cx) * 0.8, cy + ((ring[i + 1] ?? 0) - cy) * 0.8] as const] : []))
+    expect(inWing.filter(([x, y]) => world.isSolid(x, y)).length).toBeGreaterThan(inWing.length / 2)
+  })
+
+  it("gets a roof over the wings only", () => {
+    const roof = bridgeHoles(openRing(school.pts), (school.holes ?? []).map(openRing))
+    const tris = triangulate(roof, true)
+    let area = 0
+    for (let t = 0; t + 2 < tris.length; t += 3) area += Math.abs(signedArea([tris[t], tris[t + 1], tris[t + 2]].flatMap((i) => [roof[(i ?? 0) * 2] ?? 0, roof[(i ?? 0) * 2 + 1] ?? 0])))
+    expect(area).toBeCloseTo(polygonArea(school.pts) - polygonArea(school.holes?.[0] ?? []), 0)
+  })
+})
+
+describe("the hospital", () => {
+  it("is Dr. Schmucker's practice, the doctor nearest the start (a dentist or vet is no hospital)", () => {
+    const { hospital } = newGame(world, 1)
+    const nearest = map.pois.filter((p) => p.kind === "doctor").toSorted((a, b) => Math.hypot(a.x - hospital.x, a.y - hospital.y) - Math.hypot(b.x - hospital.x, b.y - hospital.y))[0]
+    expect(nearest?.name).toBe("Dr. Schmucker")
   })
 })
 

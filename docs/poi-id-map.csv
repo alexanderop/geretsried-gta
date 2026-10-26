@@ -1,0 +1,376 @@
+old_id,new_id,name,kind_old,kind_new
+1,1,Landgasthof Lacherdinger,food,food
+2,2,Schuhe Herrmann,shop,shop
+3,3,"Gasthaus ""Holzwirt""",food,food
+4,4,Freie Tankstelle,fuel,fuel
+5,5,Bäckerei Backhupferl,bakery,bakery
+6,6,Lidl,supermarket,supermarket
+7,7,KiK,shop,shop
+8,8,Fristo,shop,shop
+9,9,JYSK,shop,shop
+10,10,Netto Marken-Discount,supermarket,supermarket
+11,11,Quelle,shop,shop
+12,12,HoangAnh,food,food
+13,13,VR-Bank,bank,bank
+14,14,Isartaler Zweirad-Haus,shop,shop
+15,15,TEDi,shop,shop
+16,16,Ana’s Waschservice,shop,shop
+17,17,Juchheim Cosmetics,shop,shop
+18,18,Isar-Apotheke,pharmacy,pharmacy
+19,19,Italy,food,food
+20,20,Sparkasse,bank,bank
+21,21,Musik Dörfler,shop,shop
+22,22,Pho Viet Restaurant,food,food
+23,23,Bäckerei Lidl,bakery,bakery
+24,24,Kiosk Wendler,shop,shop
+25,25,Haardesign Erika,shop,shop
+26,26,KFZ-Meisterbetrieb Gerd Matheis,car_repair,car_repair
+27,27,Action,shop,shop
+28,28,Dahlhoff Feinkost,shop,shop
+29,29,Dr. Bundscherer Kinderarzt,doctor,doctor
+30,30,Tyczka GmbH,fuel,fuel
+31,31,Sonnenapotheke,pharmacy,pharmacy
+32,32,Dr.Stotzingen,doctor,doctor
+33,33,Cafe L´Arena,food,food
+34,34,Sparkasse,bank,bank
+35,35,Ihle,bakery,bakery
+36,36,Rossmann,drugstore,drugstore
+37,37,Stadtbibliothek Geretsried,civic,civic
+38,38,Staatliche Realschule Geretsried,school,school
+39,39,Gymnasium Geretsried,school,school
+40,40,HypoVereinsbank,bank,bank
+41,41,Traditionswerk Isartal,shop,shop
+42,42,Isartaler Backwerk,bakery,bakery
+43,43,Schmid-Bäck',food,food
+44,44,Völkers Bikeshop,shop,shop
+45,45,Hofpfisterei,bakery,bakery
+46,46,Bäckerei Mühlenbäck,bakery,bakery
+47,47,Dolce Gelato,food,food
+48,48,Mühlenbäck,bakery,bakery
+49,49,Amiti,car_repair,car_repair
+50,50,Intersport,shop,shop
+51,51,Dr. Heiner Müller,doctor,doctor
+52,52,Schmid-Bäck',bakery,bakery
+53,53,Edeka,supermarket,supermarket
+54,54,Haar Genau Friseurteam,shop,shop
+55,55,Landgasthof Lacherdinger,food,food
+56,56,Cafe Waldmann,food,food
+57,57,Munzur Kebap,food,food
+58,58,Restaurant Ammos,food,food
+59,59,Schreibwaren Schröter,shop,shop
+60,60,Bäckerei Konditorei Lidl GmbH,bakery,bakery
+61,61,C&A,shop,shop
+62,62,Karl 13,food,food
+63,63,K1 Kadem,shop,shop
+64,64,Hausarztpraxis Dr. Lenz,doctor,doctor
+65,65,Rossmann,drugstore,drugstore
+66,66,PENNY,supermarket,supermarket
+67,67,Ahorn Apotheke,pharmacy,pharmacy
+68,68,more & more,shop,shop
+69,69,Ernsting's family,shop,shop
+70,70,Dirtpark,shop,shop
+71,71,Orthopädie Isar-Loisachtal,doctor,doctor
+72,72,Il Soprano,food,food
+73,73,BRK KleiderMarkt,shop,shop
+74,74,Deichmann,shop,shop
+75,75,Subway,food,food
+76,76,Diveworld,shop,shop
+77,77,da Daniele,food,food
+78,78,BSZ Direktmarketing GmbH,shop,shop
+79,79,Piatsa,food,food
+80,80,Orterer Getränkemarkt,shop,shop
+81,81,Takko Fashion,shop,shop
+82,82,Denns BioMarkt,supermarket,supermarket
+83,83,Primo Pizza,food,food
+84,84,Klamottenfabrik,shop,shop
+85,85,TOP HAAR Friseur GmbH,shop,shop
+86,86,Piegsa Gesundheitshaus,shop,shop
+87,87,Hockey Sports Ott,shop,shop
+88,88,Auto Stapf,shop,shop
+89,89,Auto Stapf,car_repair,car_repair
+90,90,Iris Apotheke,pharmacy,pharmacy
+91,91,Praxis Dr. Sippel,doctor,doctor
+92,92,VR Bank München Land eG,bank,bank
+93,93,Die Dampfoase,supermarket,supermarket
+94,94,Paracelsus Apotheke,pharmacy,pharmacy
+95,95,Reisebüro Hecher,shop,shop
+96,96,Dr. Brechtelsbauer,doctor,doctor
+97,97,Zirngibl Bestattungen GmbH,shop,shop
+98,98,Arztpraxis Lewke,doctor,doctor
+99,99,Die drei Friseure,shop,shop
+100,100,EDEKA,supermarket,supermarket
+101,101,Back & Snack,bakery,bakery
+102,102,Thalia,shop,shop
+103,103,Automobilwerkstatt Wilhelm,car_repair,car_repair
+104,104,Frankenberger Goldschmiede,shop,shop
+105,105,Apollo Optik Geretsried,shop,shop
+106,106,Bäckerei Manfred Burger,bakery,bakery
+107,107,Haarstudio Christina,shop,shop
+108,108,Sitzmacher,shop,shop
+109,109,Zum Alten Öl,food,food
+110,110,Premio,car_repair,car_repair
+111,111,Fahrzeugtechnik CM,car_repair,car_repair
+112,112,Vinzenzmurr,shop,shop
+113,113,Friseur Elegance,shop,shop
+114,114,Nexial,shop,shop
+115,115,Optik Kind Geretsried-Zentrum II,shop,shop
+116,116,GG-Radsport,shop,shop
+117,117,KFZ-Technik Peter Stoiber,car_repair,car_repair
+118,118,Amormio Gelati Caffè,food,food
+119,119,Damaskus Markt,supermarket,supermarket
+120,120,Bistro Malor,food,food
+121,121,Dr. Schmucker,doctor,doctor
+122,122,Das Miedereck,shop,shop
+123,123,Dönerworks,food,food
+124,124,An Niehn Asian Streetfood,food,food
+125,125,"Cigo Kiosk, Lotto, DHL",shop,shop
+126,126,Brylka,car_repair,car_repair
+127,127,Hofladen Tonibauer,shop,shop
+128,128,Fitness Forum & Squash,gym,gym
+129,129,Aldi Süd,supermarket,supermarket
+130,130,Lotto- und Tabakladen Stirl,shop,shop
+131,131,Elegante Modeboutique,shop,shop
+132,132,Der Bauernladen,supermarket,supermarket
+133,133,Mix Land Markt,supermarket,supermarket
+134,134,B&L Hairstyling,shop,shop
+135,135,Sempol Imbiss,food,food
+136,136,Kiss der CarDoc,car_repair,car_repair
+137,137,KW-Bikes,shop,shop
+138,138,miwomo,shop,shop
+139,139,KIND Hörgeräte,shop,shop
+140,140,Bauer Gyn,doctor,doctor
+141,141,Le Nails Nagelstudio,shop,shop
+142,142,Orchidee Nagel Studio,shop,shop
+143,143,Lion‘s Barbershop,shop,shop
+144,144,Skin and Glow - Kosmetik,shop,shop
+145,145,Siegert's Hairstyle,shop,shop
+146,146,Augenoptik Pfeiffer,shop,shop
+147,147,Rialto Eiscafe Und Pizzeria,food,food
+148,148,Friseur Villa Jasmin,shop,shop
+149,149,Deutsche Post Filiale 470,post,post
+150,150,Deutsche Post Filiale 571,post,post
+151,151,Deutsche Post Filiale 569,post,post
+152,152,Flamingo Damenmode,shop,shop
+153,153,Marlis Frisierkommode,shop,shop
+154,154,Angel Nails,shop,shop
+155,155,Stroblume,shop,shop
+156,156,ALP Schuh- und Schlüsseldienst,shop,shop
+157,157,Aphrodite-aestetic,shop,shop
+158,158,Fellomenal Hundesalon,shop,shop
+159,159,Bellini,shop,shop
+160,160,Feinkost Christos,shop,shop
+161,161,Pia's Hair & Beauty,shop,shop
+162,162,Hermes Paketshop Schwägerl,post,post
+163,163,Hermes Paketshop Elegante,post,post
+164,164,Aram Döner,food,food
+165,165,Shinwari,food,food
+166,166,Woolworth,shop,shop
+167,167,Pizza Roma,food,food
+168,168,Rehmaus Apotheke,pharmacy,pharmacy
+169,169,Sun Style Bodystyling Studio,shop,shop
+170,170,Spielwaren Krömer,shop,shop
+171,171,Haardesign Irene,shop,shop
+172,172,SMBIKES,shop,shop
+173,173,Lotto im Opus G,shop,shop
+174,174,Rathaus Geretsried,civic,civic
+175,175,Mittelschule Geretsried,school,school
+176,176,Schulzentrum Geretsried,school,school
+177,177,Gaststätte Isarwinkel,food,food
+178,178,Audi;Seat;Škoda;Volkswagen,shop,shop
+179,179,Sportheim,food,food
+180,180,Kaufland,supermarket,supermarket
+181,181,Gasthof Geiger,food,food
+182,182,Fristo,shop,shop
+183,183,Penny,supermarket,supermarket
+184,184,Friedl Reifen & Kfz-Service,shop,shop
+185,185,BayWa,shop,shop
+186,186,Karl-Lederer-Hauptschule Geretsried,school,school
+187,187,Polizeiinspektion Geretsried,police,police
+188,188,Fliesenmarkt-Süd GmbH,shop,shop
+189,189,Franz-Marc-Schule,school,school
+190,190,Raiffeisenbank Isar-Loisachtal eG,bank,bank
+191,191,Zur Post,food,food
+192,192,Ratsstuben,food,food
+193,193,Isartaler Elektromarkt,shop,shop
+194,194,Hyundai,shop,shop
+195,195,Orterer Getränkemarkt,shop,shop
+196,196,Rewe To Go,supermarket,supermarket
+197,197,Elektro Friedl,shop,shop
+198,198,Michael Schmidt Motor GmbH,shop,shop
+199,199,Isar Kaufhaus,shop,shop
+200,200,Der neue Döner-Laden,food,food
+201,201,Füger Fachhandel,shop,shop
+202,202,Bestattung Klein oHG,shop,shop
+203,203,Autotechnik Dudek,car_repair,car_repair
+204,204,EDEKA,supermarket,supermarket
+205,205,Ratsstuben,food,food
+206,206,Wiedenbauer Fahrzeugtechnik,car_repair,car_repair
+207,207,Meyer Motor Cars,shop,shop
+208,208,Herbig Weinimport,shop,shop
+209,209,Yamaha,shop,shop
+210,210,BMW,shop,shop
+211,211,Biometzgerei Pichler Großhandel,shop,shop
+212,212,Isardammschule,school,school
+213,213,Cafeteria,food,food
+214,214,fair,shop,shop
+215,215,Esso,fuel,fuel
+216,216,Aral,fuel,fuel
+217,217,Occasione Mode & Livestyle,shop,shop
+218,218,Carglass,car_repair,car_repair
+219,219,Metzgerei Länger,shop,shop
+220,220,"Huber GmbH, Karosserie-Lack-Center",car_repair,car_repair
+221,221,EDEKA,supermarket,supermarket
+222,222,Blumenzauber und mehr,shop,shop
+223,223,Freie Waldorfschule Isartal,school,school
+224,224,Fisch & Feinkost Reeh,shop,shop
+225,225,Aldi Süd,supermarket,supermarket
+226,226,Kfz Meisterwerkstatt Wor Automobile,car_repair,car_repair
+227,227,L&R Automobile GbR,shop,shop
+228,228,Karl-Lederer-Grundschule Geretsried,school,school
+229,229,St. Leonhard,church,church
+230,230,Hl. Familie,church,church
+231,231,Petruskirche,church,church
+232,232,Maria Hilf,church,church
+233,233,Christuskirche,church,church
+234,234,Aussegnungshalle,church,church
+235,235,ClubVital,gym,gym
+236,236,Versicherungmakler Kafka,office,office
+237,237,Bodystreet,gym,gym
+238,238,Zahnärztin Dr. Marta Thum,health,health
+239,239,Zahnarztpraxis Geretsried Dr. Adina Landschoof,health,health
+240,240,Tina´s Fitnesstreff Geretsried,gym,gym
+241,241,Clever fit,gym,gym
+242,242,Pfarramt Maria Hilf,office,office
+243,243,Huber Präzisionstechnik GmbH,office,office
+244,244,DHL Packstation,parcel_locker,parcel_locker
+245,245,Das soziale Netzwerk,care_home,care_home
+246,246,Schlüsseldienst Geyer,office,office
+247,247,M1 Lounge,bar,bar
+248,248,Vegas Casino,bar,bar
+249,249,LVM,office,office
+250,250,Holzbau Vorholz Hawran GmbH,office,office
+251,251,XXXLutz Servicecenter,office,office
+252,252,Physio Geretsried,health,health
+253,253,Kinderland Geretsried,kindergarten,kindergarten
+254,254,Starke Bedachungen GmbH,office,office
+255,255,Formenbau Tränkl,office,office
+256,256,Isar Kurier,office,office
+257,257,Ernährungstherapie und Beratung,health,health
+258,258,Quality First Software GmbH,office,office
+259,259,Depner Immobilien Marketing,office,office
+260,260,Taxiunternehmen Kottysch,office,office
+261,261,DMG MORI Spare Parts GmbH,office,office
+262,262,Zahnzentrum Geretsried,health,health
+263,263,Stadtarchiv und Kulturbüro der Stadt Geretsried,office,office
+264,264,Simone Boll Photographie,office,office
+265,265,Michael Golmayer Kommuniktionstechnik,office,office
+266,266,Kleintierpraxis Dr. Barbara Homeier,health,health
+267,267,Wirth Steffen,health,health
+268,268,Verwaltung Junius,office,office
+269,269,Intec,office,office
+270,270,Isabel Grimm Steuerberaterin,office,office
+271,271,Uniccomp GmbH,office,office
+272,272,Bauer Kompressoren GmbH,office,office
+273,273,HUK-Coburg,office,office
+274,274,TherapierBar,health,health
+275,275,Ertugrul Gartenbau und Erdarbeiten,office,office
+276,276,Allgäuer Glaserei GmbH,office,office
+277,277,Formen- und Metallbau Berger GmbH,office,office
+278,278,W. Heiduk | Farbe | Raum | Konzept,office,office
+279,279,PHYSIO therapierbar,health,health
+280,280,DHL Packstation,parcel_locker,parcel_locker
+281,281,DHL Packstation,parcel_locker,parcel_locker
+282,282,Dr. med. vet. Inga Bräuning,health,health
+283,283,Johanniter Kinderhaus Zwergenland,kindergarten,kindergarten
+284,284,DHL Packstation,parcel_locker,parcel_locker
+285,285,Gemeinschaftspraxis Dres. Immertreu,health,health
+286,286,Profimeo,office,office
+287,287,D. Wagner Immobilien,office,office
+288,288,Bursch Immobilien GmbH,office,office
+289,289,Glaserei Farkasch,office,office
+290,290,DHL Packstation,parcel_locker,parcel_locker
+291,291,DHL Packstation,parcel_locker,parcel_locker
+292,292,Athletik Delta,gym,gym
+293,293,Tierärztin C. Schedel,health,health
+294,294,Christopherus Hospitzverein,health,health
+295,295,Fuch & Fuchs,office,office
+296,296,ambulantex,care_home,care_home
+297,297,Augentierarztpraxis Dr.med.vet. Gabriele Rogge,health,health
+298,298,Weidinger,office,office
+299,299,Vermas Versicherungs- und Finanzdienstleistungen,office,office
+300,300,Erle Elebnis Lernen e.V.,kindergarten,kindergarten
+301,301,Beautydate,office,office
+302,302,Rechtsanwalt Stevan Krnjaic,office,office
+303,303,FMDienste,office,office
+304,304,Selbstverteidigungsschule PT-Kubis,gym,gym
+305,305,Tierärztliche Praxis Dr. Heidi Buschmann,health,health
+306,306,DHL Packstation,parcel_locker,parcel_locker
+307,307,DHL Packstation,parcel_locker,parcel_locker
+308,308,BGS-Präzisionstechnik GmbH,office,office
+309,309,Psychotherapeutische Praxis für Kinder und Jugendliche Natascha Faust,health,health
+310,310,BaseFit Gesundheitszentrum,gym,gym
+311,311,Sägewerk Harrer,office,office
+312,312,Kindergarten Gelting,kindergarten,kindergarten
+313,313,Pflegeheim St. Ursula,care_home,care_home
+314,314,Classic ShishaBar Lounge Geretsried,bar,bar
+315,315,Fullhouse IT-Services AG,office,office
+316,316,Stadtwerke Geretsried,office,office
+317,317,ReLo Zahn,health,health
+318,318,Pulcra Chemicals,office,office
+319,319,Kinderland Gartenberg,kindergarten,kindergarten
+320,320,Sportschützenverein Geretsried e.V.,office,office
+321,321,Peter Müller Natursteine,office,office
+322,322,Kindergarten Ascholding,kindergarten,kindergarten
+323,323,Jacoby Messebau,office,office
+324,324,art-4-sign,office,office
+325,325,ADA Planungs- und Bauconsulting GmbH & Co. KG,office,office
+326,326,Metallbau Voggenreiter GmbH,office,office
+327,327,Steinmetzmeisterbetrieb Wagner,office,office
+328,328,Infoam GmbH,office,office
+329,329,"Marmor, Stein & Hofstetter GmbH",office,office
+330,330,"Alfons Hafenmayer Lager-, und Metallbearbeitung",office,office
+331,331,Hirschberger GmbH,office,office
+332,332,SILATEC Sicherheits- und Laminatglastechnik GmbH,office,office
+333,333,Deutsche Lebens-Rettungs-Gesellschaft,office,office
+334,334,Waldkindergarten Isartal e.V.,kindergarten,kindergarten
+335,335,Gemeinschaftsunterkunft für Asylbewerber,care_home,care_home
+336,336,CHT Geretsried,office,office
+337,337,Champini Sport- & Bewegungskita Geretsried,kindergarten,kindergarten
+338,338,Caritas,care_home,care_home
+339,339,Kindergarten des Diakonischen Werkes,kindergarten,kindergarten
+340,340,Sonnengarten,care_home,care_home
+341,341,Caritas Kindergarten,kindergarten,kindergarten
+342,342,"Haus Elisabeth, Betreutes Wohnen",care_home,care_home
+343,343,"Kindertagesstätte ""Isarkinder"" Ascholding",kindergarten,kindergarten
+344,344,Effenberger & Schäfer Metallbau GmbH,office,office
+345,345,Malerbetrieb RoVo UG,office,office
+346,346,BayWa AG Technik Geretsried - Gelting,office,office
+347,347,BRUMABA GmbH & Co.KG,office,office
+348,348,Papendick Antje,health,health
+349,337,Champini,kindergarten,kindergarten
+350,349,Kita Blechkiste,kindergarten,kindergarten
+351,350,Blechkiste,kindergarten,kindergarten
+352,351,Seniorendomizil Haus Elisabeth,care_home,care_home
+353,352,Sportstudio Innings,gym,gym
+354,353,BeaFit Frauenfigurstudio,gym,gym
+355,354,Lu Jong Yoga Studio,gym,gym
+356,355,Takt Tanz,gym,gym
+357,356,Carsten Schwarz Tanzstudio,gym,gym
+358,357,Muscle & Mind Bodyforming,gym,gym
+359,358,Elements Yoga und Pilates,gym,gym
+360,359,Fitness-Studio imPuls,gym,gym
+,360,Sport Center Hahn,,sport
+,361,Interkommunales Hallenbad Geretsried,,sport
+,362,Fahrschule Leirich,,office
+,363,Fahschule Schattschneider,,office
+,364,Staatliche Feuerwehrschule Geretsried,,school
+,365,Heinz-Schneider-Eisstadion,,sport
+,366,Kulturbühne Hinterhalt,,civic
+,367,Fahrschule kmh,,office
+,368,Isarau Stadion,,sport
+,369,Centrale Geretsried,,food
+,370,Café Bar DUO,,bar
+,371,Fahrzeugtechnik Seitz,,car_repair
+,372,Asien Perle,,food
+,373,Club57,,food
+,374,Restaurant Akropolis,,food

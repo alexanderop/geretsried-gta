@@ -4,6 +4,10 @@ data/raw.json
 *.tsbuildinfo
 test-results
 data/places.json
+data/places-more.json
+data/buildings-rel.json
+data/places-next.json
+data/areas-more.json
 compare
 data/dop40
 data/extra.json
