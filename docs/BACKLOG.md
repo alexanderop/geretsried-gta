@@ -37,6 +37,119 @@ Status values: `todo` (nothing yet) · `ref-done (partial)` (prompt written, som
 **Acceptance criteria:** `reference/` line in `.gitignore`; `git status` clean after adding files under `reference/`.
 **Done:** the unanchored `reference/` line ignores a `reference/` directory at any depth, so both `reference/<slug>/` (root, as the prompts use) and `docs/reference/<slug>/` stay local.
 
+### P-1 · Foto-Tour (Alex, Handy) — status: todo — Aufgabe für ALEX, nicht für Claude Code
+> **Claude Code: dieses Item NICHT bearbeiten.** Das ist ein Spaziergang für Alex mit dem Handy. Er liefert die Fotos, aus denen die
+> offenen "needs reference"-Stellen (Batches 1–6d, Start-Straßen, I-1/I-2-Orte, V-13) ihren Look bekommen. Erst danach werden die B-Items fertig.
+
+**So geht's:** pro Ort **2 Fotos**: frontal mit Schild + schräg. Was zusätzlich gebraucht wird, steht hinter dem Ort.
+Bei Tageslicht und von öffentlichem Grund aus. Keine Menschen oder Kennzeichen im Fokus (Schulen/Kitas am Wochenende).
+Fotos einfach in den Chat schicken. Der Scout legt sie in `reference/<slug>/` ab (gitignored) und aktualisiert `places/<slug>.md` + das B-Item.
+Abhaken hier, sobald das Foto im Chat ist. Nicht mehr gebraucht: HoangAnh, Ammos, Bistro Malor (Web-Fotos reichen).
+Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links dazu stehen unter jeder Runde.
+
+**Runde 1: Start → Am Stern → Ost → Süd (≈ 3,5 km)**
+
+*G1 · Start, Sudetenstraße Mitte (0–210 m)*
+- [ ] Sudetenstraße am Spawn: Straßenbild — Sudetenstr. 14–19 — SW-Zebrastreifen-Schild (VZ 350) + Blinklicht nah; runde blaue Tafel bei der Rehmaus; Parkstreifen + Laternen längs (start-area-streets)
+- [ ] Mühlenbäck (Detail) — Sudetenstr. 19 — Schild nah; Namen der Läden mit rotem Schild/roter Markise daneben (B2-1)
+- [ ] Rehmaus Apotheke (Detail) — Sudetenstr. 14 — rotes "A"-Schild + Banner nah; Arkade schräg, Bögen zählbar (B1-1)
+- [ ] VR Bank (Detail) — Sudetenstr. 11 — wo der Geldautomat sitzt (B6a-5)
+- [ ] Quelle — Beethovenweg 2 / Kirchweg — gibt's den Laden noch? Front oder leerer Laden (B6a-9)
+- [ ] Gaststätte Isarwinkel (Detail) — Richard-Wagner-Str. 14 — rundes Brauerei-Schild am Mast nah (B6a-10)
+- [ ] Versöhnungskirche — Richard-Wagner-Str. 3 — frontal + schräg (Sechseck-Module, Schindeln) (V-13 L15)
+
+*G2 · Breslauer Weg Nord (250–320 m)*
+- [ ] miwomo / THOMA Reisemobile — Breslauer Weg 9 — Front + Schild, falls vorhanden (B6b-1)
+- [ ] Spielplatz Breslauer Weg — Breslauer Weg — Geräte + Belag, Übersicht über den Zaun (B6d-13)
+
+*G3 · Am Stern: Sudetenstr. 20–43, Marienburgweg, Altvaterstraße, EDEKA (150–460 m)*
+- [ ] Flamingo Damenmode — Altvaterstr. 61 — Front + Schild (B4-10)
+- [ ] Fellomenal Hundesalon — Altvaterstr. 61 — gibt's den noch? Front oder leerer Laden (B4-11)
+- [ ] da Daniele (Detail) — Sudetenstr. 39 — Terrasse/Außenbereich (B3-7)
+- [ ] Post Filiale 571 (Detail) — Sudetenstr. 34 — Post-/DHL-Schild nah; ganze Höhe (Stockwerke) (B2-2)
+- [ ] PENNY · Rossmann · denns (Detail) — Sudetenstr. 43 / 33 / 29 C — jeweils die Eingangstür (B1-5, B3-3, B3-2)
+- [ ] Orterer · Takko · TEDi · Woolworth (Detail) — Sudetenstr. 29a / 29b / 26 / 27 — Plakat an der Orterer-Glasfront + was das Ding im Durchgang ist; Takko-Schriftzug nah; TEDi orange Wand unten; Woolworth-Logo nah (B3-5, B3-4, B4-1, B4-2)
+- [ ] Sun Style · Aphrodite · Spielwaren Krömer (Detail) — Sudetenstr. 24 / Marienburgweg 25 / Sudetenstr. 20 — Schilder nah für die Goldtöne/das Blau (B4-7, B4-5, B4-8)
+- [ ] EDEKA + Backhupferl — Breslauer Weg 113 — gelbes Band + Pylon am Parkplatz; Backhupferl-Theke drinnen nur, wenn's ohne Leute geht (B3-1, B4-9)
+
+*G4 · Ost: Breslauer Weg 103, Lausitzer Str., Sudetenstr. 47–50, Wallensteinstr. (500–790 m)*
+- [ ] Fitness Forum & Squash — Breslauer Weg 103 — Eingang + Schild; Biergarten (B6d-5)
+- [ ] Piatsa — Lausitzer Str. 12 — Mastschild nah; welche Tür Piatsa ist, welche Vegas Casino (B6d-2)
+- [ ] Werkstatt Wilhelm (Detail) — Wallensteinstr. 4 — Eingangstür + Werkstatttore (B2-3)
+- [ ] BSZ Direktmarketing — Wallensteinstr. 6b — Fassade, Ladetore, Schild (über die Hecke) (B6d-11)
+- [ ] Café Bar DUO — Sudetenstr. 47a — Front + Schild; welche Einheit (47 vs. 47a) (B6d-12)
+- [ ] Carglass — Sudetenstr. 50 — Werkstatttor; Nachbarhalle (wer drin ist) (B6d-1)
+
+*G5 · Süd: Benzweg, Spreestraße, Jeschkenstraße (680–820 m)*
+- [ ] Bäckerei Burger — Benzweg 2 — Drive-in-Spur (B6d-7)
+- [ ] KFZ Matheis — Spreestr. 11 — Halle, Tore + Schild (B6d-4)
+- [ ] Champini Kita — Jeschkenstr. 103 — Banner nah (Untertitel, Buchstabenfarben) (B6d-16)
+- [ ] Christuskirche — Jeschkenstr. 125 — Türmchen: schräg, so dass man sieht, wo es sitzt und wie hoch (B6d-10)
+
+Runde 1 in Maps (zu Fuß, 3 Etappen):
+[A](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.858199,11.483593&waypoints=47.860109,11.485324%7C47.85898,11.487694%7C47.856222,11.487093&destination=47.856796,11.489381) ·
+[B](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.856796,11.489381&waypoints=47.859275,11.492707%7C47.857163,11.492293%7C47.856083,11.493607&destination=47.855285,11.489584) ·
+[C](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.855285,11.489584&waypoints=47.852742,11.488782%7C47.852606,11.487225%7C47.851222,11.487208&destination=47.851528,11.486217)
+
+**Runde 2: J.-S.-Bach-Straße → Neuer Platz → Stadtwald → Waldfriedhof (≈ 3,5 km)**
+
+*G6 · Johann-Sebastian-Bach-Straße, Schulen (265–480 m)*
+- [ ] Karl-Lederer-Grundschule — J.-S.-Bach-Str. 4 — Fassade, Eingang, Holz-Geschoss (B6b-2)
+- [ ] Karl-Lederer-Mittelschule — J.-S.-Bach-Straße — Fassade, Eingang, Schulschild (B6b-4)
+- [ ] Maria Hilf (Detail) — J.-S.-Bach-Straße — Haupteingangs-Seite; Turm ganz drauf (Höhe, Dachfarbe) (B1-4)
+- [ ] Pia's Hair & Beauty — J.-S.-Bach-Str. 11a — Eingang + Schild (B6b-7)
+- [ ] Dr. Schmucker — J.-S.-Bach-Str. 13 — Praxisschild nah + Eingang (B6c-2)
+- [ ] Italy da Umile + Zirngibl Bestattungen — J.-S.-Bach-Str. 23 / 25 — Schilder nah, Mastschild; Zirngibl-Front (B6c-4)
+
+*G7 · Neuer Platz / Händelstraße (330–450 m)*
+- [ ] Sparkasse Stein (Detail) — Händelstraße — Südteil: ist der niedriger (Sockelbau)? (B1-2)
+- [ ] Juchheim Cosmetics — Neuer Platz 2 — Schild nah (heißt er noch so?) (B6c-3)
+- [ ] Centrale Geretsried — Neuer Platz 5 — Namensschild ("Centrale" oder "Coffeeholic") (B6d-12)
+- [ ] Feinkost Christos · Munzur Kebap (Detail) — Neuer Platz 7 / 3 — obere Fensterreihe; wie breit Munzur ist (B6c-1)
+- [ ] Hair & Style Bellini — Neuer Platz 22 — Front + Schild; welche Seite (Platz oder Parkplatz) (B6b-5)
+- [ ] Ana's Waschservice — Händelstr. 2 — Laden + Schild (Ana's oder ZER-O-WASH), wo im Block (B6b-8)
+- [ ] Friseurteam Haar Genau — Carl-Maria-von-Weber-Weg 34 — Front + Schild, welche Seite (B6b-3)
+
+*G8 · Westen: Franz-Marc-Schule, Stadtwald (670–790 m)*
+- [ ] Franz-Marc-Schule — Robert-Schumann-Weg 5 — Schulschild + Eingangsseite (B6d-6)
+- [ ] Verkehrsübungsplatz (optional) — bei der Franz-Marc-Schule — Schilder/Ampeln (B6d-14)
+- [ ] Spielplatz J.-S.-Bach-Straße — J.-S.-Bach-Str. (West) — Geräte, Übersicht (B6d-13)
+- [ ] Fitness-Station (beleuchtet) — Stadtwald, way 497511384 — Geräte + Boden (B6d-15)
+- [ ] Fitness-Station — Stadtwald, way 574767212 — Geräte + Boden (B6d-15)
+
+*G9 · Waldfriedhof (430–510 m)*
+- [ ] Aussegnungshalle — Waldfriedhof — Wände + Glockenturm schräg (B6c-5)
+- [ ] Waldfriedhof-Denkmäler — Kriegergedenkstätte + Fahnenmasten, 6 Stelen — je 1 Foto (V-13 L11/L12)
+
+Runde 2 in Maps (zu Fuß, 4 Etappen):
+[D](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.858199,11.483593&waypoints=47.85848,11.48083%7C47.856893,11.48216%7C47.856605,11.480952&destination=47.855842,11.480368) ·
+[E](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.855842,11.480368&waypoints=47.857099,11.477537%7C47.857555,11.477603%7C47.8577969,11.4785523&destination=47.858534,11.478787) ·
+[F](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.858534,11.478787&waypoints=47.858865,11.480063%7C47.856733,11.474448%7C47.858685,11.474506&destination=47.861853,11.474556) ·
+[G](https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=47.861853,11.474556&waypoints=47.862484,11.475803%7C47.862682,11.482214&destination=47.858199,11.483593)
+
+**Extra: mit Rad oder Auto (1–5 km, wenn du eh dort bist)**
+
+*G10 · West, Tattenkofener Straße (≈ 1,2 km)*
+- [ ] Gasthof Geiger (Detail) — Tattenkofener Str. 1 — Biergarten, Parkplatz, N/O/S-Seiten (B5-1)
+- [ ] Nikolauskapelle — bei der Tattenkofener Straße (way 822460728) — frontal + schräg (Achteck, Zwiebelturm) (V-13 L1)
+
+*G11 · Stadtmitte, Karl-Lederer-Platz / Egerlandstraße (≈ 2–3,3 km)*
+- [ ] Rathaus (Detail) — Karl-Lederer-Platz 1 — Turm ganz drauf (Höhe) (B1-3)
+- [ ] Gorilla · "Dialog" · Wasserträgerinnen + Bachlauf · Stele "Stadt Geretsried" — Karl-Lederer-Platz — je 1 Foto + Standort (V-13 L6–L9)
+- [ ] Petruskirche (Detail) — Egerlandstr. 39 — Eingangsgiebel frontal, Bronzeportal, Mosaik; Turm ganz drauf (B5-2)
+- [ ] Bäckerei Mühlenbäck Zentrum — Egerlandstr. 54 / Fasanenweg — Front + Schild, Sitzplätze (B5-3)
+- [ ] Schriftzug "Geretsried" (Skulptur) — node 2886910016 — 1 Foto (V-13 L10)
+- [ ] Kaufland (Detail) — Bayerwaldstr. 2 — Eingang, Parkplatzseite, Mall-Schilder, Ladesäule (B5-6)
+
+*G12 · V-13 Wahrzeichen weiter draußen (nur von außen/vom Weg)*
+- [ ] Blauer Bunker (nur vom Weg, einsturzgefährdet) · Kohlebunker Isardamm 20 · Kalkbrennofen am Isarufer — je 1–2 Fotos (V-13 L3, L2, L5)
+- [ ] Löschkette-Brunnen (Feuerwehrschule) · Obelisk Südrand — je 1 Foto (V-13 L14, L13)
+- [ ] Schloss Ascholding + St. Leonhard · St.-Anna-Kapelle Gelting · DITIB-Moschee · Erinnerungsort Badehaus — je 1–2 Fotos (V-13 L18, L16, L17, L19)
+- [ ] Ruine Werksgelände · drei Türme — was ist das? (V-13 L4, L20)
+
+**Noch nicht drin:** die 49 Orte aus 6e und die Gyms. Die sind noch nicht recherchiert; das macht zuerst der Scout per Street View, nach I-1.
+Fotos davon nur, wenn du eh vorbeiläufst.
+
 ### Batch 1: exterior only (decision)
 Batch 1 is **exterior-only** (Size S/M). There are no walk-in interiors, no roof fade, and no new `ShopKind`.
 - That way none of the five places needs the hard-wired Waldmann single-instance (`World.cafe`, `Chunk.cafe`, `roofAt`, `guests.ts`).
@@ -606,6 +719,10 @@ Size: S
   here; copy Codex output with `command cp -f`, or the old file silently stays.
 - **Start, phone, jobs:** unchanged (START, the home payphone and the brezn pickup #46 are not touched; nothing new is
   solid). The canopies hang at 2.55 m over the sidewalk, the board is a sprite.
+
+Follow-up (6d research, 2026-10-25, docs only; this item stays as built): newer Google Maps user photos (reference/hoanganh/30–32)
+show No. 17 as **HoangAnh** (gold 3D letters "HOÀNG ANH", red neon "Asiatische Küche", dark-grey frames, "NEUERÖFFNUNG").
+The sign for the No. 17 strips (wall 0 u 0.3–12.9) is now spec'd in B6a-2.
 
 ### B2-2 · Deutsche Post Filiale 571, Sudetenstraße 34 (#150, post) — Size: S — status: implemented (partial: shop widths, the canopy's depth and the yellow Post board are guesses; the photos were not on disk, so not compared with 01/02)
 ```
@@ -1898,7 +2015,7 @@ street frame), no interiors (#0c not needed), no new ShopKind. Rows are in the S
 reference/<slug>/ (gitignored by #0); docs: docs/places/<slug>.md. The first six sit in two OSM buildings right at the spawn:
 way 127604891 (Sudetenstr. 17–19: unit 17 · Angel Nails · Mühlenbäck) and way 127604887 (Sudetenstr. 11–15: VR-Bank · Bodystreet ·
 Stroblume · Dolce Gelato, NW→SE), both NE of Sudetenstraße (bearing 304°). Build B6a-1…B6a-5 as one pass so the signs line up.
-Open questions for Alex: HoangAnh vs Deliqos (B6a-2), Autohaus name (B6a-8), drop Quelle (B6a-9).
+Open questions for Alex: HoangAnh vs Deliqos (B6a-2; answered by photos 2026-10-25: HoangAnh is current), Autohaus name (B6a-8), drop Quelle (B6a-9).
 
 ### B6a-1 · Angel Nails, Sudetenstraße 19 (#154, shop) — Size: S — status: implemented (partial: box-sign and pillar depth, door/window widths, posters)
 ```
@@ -1933,11 +2050,20 @@ As built (2026-10-25):
 - Screenshots (local scratchpad `b6a-1/`): `before-spawn.png`, `play.png` (spawn), `play-crop.png`, `play-across.png` and
   `play-across-crop.png` (lettering and front from across the street), `overhead.png`, `overhead-crop.png`.
 
-### B6a-2 · HoangAnh, Sudetenstraße 17 (#12, food) — Size: S — status: todo (needs reference; ask Alex)
+### B6a-2 · HoangAnh, Sudetenstraße 17 (#12, food) — Size: S — status: ref-done (partial: sign width and terrace extent by screenshot)
 ```
-Unit 17 (NW end of way 127604891). Listings (2024–2026) and the Google pin say HoangAnh is open, but Street View (Aug 2022)
-shows the unit dressed as Deliqos Burger & Pizza (also listed at Sudetenstr. 17). No HoangAnh photo: nothing to build
-until Alex decides HoangAnh / Deliqos / both. See docs/places/hoanganh.md.
+Unit 17 (NW end of way 127604891). Answered by photos (2026-10-25): Google Maps user photos reference/hoanganh/30–32 show the
+white unit with gold 3D letters "HOÀNG ANH" and "NEUERÖFFNUNG" stickers, so HoangAnh is current; Deliqos (SV Aug 2022) is
+the old state. Keep the POI name.
+Goal: No. 17 reads as the HoangAnh restaurant: gold letters on white, red neon script, rattan chairs on the pavement.
+Reference: docs/places/hoanganh.md; reference/hoanganh/30 (day, key), 31–32 (night).
+Spec (via #0b): wallSign "HOÀNG ANH" in dark-gold letters (#5c543d range; no lighter) on the white wall above the windows,
+plus a red script strip "Asiatische Küche" (#e01e37 darkened) to its right, on the B2-1 No. 17 strips (wall 0 u 0.3–12.9),
+z ≈ 3.0–3.6 by eye; frames dark grey (#1a1b1f). Optional: 2–3 rattan table sprites on the pavement. No Deliqos dressing.
+Acceptance criteria:
+- [ ] From Sudetenstraße at the start, "HOÀNG ANH" reads above No. 17 like 30; the pavement stays walkable.
+- [ ] Only the No. 17 part of way 127604891 changes (B2-1's other units untouched); pnpm test + typecheck green.
+Size: S
 ```
 
 ### B6a-3 · Dolce Gelato, Sudetenstraße 15 (#47, food) — Size: S — status: implemented (partial: unit widths, awning and sign-box depth, glazing; no P sign or tree)
@@ -2110,6 +2236,12 @@ As built (2026-10-25):
 - Chunk hashes: before/after only chunk 1615 (the building's) differs. pnpm -s check green (252 tests).
 - Screenshots (local scratchpad `b6a-7/`): `play.png`, `play-across.png` + `play-across-crop.png` (sign), `overhead.png`
   + `overhead-crop.png`.
+
+Follow-up (6d research, 2026-10-25, docs only; this item stays as built): Google Maps user photo reference/bistro-malor/30 shows
+the **facade sign**: cream board "BISTRO MALOR" (dark capitals, the O a dark-red ring, small "BISTRO · RESTAURANT · PIZZERIA"
+line) left of the door, and the **terrace roof**: a large square **maroon parasol** (pyramid top, valance; = the dark-red roof in
+07). Facade light grey-white, 3 storeys, French balconies. Possible small follow-up: wallSign + maroon parasol (see
+docs/places/bistro-malor.md). Needs reference: none for these two.
 
 ### B6a-8 · Autohaus Billion, Sudetenstraße 25 (#178 "Audi;Seat;Škoda;Volkswagen", shop) — Size: S — status: implemented (partial: plate size/place, awning split, pylon/flag/car places, parallel parking)
 ```
@@ -2284,16 +2416,21 @@ Acceptance criteria:
 Size: S
 ```
 
-### B6b-6 · Restaurant Ammos, Neuer Platz 9 (#58, food) — Size: S — status: todo (needs facade reference)
+### B6b-6 · Restaurant Ammos, Neuer Platz 9 (#58, food) — Size: S — status: ref-done (partial: sign position and terrace extent by screenshot)
 ```
-Goal: Ammos' low building N of the Neuer Platz fountain gets its grey-green roof.
-Reference: docs/places/ammos.md; reference/ammos/01-dop20-ortho.jpg, 03/04 (LoD2).
+Goal: Ammos' low building N of the Neuer Platz fountain gets its grey-green roof, gold "Ammos" board and fenced terrace.
+Reference: docs/places/ammos.md; reference/ammos/01-dop20-ortho.jpg, 03/04 (LoD2), 30–31 (day, key), 32 (night entrance).
 Spec (via #0b):
 - POI "Restaurant Ammos" (#58 at 3655.2, 4645.4). Way 188651577: roof { colour: "#858d7e" } (engine has no DOP colour here);
   levels stay 2 (LoD2 eave 7.0 m, ridge 7.9 m).
-- Facade, sign, terrace furniture: needs reference (only an interior photosphere exists). No props.
+- Plaza face (photos 30–32): white upper floor (engine off-white), dark shopfront band with white "PAULANER" letters + round
+  Paulaner logo, gold/ochre board "Restaurant Ammos – Griechische Spezialitäten" (black script, darkened), dark-brown
+  timber cladding (#302428) above a white glass double door. Edge + u: screenshot vs 30/31.
+- Terrace (optional props): natural-wood picket fence (#a26927 darkened) with flower boxes, 2–4 blue Paulaner parasols
+  (#4d5f87), wicker table sprites. Extent: screenshot vs 30 + DOP 01.
 Acceptance criteria:
 - [ ] Roof colour matches 01. pnpm test + typecheck green.
+- [ ] From the plaza, the gold "Ammos" board and the dark PAULANER band read like 31; the plaza stays walkable.
 Size: S
 ```
 
@@ -2397,6 +2534,217 @@ Acceptance: only way 645297386 changes colour; save point still works; pnpm test
 See docs/places/aussegnungshalle.md.
 ```
 
+### Batch 6d: start area 318–821 m (decision)
+Same rules as 6a–6c: **exterior only** (Size S), everything through **#0b**, no interiors, no new ShopKind, NEVER invent
+appearance. **Dark GTA style (V header):** fix accuracy only; new tints sit inside the existing dark palette (nothing lighter
+than today's lightest ground/roof tone) and the average frame lightness at the six spots must not rise by more than ~3 %.
+Sources: Street View (Sept 2023 unless noted), web photos (Christuskirche, Franz-Marc-Schule, Burger; Google Maps user photos for
+Centrale, Ammos, HoangAnh, Bistro Malor; reference only),
+**BVV DOP20 + LoD2** (CC BY 4.0, "© Bayerische Vermessungsverwaltung – www.geodaten.bayern.de"), OSM. Hex values: SV pixel
+samples (walls in shade read bluish/grey, e.g. Lewke's white wall = #6c84a6; the docs give the perceived colour; for light walls
+prefer a web daylight photo) or DOP20 roof quartiles. Research notes:
+docs/work/6d-prep.md. Privacy: bystanders in schreibwaren-schroeter/01 blurred by us; 2026-10-25 also the web photos centrale-geretsried/31 (cropped
++ blurred: guests, a child, photographer's legs/bag) and 32, ammos/32, hoanganh/30 + 32, bistro-malor/30 (plates).
+Fixes found: the Neuer Platz pavilion in centrale-geretsried/01 is **Feinkost Christos**, not Centrale (B6d-12); Fitness Forum kind food → gym (already I-1 step 3); Occasione is "Mode & **Lifestyle**" (B6d-9); the
+"Laufbahnen" at the Franz-Marc-Schule are a **Verkehrsübungsplatz** (I-2 note, B6d-14); Carglass is **Sudetenstraße 50**.
+No usable Street View: Matheis, DUO, Franz-Marc-Schule (web photo only), BSZ (hedge), J.-S.-Bach playground, both fitness
+stations. B6d-1…11 = existing POIs; B6d-12…16 = new places that wait for I-1/I-2.
+
+### B6d-1 · Carglass, Sudetenstraße 50 (#218, car_repair) — Size: S — status: ref-done (front edge to confirm)
+```
+Goal: The small Carglass kiosk on Sudetenstraße becomes a low red box with its grey "CARGLASS" fascia.
+Reference: docs/places/carglass.md; reference/carglass/01, 03 (SV), 10–11 (DOP20).
+Spec (via #0b):
+- Way 772887800 (82 m², 12.5 × 6.6 m): levels 1 (LoD2 flat 3.6 m; engine has 2), roof { pitched: false, colour #cdc8c4 }
+  (DOP), wallColour #813b3c (red, SV).
+- wallSign "CARGLASS": red capitals on a dark grey fascia (#5f6060) with yellow/red arrow blocks at the left end, as a
+  strip z 2.6–3.2 along the front. Front = edge 3 (6.6 m, faces 31°, nearest Sudetenstraße) or edge 2 (12.5 m, faces 121°):
+  check in a screenshot against SV 03 before writing the entry.
+- Way 772887798 (same lot, 159 m²): levels 1, pitched: false (LoD2 flat 3.1–3.6 m; engine 2 levels pitched). No sign (which
+  business: needs reference).
+- No bay door / no props (not seen).
+Acceptance criteria:
+- [ ] Both boxes are single-storey and flat; no other building changes.
+- [ ] From Sudetenstraße the red box with the grey CARGLASS fascia reads like SV 03; places.test passes.
+- [ ] pnpm test + typecheck green.
+Size: S
+```
+
+### B6d-2 · Piatsa, Lausitzer Straße 12 (#79, food) — Size: S — status: ref-done (partial: sign illegible)
+```
+Goal: The long Piatsa / Vegas Casino building on Wallensteinstraße becomes the single-storey red-roofed restaurant from SV.
+Reference: docs/places/piatsa.md; reference/piatsa/01–02 (SV), 10–11.
+Spec (via #0b): way 189043196 (60.4 × 21.8 m): levels 1 (SV single storey; LoD2 main eave 3.0 m, ridge 8.1), pitched stays
+(SV: red clay hip roof; engine gable), keep the map roof colours (DOP #a67763 red part, #e3dee1 light NW part).
+- Optional: cream awning (#e9dcc6) as a plain wallSign strip on edge 4 (60.4 m, faces 51°, Wallensteinstraße side),
+  z 2.3–2.7, out 0.6; u range from a screenshot vs SV 01. Green terrace screens (#536b45) at the right end: optional sprite.
+- Piatsa = the red-roofed restaurant front with the cream awning and green screens (SV 01, edge 4). The Google listing
+  thumbnail reference/piatsa/30 (white part with roller shutters) may be a different unit or a neighbour: not used.
+- No sign: the pole sign text is not legible → needs reference (a photo of the Piatsa sign would also confirm the unit).
+Acceptance criteria:
+- [ ] Building is one storey with its pitched red roof; no other building changes.
+- [ ] pnpm test + typecheck green; places.test passes.
+Size: S
+```
+
+### B6d-3 · Arztpraxis Lewke, Adalbert-Stifter-Straße 43 (#98, doctor) — Size: S — status: ref-done
+```
+Goal: The doctor's house shows its dark red "Arzt-Praxis" board.
+Reference: docs/places/arztpraxis-lewke.md; reference/arztpraxis-lewke/01 (SV), 10–11.
+Spec (via #0b): way 188590009: massing stays (SV: 2 full storeys + roof windows; levels 2, pitched). Roof colour #767460 (DOP)
+or keep the map colour. wallColour engine off-white (white render; no lighter).
+- wallSign: dark aubergine board (#2f1d29) with beige "Arzt-Praxis" and white "Dorothea Lewke" (white stethoscope icon between
+  the words, small family pictogram; 3 tiny lines illegible → leave out), ≈ 1.8 × 0.9 m,
+  z ≈ 1.8–2.7, on the street side (edges 2–4 face 230°) left of the ground-floor windows: edge + u from a screenshot vs SV 01.
+- Do not move/rename the POI.
+Acceptance criteria:
+- [ ] Sign readable from the play camera on the street side; only this building changes.
+- [ ] pnpm test + typecheck green; places.test passes.
+Size: S
+```
+
+### B6d-4 · KFZ-Meisterbetrieb Gerd Matheis, Spreestraße 11 (#26, car_repair) — Size: S — status: ref-done (partial: massing; facade/sign need reference)
+```
+Massing only (no Street View: hedge on Dieselweg). Way 1319566946 (No. 11) stays levels 2 + pitched (LoD2 gable 7.5 / eave
+4.7). Neighbour No. 13, way 1319566945: engine draws it flat, LoD2 = 3 gables (7.3/4.6, 6.1/3.0, 9.7/8.4) → #0b pitched: true,
+colour stays #f6f4f7 (= DOP, not brightened); masses for the 3 gables optional. Workshop doors, sign: Alex's photo.
+Address check (2026-10-25): no conflict. OSM node + way 1319566946 = Spreestraße 11 (spelling "Spreestraße"), neighbour
+1319566945 = Spreestraße 13; all listings say Spreestraße 11. "Dieselweg" is only the street of the nearest SV pano.
+Acceptance: only ways 1319566945/-946 change; pnpm test + typecheck green. See docs/places/kfz-matheis.md.
+```
+
+### B6d-5 · Fitness Forum & Squash, Breslauer Weg 103 (#128, food → gym) — Size: S — status: ref-done (partial: massing ok; entrance/sign need reference)
+```
+Nothing to build: way 188648201 is already right (SV Nov 2022 through trees: long 2-storey flat-roof block; LoD2 flat 7.4 m;
+engine levels 2, flat #dbd5d0 ≈ DOP). The POI kind fix (food → gym) is I-1 step 3; do not duplicate it here. Entrance, sign,
+beer garden: needs reference. See docs/places/fitness-forum-squash.md.
+```
+
+### B6d-6 · Franz-Marc-Schule, Robert-Schumann-Weg 5 (#189, school) — Size: S — status: ref-done (partial: web photo only)
+```
+No Street View. Massing already matches (web photos 20 + 30: white panel-clad 2-storey flat block, dark window bands, glazed
+entrance where two wings meet; LoD2 flat 8.4 / 7.3 m, gym
+gable 7.1 m). Optional: roof colour #a3a28f (DOP: PV) on way 128271980; shed way 822457546 (26 m², engine 2 levels pitched,
+no LoD2) → levels 1 after a DOP check. Entrance side + school sign: needs reference.
+Acceptance: only those ways change; pnpm test + typecheck green. See docs/places/franz-marc-schule.md.
+```
+
+### B6d-7 · Bäckerei Manfred Burger, Benzweg 2 (#106, bakery) — Size: S — status: ref-done (drive-in needs reference)
+```
+Goal: The Burger bakery becomes the 2-storey timber-and-white building with its pergola sign, as on Benzweg.
+Reference: docs/places/baeckerei-burger.md; reference/baeckerei-burger/01–02 (SV), 20 (web, small), 10–11.
+Spec (via #0b): way 191449964 (32.1 × 17.8 m):
+- levels 2 (SV: 2 storeys; LoD2 eave 5.1), roof { pitched: true, colour #a27969 } (SV: shallow pitched, wide overhang; DOP
+  red-brown tiles; the LoD2 "flat" is wrong).
+- bands: z 0–3 white render (engine off-white, not lighter), z 3–6 timber boards #796255.
+- wallSign "Bäckerei & Konditorei Manfred Burger" + "www.burger-baeckerei.de" (brown on cream, ≈ #958a81 in shade) on edge 0
+  (32 m, faces 22°, Benzweg), z 2.2–2.9, out 0.4, at the W end (u ≈ 20–25 by eye): check in a screenshot.
+- Optional sprite: pergola with benches in front of edge 0. Drive-in lane: needs reference (not seen).
+Acceptance criteria:
+- [ ] Building is 2 storeys with a pitched red-brown roof; timber upper band visible; no other building changes.
+- [ ] Sign readable from Benzweg; pnpm test + typecheck green; places.test passes.
+Size: S
+```
+
+### B6d-8 · Schreibwaren Schröter, Adalbert-Stifter-Straße 39 (#59, shop) — Size: S — status: ref-done (front edge to confirm)
+```
+Goal: Schröter's corner becomes the 3-storey cream block with the red shop wing, blue/white awning and "Schröter" sign.
+Reference: docs/places/schreibwaren-schroeter.md; reference/schreibwaren-schroeter/01–02 (SV), 10–11.
+Spec (via #0b), way 668663477 (414 m²), masses (LoD2 walls):
+- main block (LoD2 4603829, 242 m²): levels 3 (eave 10.6), pitched; shop wing (4604182, 113 m²): levels 2 (eave 7.3), pitched.
+  Roof colour #c6b9a8 (DOP). Engine today: levels 2, flat. No hip roof in the engine → gable.
+- Shop wing street face (edge 4, 12.7 m, faces 231°, or edge 3, 12.0 m, 218°; screenshot vs SV 01): red ground floor
+  #691718 (plain wallSign z 0–3 or a band if it can be limited to the wing), blue/white striped awning strip (#1e2661 + white)
+  z 2.6–3.0, out 0.6; wallSign "Schröter" (black + red/black swoosh logo on white) ≈ 2.2 × 0.8 m, z 3.2–4.0. Upper floor cream
+  #9f928a (shade sample; use the engine's cream, not lighter).
+- Do B6d-9 (Occasione annex, same address) in the same PR.
+Acceptance criteria:
+- [ ] Block 3 storeys + 2-storey wing, masses tile the footprint (places.test); no other building changes.
+- [ ] From Adalbert-Stifter-Straße: red shop front, awning, "Schröter" sign like SV 01. pnpm test + typecheck green.
+Size: S
+```
+
+### B6d-9 · Occasione Mode & Lifestyle, Adalbert-Stifter-Straße 39 (#217, shop) — Size: S — status: ref-done
+```
+Goal: The small clothes shop in front of Schröter's block becomes single-storey with its canopy sign; its name is fixed.
+Reference: docs/places/occasione.md; reference/occasione/01 (SV July 2022), 02 (gable sign), 10–11.
+Spec (via #0b): way 668663478 (77 m²): levels 1 (LoD2 flat 3.9; engine 2), roof { pitched: false, colour #7f7f6a } (DOP).
+- wallSign on edge 1 (10.2 m, faces 315°, St.-Hubertus-Straße side) at the canopy fascia, z 2.6–3.4, out 0.6: grey-beige panel
+  (#796e60), "OCCASIONE" dark serif with a red tick over the I + red underline, second line "Mode & Lifestyle". Canopy edge
+  dark grey #54555d.
+- Name fix: POI "Occasione Mode & Livestyle" → "Occasione Mode & Lifestyle" (both signs + web). Same small typed override by
+  OSM id as the B6b-5 Bellini fix (POI from way 668663478); check no code looks it up by the old name.
+Acceptance criteria:
+- [ ] Annex is one storey, flat; sign readable; HUD shows "Occasione Mode & Lifestyle"; no other POI name changed.
+- [ ] pnpm test + typecheck green; places.test passes.
+Size: S
+```
+
+### B6d-10 · Christuskirche, Jeschkenstraße 125 (#233, church) — Size: S — status: ref-done (partial: turret needs reference)
+```
+Way 127872148 (L-shape, 501 m²): levels 2 stay (LoD2 eave 4.9: 6 m is closer than 3 m), pitched, roof colour #695b4b (DOP;
+darker than today's #7a6a59), wallColour engine off-white (SV + web: white render, six round-arched windows, glazed porch).
+No name sign (only a notice board) → no wallSign. White bell turret with cross: a `tower` part would fit, but position and
+height need reference (LoD2 has no separate part) → leave out. Front = edge 3 (20.8 m, faces 30°).
+Acceptance: only way 127872148 changes; pnpm test + typecheck green. See docs/places/christuskirche.md.
+```
+
+### B6d-11 · BSZ Direktmarketing GmbH, Wallensteinstraße 6b (#78, shop) — Size: S — status: ref-done (partial: roof; facade/sign need reference)
+```
+Roof fix only: way 191461638: roof { pitched: true, colour #a9a69f } (LoD2 gable 9.8 / eave 7.6; SV: shallow grey roof above
+the hedge; DOP: PV on both slopes); levels 2 stay. Facade, loading doors, sign: hidden by a conifer hedge → needs reference.
+Note: it is BSZ GmbH (direct marketing + logistics, B2B); OSM tags it shop=stationery. POI stays; OSM fix is Alex's call.
+Acceptance: only way 191461638 changes; pnpm test + typecheck green. See docs/places/bsz-direktmarketing.md.
+```
+
+### B6d-12 · Centrale Geretsried + Café Bar DUO (hand-added POIs) — Size: S — status: blocked by I-2 (Centrale sign + DUO need reference)
+```
+Depends on: I-2 step 3 (both POIs are hand-added there) and B6c-1 (Centrale's building 127604896 gets its flat roof there).
+Correction (2026-10-25): the pavilion in centrale-geretsried/01 is **Feinkost Christos**. Centrale is the neighbouring terrace
+unit in the same block (web photos 30–32: dark-red awning, yellow König Ludwig and cream parasols, a red Coca-Cola parasol,
+grey wicker chairs, dark-framed glass front).
+After I-2: check in a screenshot that the Centrale icon sits on Centrale's terrace unit (not on Feinkost Christos) and the
+DUO icon on way 1385177375 (Sudetenstraße 47a), not in the road (I-2 "Done when"). No #0b change: Centrale massing = B6c-1; DUO
+massing stays (levels 2, pitched, LoD2 eave 4.1). Optional after I-2: dark-red awning strip (#5c1418) + 2–3 darkened parasols.
+Signs: Centrale (no name sign in 30–32) and DUO (no SV) need reference.
+See docs/places/centrale-geretsried.md, cafe-bar-duo.md.
+```
+
+### B6d-13 · Playgrounds Breslauer Weg + J.-S.-Bach-Straße — Size: S — status: blocked by I-2 (equipment needs reference)
+```
+Depends on: I-2 step 1 (playground AreaKind, DOP centroid tint).
+After I-2, check the two tints: Breslauer Weg (way 1271723892) lies under canopy → dark green (#44512e range, fine);
+J.-S.-Bach-Straße (way 122032725) → sand (#a8896b range): keep it inside the dark palette (V rule; the patch is small).
+Optional later (needs Alex's photo for positions): Breslauer Weg fence (dark metal, gate) and sprites for the light-yellow
+slide + wooden frame (SV 01–02); J.-S.-Bach equipment unknown. See docs/places/spielplatz-*.md.
+```
+
+### B6d-14 · Verkehrsübungsplatz Franz-Marc-Schule (ex "Laufbahnen") — Size: S — status: blocked by I-2
+```
+Depends on: I-2 step 1 (track AreaKind). The 5 track ways (258497399–402, 269909762, surface asphalt) are a children's traffic
+training course in recreation_ground 258497403 "Verkehrsübungsplatz", not running tracks. I-2 already paints asphalt tracks
+grey → right. After I-2: screenshot vs reference/verkehrsuebungsplatz-franz-marc-schule/10 (DOP20): grey lanes round 3 lawn
+islands. Optional later: white lane/stop markings. See docs/places/verkehrsuebungsplatz-franz-marc-schule.md.
+```
+
+### B6d-15 · Fitness-Stations ways 574767212 + 497511384 (Stadtwald) — Size: S — status: blocked by I-2 (needs reference)
+```
+Depends on: I-2 step 1 (fitness_station → pitch). 574767212 is under canopy (DOP #262e23) → stays dark; 497511384 is a light
+bark/sand patch (DOP #e0c5a4): don't use that raw hex (lighter than the lightest ground tone), pick the nearest muted
+existing ground tint. Equipment: Alex's photo. See docs/places/fitness-station-*.md.
+```
+
+### B6d-16 · Champini Sport- & Bewegungskita, Jeschkenstraße 103 — Size: S — status: blocked by I-1 (ref-done)
+```
+Depends on: I-1 (kindergarten kind gives the POI; I-2 step 2 dedupes it with grounds way 1271723889).
+Goal: The Kita reads as the white building with lime-green bands from SV.
+Spec (via #0b): way 524105770: massing stays (levels 2, flat, LoD2 6.5 m). bands: z 0–0.5 dark grey #2a2f33 (plain plinth),
+z 2.6–3.2 lime green #8b954b (plain, between the window rows); wallColour engine off-white. Front = edge 1 (32 m, faces 19°,
+Jeschkenstraße). Banner over the recessed lime-green entrance (E end): white banner, "CHAMPINI" in multicoloured letters
+(subtitle illegible) → optional small wallSign "CHAMPINI"; letter colours are a guess, subtitle left out.
+Acceptance: only way 524105770 changes; pnpm test + typecheck green; places.test passes. See docs/places/champini-kita.md.
+```
+
 ## Start area (everything within ~800 m of the start)
 
 Start = Sudetenstraße 19 spawn at map (3997.4, 4648.0). Radius 800 m, map metres (project.ts). Source: public/geretsried.map.json pois
@@ -2408,7 +2756,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
 | 154 | Angel Nails | shop | 3 | implemented (partial) |
-| 12 | HoangAnh | food | 6 | todo (needs reference; unit shows Deliqos) |
+| 12 | HoangAnh | food | 6 | ref-done (partial: B6a-2; photos show HoangAnh, Deliqos was 2022) |
 | 47 | Dolce Gelato | food | 20 | implemented (partial) |
 | 155 | Stroblume | shop | 29 | implemented (partial) |
 | 13 | VR-Bank | bank | 48 | implemented (partial) |
@@ -2427,7 +2775,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 315 | ref-done (partial: massing; name kept, merger noted) |
 | 159 | Bellini | shop | 330 | ref-done (partial: massing + rename to Hair & Style Bellini) |
 | 152 | Flamingo Damenmode | shop | 341 | todo (needs reference; B4-10) |
-| 58 | Restaurant Ammos | food | 342 | todo (needs facade reference; massing ref-done) |
+| 58 | Restaurant Ammos | food | 342 | ref-done (partial: B6b-6; facade + terrace from web photos) |
 | 158 | Fellomenal Hundesalon | shop | 343 | todo (needs reference, probably moved; B4-11) |
 | 161 | Pia's Hair & Beauty | shop | 356 | todo (needs facade reference; massing ref-done) |
 | 16 | Ana’s Waschservice | shop | 360 | ref-done (partial: massing; name kept, ZER-O-WASH possible successor) |
@@ -2446,33 +2794,33 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 | 97 | Zirngibl Bestattungen GmbH | shop | 484 | todo (needs facade reference; massing in B6c-4) |
 | 234 | Aussegnungshalle | church | 509 | ref-done (partial: roof B6c-5; walls/tower need reference) |
 
-### 6d
+### 6d (captured/researched 2026-10-25: B6d-1…B6d-16)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 218 | Carglass | car_repair | 552 | todo |
-| 79 | Piatsa | food | 659 | todo |
-| 98 | Arztpraxis Lewke | doctor | 664 | todo |
-| 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 678 | todo |
-| 128 | Fitness Forum & Squash | food | 690 | todo |
-| 189 | Franz-Marc-Schule | school | 701 | todo |
-| 106 | Bäckerei Manfred Burger | bakery | 720 | todo |
-| 59 | Schreibwaren Schröter | shop | 726 | todo |
-| 217 | Occasione Mode & Livestyle | shop | 750 | todo |
-| 233 | Christuskirche | church | 767 | todo |
-| 78 | BSZ Direktmarketing GmbH | shop | 783 | todo |
+| 218 | Carglass | car_repair | 552 | ref-done (B6d-1; Sudetenstraße 50; front edge to confirm) |
+| 79 | Piatsa | food | 659 | ref-done (partial: B6d-2; sign illegible, unit from SV 01) |
+| 98 | Arztpraxis Lewke | doctor | 664 | ref-done (B6d-3) |
+| 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 678 | todo (needs reference: no SV, hedge; massing in B6d-4) |
+| 128 | Fitness Forum & Squash | food | 690 | ref-done (partial: B6d-5, massing ok; kind → gym in I-1 step 3; entrance/sign need reference) |
+| 189 | Franz-Marc-Schule | school | 701 | ref-done (partial: B6d-6; no SV, 2 web photos; sign needs reference) |
+| 106 | Bäckerei Manfred Burger | bakery | 720 | ref-done (B6d-7; drive-in needs reference) |
+| 59 | Schreibwaren Schröter | shop | 726 | ref-done (B6d-8; front edge to confirm) |
+| 217 | Occasione Mode & Livestyle | shop | 750 | ref-done (B6d-9; rename to "Occasione Mode & Lifestyle") |
+| 233 | Christuskirche | church | 767 | ref-done (partial: B6d-10; turret needs reference) |
+| 78 | BSZ Direktmarketing GmbH | shop | 783 | ref-done (partial: B6d-11 roof; facade/sign need reference, hedge) |
 
-6d, new (added 2026-10-25 from the gap check; not POIs/areas yet: pending I-1/I-2). Capture the exterior now with the rest
-of 6d (Street View still to do); the #id comes from docs/poi-id-map.csv once imported.
+6d, new (added 2026-10-25 from the gap check; not POIs/areas yet: pending I-1/I-2). Captured with the rest of 6d (SV +
+DOP20, B6d-12…16); the #id comes from docs/poi-id-map.csv once imported.
 | # | Name | Kind | lat, lon | map x, y | m from start | Status |
 |---|---|---|---|---|---|---|
-| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | todo (needs reference: surface + equipment, DOP20 + SV) |
-| — | Centrale Geretsried (ex Coffeeholic), Neuer Platz 5 | food (hand-added, I-2) | 47.8577969, 11.4785523 | 3621.4, 4692.7 | 379 | todo (needs facade + sign reference; which name is on the sign?) |
-| — | Café Bar DUO, Sudetenstraße 47a | bar (hand-added, I-2) | 47.8561907, 11.4897066 | 4453.4, 4871.3 | 508 | todo (needs facade reference; same block as Takt Tanz, no. 47) |
-| — | Laufbahnen Franz-Marc-Schule (ways 258497399–402, 269909762, asphalt) | track area (I-2) | 47.8579, 11.4746 | 3330, 4680 | 660–690 | todo (needs reference: lanes/markings, DOP20) |
-| — | Spielplatz J.-S.-Bach-Straße (way 122032725, public) | playground area (I-2) | 47.858685, 11.474506 | 3319.6, 4594.0 | 680 | todo (needs reference) |
-| — | Fitness-Station (way 574767212) near St 2369 | pitch area (I-2) | 47.862484, 11.475803 | 3416.3, 4171.5 | 751 | todo (needs reference; 127 m off the road, probably no SV: DOP20) |
-| — | Fitness-Station (way 497511384, lit) near St 2369 | pitch area (I-2) | 47.861853, 11.474556 | 3323.3, 4241.7 | 787 | todo (needs reference; DOP20) |
-| — | Champini Sport- & Bewegungskita, Jeschkenstraße 103 (way 524105770) | kindergarten (I-1) | 47.851222, 11.487208 | 4267.0, 5423.8 | 821 | todo (needs facade reference; just over 800 m) |
+| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | ref-done (partial: B6d-13; fence/slide seen, surface under canopy) |
+| — | Centrale Geretsried (ex Coffeeholic), Neuer Platz 5 | food (hand-added, I-2) | 47.8577969, 11.4785523 | 3621.4, 4692.7 | 379 | ref-done (partial: B6d-12; terrace from web photos, the 01 pavilion is Feinkost Christos; sign/name needs reference) |
+| — | Café Bar DUO, Sudetenstraße 47a | bar (hand-added, I-2) | 47.8561907, 11.4897066 | 4453.4, 4871.3 | 508 | todo (needs reference: no SV; B6d-12; same block as Takt Tanz, no. 47) |
+| — | Verkehrsübungsplatz Franz-Marc-Schule (was "Laufbahnen"; ways 258497399–402, 269909762, asphalt, in recreation_ground 258497403) | track area (I-2) | 47.8579, 11.4746 | 3330, 4680 | 660–690 | ref-done (B6d-14; layout from DOP20) |
+| — | Spielplatz J.-S.-Bach-Straße (way 122032725, public) | playground area (I-2) | 47.858685, 11.474506 | 3319.6, 4594.0 | 680 | todo (needs reference: SV sees only trees; B6d-13) |
+| — | Fitness-Station (way 574767212) near St 2369 | pitch area (I-2) | 47.862484, 11.475803 | 3416.3, 4171.5 | 751 | todo (needs reference: under canopy, no SV; B6d-15) |
+| — | Fitness-Station (way 497511384, lit) near St 2369 | pitch area (I-2) | 47.861853, 11.474556 | 3323.3, 4241.7 | 787 | todo (needs reference: DOP20 only; B6d-15) |
+| — | Champini Sport- & Bewegungskita, Jeschkenstraße 103 (way 524105770) | kindergarten (I-1) | 47.851222, 11.487208 | 4267.0, 5423.8 | 821 | ref-done (B6d-16, after I-1) |
 Not added: Indian Palace, Sudetenstraße 47 (no sign of being open: only old directory entries); see I-2 step 3.
 
 ### Already done in the start area (no capture needed)
@@ -2711,6 +3059,9 @@ Change:
    New AreaKinds (types.ts + areaKind() + AREA_LOOK, keep it minimal):
      playground      leisure=playground (ways + relations). NOT nodes (2 in bbox: skip).
      track           leisure=track (running/athletics/long-jump; relation 16929053 is the tartan track at Jahnstraße).
+                     Note (6d, 2026-10-25): the 5 asphalt ways at the Franz-Marc-Schule (258497399–402, 269909762) are a
+                     Verkehrsübungsplatz (children's traffic course, recreation_ground 258497403), not running tracks; still
+                     track + asphalt grey (B6d-14).
      fitness_station → reuse "pitch" (small outdoor exercise patches, no new kind).
    Skip leisure=stadium as an AREA on purpose: its outline wraps the pitch/track areas that already render; painting it would
    cover them. Stadiums become POIs (step 2). Do NOT import leisure=swimming_pool at all: 19 in bbox, all unnamed, 18 are
@@ -2788,7 +3139,7 @@ Done when:
 - every check-list row is a POI (print table: row, POI id, distance, kind) and the area counts above match (print per kind,
   before/after); no old POI lost (all names + positions ≤ 1 m, from poi-id-map.csv), no old area or building changed;
 - in game (screenshots): the Breslauer Weg playground (map ≈ 4303, 4561, 318 m NE of the start) and the J.-S.-Bach-Straße
-  playground (≈ 3320, 4594) show as their own ground patch, not lawn; the Franz-Marc tracks (≈ 3330, 4680) read as grey
+  playground (≈ 3320, 4594) show as their own ground patch, not lawn; the Franz-Marc Verkehrsübungsplatz lanes (≈ 3330, 4680) read as grey
   asphalt strips; the tartan track at Jahnstraße reads red-brown; the Hallenbad and Isarau Stadion carry a "sport" label;
   Café Bar DUO and Centrale Geretsried icons sit on their buildings (Sudetenstraße 47a, Neuer Platz 5), not in the road;
 - findHospital still picks Dr. Schmucker; places.test passes; `pnpm check` + `pnpm build` pass; the game starts at
@@ -3029,7 +3380,7 @@ Done when:
 
 Order: P1 batch → gameplay places → landmarks/anchors → services → food → generic shops. Within a tier, nearest to the start (Sudetenstraße 19) first. Duplicate names are separate OSM objects; `#` = row id in `pois.csv`.
 
-### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2 · batch 6a = start area nearest 10 (B6a-1…B6a-10) · batch 6b = start area next 8 (B6b-1…B6b-8, massing only)
+### P1 — Batch 1 (scouted; prompts above: B1-1…B1-5) ⭐ · batch 2 = the ref-done rows in P2 (prompts B2-1…B2-5) · batch 3 = Am Stern (B3-0…B3-7), rows in P3–P6 · batch 4 = Am Stern small shops (B4-1…B4-11) · batch 5 = job places (B5-1…B5-6), rows in P2 · batch 6a = start area nearest 10 (B6a-1…B6a-10) · batch 6b = start area next 8 (B6b-1…B6b-8, massing only) · batch 6d = start area 318–821 m (B6d-1…B6d-16; 12–16 wait for I-1/I-2)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
 | 232 | Maria Hilf | church | 3831.3, 4907.8 | 47.855863, 11.481366 | 309 | implemented (partial) | save point (Jesus Saves); Johann-Sebastian-Bach-Straße |
@@ -3065,8 +3416,8 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 186 | Karl-Lederer-Hauptschule Geretsried | school | 3740.9, 4830.9 | 47.856555, 11.480154 | 315 | ref-done (partial) | B6b-4. Now Karl-Lederer-Mittelschule; merger by 2029–2031 (name kept); LoD2 ~13 m |
 | 204 | EDEKA | supermarket | 4429.1, 4804.1 | 47.856796, 11.489381 | 459 | implemented (partial) | B3-1; EDEKA Heininger & Dietz, Breslauer Weg 113; flat hall, yellow band, porthole upper wall |
 | 234 | Aussegnungshalle | church | 3894.5, 4149.6 | 47.862682, 11.482214 | 509 | ref-done (partial) | B6c-5. Roof orange + PV (#e19f6b); mono-pitch not modelled; bell tower outside footprint |
-| 189 | Franz-Marc-Schule | school | 3315.3, 4811.1 | 47.856733, 11.474448 | 702 | todo |  |
-| 233 | Christuskirche | church | 4193.1, 5389.8 | 47.851528, 11.486217 | 767 | todo |  |
+| 189 | Franz-Marc-Schule | school | 3315.3, 4811.1 | 47.856733, 11.474448 | 702 | ref-done (partial) | B6d-6. No SV; web photo: 2-storey flat block; massing ok |
+| 233 | Christuskirche | church | 4193.1, 5389.8 | 47.851528, 11.486217 | 767 | ref-done (partial) | B6d-10. Baptist church; roof colour; turret needs reference |
 | 10 | Netto Marken-Discount | supermarket | 4504.9, 5450.7 | 47.850981, 11.490397 | 949 | todo |  |
 | 215 | Esso | fuel | 4842.4, 5157.2 | 47.85362, 11.494922 | 986 | todo |  |
 | 175 | Mittelschule Geretsried | school | 3217.6, 3632.8 | 47.867329, 11.473139 | 1280 | todo |  |
@@ -3109,8 +3460,8 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | ref-done | B6c-2. J.-S.-Bach-Str. 13a; block → levels 4 |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo (needs reference) | B6c-2 (height only). Sign illegible; findHospital respawn point |
 | 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo | needs reference: counter inside EDEKA, no photo (B4-9) |
-| 98 | Arztpraxis Lewke | doctor | 3695.3, 4056.5 | 47.863519, 11.479543 | 664 | todo |  |
-| 106 | Bäckerei Manfred Burger | bakery | 4384.4, 5254.9 | 47.852742, 11.488782 | 720 | todo |  |
+| 98 | Arztpraxis Lewke | doctor | 3695.3, 4056.5 | 47.863519, 11.479543 | 664 | ref-done | B6d-3. "Arzt-Praxis" board |
+| 106 | Bäckerei Manfred Burger | bakery | 4384.4, 5254.9 | 47.852742, 11.488782 | 720 | ref-done | B6d-7. 2 storeys, pitched (LoD2 "flat" is wrong) |
 | 23 | Bäckerei Lidl | bakery | 3376, 5874.7 | 47.847168, 11.475262 | 1375 | todo |  |
 | 60 | Bäckerei Konditorei Lidl GmbH | bakery | 3152.3, 3303.7 | 47.870289, 11.472263 | 1588 | todo |  |
 | 71 | Orthopädie Isar-Loisachtal | doctor | 3144.7, 3265.3 | 47.870634, 11.472161 | 1625 | todo |  |
@@ -3134,16 +3485,16 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 ### P5 — food & drink (nearest to start first)
 | # | Name | Kind | x, y (m) | lat, lon | m from start | Status | Note |
 |---|---|---|---|---|---|---|---|
-| 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | todo (needs reference; unit shows Deliqos) | B6a-2. Sudetenstraße 17. SV 2022 shows Deliqos at this unit; listings say HoangAnh open. Ask Alex |
+| 12 | HoangAnh | food | 3992.7, 4644.1 | 47.858235, 11.48353 | 6 | ref-done (partial) | B6a-2. Sudetenstraße 17. Web photos: gold "HOÀNG ANH" letters, NEUERÖFFNUNG; Deliqos was the 2022 SV state |
 | 47 | Dolce Gelato | food | 3980.5, 4636.4 | 47.858304, 11.483367 | 21 | implemented (partial) | B6a-3. Sudetenstraße 15 |
 | 120 | Bistro Malor | food | 3929.9, 4632.5 | 47.858339, 11.482688 | 70 | implemented (partial) | B6a-7. Sudetenstraße 10, terrace by the KIND corner; facade sign needs reference |
 | 177 | Gaststätte Isarwinkel | food | 3890.5, 4793.3 | 47.856893, 11.48216 | 181 | implemented (partial) | B6a-10. Richard-Wagner-Straße 14 (not Sudetenstraße); pole brewery logo needs reference |
 | 77 | da Daniele | food | 4280.4, 4816.7 | 47.856682, 11.487388 | 329 | implemented (partial) | B3-7; crimson fascia; terrace not seen (needs reference) |
-| 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | todo (needs facade reference) | B6b-6. Neuer Platz 9; roof #858d7e; front needs reference |
+| 58 | Restaurant Ammos | food | 3655.2, 4645.4 | 47.858223, 11.479005 | 343 | ref-done (partial) | B6b-6. Neuer Platz 9; roof #858d7e; gold Ammos board, PAULANER band, picket-fence terrace (web) |
 | 57 | Munzur Kebap | food | 3607.4, 4689.2 | 47.857829, 11.478365 | 393 | ref-done (partial) | B6c-1. Munzur Kebap & Imbiss, Neuer Platz 3; same footprint as #160 |
 | 19 | Italy | food | 3545.7, 4770.4 | 47.857099, 11.477537 | 468 | ref-done (partial) | B6c-4. "Italy da Umile"; massing only, signage needs reference |
-| 79 | Piatsa | food | 4646.3, 4763.3 | 47.857163, 11.492293 | 659 | todo |  |
-| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | todo | WRONG KIND: is a gym (Breslauer Weg 103); food only because OSM node 9955217554 is amenity=pub. Fix in I-1 |
+| 79 | Piatsa | food | 4646.3, 4763.3 | 47.857163, 11.492293 | 659 | ref-done (partial) | B6d-2. 1 storey; sign illegible |
+| 128 | Fitness Forum & Squash | food | 4677.2, 4528.4 | 47.859275, 11.492707 | 690 | ref-done (partial) | B6d-5 (massing ok). WRONG KIND: is a gym (Breslauer Weg 103); food only because OSM node 9955217554 is amenity=pub. Fix in I-1 |
 | 22 | Pho Viet Restaurant | food | 3358, 5828.9 | 47.847579, 11.475021 | 1343 | todo |  |
 | 213 | Cafeteria | food | 5192.3, 5297.5 | 47.852358, 11.499613 | 1360 | todo |  |
 | 135 | Sempol Imbiss | food | 5005.2, 5567.9 | 47.849927, 11.497105 | 1364 | todo |  |
@@ -3199,11 +3550,11 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 73 | BRK KleiderMarkt | shop | 3691.5, 4872.7 | 47.856179, 11.479492 | 380 | ref-done | B6c-2. J.-S.-Bach-Str. 13, SE end of the block |
 | 17 | Juchheim Cosmetics | shop | 3582.7, 4710.5 | 47.857637, 11.478033 | 420 | ref-done (partial) | B6c-3. Massing only; web shows "Isar Nails und Beauty" → sign check |
 | 97 | Zirngibl Bestattungen GmbH | shop | 3524.7, 4750.8 | 47.857275, 11.477256 | 484 | todo (needs facade reference) | B6c-4 (height only). OSM operator unverified |
-| 218 | Carglass | car_repair | 4444.2, 4972.1 | 47.855285, 11.489584 | 552 | todo |  |
-| 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 4268.3, 5270 | 47.852606, 11.487225 | 678 | todo |  |
-| 59 | Schreibwaren Schröter | shop | 3655.5, 4007.1 | 47.863963, 11.479009 | 727 | todo |  |
-| 217 | Occasione Mode & Livestyle | shop | 3644.3, 3986.2 | 47.864151, 11.478859 | 750 | todo |  |
-| 78 | BSZ Direktmarketing GmbH | shop | 4744.3, 4883.4 | 47.856083, 11.493607 | 783 | todo |  |
+| 218 | Carglass | car_repair | 4444.2, 4972.1 | 47.855285, 11.489584 | 552 | ref-done | B6d-1. Address Sudetenstraße 50 (OSM has none); red kiosk, 1 level |
+| 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 4268.3, 5270 | 47.852606, 11.487225 | 678 | todo | B6d-4 massing only; needs reference (no SV); address Spreestraße 11 checked, no conflict |
+| 59 | Schreibwaren Schröter | shop | 3655.5, 4007.1 | 47.863963, 11.479009 | 727 | ref-done | B6d-8. 3-storey block + red shop wing, masses |
+| 217 | Occasione Mode & Livestyle | shop | 3644.3, 3986.2 | 47.864151, 11.478859 | 750 | ref-done | B6d-9. Name fix: "Occasione Mode & Lifestyle" (signs + web) |
+| 78 | BSZ Direktmarketing GmbH | shop | 4744.3, 4883.4 | 47.856083, 11.493607 | 783 | ref-done (partial) | B6d-11. Roof → gable + PV; B2B firm (BSZ GmbH), not a shop |
 | 110 | Premio | car_repair | 4719.9, 5087.2 | 47.85425, 11.49328 | 845 | todo |  |
 | 27 | Action | shop | 4524.8, 5429.5 | 47.851171, 11.490664 | 943 | todo |  |
 | 227 | L&R Automobile GbR | shop | 4878.4, 5172.5 | 47.853483, 11.495405 | 1025 | todo |  |
