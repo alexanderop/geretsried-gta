@@ -3,7 +3,7 @@ import { Schema } from "effect"
 import { describe, expect, it } from "vitest"
 import { GameMap } from "#/map/types.ts"
 import { makeWorld } from "#/world/world.ts"
-import { carOutline, type Car } from "./car.ts"
+import { CAR_LENGTH, CAR_WIDTH, carOutline, type Car } from "./car.ts"
 import { DT, newGame, step, type Game, type Input } from "./game.ts"
 import { CAR_HP, vitals } from "./damage.ts"
 import { rayWall } from "./hitscan.ts"
@@ -16,6 +16,12 @@ const idle: Input = { up: false, down: false, left: false, right: false, handbra
 const must = <T,>(value: T | null | undefined): T => {
   if (value == null) throw new Error("expected a value")
   return value
+}
+/** Is (x, y) on a car's sprite, parked at (c.x, c.y) facing c.angle? */
+const inCar = (c: { readonly x: number; readonly y: number; readonly angle: number }, x: number, y: number) => {
+  const along = (x - c.x) * Math.cos(c.angle) + (y - c.y) * Math.sin(c.angle)
+  const across = -(x - c.x) * Math.sin(c.angle) + (y - c.y) * Math.cos(c.angle)
+  return Math.abs(along) < CAR_LENGTH / 2 && Math.abs(across) < CAR_WIDTH / 2
 }
 const run = (game: ReturnType<typeof newGame>, input: Input, seconds: number) => {
   for (let t = 0; t < seconds / DT; t++) step(world, game, input)
@@ -81,6 +87,24 @@ describe("pedestrians", () => {
     const inside = game.walkers.filter((w) => world.isSolid(w.x, w.y))
     expect(inside.length).toBeLessThan(game.walkers.length * 0.05)
     for (const w of game.walkers) expect(world.roadAt(w.x, w.y, 4)).not.toBeNull()
+  })
+
+  it("walk past parked cars, at the kerb and on Sudetenstraße, not through them", () => {
+    const game = newGame(world, 21)
+    const profileCars = world.streets.flatMap((s) => s.parked)
+    let ticks = 0
+    let inside = 0
+    for (let t = 0; t < 20 / DT; t++) {
+      step(world, game, idle)
+      for (const w of game.walkers) {
+        if (w.dead || w.down > 0 || w.visit !== undefined) continue
+        ticks++
+        if ([...game.parked, ...profileCars].some((c) => inCar(c, w.x, w.y))) inside++
+      }
+    }
+    expect(game.parked.length).toBeGreaterThan(30)
+    // Before walkers kept clear of them, about 3 in 100 walker-ticks were inside a parked car.
+    expect(inside).toBeLessThan(ticks * 0.0005)
   })
 
   it("jump out of the way of a speeding car, or get knocked down", () => {

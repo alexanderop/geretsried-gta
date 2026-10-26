@@ -48,6 +48,10 @@ const cellOf = (x: number, y: number) => Math.floor(x / CELL_M) * 4096 + Math.fl
 /** How far from a street's centre line its parked cars stand: half on the kerb, LANE_CLEAR from the moving lane. */
 export const kerbOffset = (road: Road): number => Math.max(road.width / 2 - CAR_WIDTH / 2, (road.oneway ? 0 : road.width / 4) + LANE_CLEAR)
 
+/** Does a street have kerbside slots at all: one people park along, with room for a car beside its lanes on the carriageway? */
+export const parksAlong = (road: Road): boolean =>
+  KINDS.has(road.kind) && !(road.oneway && road.width < ONEWAY_MIN_W) && kerbOffset(road) - CAR_WIDTH / 2 <= road.width / 2
+
 const cache = new WeakMap<World, ReadonlyArray<Slot>>()
 
 /** Every kerbside slot in town. */
@@ -89,10 +93,9 @@ const makeSlots = (world: World): Array<Slot> => {
   }
   const out: Array<Slot> = []
   map.roads.forEach((road, ri) => {
-    if (!KINDS.has(road.kind) || (road.oneway && road.width < ONEWAY_MIN_W)) return
-    const offset = kerbOffset(road)
     // The car's road side must still be on the carriageway: no parking out on the pavement.
-    if (offset - CAR_WIDTH / 2 > road.width / 2) return
+    if (!parksAlong(road)) return
+    const offset = kerbOffset(road)
     const count = road.pts.length / 2
     const station = [0]
     for (let i = 1; i < count; i++) station.push((station[i - 1] ?? 0) + Math.hypot((road.pts[i * 2] ?? 0) - (road.pts[i * 2 - 2] ?? 0), (road.pts[i * 2 + 1] ?? 0) - (road.pts[i * 2 - 1] ?? 0)))

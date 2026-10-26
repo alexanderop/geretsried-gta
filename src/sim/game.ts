@@ -374,7 +374,7 @@ export const step = (world: World, game: Game, input: Input): void => {
     const wasDead = w.dead
     // Cafe guests follow their visit until something knocks them down.
     if (w.visit !== undefined && !w.dead && w.down <= 0) stepGuest(world, w, game.walkers, DT, game.random)
-    else stepWalker(world, w, threat, DT, game.random)
+    else stepWalker(world, w, threat, DT, game.random, game.parked)
     // Knocked over by the car (no gore: they get up again, or just lie there), and the police care.
     if (!wasDown && w.down > 0 && threat !== null && w.vitals.lastHit === "car") commit(game.wanted, "pedestrian")
     // Burnt to death: the player lit the fire.
