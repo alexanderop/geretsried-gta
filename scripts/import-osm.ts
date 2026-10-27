@@ -17,6 +17,7 @@ import { PLACES as DRESSINGS } from "../src/world/places/index.ts"
 import { encodeCrowns } from "../src/map/crowns.ts"
 import { encodePng } from "../src/map/png.ts"
 import { groundTint, readPhoto } from "../src/map/photo.ts"
+import { GROUND_FIXES } from "../src/map/ground-fixes.ts"
 import { loadPhoto } from "./dop40.ts"
 import { BBOX } from "./bbox.ts"
 
@@ -308,7 +309,7 @@ const program = Effect.gen(function* () {
     furniture: located(furnitureElements),
   })
   for (const t of tints) yield* Console.log(`area tint ${t}`)
-  const { map, crowns, paved } = readPhoto(dressMap(built, DRESSINGS), photo)
+  const { map, crowns, paved } = readPhoto(dressMap(built, DRESSINGS), photo, GROUND_FIXES)
   const wayBuildings = new Set(ways.filter((w) => w.tags.building !== undefined).map((w) => w.id))
   for (const rel of relationBuildings(buildingRelations, wayBuildings, BBOX, lod2Levels.relations))
     yield* Console.log(`relation building ${rel.id} ${rel.name === "" ? "(unnamed)" : rel.name}: ${rel.area} m², ${rel.status === "new" ? `new, ${rel.buildings.reduce((n, b) => n + (b.holes?.length ?? 0), 0)} courtyard(s)` : "duplicate of a way building, skipped"}`)

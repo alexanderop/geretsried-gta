@@ -30,6 +30,7 @@
 | reference/penny-sudetenstrasse/04-satellite.png | long terracotta-roof blocks around a round plaza | Google Maps satellite, cropped to the aerial only (Maps UI removed) |
 | reference/penny-sudetenstrasse/05-street-entrance.png | NW facade of 822461881 from the car park: Penny boards at the NE end, da Daniele, Ahorn, pylon | Street View in the car park (date not given in the capture notes) |
 | reference/penny-sudetenstrasse/06-street-carpark.png | Car park from Sudetenstraße; Penny block on the right, Penny sign at its far (NE) end | Street View, Sudetenstraße |
+| reference/rossmann-am-stern/40-alex-parkplatz.jpg | NW facade of 822461881 across the car park: PENNY Am Stern, da Daniele, Ahorn Apotheke, pylon (sunny, from the W) | Foto Alex Opalic, 2026-10-27 |
 
 ## Look spec (only what's seen)
 | Element | Seen | Hex (sampled) |
@@ -41,7 +42,8 @@
 | Pylon | tall red post at the car-park entrance, several panels, PENNY on top | red as the sign |
 | Roofs | terracotta, pitched | DOP `#d9a180` |
 | Penny canopy (05, da-daniele/02) | free-standing red canopy on posts in front of the NE end, "PENNY." white + yellow dot, "Am Stern" small white; trolleys under it | shade `#871b21` / `#86272c`; sunlit red from 01 `#e7595e` |
-| Penny entrance | glass front behind the canopy at the NE end of the NW facade; exact door position **needs reference** | — |
+| Penny entrance | glass front behind the canopy at the NE end of the NW facade; exact door position **needs reference** (rossmann/40 sees the board, not the door) | — |
+| Storeys (rossmann/40) | from the W: shop floor + **3 balcony storeys** + a **set-back white top storey** behind a terracotta roof band (5 levels, same total as above) | roof band `#7e5249` |
 | Block (05/06) | 822461881: white render, continuous **balconies with grey steel railings**; ground floor of shops + **4 balcony storeys** (≈ 5 storeys vs engine 2) | wall in shade `#aab1bc`; fascia band in shade `#a3aebe`; rails dark grey |
 | Pylon (05) | red, panels PENNY Am Stern (top), ROSSMANN (white), Ahorn Apotheke (green, red A), **Schlüsseldienst GEYER** (white) | red `#a2333b` (shade), green `#669c36` |
 | Store interior | not seen → not needed (exterior only) | — |

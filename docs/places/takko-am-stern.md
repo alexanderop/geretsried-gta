@@ -19,6 +19,7 @@
 | reference/takko-am-stern/02-street-side.png | Looking NW: Orterer arcade in front, TAKKO further on | same |
 | reference/takko-am-stern/03-street-other.png | SE corner with arcade and crates (= orterer/03) | same |
 | reference/takko-am-stern/04-satellite.png | West complex from above | Google Maps satellite |
+| reference/denns-biomarkt/40-alex-durchgang.jpg | Passage side: yellow TAKKO box sign over the arcade, clothes racks under it (seen at an angle) | Foto Alex Opalic, 2026-10-27 |
 
 ## Look spec (only what's seen)
 | Element | Seen | Hex (sampled) |
@@ -26,7 +27,8 @@
 | Sign | rectangular **yellow-orange panel** with dark "TAKKO" lettering, on the white band | `#e9cb76` (sunlit, slightly washed) |
 | Shop front | glazing with window displays | — |
 | Block above | white balcony block (same as Denns) | `#fcfcfe` |
-| Exact lettering colour / logo detail | small at this resolution → **needs reference** | — |
+| Passage side (denns/40) | Takko also faces the **passage arcade**: a **yellow box sign** (proud of the wall) with "TAKKO" on the white wall over the arcade's NE half, and **clothes racks** out under the arcade | box `#fedb61` (sunny, phone) |
+| Exact lettering colour / logo detail | dark lettering, but only seen edge-on in 40 → still **needs reference** | — |
 
 ## Engine terms
 - Wall-sign panel (square-ish, not a full-width strip) on the middle of the SW frontage; glass strip under it.

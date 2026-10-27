@@ -47,7 +47,7 @@ Fotos einfach in den Chat schicken. Der Scout legt sie in `reference/<slug>/` ab
 Abhaken hier, sobald das Foto im Chat ist. Nicht mehr gebraucht: HoangAnh, Ammos, Bistro Malor (Web-Fotos reichen).
 Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links dazu stehen unter jeder Runde.
 
-**Stand 2026-10-26:** 2 Orte der Liste fertig (Spielplatz Breslauer Weg, EDEKA Band + Pylon) + 2 Extras (Seitz, Königsberger Weg). Offen: Backhupferl und der Rest.
+**Stand 2026-10-27:** 3 Orte der Liste fertig (Spielplatz Breslauer Weg, EDEKA Band + Pylon, denns-Eingang) + 2 Extras (Seitz, Königsberger Weg). Teilfotos Am Stern: Rossmann-Block + Parkplatz, Durchgang Orterer/Takko (2026-10-27). Offen: Backhupferl, PENNY- und Rossmann-Tür und der Rest.
 
 **Runde 1: Start → Am Stern → Ost → Süd (≈ 3,5 km)**
 
@@ -70,8 +70,9 @@ Jede Gruppe ist eine Etappe in Google Maps (zu Fuß, Koordinaten). Die Links daz
 - [ ] Fellomenal Hundesalon — Altvaterstr. 61 — gibt's den noch? Front oder leerer Laden (B4-11)
 - [ ] da Daniele (Detail) — Sudetenstr. 39 — Terrasse/Außenbereich (B3-7)
 - [ ] Post Filiale 571 (Detail) — Sudetenstr. 34 — Post-/DHL-Schild nah; ganze Höhe (Stockwerke) (B2-2)
-- [ ] PENNY · Rossmann · denns (Detail) — Sudetenstr. 43 / 33 / 29 C — jeweils die Eingangstür (B1-5, B3-3, B3-2)
-- [ ] Orterer · Takko · TEDi · Woolworth (Detail) — Sudetenstr. 29a / 29b / 26 / 27 — Plakat an der Orterer-Glasfront + was das Ding im Durchgang ist; Takko-Schriftzug nah; TEDi orange Wand unten; Woolworth-Logo nah (B3-5, B3-4, B4-1, B4-2)
+- [x] denns (Detail) — Sudetenstr. 29 C — Eingangstür (B3-2) — Foto 2026-10-27 → `reference/denns-biomarkt/40` (Tür an der Stirnwand am Ende des Durchgangs, nicht an der Sudetenstraße)
+- [ ] PENNY · Rossmann (Detail) — Sudetenstr. 43 / 33 — jeweils die Eingangstür (B1-5, B3-3) — `reference/rossmann-am-stern/40` (2026-10-27) zeigt beide Fronten, aber zu weit weg für die Türen
+- [ ] Orterer · Takko · TEDi · Woolworth (Detail) — Sudetenstr. 29a / 29b / 26 / 27 — Plakat an der Orterer-Glasfront + was das Ding im Durchgang ist; Takko-Schriftzug nah; TEDi orange Wand unten; Woolworth-Logo nah (B3-5, B3-4, B4-1, B4-2) — Teil 2026-10-27 in `reference/denns-biomarkt/40`: Durchgang (offenes Pflaster, Fahrradbügel, Einkaufswagen-Häuschen), Orterer-Schild am Durchgang, TAKKO-Box schräg. Noch offen: Plakat, Takko-Schriftzug frontal, TEDi, Woolworth
 - [ ] Sun Style · Aphrodite · Spielwaren Krömer (Detail) — Sudetenstr. 24 / Marienburgweg 25 / Sudetenstr. 20 — Schilder nah für die Goldtöne/das Blau (B4-7, B4-5, B4-8)
 - [x] EDEKA — Breslauer Weg 113 — gelbes Band + Pylon am Parkplatz (B3-1) — Foto 2026-10-26 → `reference/edeka-am-stern/40` (Ecke "113", Dachschild, Pylon an der Einfahrt)
 - [ ] Backhupferl (in der EDEKA) — Theke drinnen nur, wenn's ohne Leute geht (B4-9)
@@ -1121,6 +1122,17 @@ Size: M
 - **Screenshots** (local): `?compare=47.85685,11.4876,90` from above; on foot at (4260, 4822) the pylon at the
   corner; at (4276, 4794) the canopy's red fascia with PENNY at the bottom right.
 
+**B3-0 follow-up (Alex's photo 2026-10-27, `reference/rossmann-am-stern/40-alex-parkplatz.jpg`; built 2026-10-27: Penny's three balcony rows + terracotta band, the passage ground; lamps and the set-back top storey not built):**
+- **Car park** from its W end looking SE: bays in grey concrete pavers `#ada299`, asphalt aisles `#a29894`, a planting
+  island with shrubs and young trees, **tall grey lamp posts with two lamps on a T-arm**. Penny block ahead with the pylon at
+  its right end, as built.
+- **Penny block from the W:** shop floor + 3 balcony storeys + a set-back white top storey behind a terracotta roof band
+  (5 levels); compare with the four balcony rows built along its car-park front.
+- **Right of the car park:** Sudetenstr. 28–32 (way 119921782, apartments, levels 3, gabled): white 3-storey block, dark
+  pitched roof, shops on the ground floor. Not part of B3-0.
+- **Passage** (`reference/denns-biomarkt/40-alex-durchgang.jpg`): open paving along the west block's wall 1, bike hoops, a low
+  dark canopy on legs at the planting strip, a glass trolley shelter at the car-park edge. What -156 is stays open (B3-5).
+
 ### B3-1 · EDEKA Heininger & Dietz, Breslauer Weg 113 (#204, supermarket) — Size: S — status: implemented (partial: the band, canopy and porthole heights, how far the band and glazing run, the portholes' spots, the NW glazing, the pylon's size and spot, the exact yellow and the roof board are guesses)
 ```
 Goal: A big flat EDEKA hall: yellow band with the blue EDEKA logo and "Heininger & Dietz" over a glazed front,
@@ -1218,6 +1230,19 @@ Size: S
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
   block's).
 
+**B3-2 follow-up (Alex's photo 2026-10-27, `reference/denns-biomarkt/40-alex-durchgang.jpg`; built 2026-10-27 on wall 2: glass front with the sliding door `denns-door`, white fascia with the letters, grey pillar, the "Bio Markt" discs, bike hoops, the low shelter roof and the glass trolley shelter; A-boards and basket racks not built):**
+- **Entrance found, and it is not on Sudetenstraße:** denns' door is on the **end wall at the NE end of the passage arcade**,
+  the short SW-facing edge (4203.3, 4746) → (4210.6, 4751) of way 127872184 (≈ 8.8 m, where the outline steps out to the car
+  park), ≈ 1 m in front of the OSM node. Read from the outline and the view direction, not measured.
+- **That wall:** white fascia the wall's width with green "denns BioMarkt" (`#60ac1b`, fascia `#e2e0e1`, sunny); under it a
+  full-height glass front with a central **sliding door**, posters, a grey "Bio" disc over the door; a grey square pillar at
+  the right end. In front: two light-green "Bio Markt" discs on a post (`#9bd291`), basket rack, A-boards, ≈ 4 silver bike
+  hoops along the planting strip.
+- **Above it:** the end building reads ground + 2 storeys, grey balcony slabs with glass/grey rails, grey concrete pillars, a
+  **red band** along the top storey (`#421114`, in the eave's shade) under a wide flat eave.
+- Today's B3-2 (letters + glazing on wall 0, Sudetenstraße) stays valid for that side; a door + second fascia on the passage
+  end wall would be a small follow-up if Alex wants it.
+
 ### B3-3 · Rossmann, Sudetenstraße 33 (#65, drugstore) — Size: S — status: implemented (partial: the balcony floors, the pillars' spacing, how far the glazing runs, the letters' spot and size, the chimneys' spots, height and size, and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: Red ROSSMANN letters on the white ground floor of the 3-storey balcony block with the terracotta roof.
@@ -1257,6 +1282,15 @@ Size: S
 - **Screenshots** (local): `?compare=47.85705,11.48705,40` from above (ROSSMANN board, chimney pairs); on foot at
   (4247, 4783) the band with the red letters' edge under the balconies.
 
+**B3-3 follow-up (Alex's photo 2026-10-27, `reference/rossmann-am-stern/40-alex-parkplatz.jpg`; built 2026-10-27: the two logo discs `rossmann-disc` and the Ladestation sign; the eave's rafters not built):**
+- Confirms the 3-storey read: ground floor + 2 storeys of **continuous galleries** (grey panel parapets `#9fa3a6`, grey
+  posts, dark window bands), wide eave with exposed rafters (soffit `#4f4a49`), grey downpipes.
+- Ground floor: white `#e4e3df`, **recessed bays between white square pillars** with the glazing set back. ROSSMANN letters
+  `#b85e66` (phone, sunny) with the O as the red logo disc.
+- **Red round logo discs** `#de2842` on the ground-floor wall: one at the NW end (high, under the first gallery), one at the SE
+  end. Blue **"Ladestation"** sign `#6480b3` at the NW end (OSM charging_station 6356242273 at (4230.4, 4764.6)).
+- Door: still not resolved (too far away), still needs reference.
+
 ### B3-4 · Takko Fashion, Sudetenstraße 29b (#81, shop) — Size: S — status: implemented (partial: where the glazing ends, the panel's spot and size, the lettering colour and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
 Goal: The yellow-orange TAKKO panel on the middle unit of the west block's Sudetenstraße front.
@@ -1285,6 +1319,10 @@ Size: S
   (too small in 01 to sample), the shop front's line. Not built: the entrance door (not seen), the poster stands.
 - **Every other chunk unchanged:** all 2111 chunk meshes hash identical before and after except chunk 1660 (the west
   block's).
+
+**B3-4 follow-up (Alex's photo 2026-10-27, `reference/denns-biomarkt/40-alex-durchgang.jpg`; built 2026-10-27: Takko's glazing under the link on wall 1 and the TAKKO box over the arcade's NE end; the racks not built):**
+- Takko also faces the **passage arcade (wall 1)**: a **yellow box sign** `#fedb61` with "TAKKO", proud of the white wall over
+  the arcade's NE half, and **clothes racks** out under the arcade. Lettering only seen edge-on: colour still needs reference.
 
 ### B3-5 · Orterer Getränkemarkt, Sudetenstraße 29a (#80, shop) — Size: S — status: implemented (partial: the pier's and corner opening's widths, the board's size and height, the wall-1 arcade's length, pillar size and spacing and the beam's depth, the small board's and the crate rows' spots, and the shop front standing flush with the balconies are guesses; no door drawn)
 ```
@@ -1334,6 +1372,17 @@ Size: S
   block's); with the west block skipped, all identical.
 - **Screenshots** (local): on foot at (4193, 4779) the crate rows at the corner; at (4200, 4772) the wall-1 beam with
   the small board beside -156; `?compare=47.85712,11.48605,28` from above.
+
+**B3-5 follow-up (Alex's photo 2026-10-27, `reference/denns-biomarkt/40-alex-durchgang.jpg`; built 2026-10-27: the arcade along all of wall 1 on pillars 4.5 m apart and 2.4 m out, the big board high over its S end; -156 and the passage's lawn and trees removed as aerial misreads via `src/map/ground-fixes.ts`, a planting strip in their place):**
+- **Passage board:** round-topped white board (`#eae3d7`) on the white wall over the arcade's S end, passage side: red diagonal
+  stripes with a white half-sun in the arch (`#741c31`, thin stripes sample dark), **blue "Orterer"** (`#205f9c`), red line,
+  blue "Getränke-Märkte"; a small "29a" plate under it. Larger than a "small board on the beam".
+- **Arcade, wall 1:** grey square pillars `#7f838c` ≈ 4–5 m apart, white render wall above `#b7b3b2`, glazing set back. Not all
+  Orterer: first bay a cart of blue screen-wash canisters + "-25 % / -30 %" posters, then Takko's clothes racks (B3-4), then
+  denns' end wall (B3-2). No crate stacks on the passage side in this photo.
+- **-156:** the paving in front of the arcade is open; the passage holds only bike hoops, a low dark canopy at the planting
+  strip and a glass trolley shelter by the car park. Which (if any) is -156 is not measurable → still open. Poster: still
+  needs reference.
 
 ### B3-6 · Ahorn Apotheke, Sudetenstraße 41 (#67, pharmacy) — Size: S — status: implemented (partial: the unit's start on wall 1, the end wall's bays and piers, the letters', boards' and A box's sizes and heights, the pillars and the glass' set-back are guesses)
 ```

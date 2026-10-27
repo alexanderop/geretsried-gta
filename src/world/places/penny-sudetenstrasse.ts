@@ -46,13 +46,21 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * Ahorn's band), the barrier's spot (off 02/03, 5.5 m out from wall 1 at its u 2.4), the boom's height and bands, the
  * sign's size. Not built: the second raised boom in 01's foreground (its spot is not clear from the photos), the
  * café's outdoor seating (the website mentions it, no photo shows it).
+ *
+ * Alex's photo across the car park from the W (reference/rossmann-am-stern/40-alex-parkplatz.jpg, 2026-10-27): over
+ * the shop floor only three balcony storeys, then a terracotta roof band along the whole front and a set-back white top
+ * storey behind it. The band is drawn as a terracotta pent on the third row's ceiling, as deep as the balconies; the
+ * top storey stays the block's wall (no set-back drawn). Guesses: the band's height and depth.
  */
 const SLAB_H = 15
 const SLAB_PITCH = 16.5
 /** The hall's flat roof (its parapet 0.6 m over it), the LoD2 model's 6.9 m. */
 const HALL_ROOF = 6.3
 /** The balcony floors over the tall shop storey, the lowest clear of the canopy's top. */
-const STOREYS = [5.0, 7.8, 10.6, 13.4] as const
+const STOREYS = [5.0, 7.8, 10.6] as const
+/** The terracotta roof band over the third balcony row (photo 40), the set-back top storey behind it. */
+const PENT_Z = 13.4
+const TERRACOTTA: Rgba = [168, 86, 62, 255]
 const PENNY_RED = [216, 50, 60, 255] as const
 /** The Ahorn Apotheke's unit on wall 1, from the pier by da Daniele to the W corner (its start a guess). */
 const AHORN_1 = [2.4, 11.37] as const
@@ -200,5 +208,7 @@ export const PENNY_SUDETENSTRASSE: PlaceDressing = {
     // The red Am Stern pylon by the corner, between the car-park entrance and the building, its panels facing along
     // Sudetenstraße: PENNY Am Stern, ROSSMANN, Ahorn Apotheke, Schlüsseldienst GEYER.
     { kind: "pylon", u: -6.0, n: 9.5, angle: -Math.PI / 2, w: 2.0, d: 0.4, h: 7.6, colour: [184, 50, 58, 255], texture: "am-stern-pylon", z0: 1.8, z1: 7.4 },
+    // The terracotta roof band over the third balcony row along the car-park front (photo 40).
+    ...([[1, 0, 11.37], [2, 0, 29.68], [3, 0, 10.1]] as const).map(([edge, u0, u1]): Part => ({ kind: "canopy", edge, u0, u1, z: PENT_Z, depth: BALCONY_DEPTH + 0.3, colour: TERRACOTTA, fascia: { h: 0.45, colour: TERRACOTTA } })),
   ],
 }

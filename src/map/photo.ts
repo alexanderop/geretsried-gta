@@ -9,6 +9,7 @@ import { polygonArea } from "./build.ts"
 import { boxOf, distToSegmentSq, pointInPolygon } from "#/world/geometry.ts"
 import { eaves, nearestWall, wallCount } from "./roof.ts"
 import { components, inRect, orientedRect, rectCorners, rim } from "./shapes.ts"
+import type { GroundFix } from "./ground-fixes.ts"
 
 import { PHOTO_PX_PER_M, type Raster } from "./raster.ts"
 
@@ -473,11 +474,13 @@ export const groundTint = (raster: Raster, pts: ReadonlyArray<number>, holes: Re
 /**
  * Everything the importer reads from the photo: each building's roof colours,
  * the tree crowns outside forests and fields, and the paved-ground mask (an
- * RGBA image, `GROUND_M_PER_PX` meters per pixel, paved share in alpha).
+ * RGBA image, `GROUND_M_PER_PX` meters per pixel, paved share in alpha). `fixes` overrule the photo's ground where it
+ * reads wrong (ground-fixes.ts).
  */
 export const readPhoto = (
   map: GameMap,
   raster: Raster,
+  fixes: ReadonlyArray<GroundFix> = [],
 ): { readonly map: GameMap; readonly crowns: ReadonlyArray<Crown>; readonly paved: Raster } => {
   const { width, height } = raster
   const buildings = map.buildings.map((b) => {
@@ -494,11 +497,21 @@ export const readPhoto = (
   }
   const masks = buildingMasks(width, height, map.buildings)
   const ground = classifyGround(raster, { ...masks, skip })
+  // Before the crowns and sheds are read, and again after the cleanup, which paves every parking area over.
+  const fix = (classes: Uint8Array) => {
+    for (const f of fixes) for (const i of polygonPixels(raster, f.pts)) if (classes[i] !== Ground.building) classes[i] = Ground[f.ground]
+    return classes
+  }
+  fix(ground)
   // Clay courts and running tracks are tile-coloured too.
   const noSheds = new Uint8Array(skip)
   for (const area of map.areas) if (area.kind === "pitch") for (const i of polygonPixels(raster, area.pts)) noSheds[i] = 1
-  const extra = findMissingBuildings(raster, masks.footprint, roadMask(map, width, height), noSheds)
-  const paved = pavedMask(cleanPaved(ground, width, height, parking), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
+  const inFix = (b: Building) => {
+    const [x, y] = b.pts.reduce<[number, number]>(([sx, sy], v, i) => (i % 2 === 0 ? [sx + v, sy] : [sx, sy + v]), [0, 0]).map((v) => v / (b.pts.length / 2))
+    return fixes.some((f) => pointInPolygon(x ?? 0, y ?? 0, f.pts))
+  }
+  const extra = findMissingBuildings(raster, masks.footprint, roadMask(map, width, height), noSheds).filter((b) => !inFix(b))
+  const paved = pavedMask(fix(cleanPaved(ground, width, height, parking)), width, height, GROUND_M_PER_PX * PHOTO_PX_PER_M)
   return { map: { ...map, buildings: [...buildings, ...extra], covered: findCoveredRoads(map.roads, raster, masks.shadow) }, crowns: findCrowns(ground, width, height), paved }
 }
 

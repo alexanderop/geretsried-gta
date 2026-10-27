@@ -22,6 +22,11 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * glazing starts and ends (wall 3 u 17.2 to wall 4 u 10.2), the letters' spot (01 has them centred a few meters SE of
  * the bend; drawn on wall 4 from its NW end) and size, the chimneys' spots along the roof (from 04, ±1 m), their height
  * and size, the roof sign's place, the strip's roof colour. The entrance door is not resolved in the photos; none drawn.
+ *
+ * Alex's photo from the car park's W end (reference/rossmann-am-stern/40-alex-parkplatz.jpg, 2026-10-27) adds the
+ * red round Rossmann logo discs on the white band: a big one at the NW end of the front, a small one at its SE end, and
+ * the blue "Ladestation" sign low at the NW end (OSM's charging station 6356242273 stands in front of it). Guesses: the
+ * discs' spots and sizes (1.5 and 0.9 m, read off the photo against the 0.95 m letters), the sign's spot and size.
  */
 const EAVES = 12.3
 const PITCH = 18
@@ -36,6 +41,12 @@ const BAND_TOP = BALCONY_FLOORS[0] - 0.1
 /** "ROSSMANN" is 7.26 times as wide as tall (the cropped Codex lettering), 0.95 m tall as in 01. */
 const LETTERS_H = 0.95
 const LETTERS_Z0 = 3.7
+
+/** The logo discs on the band: [edge, u, z centre, diameter] (photo 40). */
+const DISCS: ReadonlyArray<readonly [edge: number, u: number, z: number, d: number]> = [
+  [3, 1.9, 4.15, 1.5],
+  [4, 26.4, 4.15, 0.9],
+]
 
 /** The walls of the car-park front, NW (3) and SE (4), and how far each runs (the balconies' stretch). */
 const FRONT = [
@@ -104,6 +115,9 @@ export const ROSSMANN_AM_STERN: PlaceDressing = {
     ...GLASS.map(([edge, u0, u1]): Part => ({ kind: "wallSign", texture: "rossmann-front", edge, u0, u1, z0: 0, z1: BAND_Z0, out: SHOP_OUT })),
     // The red ROSSMANN letters on the band over the glazing.
     { kind: "wallSign", texture: "rossmann-letters", edge: 4, u0: 0.2, u1: 0.2 + LETTERS_H * 7.26, z0: LETTERS_Z0, z1: LETTERS_Z0 + LETTERS_H, out: SHOP_OUT + 0.03 },
+    // The red logo discs at both ends of the front and the blue Ladestation sign at its NW end.
+    ...DISCS.map(([edge, u, z, d]): Part => ({ kind: "wallSign", texture: "rossmann-disc", edge, u0: u - d / 2, u1: u + d / 2, z0: z - d / 2, z1: z + d / 2, out: SHOP_OUT + 0.04 })),
+    { kind: "wallSign", texture: "ladestation", edge: 3, u0: 3.4, u1: 4.1, z0: 1.6, z1: 2.3, out: SHOP_OUT + 0.04 },
     // ROSSMANN in red on a white board on the roof over the store, by the POI, for the top-down camera.
     { kind: "roofSign", texture: "roof-rossmann", edge: 4, u0: 2, u1: 22, n0: 0.8, n1: 5.8, z0: onRoof(EAVES, PITCH, 0.8), z1: onRoof(EAVES, PITCH, 5.8) },
     // Four pairs of chimneys just short of the ridge on the car-park plane.

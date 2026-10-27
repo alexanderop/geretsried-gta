@@ -40,13 +40,26 @@ import type { Part, PlaceDressing } from "./dressing.ts"
  * end (wall 1, u 0 at the S corner, the passage to the car park): grey square pillars about 4 m apart under a white
  * beam with a small Orterer board, the shop's glazing set back behind them with crates in front (03). Drawn on the same
  * line as denns and Takko on wall 0 (BALCONY_DEPTH out); the solid stays OSM's outline, so the arcade is relief: the
- * pillars are canopy posts (never solid) and the recess behind them a texture on the wall. On wall 1 the beam stands
- * only 0.6 m out: the synthetic building -156 (a 3.9 × 12.6 m flat box the map puts 0.7–1.2 m off wall 1, where 03
- * shows open pavement) is left as it is (B3-0: "don't dress it"), and the posts stay clear of it. Guesses: the pier's
- * width (u 31.2–35.4) and so the corner opening's (to the corner, 8.1 m), the board's size (1.27 × 1.3 m) and height,
- * the wall-1 arcade's length (the Sudetenstraße block's 16 m end), pillar size (0.45 m) and spacing, the beam's depth on
- * wall 1, the small board's spot, the crate rows' spots. Not built: the blue "1880" box and the poster column on the
- * verge (street furniture, not the shop's), the door (not seen).
+ * pillars are canopy posts (never solid) and the recess behind them a texture on the wall. Guesses: the pier's width
+ * (u 31.2–35.4) and so the corner opening's (to the corner, 8.1 m), the board's size (1.27 × 1.3 m) and height, pillar
+ * size (0.45 m), the crate rows' spots. Not built: the blue "1880" box and the poster column on the verge (street
+ * furniture, not the shop's), the door (not seen).
+ *
+ * The passage (wall 1, and denns' door on wall 2), from Alex's photo looking NE along it from Sudetenstraße
+ * (reference/denns-biomarkt/40-alex-durchgang.jpg, 2026-10-27): the arcade runs the whole of wall 1, under the
+ * Sudetenstraße block (Orterer's glazing) and on under the link (Takko's glazing with its clothes racks), grey square
+ * pillars about 4.5 m apart under the white beam, the glazing set back about 2.4 m. Over its S end, high on the block's
+ * white wall, the large round-topped Orterer board (about 2 m, "29a" under it); on the link's wall over the arcade's NE
+ * end, just under the flat roof, the yellow TAKKO box. The passage ends at wall 2, the 8.85 m end wall facing SW down
+ * it: denns' entrance, a full-height glass front with the sliding door in the middle under a white fascia with the
+ * green "denns BioMarkt", a grey square pillar at its SE end. In front: two light-green "Bio Markt" discs on a post, a
+ * row of silver bike hoops along the planting strip, a low dark shelter roof on legs at the strip's end, and across the
+ * strip in the car park a glass shelter for trolleys. The paving is open: what the map had as building -156 (a 3.9 ×
+ * 12.6 m box in the passage) was parked cars in the aerial, and its lawn and trees there the block's shadow
+ * (src/map/ground-fixes.ts). Guesses (read off one photo against a 2.2 m door, no measure): the pillars' spacing and
+ * the arcade's depth, the board's size and height, the TAKKO box's spot and size, denns' fascia, letters, bays and
+ * pillar, the discs', hoops' and shelters' spots and sizes. Not built: the A-boards and basket racks, Takko's racks out
+ * under the arcade, the screen-wash cart in the first bay, the "29a" plate.
  *
  * The Marienburgweg face (wall 5, u 0 at the N corner, 52.4 m to the W corner; B4-4…B4-6), from Street View
  * (reference/gg-radsport/01–03, aphrodite-aestetic/01, nexial/01): a white ground floor under one dark steel canopy with
@@ -113,9 +126,24 @@ const ORTERER_LOGO_H = 1.3
 const ORTERER_LOGO_W = ORTERER_LOGO_H * 0.98
 const ORTERER_LOGO_Z0 = 2.95
 const ORTERER_LOGO_MID = (ORTERER_PIER[0] + ORTERER_PIER[1]) / 2
-/** The arcade along wall 1: the Sudetenstraße block's SE end, its beam 0.6 m out (clear of building -156), grey pillars. */
-const ARCADE_1 = [0, 15.9] as const
-const ARCADE_1_OUT = 0.6
+/** The arcade along all of wall 1 (the Sudetenstraße block's end to u 15.9, the link's after it), its pillars 2.4 m out. */
+const ARCADE_1 = [0, 32.04] as const
+const ARCADE_1_LINK = 15.9
+const ARCADE_1_OUT = 2.4
+/** The round-topped Orterer board high on the block's wall over the arcade's S end (photo 40), 0.98 times as wide as tall. */
+const PASSAGE_BOARD = { u0: 1.3, z0: 4.8, h: 2.05 } as const
+/** The yellow TAKKO box on the link's wall over the arcade's NE end, under its flat roof at 5.7 m (photo 40). */
+const TAKKO_BOX = [26.2, 28.6, 4.6, 5.5] as const
+
+/** denns' end wall (wall 2, 8.85 m, u 0 at the arcade's corner): glass front with the sliding door, the white fascia over it. */
+const DENNS_END = 2
+const DENNS_END_LEN = 8.85
+const DENNS_END_GLASS = 3.3
+const DENNS_END_FASCIA_TOP = 4.9
+const DENNS_END_LETTERS_W = 6
+const DENNS_STEEL: Rgba = [58, 60, 64, 255]
+const HOOP: Rgba = [190, 194, 198, 255]
+const SHELTER_GLASS: Rgba = [178, 196, 204, 255]
 const PILLAR: Rgba = [150, 152, 155, 255]
 const PILLAR_SIDE = 0.45
 
@@ -245,11 +273,42 @@ export const AM_STERN_WEST: PlaceDressing = {
       posts: { every: ORTERER_CORNER[1] - ORTERER_CORNER[0], colour: PILLAR, side: PILLAR_SIDE },
     },
     ...row("orterer-arcade", ORTERER_CORNER, 2, BAND_Z0 + 0.4, 0, 0.04),
-    // Round the corner along the passage (wall 1): the beam on grey pillars about 4 m apart, the small board on it, the
-    // set-back glazing with crates in four bays.
-    { kind: "canopy", edge: 1, u0: ARCADE_1[0], u1: ARCADE_1[1], z: BAND_TOP, depth: ARCADE_1_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER }, posts: { every: 4, colour: PILLAR, side: PILLAR_SIDE } },
-    ...row("orterer-arcade", ARCADE_1, 4, BAND_Z0 + 0.4, 1, 0.04),
-    { kind: "wallSign", texture: "orterer-logo", edge: 1, u0: 9.6, u1: 9.6 + 0.85 * 0.98, z0: 3.3, z1: 4.15, out: ARCADE_1_OUT + 0.03 },
+    // Round the corner along the passage (wall 1): the beam on grey pillars about 4.5 m apart the whole wall long, the
+    // set-back glazing (Orterer's under the block, Takko's under the link), the big Orterer board high on the block's
+    // wall, the yellow TAKKO box on the link's wall under its roof.
+    { kind: "canopy", edge: 1, u0: ARCADE_1[0], u1: ARCADE_1[1], z: BAND_TOP, depth: ARCADE_1_OUT, colour: WHITE_RENDER, fascia: { h: BAND_TOP - BAND_Z0, colour: WHITE_RENDER }, posts: { every: 4.5, colour: PILLAR, side: PILLAR_SIDE } },
+    ...row("orterer-arcade", [ARCADE_1[0], ARCADE_1_LINK], 4, BAND_Z0 + 0.4, 1, 0.04),
+    ...row("takko-front", [ARCADE_1_LINK, ARCADE_1[1]], 4, BAND_Z0 + 0.4, 1, 0.04),
+    { kind: "wallSign", texture: "orterer-logo", edge: 1, u0: PASSAGE_BOARD.u0, u1: PASSAGE_BOARD.u0 + PASSAGE_BOARD.h * 0.98, z0: PASSAGE_BOARD.z0, z1: PASSAGE_BOARD.z0 + PASSAGE_BOARD.h, out: 0.06 },
+    { kind: "wallSign", texture: "takko-sign", edge: 1, u0: TAKKO_BOX[0], u1: TAKKO_BOX[1], z0: TAKKO_BOX[2], z1: TAKKO_BOX[3], out: 0.25 },
+    // denns' entrance on the passage's end wall (wall 2): the glass front in three bays, the sliding door in the middle,
+    // the white fascia over it with the green letters, the grey pillar at its SE end (street frame).
+    ...row("denns-front", [0.3, 2.9], 1, DENNS_END_GLASS, DENNS_END, 0.04),
+    ...row("denns-door", [2.9, 5.9], 1, DENNS_END_GLASS, DENNS_END, 0.04),
+    ...row("denns-front", [5.9, 8.5], 1, DENNS_END_GLASS, DENNS_END, 0.04),
+    { kind: "canopy", edge: DENNS_END, u0: 0, u1: DENNS_END_LEN, z: DENNS_END_FASCIA_TOP, depth: 0.35, colour: WHITE_RENDER, fascia: { h: DENNS_END_FASCIA_TOP - DENNS_END_GLASS, colour: WHITE_RENDER } },
+    {
+      kind: "wallSign",
+      texture: "denns-letters",
+      edge: DENNS_END,
+      u0: (DENNS_END_LEN - DENNS_END_LETTERS_W) / 2,
+      u1: (DENNS_END_LEN + DENNS_END_LETTERS_W) / 2,
+      z0: 3.75,
+      z1: 3.75 + DENNS_END_LETTERS_W / 8.3,
+      out: 0.38,
+    },
+    { kind: "pylon", u: 12.35, n: 42.95, angle: 0, w: 0.45, d: 0.45, h: DENNS_END_FASCIA_TOP, colour: PILLAR },
+    // In front of it: the two "Bio Markt" discs on their post, the bike hoops along the planting strip, the low dark
+    // shelter roof on legs at the strip's end; across the strip in the car park the glass trolley shelter.
+    { kind: "pylon", u: 10.2, n: 40.6, angle: 0, w: 0.07, d: 0.07, h: 2.0, colour: HOOP },
+    { kind: "pylon", u: 9.85, n: 40.6, angle: 0, w: 0.7, d: 0.03, h: 2.05, base: 1.35, colour: WHITE_RENDER, texture: "denns-bio", z0: 1.35, z1: 2.05 },
+    { kind: "pylon", u: 10.55, n: 40.6, angle: 0, w: 0.7, d: 0.03, h: 1.95, base: 1.25, colour: WHITE_RENDER, texture: "denns-bio", z0: 1.25, z1: 1.95 },
+    ...[29.5, 31, 32.5, 34, 35.5].map((n): Part => ({ kind: "pylon", u: 8.4, n, angle: 0, w: 0.9, d: 0.06, h: 0.85, colour: HOOP })),
+    { kind: "pylon", u: 10.7, n: 38.2, angle: Math.PI / 2, w: 3.2, d: 1.4, h: 1.3, base: 1.2, colour: DENNS_STEEL },
+    ...[36.8, 39.6].map((n): Part => ({ kind: "pylon", u: 10.7, n, angle: 0, w: 0.08, d: 0.08, h: 1.2, colour: DENNS_STEEL })),
+    { kind: "pylon", u: 15.2, n: 37.5, angle: Math.PI / 2, w: 5.2, d: 2.2, h: 2.35, base: 2.25, colour: SHELTER_GLASS },
+    ...[35.1, 39.9].map((n): Part => ({ kind: "pylon", u: 16.2, n, angle: 0, w: 0.08, d: 0.08, h: 2.25, colour: DENNS_STEEL })),
+    { kind: "sprite", name: "trolley-row", u: 15.2, n: 37.5, z: 1, angle: Math.PI / 2, len: 4.6 },
     // Crate rows on pallets in the corner opening, half out from under the beam so the play camera sees them (01, 03).
     { kind: "sprite", name: "crate-stack", u: -2.4, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },
     { kind: "sprite", name: "crate-stack", u: 0.6, n: 9.8, z: 1.1, angle: -0.027, len: 2.2 },

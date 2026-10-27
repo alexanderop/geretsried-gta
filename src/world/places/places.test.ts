@@ -472,7 +472,7 @@ describe("the registry on the real map", () => {
     expect(sign.out ?? 0).toBeGreaterThan(band?.kind === "canopy" ? band.depth : Infinity)
   })
 
-  it("dresses Orterer's S corner: the board on the pier after Takko, the open arcade round the corner, the passage left clear", () => {
+  it("dresses Orterer's S corner and the passage: the board on the pier after Takko, the arcade round the corner along all of wall 1, denns' door at its end", () => {
     const west = at(127872184)
     const pts = map.buildings[west?.building ?? -1]?.pts ?? []
     const parts = west?.dressing.parts ?? []
@@ -500,12 +500,17 @@ describe("the registry on the real map", () => {
     const beam = canopies(1)[0]
     expect(beam?.u0).toBe(0)
     expect(signs(1, "orterer-arcade").length).toBeGreaterThan(2)
-    // The passage stays as it was: the beam's pillars stay off the synthetic building -156 beside wall 1, and nothing new is solid
-    // (posts and sprites never are), so building -156 and the pavement round it are untouched.
-    const box = map.buildings.find((b) => b.id === -156)?.pts ?? []
-    expect(box.length).toBeGreaterThan(0)
-    const nearest = Math.min(...box.flatMap((_, i) => (i % 2 === 0 ? [-toLocal(w1.frame, box[i] ?? 0, box[i + 1] ?? 0)[1]] : [])))
-    expect(beam?.depth ?? Infinity).toBeLessThan(nearest)
+    // The passage is open paving (Alex's photo 40): no building stands in it any more (the aerial's -156 were parked cars),
+    // the beam runs the whole of wall 1, Takko's glazing under the link; denns' door is on wall 2 at the passage's end.
+    expect(map.buildings.some((b) => b.id === -156)).toBe(false)
+    expect(beam?.u1).toBeCloseTo(w1.length, 1)
+    expect(signs(1, "takko-front").length).toBeGreaterThan(0)
+    const door = signs(2, "denns-door")[0]
+    const w2 = wallFrame(pts, 2)
+    expect(door && w2).toBeTruthy()
+    expect(door?.u0).toBeGreaterThan(0)
+    expect(door?.u1).toBeLessThan(w2?.length ?? 0)
+    expect(signs(2, "denns-letters").length).toBe(1)
     // The crate rows stand in the corner opening, off Sudetenstraße's carriageway and sidewalk.
     const half = (map.roads.find((r) => r.name === "Sudetenstraße" && r.kind === "tertiary")?.width ?? 0) / 2
     const crates = parts.flatMap((p) => (p.kind === "sprite" && p.name === "crate-stack" ? [p] : []))
@@ -613,7 +618,7 @@ describe("the registry on the real map", () => {
     for (const b of boxes) {
       const [x, y] = toWorld(west.frame, b.u, b.n)
       const [u, n] = toLocal(w5.frame, x, y)
-      if (u < 17 || u > 29) continue
+      if (u < 17 || u > 29 || Math.abs(n) > 5) continue
       // `h` is the box's top, over `base` when it floats (the rail).
       expect(b.h).toBeGreaterThan(b.base ?? 0)
       expect(-n).toBeGreaterThan(1.6)
@@ -682,7 +687,7 @@ describe("the registry on the real map", () => {
     for (const b of boxes) {
       const [x, y] = toWorld(west.frame, b.u, b.n)
       const [u, n] = toLocal(w5.frame, x, y)
-      if (u < 29 || u > 42) continue
+      if (u < 29 || u > 42 || Math.abs(n) > 5) continue
       along++
       expect(b.h).toBeGreaterThan(b.base ?? 0)
       expect(-n).toBeGreaterThan(1.6)

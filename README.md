@@ -133,6 +133,9 @@ The map, the collision data and the minimap come from OSM plus `pnpm map`, which
   shapes (closing fills cars, opening drops specks; green islands in paving under 12 m² are paved
   over, larger ones squared into straight planting strips), as the alpha of `public/ground.png` (2 m/px). The
   renderer gives the mask a hard edge and fills it with smooth light paving.
+- **Ground fixes** (`src/map/ground-fixes.ts`): where photos from the spot show the aerial read wrong (a shaded
+  passage with parked cars taken for lawn, trees and a shed), a polygon sets the ground to paved or lawn there: no
+  crowns grow in it, and the sheds found in it are dropped (the other synthetic ids stay as they were).
 - Parked cars are not solid: the ones in the photo cannot be told apart at 1 m per pixel, and an
   invisible obstacle is worse than driving through a picture of a car.
 
