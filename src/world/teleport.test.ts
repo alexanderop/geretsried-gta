@@ -23,6 +23,13 @@ describe("?at= on the real map", () => {
     expect(world.isSolid(spot?.x ?? 0, spot?.y ?? 0)).toBe(false)
   })
 
+  it("finds a dressed area by name: Spielplatz Breslauer Weg, on the sidewalk in front of it", () => {
+    const spot = findSpot(world, "spielplatz-breslauer-weg")
+    expect(spot?.label).toBe("Spielplatz Breslauer Weg")
+    // The playground's middle is (4303, 4561); its street front is about 24 m N of that.
+    expect(Math.hypot((spot?.x ?? 0) - 4303, (spot?.y ?? 0) - 4561)).toBeLessThan(30)
+  })
+
   it("takes a prefix and prefers a dressed place over a POI of the same name", () => {
     expect(findSpot(world, "hochhaus")?.label).toBe("Hochhaus Königsberger Weg")
     expect(findSpot(world, "EDEKA")?.label).toBe("EDEKA")

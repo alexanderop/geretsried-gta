@@ -17,21 +17,22 @@ import type { World } from "#/world/world.ts"
 import { boxOf, centroid, longestEdgeAngle, pointInPolygon, type Box } from "#/world/geometry.ts"
 import { Grid } from "#/world/grid.ts"
 import { facadeFor, type Facade } from "./facade.ts"
-import { roofTone } from "./roof-tone.ts"
+import { roofGrade, roofTone } from "./roof-tone.ts"
 import { band, bridgeHoles, clipHalfPlane, dashes, keepIntervals, openRing, polylineLength, signedArea, subPolyline, triangulate } from "./geometry.ts"
 import { makeSignals, ZEBRA_M, type StopLine, type Zebra } from "#/sim/signals.ts"
 import { CANOPY_Z, planStations, pillarsOf as canopyPillars } from "#/sim/stations.ts"
 import { canopy, STATION_BANDS, type Canopy } from "./canopy.ts"
 import { cafe as cafeMesh } from "./cafe.ts"
 import { OBELISK, PAVILION, PAVILION_H, ROOM, TERRACE, inRect, rectRing, toLocal, type Rect } from "#/world/cafe.ts"
-import { bollard, signalHead, stopLine, streetLamp, streetLamps, streetProp, streetProps, streetSign, zebra, type StreetLamp, type StreetProp } from "./street.ts"
+import { bollard, SHELTER, signalHead, stopLine, streetFurniture, streetLamp, streetLamps, streetProp, streetProps, streetSign, zebra, type StreetLamp, type StreetProp } from "./street.ts"
+import { placeFurniture, type Furniture } from "#/world/furniture.ts"
 import { overheadLines, POLE_Z, roadWord, roadWords, wire, wirePole, type RoadWord, type Wire, type WirePole } from "./road-paint.ts"
 import { grime, grimeOf, type Grime } from "./grime.ts"
 import { FADES, Material, MeshBuilder, Mode, Sprite, material as materialLayer, spriteQuad, type Mesh, type Rgba, type SpriteBoxes } from "./mesh.ts"
 import { BOLLARD_M, type ParkedCar, type StreetLayout, type StreetSign, type Strip } from "#/world/street-profile.ts"
 import { CAR_LENGTH } from "#/sim/car.ts"
 import type { Mass, Place, PlaceDressing } from "#/world/places/dressing.ts"
-import { placeBox, placeParts } from "./places.ts"
+import { groundBox, groundParts, placeBox, placeParts } from "./places.ts"
 import { hipFaces, type HipFace } from "./hip-roof.ts"
 
 export const CHUNK_M = 128
@@ -115,6 +116,8 @@ type Chunk = {
   readonly crowns: Array<number>
   readonly street: Array<number>
   readonly canopies: Array<number>
+  /** Ground dressings (world.grounds) drawn with this chunk. */
+  readonly grounds: Array<number>
   /** Cafe Waldmann's pavilion and terrace are drawn with this chunk. */
   cafe: boolean
   bounds: Box
@@ -164,6 +167,7 @@ type StreetItem =
   | { readonly kind: "zebra"; readonly zebra: Zebra }
   | { readonly kind: "lamp"; readonly lamp: StreetLamp }
   | { readonly kind: "prop"; readonly prop: StreetProp }
+  | { readonly kind: "furniture"; readonly furniture: Furniture }
   | { readonly kind: "word"; readonly word: RoadWord }
   | { readonly kind: "pole"; readonly pole: WirePole }
   | { readonly kind: "wire"; readonly wire: Wire }
@@ -201,7 +205,8 @@ export const roofColors = (b: Building, nx: number, ny: number, d: number): { re
   }
   const colors = roof.colors
   const first = colors.find((c) => c !== null)
-  const tone = (hex: string) => roofTone(parseHex(hex), roof.pitched)
+  const grade = roofGrade(colors.flatMap((c) => (c === null ? [] : [parseHex(c)])), roof.pitched)
+  const tone = (hex: string) => roofTone(parseHex(hex), grade)
   const base = first == null ? GRAVEL : tone(first)
   if (!roof.pitched || colors.length === 1) return { sides: [base, base], pitched: roof.pitched }
   // Per side of the ridge: the plane over the longest wall there.
@@ -255,6 +260,8 @@ export class Scene {
   private readonly chunks: Array<Chunk>
   private readonly lines: Array<Line> = []
   private readonly street: Array<StreetItem> = []
+  /** The benches, bins, recycling points and bike racks as they stand (world/furniture.ts), clear of the other street furniture. */
+  readonly furniture: ReadonlyArray<Furniture>
   private readonly profileItems: Array<ProfileItem> = []
   /** Petrol station canopies, and the other roofs on pillars OSM maps (carports, shelters). */
   private readonly canopies: Array<Canopy> = []
@@ -276,7 +283,7 @@ export class Scene {
     this.chunks = Array.from({ length: this.cols * this.rows }, (_, key) => {
       const x = (key % this.cols) * CHUNK_M
       const y = Math.floor(key / this.cols) * CHUNK_M
-      return { profile: [], buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], cafe: false, bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
+      return { profile: [], buildings: [], areas: [], segments: [], rivers: [], lines: [], crowns: [], street: [], canopies: [], grounds: [], cafe: false, bounds: { minX: x, minY: y, maxX: x + CHUNK_M, maxY: y + CHUNK_M } }
     })
     const own = (x: number, y: number, box: Box): Chunk | undefined => {
       const cx = Math.min(this.cols - 1, Math.max(0, Math.floor(x / CHUNK_M)))
@@ -326,6 +333,10 @@ export class Scene {
       const box = parts === null ? walls : { minX: Math.min(walls.minX, parts.minX), minY: Math.min(walls.minY, parts.minY), maxX: Math.max(walls.maxX, parts.maxX), maxY: Math.max(walls.maxY, parts.maxY) }
       // Owned by the chunk of the walls' middle, as without parts.
       own((walls.minX + walls.maxX) / 2, (walls.minY + walls.maxY) / 2, box)?.buildings.push(i)
+    })
+    world.grounds.forEach((g, i) => {
+      const box = groundBox(g)
+      if (box !== null) own((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2, box)?.grounds.push(i)
     })
     map.areas.forEach((a, i) => {
       if (AREA_LOOK[a.kind] === undefined) return
@@ -394,10 +405,18 @@ export class Scene {
       ...signals.zebras.map((z): StreetItem => ({ kind: "zebra", zebra: z })),
     ]
     const furniture = [...signals.stops.map((st) => signalHead(st).pole), ...signals.zebras]
-    items.push(...streetLamps(world, furniture).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
-    items.push(...world.streets.flatMap((l) => l.lamps).map((lamp): StreetItem => ({ kind: "lamp", lamp })))
+    const lamps = [...streetLamps(world, furniture), ...world.streets.flatMap((l) => l.lamps)]
+    items.push(...lamps.map((lamp): StreetItem => ({ kind: "lamp", lamp })))
     const props = streetProps(world, furniture)
     items.push(...props.map((p): StreetItem => ({ kind: "prop", prop: p })))
+    // Benches, bins, recycling points and bike racks: clear of the shelters (and the bin beside them), poles and lamps.
+    const taken = [
+      ...props.map((p) => (p.kind === "shelter" ? { x: p.x, y: p.y, angle: p.angle, length: SHELTER.length + 2.4, depth: SHELTER.depth } : { x: p.x, y: p.y, angle: 0, length: 0.6, depth: 0.6 })),
+      ...props.flatMap((p) => (p.kind === "shelter" ? [{ ...p.pole, angle: 0, length: 0.6, depth: 0.6 }] : [])),
+      ...[...furniture, ...lamps].map((q) => ({ x: q.x, y: q.y, angle: 0, length: 0.6, depth: 0.6 })),
+    ]
+    this.furniture = placeFurniture(world, taken)
+    items.push(...this.furniture.map((f): StreetItem => ({ kind: "furniture", furniture: f })))
     const busStops = props.flatMap((p) => (p.kind === "shelter" ? [{ ...p.pole, angle: p.angle }] : p.kind === "pole" ? [p] : []))
     items.push(...roadWords(world, signals.stops, signals.zebras, busStops).map((word): StreetItem => ({ kind: "word", word })))
     const lines = overheadLines(world, [...furniture, ...items.flatMap((i) => (i.kind === "lamp" ? [i.lamp] : i.kind === "prop" ? [i.prop] : []))])
@@ -411,7 +430,15 @@ export class Scene {
         this.street.push(item)
         continue
       }
-      const at = item.kind === "stop" ? item.stop : item.kind === "zebra" ? item.zebra : item.kind === "lamp" ? item.lamp : item.kind === "word" ? item.word : item.kind === "pole" ? item.pole : item.kind === "grime" ? item.grime : item.prop
+      const at =
+        item.kind === "stop" ? item.stop
+        : item.kind === "zebra" ? item.zebra
+        : item.kind === "lamp" ? item.lamp
+        : item.kind === "word" ? item.word
+        : item.kind === "pole" ? item.pole
+        : item.kind === "grime" ? item.grime
+        : item.kind === "prop" ? item.prop
+        : item.furniture
       // Room for an arm over the road and a shadow 7 m long.
       const reach = 14
       own(at.x, at.y, { minX: at.x - reach, minY: at.y - reach, maxX: at.x + reach, maxY: at.y + reach })?.street.push(this.street.length)
@@ -493,6 +520,10 @@ export class Scene {
       else for (const v of masses) this.building(m, massBuilding(b, v), facade, { ...place.dressing, roof: v.roof ?? place.dressing.roof, wallColour: v.wallColour ?? place.dressing.wallColour, bands: v.bands ?? place.dressing.bands })
       if (place !== undefined) placeParts(m, this.sprites, place, b.pts)
     }
+    for (const i of chunk.grounds) {
+      const g = this.world.grounds[i]
+      if (g !== undefined) groundParts(m, this.sprites, g)
+    }
     for (const i of chunk.canopies) {
       const c = this.canopies[i]
       if (c !== undefined) canopy(m, this.sprites, c)
@@ -503,7 +534,8 @@ export class Scene {
       if (item?.kind === "stop") stopLine(m, this.sprites, item.stop)
       else if (item?.kind === "zebra") zebra(m, this.sprites, this.profiledZebra(item.zebra), ZEBRA_M)
       else if (item?.kind === "lamp") streetLamp(m, this.sprites, item.lamp)
-      else if (item?.kind === "prop") streetProp(m, this.sprites, item.prop)
+      else if (item?.kind === "prop") streetProp(m, item.prop)
+      else if (item?.kind === "furniture") streetFurniture(m, this.sprites, item.furniture)
       else if (item?.kind === "word") roadWord(m, item.word)
       else if (item?.kind === "pole") wirePole(m, item.pole)
       else if (item?.kind === "wire") wire(m, item.wire)

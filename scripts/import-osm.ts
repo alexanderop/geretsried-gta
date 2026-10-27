@@ -5,7 +5,8 @@
  * To refresh one cache alone (so the rest stays byte-identical), delete that file and run `pnpm map`.
  * Data © OpenStreetMap contributors, ODbL. Roof colours, trees and paved ground
  * (public/ground.png) are read from the DOP40 aerial photo, © Bayerische
- * Vermessungsverwaltung, CC BY 4.0 (see scripts/dop40.ts).
+ * Vermessungsverwaltung, CC BY 4.0 (see scripts/dop40.ts). Storeys where OSM has none come from the Bavarian LoD2
+ * building model, same licence: data/lod2-levels.json, written by `node scripts/lod2-heights.ts`.
  */
 import { Console, Effect, FileSystem, Schema } from "effect"
 import { NodeRuntime, NodeServices } from "@effect/platform-node"
@@ -17,7 +18,7 @@ import { encodeCrowns } from "../src/map/crowns.ts"
 import { encodePng } from "../src/map/png.ts"
 import { groundTint, readPhoto } from "../src/map/photo.ts"
 import { loadPhoto } from "./dop40.ts"
-import type { Bbox } from "../src/map/project.ts"
+import { BBOX } from "./bbox.ts"
 
 const RAW = "data/raw.json"
 const PLACES = "data/places.json"
@@ -26,15 +27,15 @@ const PLACES_MORE = "data/places-more.json"
 const BUILDINGS_REL = "data/buildings-rel.json"
 const PLACES_NEXT = "data/places-next.json"
 const AREAS_MORE = "data/areas-more.json"
+const FURNITURE = "data/furniture.json"
 const ROUTES = "data/routes.json"
+const LOD2_LEVELS = "data/lod2-levels.json"
 const OUT = "public/geretsried.map.json"
 const GROUND_OUT = "public/ground.png"
 const TREES_OUT = "public/trees.bin"
 /** The main server is often at capacity (502): then the next one answers. */
 const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.openstreetmap.fr/api/interpreter"]
 
-/** Geretsried town, Gelting and the Isar on the west edge. */
-const BBOX: Bbox = { south: 47.845, west: 11.43, north: 47.9, east: 11.505 }
 
 const QUERY = `[out:json][timeout:120];
 (
@@ -96,6 +97,16 @@ const AREAS_MORE_QUERY = `[out:json][timeout:120];
   relation["leisure"~"^(playground|track)$"]["type"="multipolygon"](${B});
 );
 out geom;`
+
+/**
+ * Street furniture (V-11): benches, litter bins, recycling points (every material; EXTRA_QUERY has the glass ones
+ * only) and bike racks; a way by its centre. Its own cache, so the older caches stay as they are.
+ */
+const FURNITURE_QUERY = `[out:json][timeout:120];
+(
+  nwr["amenity"~"^(bench|waste_basket|recycling|bicycle_parking)$"](${B});
+);
+out center tags;`
 
 /** Buildings mapped as multipolygon relations (a ring around a courtyard); QUERY fetches way buildings only. */
 const BUILDINGS_REL_QUERY = `[out:json][timeout:120];
@@ -200,6 +211,8 @@ const RelationsResponse = Schema.Struct({
   ),
 })
 
+const Lod2LevelsFile = Schema.Struct({ ways: Schema.Record(Schema.String, Schema.Number), relations: Schema.Record(Schema.String, Schema.Number) })
+
 class OverpassError extends Schema.TaggedError<OverpassError>()("OverpassError", {
   status: Schema.Number,
 }) {}
@@ -229,6 +242,7 @@ const program = Effect.gen(function* () {
   if (fresh || !(yield* fs.exists(BUILDINGS_REL))) yield* fs.writeFileString(BUILDINGS_REL, yield* download(BUILDINGS_REL_QUERY))
   if (fresh || !(yield* fs.exists(PLACES_NEXT))) yield* fs.writeFileString(PLACES_NEXT, yield* download(PLACES_NEXT_QUERY))
   if (fresh || !(yield* fs.exists(AREAS_MORE))) yield* fs.writeFileString(AREAS_MORE, yield* download(AREAS_MORE_QUERY))
+  if (fresh || !(yield* fs.exists(FURNITURE))) yield* fs.writeFileString(FURNITURE, yield* download(FURNITURE_QUERY))
   const decode = Schema.decodeUnknownEffect(Schema.fromJsonString(PlacesResponse))
   type Element = (typeof PlacesResponse.Type)["elements"][number]
   const located = (elements: ReadonlyArray<Element>) =>
@@ -253,6 +267,10 @@ const program = Effect.gen(function* () {
     const why = e.tags.name === undefined ? "no name" : venue ? sportSkip(e.tags) : null
     if (why !== null) yield* Console.log(`skipped: ${e.type} ${e.id} ${e.tags.name ?? "(unnamed)"} (${e.tags.amenity ?? `leisure=${e.tags.leisure}`}): ${why}`)
   }
+  // The glass banks EXTRA_QUERY brought are props already (in `first`).
+  const furnitureElements = (yield* decode(yield* fs.readFileString(FURNITURE))).elements.filter((e) => !seen.has(`${e.type}/${e.id}`))
+  for (const e of furnitureElements)
+    if (e.tags.amenity === "recycling" && e.tags.building !== undefined) yield* Console.log(`skipped: ${e.type} ${e.id} ${e.tags.name ?? "(unnamed)"} (amenity=recycling): a recycling firm's building, no container`)
   const areaElements = (yield* Schema.decodeUnknownEffect(Schema.fromJsonString(AreasResponse))(yield* fs.readFileString(AREAS_MORE))).elements
   const leisureAreas = {
     ways: areaElements.flatMap((e): Array<OsmWay> => (e.type === "way" && e.geometry !== undefined ? [{ id: e.id, nodes: e.nodes ?? [], geometry: e.geometry, tags: e.tags }] : [])),
@@ -262,6 +280,16 @@ const program = Effect.gen(function* () {
   const routes = (yield* Schema.decodeUnknownEffect(Schema.fromJsonString(RoutesResponse))(yield* fs.readFileString(ROUTES))).elements
   const raw = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(OverpassResponse))(yield* fs.readFileString(RAW))
   const ways = raw.elements.filter((e) => e.type === "way")
+  // A place's footprint keeps the storeys it had (OSM's or the typical ones), or its dressing's.
+  const placeIds = new Set(DRESSINGS.map((d) => d.osmBuildingId))
+  const lod2File = (yield* fs.exists(LOD2_LEVELS))
+    ? yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Lod2LevelsFile))(yield* fs.readFileString(LOD2_LEVELS))
+    : { ways: {}, relations: {} }
+  const byId = (r: Readonly<Record<string, number>>) => new Map(Object.entries(r).flatMap(([id, n]) => (placeIds.has(Number(id)) ? [] : [[Number(id), n] as const])))
+  const lod2Levels = { ways: byId(lod2File.ways), relations: byId(lod2File.relations) }
+  yield* Console.log(
+    lod2Levels.ways.size === 0 ? `${LOD2_LEVELS} missing: storeys from OSM only (run node scripts/lod2-heights.ts)` : `LoD2 storeys for ${lod2Levels.ways.size} ways, ${lod2Levels.relations.size} relations`,
+  )
   const photo = yield* loadPhoto(BBOX)
   const tints: Array<string> = []
   const tintOf = (id: number, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>) => {
@@ -276,11 +304,13 @@ const program = Effect.gen(function* () {
     next: { places: nextPlaces, extraPois: EXTRA_POIS_NEXT },
     leisureAreas,
     groundTint: tintOf,
+    lod2Levels,
+    furniture: located(furnitureElements),
   })
   for (const t of tints) yield* Console.log(`area tint ${t}`)
   const { map, crowns, paved } = readPhoto(dressMap(built, DRESSINGS), photo)
   const wayBuildings = new Set(ways.filter((w) => w.tags.building !== undefined).map((w) => w.id))
-  for (const rel of relationBuildings(buildingRelations, wayBuildings, BBOX))
+  for (const rel of relationBuildings(buildingRelations, wayBuildings, BBOX, lod2Levels.relations))
     yield* Console.log(`relation building ${rel.id} ${rel.name === "" ? "(unnamed)" : rel.name}: ${rel.area} m², ${rel.status === "new" ? `new, ${rel.buildings.reduce((n, b) => n + (b.holes?.length ?? 0), 0)} courtyard(s)` : "duplicate of a way building, skipped"}`)
   const kinds = new Map<string, number>()
   for (const p of map.pois) kinds.set(p.kind, (kinds.get(p.kind) ?? 0) + 1)
@@ -288,6 +318,9 @@ const program = Effect.gen(function* () {
   const areaKinds = new Map<string, number>()
   for (const a of map.areas) areaKinds.set(a.kind, (areaKinds.get(a.kind) ?? 0) + 1)
   yield* Console.log(`areas per kind: ${[...areaKinds].map(([k, n]) => `${k} ${n}`).join(", ")}`)
+  const propKinds = new Map<string, number>()
+  for (const p of map.props) propKinds.set(p.kind, (propKinds.get(p.kind) ?? 0) + 1)
+  yield* Console.log(`props per kind: ${[...propKinds].map(([k, n]) => `${k} ${n}`).join(", ")}`)
   yield* fs.writeFileString(OUT, JSON.stringify(map))
   yield* fs.writeFile(GROUND_OUT, encodePng(paved))
   // Row by row, so neighbours sit together and the file gzips well.

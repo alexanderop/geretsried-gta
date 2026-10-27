@@ -2,8 +2,8 @@ import type { AreaKind, GameMap, Road, RoadKind } from "#/map/types.ts"
 import { boxOf, distToSegmentSq, inFootprint, pointInPolygon } from "./geometry.ts"
 import { Grid } from "./grid.ts"
 import { planCafe, type Cafe } from "./cafe.ts"
-import { dressMap, resolvePlaces, type Place, type PlaceDressing } from "./places/dressing.ts"
-import { PLACES } from "./places/index.ts"
+import { dressMap, resolveGrounds, resolvePlaces, type Ground, type GroundDressing, type Place, type PlaceDressing } from "./places/dressing.ts"
+import { GROUNDS, PLACES } from "./places/index.ts"
 import { STREETS } from "./places/streets.ts"
 import { layoutStreet, type StreetLayout, type StreetProfile } from "./street-profile.ts"
 
@@ -37,12 +37,19 @@ export type World = {
   readonly cafe: Cafe | null
   /** The dressed places (places/): their footprints in `map` already have the storeys they set. */
   readonly places: ReadonlyArray<Place>
+  /** The dressed areas (places/, GROUNDS): free-standing equipment, never solid. */
+  readonly grounds: ReadonlyArray<Ground>
   /** The street profiles (places/streets.ts) laid out on the map: their parked cars and bollards are solid. */
   readonly streets: ReadonlyArray<StreetLayout>
 }
 
-/** The world of `osm` with the place dressings applied (the registry unless given). */
-export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> = PLACES, profiles: ReadonlyArray<StreetProfile> = STREETS): World => {
+/** The world of `osm` with the place dressings applied (the registries unless given). */
+export const makeWorld = (
+  osm: GameMap,
+  dressings: ReadonlyArray<PlaceDressing> = PLACES,
+  profiles: ReadonlyArray<StreetProfile> = STREETS,
+  grounds: ReadonlyArray<GroundDressing> = GROUNDS,
+): World => {
   const map = dressMap(osm, dressings)
   // Buildings are solid: nothing drives or walks through them. Canopies (petrol stations) stand on pillars: you drive under them.
   const cafe = planCafe(map)
@@ -148,7 +155,7 @@ export const makeWorld = (osm: GameMap, dressings: ReadonlyArray<PlaceDressing> 
     return out
   }
 
-  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe, places: resolvePlaces(map, dressings), streets }
+  return { map, isSolid, isWater, roadAt, junctions: graph(DRIVABLE), walkJunctions: graph(WALKABLE), areaAt, cafe, places: resolvePlaces(map, dressings), grounds: resolveGrounds(map, grounds), streets }
 }
 
 const nearestOnPolyline = (x: number, y: number, pts: ReadonlyArray<number>): number => {

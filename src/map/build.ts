@@ -1,4 +1,4 @@
-import type { Area, AreaKind, Building, Crossing, District, GameMap, Poi, PoiKind, Prop, Road, RoadKind, Signal, Waterway } from "./types.ts"
+import type { Area, AreaKind, Building, Container, Crossing, District, GameMap, Poi, PoiKind, Prop, Road, RoadKind, Signal, Waterway } from "./types.ts"
 import { makeProjection, type Bbox, type LatLon } from "./project.ts"
 import { buildBusLines, type OsmElement } from "./bus.ts"
 import type { ExtraPoi } from "./extra-pois.ts"
@@ -144,6 +144,15 @@ export const poiKind = (tags: Readonly<Record<string, string>>): PoiKind | null 
 }
 
 /**
+ * POI names OSM spells wrong, by the OSM id of the place they come from. The id, not the name, so the POI keeps its slot
+ * (docs/poi-id-map.csv). Occasione (way 668663478, B6d-9): OSM says "Livestyle", its signs and website "Lifestyle".
+ */
+const NAME_FIXES: ReadonlyMap<number, string> = new Map([[668663478, "Occasione Mode & Lifestyle"]])
+
+/** A place's POI name: a fixed one, else its brand, else its name. */
+export const placeName = (place: OsmPlace): string | undefined => NAME_FIXES.get(place.id) ?? place.tags.brand ?? place.tags.name
+
+/**
  * A later place this close to a POI whose name equals its own or starts with it, or the other way round, is the same
  * place (a pub node inside a gym's building way; "Champini" grounds round "Champini Sport- & Bewegungskita").
  */
@@ -212,7 +221,12 @@ export type RelationBuilding = {
  * The building relations in the box as buildings: each outer ring a footprint (id = the relation's), the inner
  * rings inside it its `holes`. `wayBuildings` are the ids of the way buildings already on the map.
  */
-export const relationBuildings = (relations: ReadonlyArray<OsmRelation>, wayBuildings: ReadonlySet<number>, bbox: Bbox): Array<RelationBuilding> => {
+export const relationBuildings = (
+  relations: ReadonlyArray<OsmRelation>,
+  wayBuildings: ReadonlySet<number>,
+  bbox: Bbox,
+  lod2Levels: ReadonlyMap<number, number> = new Map(),
+): Array<RelationBuilding> => {
   const projection = makeProjection(bbox)
   const inside = (p: LatLon) => p.lat >= bbox.south && p.lat <= bbox.north && p.lon >= bbox.west && p.lon <= bbox.east
   const flat = (ring: ReadonlyArray<LatLon>) => ring.flatMap((p) => projection.toMeters(p).map(round))
@@ -225,7 +239,7 @@ export const relationBuildings = (relations: ReadonlyArray<OsmRelation>, wayBuil
     const duplicate = rel.members.some((m) => m.type === "way" && m.role === "outer" && wayBuildings.has(m.ref))
     const buildings = outers.map((pts): Building => {
       const holes = inners.filter((h) => pointInPolygon(h[0] ?? 0, h[1] ?? 0, pts))
-      return { id: rel.id, levels: buildingLevels(rel.tags), pts, ...(rel.tags.building === "roof" ? { canopy: true } : {}), ...(holes.length > 0 ? { holes } : {}) }
+      return { id: rel.id, levels: buildingLevels(rel.tags, lod2Levels.get(rel.id)), pts, ...(rel.tags.building === "roof" ? { canopy: true } : {}), ...(holes.length > 0 ? { holes } : {}) }
     })
     const area = buildings.reduce((s, b) => s + polygonArea(b.pts) - (b.holes ?? []).reduce((h, r) => h + polygonArea(r), 0), 0)
     return [{ id: rel.id, name: rel.tags.name ?? "", area: Math.round(area), status: duplicate ? "duplicate" : "new", buildings }]
@@ -264,13 +278,61 @@ const TYPICAL_LEVELS: Readonly<Record<string, number>> = {
   apartments: 4,
 }
 
-export const buildingLevels = (tags: Readonly<Record<string, string>>): number => {
+/**
+ * A building:levels tag this many storeys under the LoD2 model's walls counts only part of the building, and LoD2
+ * wins: of the 149 tagged buildings LoD2 matches, the Sparkassengebäude (way 980958027: 5 over a 27.5 m flat roof),
+ * way 188048816 (1 under a 7.8 m eave) and Kaufland (a place, which keeps its own). Every other tag is within one
+ * storey of LoD2's or above it, and stays.
+ */
+const TAG_UNDER_LOD2 = 2
+
+/** Storeys: OSM's building:levels (unless far under LoD2's), else the LoD2 model's (scripts/lod2-heights.ts), else the type's typical count. */
+export const buildingLevels = (tags: Readonly<Record<string, string>>, lod2?: number): number => {
   const levels = Number(tags["building:levels"])
-  if (Number.isFinite(levels) && levels > 0) return levels
-  return TYPICAL_LEVELS[tags.building ?? ""] ?? 2
+  if (Number.isFinite(levels) && levels > 0) return lod2 !== undefined && lod2 - levels >= TAG_UNDER_LOD2 ? lod2 : levels
+  return lod2 ?? TYPICAL_LEVELS[tags.building ?? ""] ?? 2
 }
 
 const round = (n: number) => Math.round(n * 10) / 10
+
+/** What each OSM recycling:* material puts in the row; a bottle bank comes as three (white, green and brown glass). */
+const MATERIALS: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<Container>]> = [
+  [["glass_bottles", "glass"], ["glass", "glass", "glass"]],
+  [["paper", "cardboard"], ["paper"]],
+  [["cans"], ["cans"]],
+  [["clothes", "shoes"], ["clothes"]],
+  [["green_waste", "garden_waste"], ["green"]],
+]
+
+/** A recycling point that names no material (most Wertstoffinseln in OSM): glass, paper and cans. */
+const WERTSTOFFINSEL: ReadonlyArray<Container> = ["glass", "paper", "cans"]
+
+/** The containers of a recycling point, from its recycling:*=yes tags. */
+export const recyclingHolds = (tags: Readonly<Record<string, string>>): ReadonlyArray<Container> => {
+  const holds = MATERIALS.flatMap(([keys, row]) => (keys.some((k) => tags[`recycling:${k}`] === "yes") ? row : []))
+  return holds.length === 0 ? WERTSTOFFINSEL : holds
+}
+
+/**
+ * The prop of a piece of street furniture (amenity bench, waste_basket, recycling, bicycle_parking), or null: a
+ * recycling firm mapped on its building (recycling_type=centre with building=*) is no container in the street.
+ */
+export const furnitureProp = (tags: Readonly<Record<string, string>>, x: number, y: number): Prop | null => {
+  switch (tags.amenity) {
+    case "bench":
+      return { kind: "bench", x, y }
+    case "waste_basket":
+      return { kind: "bin", x, y }
+    case "recycling":
+      return tags.building === undefined ? { kind: "recycling", x, y, holds: [...recyclingHolds(tags)] } : null
+    case "bicycle_parking": {
+      const capacity = Number.parseInt(tags.capacity ?? "", 10)
+      return { kind: "bike_rack", x, y, ...(tags.covered === "yes" ? { covered: true } : {}), ...(Number.isFinite(capacity) && capacity > 0 ? { capacity } : {}) }
+    }
+    default:
+      return null
+  }
+}
 
 /**
  * Sources fetched apart from the first ones (each with its own cache), so adding them leaves every older
@@ -292,6 +354,10 @@ export type MoreSources = {
   readonly leisureAreas?: { readonly ways: ReadonlyArray<OsmWay>; readonly relations: ReadonlyArray<OsmRelation> }
   /** The ground colour (#rrggbb) of an area from the aerial photo, `holes` left out (null: none); `id` is its OSM way or relation. */
   readonly groundTint?: (id: number, pts: ReadonlyArray<number>, holes: ReadonlyArray<ReadonlyArray<number>>) => string | null
+  /** Storeys from the LoD2 model (data/lod2-levels.json) by OSM way and relation id, used where OSM has no building:levels. */
+  readonly lod2Levels?: { readonly ways: ReadonlyMap<number, number>; readonly relations: ReadonlyMap<number, number> }
+  /** Street furniture (V-11: benches, litter bins, recycling points, bike racks), appended after every older prop. */
+  readonly furniture?: ReadonlyArray<OsmPlace>
 }
 
 /**
@@ -334,7 +400,7 @@ export const buildMap = (
         id: way.id,
       })
     } else if (tags.building !== undefined) {
-      buildings.push({ id: way.id, levels: buildingLevels(tags), pts: flat(way.geometry), ...(tags.building === "roof" ? { canopy: true } : {}) })
+      buildings.push({ id: way.id, levels: buildingLevels(tags, more.lod2Levels?.ways.get(way.id)), pts: flat(way.geometry), ...(tags.building === "roof" ? { canopy: true } : {}) })
     } else if (tags.waterway !== undefined) {
       const width = tags.waterway === "river" ? 40 : tags.waterway === "canal" ? 12 : 3
       waterways.push({ width, pts: flat(way.geometry) })
@@ -376,7 +442,8 @@ export const buildMap = (
       continue
     }
     if (tags.amenity === "recycling") {
-      props.push({ kind: "glass", x, y })
+      const p = furnitureProp(tags, x, y)
+      if (p !== null) props.push(p)
       continue
     }
     if (tags.place !== undefined) {
@@ -386,7 +453,7 @@ export const buildMap = (
     // Only churches: a prayer room in an industrial estate is no save point.
     if (tags.amenity === "place_of_worship" && tags.religion !== "christian") continue
     const kind = poiKind(place.tags)
-    const name = place.tags.brand ?? place.tags.name
+    const name = placeName(place)
     if (kind !== null && name !== undefined) pois.push({ name, kind, x, y })
   }
 
@@ -395,7 +462,7 @@ export const buildMap = (
     for (const place of batch) {
       if (!inside(place)) continue
       const kind = poiKind(place.tags)
-      const name = place.tags.brand ?? place.tags.name
+      const name = placeName(place)
       if (kind === null || name === undefined) continue
       const [x, y] = projection.toMeters(place).map(round)
       addPoi(pois, { name, kind, x: x ?? 0, y: y ?? 0 })
@@ -415,7 +482,7 @@ export const buildMap = (
   addPlaces([...(more.places ?? []).filter(isVenue), ...(more.next?.places ?? [])])
   addExtras(more.next?.extraPois ?? [])
   const wayBuildings = new Set(buildings.map((b) => b.id))
-  for (const rel of relationBuildings(more.buildingRelations ?? [], wayBuildings, bbox)) if (rel.status === "new") buildings.push(...rel.buildings)
+  for (const rel of relationBuildings(more.buildingRelations ?? [], wayBuildings, bbox, more.lod2Levels?.relations)) if (rel.status === "new") buildings.push(...rel.buildings)
 
   for (const [name, at] of signs) {
     if (districts.some((d) => d.name === name) || at.length < 2) continue
@@ -456,6 +523,13 @@ export const buildMap = (
   const buses = buildBusLines(routes, roads, bbox)
   for (const stop of buses.flatMap((l) => l.runs.flatMap((r) => r.stops))) {
     if (!props.some((p) => p.kind === "bus_stop" && Math.hypot(p.x - stop.x, p.y - stop.y) < 20)) props.push({ kind: "bus_stop", x: stop.x, y: stop.y })
+  }
+  // Where each piece stands on the ground is worked out against the buildings and paths at load (world/furniture.ts).
+  for (const place of more.furniture ?? []) {
+    if (!inside(place)) continue
+    const [x, y] = projection.toMeters(place).map(round)
+    const p = furnitureProp(place.tags, x ?? 0, y ?? 0)
+    if (p !== null) props.push(p)
   }
 
   return {

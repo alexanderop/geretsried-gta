@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildMap, buildingLevels, joinRings, poiKind, polygonArea, relationBuildings, type OsmPlace, type OsmRelation, type OsmWay } from "./build.ts"
+import { buildMap, buildingLevels, joinRings, placeName, poiKind, polygonArea, relationBuildings, type OsmPlace, type OsmRelation, type OsmWay } from "./build.ts"
 import { makeProjection } from "./project.ts"
 
 const bbox = { south: 47.85, west: 11.45, north: 47.86, east: 11.47 }
@@ -60,6 +60,12 @@ describe("buildMap", () => {
     expect(map.pois.map((p) => [p.name, p.kind])).toEqual([["EDEKA", "supermarket"]])
   })
 
+  it("fixes a name OSM misspells by the place's OSM id, and only that one (B6d-9)", () => {
+    const tags = { shop: "clothes", name: "Occasione Mode & Livestyle" }
+    expect(placeName({ id: 668663478, lat: 47.864, lon: 11.479, tags })).toBe("Occasione Mode & Lifestyle")
+    expect(placeName({ id: 668663479, lat: 47.864, lon: 11.479, tags })).toBe("Occasione Mode & Livestyle")
+  })
+
   it("keeps traffic lights with their direction", () => {
     expect(map.signals.map((s) => [s.node, s.direction])).toEqual([[902, "forward"]])
   })
@@ -80,6 +86,14 @@ describe("buildingLevels", () => {
     expect(buildingLevels({ building: "garages" })).toBe(1)
     expect(buildingLevels({ building: "apartments" })).toBe(4)
     expect(buildingLevels({ building: "yes" })).toBe(2)
+  })
+
+  it("puts the LoD2 model's storeys between OSM's tag and the type's typical count, and over a tag two or more under them", () => {
+    expect(buildingLevels({ building: "apartments" }, 7)).toBe(7)
+    expect(buildingLevels({ building: "garage" }, 1)).toBe(1)
+    expect(buildingLevels({ building: "yes", "building:levels": "3" }, 4)).toBe(3)
+    expect(buildingLevels({ building: "yes", "building:levels": "3" }, 1)).toBe(3)
+    expect(buildingLevels({ building: "apartments", "building:levels": "5" }, 9)).toBe(9)
   })
 })
 

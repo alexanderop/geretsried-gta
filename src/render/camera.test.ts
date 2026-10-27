@@ -58,7 +58,8 @@ describe("the camera over Geretsried's high-rises", () => {
 
   it("knows the few towers taller than the walking camera can pass, Maria Hilf's bell tower among them", () => {
     expect(towers.length).toBeGreaterThan(0)
-    expect(towers.length).toBeLessThan(20)
+    // LoD2 storeys put 35 blocks over the walking camera (2026-10-27); still a handful of the town's buildings.
+    expect(towers.length).toBeLessThan(60)
     expect(Math.max(...towers.map((t) => t.top))).toBeGreaterThanOrEqual(35)
   })
 

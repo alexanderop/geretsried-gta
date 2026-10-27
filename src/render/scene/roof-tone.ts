@@ -1,11 +1,17 @@
 /**
  * Roof colours from the photo, graded for GTA 2. The DOP40 plane medians are
  * hazy: a terracotta roof measures as pale salmon (lightness about 0.56,
- * saturation 0.2 across the town). The
- * grade undoes the haze and keeps each roof's own hue and the lit/shaded
- * difference between its planes, since it is monotonic in lightness.
+ * saturation 0.2 across the town). The grade undoes the haze. Only real clay
+ * is terracotta: brown and grey-beige concrete or fibre-cement tiles (a warm
+ * hue with little colour) become dark brown, never lighter than terracotta
+ * from the same measurement. One roof is one material: what it is made of and
+ * its hue come from all its planes together (a shaded plane just measures
+ * darker and greyer), each plane keeps its own lightness, so the lit/shaded
+ * difference stays (the grade is monotonic in lightness).
  */
 import type { Rgba } from "./mesh.ts"
+
+export type Rgb = readonly [number, number, number]
 
 type Hsl = readonly [number, number, number]
 
@@ -36,21 +42,41 @@ const toRgb = ([h, s, l]: Hsl): readonly [number, number, number] => {
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 
-/** Reds and oranges: clay and brown tiles. */
-const isWarm = (h: number) => h < 0.12 || h > 0.95
+/** Clay tile: red to orange (under 26 degrees) with colour left under the haze. Tuned on DOP20 at the six V-item spots. */
+const isClay = (h: number, s: number) => (h < 0.072 || h > 0.95) && s >= 0.25
+
+/** Brown and grey-beige tile: a warm hue with a little colour. Less colour than that is grey tile. */
+const isBrown = (h: number, s: number) => (h < 0.12 || h > 0.95) && s >= 0.1
+
+/** A roof's material, with the hue and saturation measured over all its planes. */
+export type RoofGrade = { readonly kind: "flat" | "clay" | "brown" | "grey"; readonly h: number; readonly s: number }
+
+/** What a roof is made of, from the mean of its planes' measured colours (0–255). */
+export const roofGrade = (planes: ReadonlyArray<Rgb>, pitched: boolean): RoofGrade => {
+  const n = Math.max(1, planes.length)
+  const mean = (i: 0 | 1 | 2) => planes.reduce((sum, c) => sum + c[i], 0) / n / 255
+  const [h, s] = toHsl(mean(0), mean(1), mean(2))
+  const kind = !pitched ? "flat" : isClay(h, s) ? "clay" : isBrown(h, s) ? "brown" : "grey"
+  return { kind, h, s }
+}
 
 /**
- * A measured roof colour (0–255) as GTA 2 would paint it: clay tile becomes
- * saturated terracotta or brown, grey tile dark anthracite, flat roofs light
- * grey gravel.
+ * A plane's measured colour (0–255) as GTA 2 would paint it: clay tile
+ * becomes saturated terracotta, brown tile dark brown, grey tile dark
+ * anthracite, flat roofs light grey gravel (their own hue, barely any).
  */
-export const roofTone = (rgb: readonly [number, number, number], pitched: boolean): Rgba => {
-  const [h, s, l] = toHsl(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255)
-  const graded: Hsl = !pitched
-    ? [h, Math.min(s, 0.06), clamp(0.3 + l * 0.42, 0.42, 0.68)]
-    : isWarm(h) && s >= 0.1
-      ? [h < 0.5 ? clamp(h * 0.8, 0.01, 0.055) : h, clamp(s * 2.2, 0.35, 0.58), clamp(0.06 + l * 0.6, 0.18, 0.44)]
-      : [h, Math.min(s, 0.08), clamp(0.12 + l * 0.4, 0.16, 0.38)]
+export const roofTone = (rgb: Rgb, grade: RoofGrade): Rgba => {
+  const own = toHsl(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255)
+  const l = own[2]
+  const { h, s } = grade
+  const graded: Hsl =
+    grade.kind === "flat"
+      ? [own[0], Math.min(own[1], 0.06), clamp(0.3 + l * 0.42, 0.42, 0.68)]
+      : grade.kind === "clay"
+        ? [h < 0.5 ? clamp(h * 0.8, 0.01, 0.055) : h, clamp(s * 2.2, 0.35, 0.58), clamp(0.06 + l * 0.6, 0.18, 0.44)]
+        : grade.kind === "brown"
+          ? [h < 0.5 ? clamp(h, 0.07, 0.1) : 0.07, clamp(s * 1.4, 0.14, 0.3), clamp(0.03 + l * 0.49, 0.15, 0.36)]
+          : [h, Math.min(s, 0.08), clamp(0.12 + l * 0.4, 0.16, 0.38)]
   const [r, g, b] = toRgb(graded)
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), 255]
 }

@@ -15,11 +15,15 @@
  * parts (wallSign, arcade, balcony, canopy, gable, stairs, ramp, roofSign) sit on one wall of the footprint, `edge` i
  * running from point i to i + 1 of its `pts`: u in meters from the wall's
  * left end as you face it from outside, z up from the ground.
+ *
+ * A ground dressing (GroundDressing) does the same for an OSM area with no
+ * building to hang parts on (a playground): only free-standing parts.
  */
-import type { GameMap } from "#/map/types.ts"
+import type { AreaKind, GameMap } from "#/map/types.ts"
 import type { Facade } from "#/render/scene/facade.ts"
 import type { MaterialName, PropName, Rgba } from "#/render/scene/mesh.ts"
 import { streetFrame, wallFrame, type Frame, type Rect } from "../frame.ts"
+import { pointInPolygon } from "../geometry.ts"
 
 /**
  * A horizontal band of the walls, z0..z1 meters above the ground, in its own
@@ -254,4 +258,35 @@ export const resolvePlaces = (map: GameMap, dressings: ReadonlyArray<PlaceDressi
       .reduce<{ x: number; y: number } | null>((best, p) => (best === null || Math.hypot(p.x - mx, p.y - my) < Math.hypot(best.x - mx, best.y - my) ? p : best), null)
     const frame = streetFrame(map, dressing.street, poi?.x ?? mx, poi?.y ?? my)
     return frame === null ? [] : [{ dressing, building, frame }]
+  })
+
+/** The parts that stand free of any wall, in the street frame: all a ground dressing can have. */
+export type FreePart = Extract<Part, { kind: "sprite" | "pylon" }>
+
+/**
+ * Equipment on an OSM area that has no building to hang it on (a playground's hut, slide and benches). The map's areas
+ * carry no OSM id, so the area of kind `area` that holds the map point `at` is the place; the parts are free-standing
+ * (sprites, pylons) in the street frame of `street` at `at`, as a place's are at its POI. Never solid.
+ */
+export type GroundDressing = {
+  /** What the place is called (the sign at its gate): only for people and `?at=`. */
+  readonly name: string
+  /** The exact OSM name of the street the place faces: its frame hangs on it. */
+  readonly street: string
+  readonly area: AreaKind
+  /** A map point inside the area: it picks the area and anchors the frame. */
+  readonly at: readonly [number, number]
+  readonly parts: ReadonlyArray<FreePart>
+}
+
+/** A ground dressing found on the map: the index of its area in `map.areas` and its street frame. */
+export type Ground = { readonly dressing: GroundDressing; readonly area: number; readonly frame: Frame }
+
+/** Every ground dressing whose area and street are on the map, with its frame. */
+export const resolveGrounds = (map: GameMap, dressings: ReadonlyArray<GroundDressing>): Array<Ground> =>
+  dressings.flatMap((dressing) => {
+    const [x, y] = dressing.at
+    const area = map.areas.findIndex((a) => a.kind === dressing.area && a.width === undefined && pointInPolygon(x, y, a.pts))
+    const frame = area < 0 ? null : streetFrame(map, dressing.street, x, y)
+    return frame === null ? [] : [{ dressing, area, frame }]
   })

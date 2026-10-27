@@ -307,7 +307,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap
         </a>{" "}
-        contributors · Dachfarben, Bäume, Minikarte aus dem Luftbild DOP40{" "}
+        contributors · Dachfarben, Bäume, Minikarte aus dem Luftbild DOP40, Gebäudehöhen aus dem 3D-Gebäudemodell LoD2{" "}
         <a className="underline" href="https://geodaten.bayern.de/opengeodata/" target="_blank" rel="noreferrer">
           © Bayerische Vermessungsverwaltung (www.geodaten.bayern.de)
         </a>

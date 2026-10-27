@@ -3,10 +3,10 @@ import { Schema } from "effect"
 import { describe, expect, it } from "vitest"
 import { GameMap, type Road } from "#/map/types.ts"
 import { pointInPolygon } from "../geometry.ts"
-import { rectRing, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
+import { rectRing, square, streetFrame, toLocal, toWorld, wallFrame } from "../frame.ts"
 import { makeWorld } from "../world.ts"
-import { dressMap, resolvePlaces, towerFrame, type Part, type PlaceDressing } from "./dressing.ts"
-import { PLACES } from "./index.ts"
+import { dressMap, resolveGrounds, resolvePlaces, towerFrame, type GroundDressing, type Part, type PlaceDressing } from "./dressing.ts"
+import { GROUNDS, PLACES } from "./index.ts"
 import { BISTRO_MALOR, KIND, UNITS as UNITS_10 } from "./sudetenstrasse-10.ts"
 import { DOLCE_GELATO, STROBLUME, UNITS, VR_BANK } from "./sudetenstrasse-11-15.ts"
 
@@ -118,6 +118,15 @@ describe("dressing a map", () => {
 
   it("gives the world the dressed storeys", () => {
     expect(makeWorld(tiny, [shop]).map.buildings[0]?.levels).toBe(3)
+  })
+  it("finds a ground dressing's area by the point inside it, and hangs its frame on the street there", () => {
+    const map: GameMap = { ...tiny, areas: [{ kind: "grass", pts: [110, 50, 150, 50, 150, 90, 110, 90] }, { kind: "playground", pts: [110, 50, 150, 50, 150, 90, 110, 90] }] }
+    const swings: GroundDressing = { name: "Swings", street: "Main", area: "playground", at: [130, 70], parts: [] }
+    const grounds = resolveGrounds(map, [swings, { ...swings, at: [130, 120] }, { ...swings, area: "pitch" }, { ...swings, street: "Nowhere" }])
+    expect(grounds).toHaveLength(1)
+    expect(grounds[0]?.area).toBe(1)
+    expect(grounds[0]?.frame).toMatchObject({ ox: 130, oy: 40, nx: 0, ny: 1 })
+    expect(makeWorld(map, [], [], [swings]).grounds).toHaveLength(1)
   })
 })
 
@@ -1522,6 +1531,165 @@ describe("the registry on the real map", () => {
     const lo = Math.min(...windows.map((w) => w.u0))
     const hi = Math.max(...windows.map((w) => w.u1))
     expect(((board?.u0 ?? 0) + (board?.u1 ?? 0)) / 2).toBeCloseTo((lo + hi) / 2, 0)
+  })
+
+  it("lays out Spielplatz Breslauer Weg inside its playground, S of the sidewalk, in photo 40's order from the street", () => {
+    const grounds = resolveGrounds(map, GROUNDS)
+    expect(grounds.map((g) => g.dressing.name)).toEqual(GROUNDS.map((g) => g.name))
+    const ground = grounds.find((g) => g.dressing.name === "Spielplatz Breslauer Weg")
+    if (ground === undefined) throw new Error("no Spielplatz Breslauer Weg")
+    // I-2's area for way 1271723892, in its dark canopy tint (leaf-covered earth, no sand).
+    const area = map.areas[ground.area]
+    expect(area?.kind).toBe("playground")
+    expect(area?.tint).toBe("#424e35")
+    const pts = area?.pts ?? []
+    // Seen from Breslauer Weg (S of it, looking S), u runs to the right: W.
+    expect(ground.frame.ny).toBeGreaterThan(0.9)
+    expect(ground.frame.ux).toBeLessThan(-0.9)
+    const sprites = ground.dressing.parts.flatMap((p) => (p.kind === "sprite" ? [p] : []))
+    const pylons = ground.dressing.parts.flatMap((p) => (p.kind === "pylon" ? [p] : []))
+    // Every sprite, as the square its long side spans whichever way it is turned, lies in the playground and S of the road and its sidewalk (half the 6.5 m and 2.6 m).
+    const street = map.roads.find((r) => r.name === "Breslauer Weg" && Math.abs(toLocal(ground.frame, r.pts[0] ?? 0, r.pts[1] ?? 0)[1]) < 40)
+    const back = (street?.width ?? 0) / 2 + 2.6
+    for (const p of sprites) {
+      const ring = rectRing(ground.frame, square(p.u, p.n, p.len / 2))
+      for (let k = 0; k < 4; k++) {
+        const [x, y] = [ring[k * 2] ?? 0, ring[k * 2 + 1] ?? 0]
+        expect(pointInPolygon(x, y, pts), `${p.name} corner ${k}`).toBe(true)
+        expect(toLocal(ground.frame, x, y)[1], `${p.name} corner ${k}`).toBeGreaterThan(back)
+      }
+    }
+    // The fences: the street one on the sidewalk's back, the wooden one along the back edge, both within the area's width.
+    for (const p of pylons) {
+      expect(p.n - p.d / 2).toBeGreaterThan(back)
+      for (const end of [-1, 1]) {
+        const [x, y] = toWorld(ground.frame, p.u + (end * p.w * Math.cos(p.angle)) / 2, p.n - (end * p.w * Math.sin(p.angle)) / 2)
+        expect(pointInPolygon(x, y, pts)).toBe(true)
+      }
+    }
+    // Left to right in photo 40: the A-frame hut and its bench at the back, the spring rider, the tower with the slide, the seesaw; the front bench, then the bin.
+    const u = (name: string, k = 0) => sprites.filter((p) => p.name === name)[k]?.u ?? Number.NaN
+    const order = [u("spielplatz-hut"), u("spielplatz-bench"), u("spielplatz-rider"), u("spielplatz-tower"), u("spielplatz-seesaw")]
+    expect(order).toEqual(order.toSorted((a, b) => a - b))
+    expect(u("spielplatz-bench", 1)).toBeLessThan(u("spielplatz-bin"))
+    // The hut and its bench stand at the back, the other bench and the bin at the front.
+    const n = (name: string, k = 0) => sprites.filter((p) => p.name === name)[k]?.n ?? Number.NaN
+    expect(Math.min(n("spielplatz-hut"), n("spielplatz-bench"))).toBeGreaterThan(Math.max(n("spielplatz-bench", 1), n("spielplatz-bin")) + 15)
+  })
+
+  /** Meters from (x, y) to the nearest centre line of the street named `name`. */
+  const toStreet = (name: string, x: number, y: number) =>
+    Math.min(
+      ...map.roads.filter((r) => r.name === name).flatMap((r) =>
+        r.pts.flatMap((_, k) => {
+          if (k % 2 !== 0 || k + 3 >= r.pts.length) return []
+          const [ax, ay, bx, by] = [r.pts[k] ?? 0, r.pts[k + 1] ?? 0, r.pts[k + 2] ?? 0, r.pts[k + 3] ?? 0]
+          const len2 = (bx - ax) ** 2 + (by - ay) ** 2
+          const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / len2))
+          return [Math.hypot(x - ax - t * (bx - ax), y - ay - t * (by - ay))]
+        }),
+      ),
+    )
+  /** Whether wall `edge` of the place's footprint faces the street: 5 m out from its middle is nearer the street's centre line than the middle itself. */
+  const facesStreet = (id: number, edge: number, street: string) => {
+    const wall = wallFrame(map.buildings.find((b) => b.id === id)?.pts ?? [], edge)
+    if (wall === null) return false
+    const [mx, my] = toWorld(wall.frame, wall.length / 2, 0)
+    const [ox, oy] = toWorld(wall.frame, wall.length / 2, -5)
+    return toStreet(street, ox, oy) < toStreet(street, mx, my) - 2
+  }
+  const signs = (id: number) => (at(id)?.dressing.parts ?? []).flatMap((p) => (p.kind === "wallSign" ? [p] : []))
+
+  it("dresses Carglass as a one-storey flat red kiosk (LoD2 3.6 m), the front and the CARGLASS fascia on the short NE end facing Sudetenstraße; the lot's other building flat and one storey", () => {
+    const kiosk = at(772887800)
+    expect(kiosk?.dressing.poi).toBe("Carglass")
+    expect((dressed.buildings[kiosk?.building ?? -1]?.levels ?? 0) * 3 + 0.6).toBeCloseTo(3.6, 5)
+    expect(kiosk?.dressing.roof?.pitched).toBe(false)
+    // Wall 3 is the 6.55 m end, the street side; the 12.5 m side (wall 2) is not.
+    expect(wallFrame(map.buildings[kiosk?.building ?? -1]?.pts ?? [], 3)?.length).toBeCloseTo(6.55, 1)
+    expect(facesStreet(772887800, 3, "Sudetenstraße")).toBe(true)
+    expect(signs(772887800).map((s) => [s.texture, s.edge, s.u0, s.u1])).toEqual([
+      ["carglass-front", 3, 0, 6.55],
+      ["carglass-sign", 3, 0, 6.55],
+    ])
+    // The sign covers the fascia band to the top of the parapet.
+    const sign = signs(772887800).find((s) => s.texture === "carglass-sign")
+    expect(kiosk?.dressing.bands?.[0]).toMatchObject({ z0: sign?.z0, z1: sign?.z1, plain: true })
+    const hall = at(772887798)
+    expect(dressed.buildings[hall?.building ?? -1]?.levels).toBe(1)
+    expect(hall?.dressing.roof?.pitched).toBe(false)
+    expect(hall?.dressing.parts).toEqual([])
+  })
+
+  it("hangs Dr. Lewke's board on the street wall near the NW corner, at the height of the ground-floor windows, and keeps the house's storeys", () => {
+    const lewke = at(188590009)
+    expect(lewke?.dressing.levels).toBeUndefined()
+    expect(facesStreet(188590009, 4, "Adalbert-Stifter-Straße")).toBe(true)
+    const [board] = signs(188590009)
+    expect(board).toMatchObject({ texture: "lewke-sign", edge: 4 })
+    // 2:1 like the board, 1.75–2.65 m up.
+    expect(((board?.u1 ?? 0) - (board?.u0 ?? 0)) / ((board?.z1 ?? 0) - (board?.z0 ?? 1))).toBeCloseTo(2, 1)
+    expect(board?.z0).toBeGreaterThan(1.5)
+    // Wall 4 starts at the NW corner (the street wall's left end seen from the street).
+    const pts = map.buildings[lewke?.building ?? -1]?.pts ?? []
+    const wall = wallFrame(pts, 4)
+    expect([wall?.frame.ox, wall?.frame.oy]).toEqual([3691.3, 4053.4])
+  })
+
+  it("builds Schröter's block from LoD2 (3 storeys under a flat hip, the 2-storey hipped wing SE of it), the red shop front, awnings and logo on the wing's street front, the OCCASIONE/Schröter panel on the block's street end", () => {
+    const schroeter = at(668663477)
+    const masses = schroeter?.dressing.masses ?? []
+    expect(masses.map((m) => [Math.round(m.levels * 30) / 10, m.roof?.hip])).toEqual([
+      [10.6, 7],
+      [7.3, 10],
+    ])
+    expect(facesStreet(668663477, 4, "Adalbert-Stifter-Straße")).toBe(true)
+    expect(facesStreet(668663477, 3, "Adalbert-Stifter-Straße")).toBe(true)
+    const parts = schroeter?.dressing.parts ?? []
+    expect(new Set(parts.flatMap((p) => (p.kind === "wallSign" || p.kind === "canopy" ? [p.edge] : [])))).toEqual(new Set([3, 4]))
+    const front = signs(668663477).find((s) => s.texture === "schroeter-front")
+    const logo = signs(668663477).find((s) => s.texture === "schroeter-sign")
+    const awnings = parts.flatMap((p) => (p.kind === "canopy" ? [p] : []))
+    // The awnings hang over the red ground floor, the logo panel above it on the cream storey; all on the wing's 7.3 m of wall.
+    expect(awnings).toHaveLength(2)
+    for (const a of awnings) expect(a.z).toBeLessThanOrEqual(front?.z1 ?? 0)
+    expect(logo?.z0).toBeGreaterThan(front?.z1 ?? Infinity)
+    expect(logo?.z1).toBeLessThan(7.3)
+    expect(signs(668663477).find((s) => s.texture === "schroeter-gable")?.edge).toBe(3)
+  })
+
+  it("dresses the Occasione annex as its own way: one flat storey (LoD2 3.9 m), the front, the board and the dark-edged canopy on the NW wall, named Lifestyle", () => {
+    const occasione = at(668663478)
+    expect(occasione?.dressing.poi).toBe("Occasione Mode & Lifestyle")
+    // The importer fixes OSM's "Livestyle" (B6d-9), so the dressing anchors on its POI (#217, same slot).
+    expect(map.pois.findIndex((p) => p.name === "Occasione Mode & Lifestyle")).toBe(216)
+    expect(map.pois.some((p) => p.name.includes("Livestyle"))).toBe(false)
+    expect(occasione?.dressing.osmBuildingId).not.toBe(at(668663477)?.dressing.osmBuildingId)
+    expect((dressed.buildings[occasione?.building ?? -1]?.levels ?? 0) * 3 + 0.6).toBeCloseTo(3.9, 5)
+    expect(occasione?.dressing.roof?.pitched).toBe(false)
+    const parts = occasione?.dressing.parts ?? []
+    expect(new Set(parts.map((p) => ("edge" in p ? p.edge : -1)))).toEqual(new Set([1]))
+    // Wall 1 faces NW, away from Schröter's block it leans on (wall 3 is the shared wall).
+    const front = wallFrame(map.buildings[occasione?.building ?? -1]?.pts ?? [], 1)?.frame
+    expect(front?.nx).toBeGreaterThan(0.6)
+    expect(front?.ny).toBeGreaterThan(0.6)
+    // The board over the door sits under the canopy's fascia.
+    const canopy = parts.find((p) => p.kind === "canopy")
+    const board = signs(668663478).find((s) => s.texture === "occasione-sign")
+    expect(board?.z1).toBeLessThanOrEqual((canopy?.kind === "canopy" ? canopy.z - (canopy.fascia?.h ?? 0) : 0) + 1e-9)
+  })
+
+  it("dresses the Champini Kita on its I-2 kindergarten POI: the drawn N front over all 32 m of wall 1, ground to the LoD2 6.5 m top, facing Jeschkenstraße", () => {
+    const kita = at(524105770)
+    const poi = map.pois.find((p) => p.name === kita?.dressing.poi)
+    expect(poi?.kind).toBe("kindergarten")
+    expect(facesStreet(524105770, 1, "Jeschkenstraße")).toBe(true)
+    const top = (dressed.buildings[kita?.building ?? -1]?.levels ?? 0) * 3 + 0.6
+    expect(top).toBeCloseTo(6.5, 5)
+    const wall = wallFrame(map.buildings[kita?.building ?? -1]?.pts ?? [], 1)
+    expect(signs(524105770).map((s) => [s.texture, s.edge, s.u0, s.z0])).toEqual([["champini-front", 1, 0, 0]])
+    expect(signs(524105770)[0]?.u1).toBeCloseTo(wall?.length ?? 0, 1)
+    expect(signs(524105770)[0]?.z1).toBeCloseTo(top, 5)
   })
 
   it("gives St. Ursula its four storeys", () => {

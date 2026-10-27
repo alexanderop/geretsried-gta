@@ -32,12 +32,12 @@ const free = (world: World, x: number, y: number): readonly [number, number] => 
   return [x, y]
 }
 
-/** The named targets: every dressed place (in front of it, on its street's sidewalk), then every POI. */
+/** The named targets: every dressed place and area (in front of it, on its street's sidewalk), then every POI. */
 const targets = (world: World): ReadonlyArray<{ readonly name: string; readonly x: number; readonly y: number }> => [
-  ...world.places.map((p) => {
-    const half = (world.roadAt(p.frame.ox, p.frame.oy, 30)?.road.width ?? 0) / 2
-    const [x, y] = toWorld(p.frame, 0, half + KERB_OUT)
-    return { name: p.dressing.poi, x, y }
+  ...[...world.places.map((p) => ({ name: p.dressing.poi, frame: p.frame })), ...world.grounds.map((g) => ({ name: g.dressing.name, frame: g.frame }))].map(({ name, frame }) => {
+    const half = (world.roadAt(frame.ox, frame.oy, 30)?.road.width ?? 0) / 2
+    const [x, y] = toWorld(frame, 0, half + KERB_OUT)
+    return { name, x, y }
   }),
   ...world.map.pois.map((p) => ({ name: p.name, x: p.x, y: p.y })),
 ]
@@ -50,7 +50,7 @@ export const spotNames = (world: World): ReadonlyArray<string> => [...new Set(ta
  * - `lat,lon` (47.859149,11.490211), as `?compare=` and Google Maps give it;
  * - `x,y` in map meters (4491,4542), as the backlog writes them;
  * - a name: a place or POI, by slug ("edeka", "fahrzeugtechnik-seitz"); an exact slug wins, else the first that
- *   starts with it, else the first that contains it. Places come before POIs, so a dressed building wins.
+ *   starts with it, else the first that contains it. Places (and dressed areas) come before POIs, so a dressed building wins.
  * The spot is moved out of walls and water to the nearest free ground. Null when nothing matches.
  */
 export const findSpot = (world: World, query: string): Spot | null => {

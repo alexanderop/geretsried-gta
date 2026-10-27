@@ -122,11 +122,32 @@ export type Signal = typeof Signal.Type
 export const Crossing = Schema.Struct({ node: Schema.Number, x: Schema.Number, y: Schema.Number, signals: Schema.Boolean })
 export type Crossing = typeof Crossing.Type
 
-/** Street furniture OSM maps as points: bus stops and glass bottle banks. */
-export const PropKind = Schema.Literals(["bus_stop", "glass"])
+/**
+ * Street furniture OSM maps as points (a way by its centre): bus stops, benches, litter bins (amenity=waste_basket),
+ * recycling points and bike racks (amenity=bicycle_parking).
+ */
+export const PropKind = Schema.Literals(["bus_stop", "bench", "bin", "recycling", "bike_rack"])
 export type PropKind = typeof PropKind.Type
-/** `node`: the OSM node of a bus stop; `shelter: false` where OSM tags it shelter=no (see streetProps for which are honoured). */
-export const Prop = Schema.Struct({ kind: PropKind, x: Schema.Number, y: Schema.Number, node: Schema.optionalKey(Schema.Number), shelter: Schema.optionalKey(Schema.Boolean) })
+
+/** One container of a recycling point: a bottle bank, paper, cans, used clothes, or a green 1100 L bin for green waste. */
+export const Container = Schema.Literals(["glass", "paper", "cans", "clothes", "green"])
+export type Container = typeof Container.Type
+
+/**
+ * `node`: the OSM node of a bus stop; `shelter: false` where OSM tags it shelter=no (see streetProps for which are
+ * honoured). `holds`: a recycling point's containers in a row, in this order. `covered`: a bike rack under a roof
+ * (covered=yes); `capacity`: its bikes (OSM capacity), which sets how many racks stand in a row.
+ */
+export const Prop = Schema.Struct({
+  kind: PropKind,
+  x: Schema.Number,
+  y: Schema.Number,
+  node: Schema.optionalKey(Schema.Number),
+  shelter: Schema.optionalKey(Schema.Boolean),
+  holds: Schema.optionalKey(Schema.Array(Container)),
+  covered: Schema.optionalKey(Schema.Boolean),
+  capacity: Schema.optionalKey(Schema.Number),
+})
 export type Prop = typeof Prop.Type
 
 /** A part of town with its own name (OSM place=suburb, village, …): where the gangs have their turf. */

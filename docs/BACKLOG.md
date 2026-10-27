@@ -2573,7 +2573,7 @@ Fixes found: the Neuer Platz pavilion in centrale-geretsried/01 is **Feinkost Ch
 No usable Street View: Matheis, DUO, Franz-Marc-Schule (web photo only), BSZ (hedge), J.-S.-Bach playground, both fitness
 stations. B6d-1…11 = existing POIs; B6d-12…16 = new places that wait for I-1/I-2.
 
-### B6d-1 · Carglass, Sudetenstraße 50 (#218, car_repair) — Size: S — status: ref-done (front edge to confirm)
+### B6d-1 · Carglass, Sudetenstraße 50 (#218, car_repair) — Size: S — status: implemented (partial: 2026-10-26, front = edge 3; side/back walls and the neighbour hall's use not seen, left plain)
 ```
 Goal: The small Carglass kiosk on Sudetenstraße becomes a low red box with its grey "CARGLASS" fascia.
 Reference: docs/places/carglass.md; reference/carglass/01, 03 (SV), 10–11 (DOP20).
@@ -2593,6 +2593,17 @@ Acceptance criteria:
 Size: S
 ```
 
+**B6d-1 as built** (`src/world/places/carglass.ts`: `CARGLASS`, `CARGLASS_HALL`; `?at=carglass`):
+- **Front = edge 3** (the 6.55 m NE end, faces 31°), not edge 2: in SV 03 the door-and-windows face is square to the road and
+  about 1.8 × as wide as it is high (6.1–7.2 m by the fascia height); the DOP has the short end to the road. In game the
+  door is at the SE end of that wall and the arrow blocks lead into "CARGLASS", as seen from the street in 01/03.
+- Way 772887800: levels 1 (3.6 m = LoD2), flat #cdc8c4, facade `plaster` × #813b3c, a plain fascia band z 2.85–3.6 #5f6060
+  (0.75 m, measured in 01) on every wall. Front: `carglass-front` (drawn in process-sprites.py from metres off 01: the
+  double glass door on its step plate under a dark visor, the white notice, two dark-framed windows) z 0–2.85 and
+  `carglass-sign` (Codex redraw of the fascia, cut to its lettering band) z 2.85–3.6.
+- Way 772887798: levels 1, flat, nothing else (its use is unknown). Guessed: the fascia on the side and back walls; the
+  openings to about ±0.3 m. Not built: the pole barrier and stand, any bay door.
+
 ### B6d-2 · Piatsa, Lausitzer Straße 12 (#79, food) — Size: S — status: ref-done (partial: sign illegible)
 ```
 Goal: The long Piatsa / Vegas Casino building on Wallensteinstraße becomes the single-storey red-roofed restaurant from SV.
@@ -2610,7 +2621,7 @@ Acceptance criteria:
 Size: S
 ```
 
-### B6d-3 · Arztpraxis Lewke, Adalbert-Stifter-Straße 43 (#98, doctor) — Size: S — status: ref-done
+### B6d-3 · Arztpraxis Lewke, Adalbert-Stifter-Straße 43 (#98, doctor) — Size: S — status: implemented (2026-10-26)
 ```
 Goal: The doctor's house shows its dark red "Arzt-Praxis" board.
 Reference: docs/places/arztpraxis-lewke.md; reference/arztpraxis-lewke/01 (SV), 10–11.
@@ -2625,6 +2636,12 @@ Acceptance criteria:
 - [ ] pnpm test + typecheck green; places.test passes.
 Size: S
 ```
+
+**B6d-3 as built** (`src/world/places/arztpraxis-lewke.ts`; `?at=arztpraxis-lewke`): the board (`lewke-sign`, Codex
+redraw: beige "Arzt-Praxis", orange rule, white "Dorothea", stethoscope, "Lewke", family pictogram; the three small lines
+left out) on wall 4 (the NW 5.03 m of the street wall), u 1.1–2.9 from the NW corner, z 1.75–2.65, measured in SV 01 with
+the wall's perspective taken out. Massing and walls unchanged; the roof gets one colour, the DOP's #767460, because the
+map's colours rendered it terracotta (01: dark grey). Guessed: the board's place to about ±0.5 m.
 
 ### B6d-4 · KFZ-Meisterbetrieb Gerd Matheis, Spreestraße 11 (#26, car_repair) — Size: S — status: ref-done (partial: massing; facade/sign need reference)
 ```
@@ -2669,7 +2686,7 @@ Acceptance criteria:
 Size: S
 ```
 
-### B6d-8 · Schreibwaren Schröter, Adalbert-Stifter-Straße 39 (#59, shop) — Size: S — status: ref-done (front edge to confirm)
+### B6d-8 · Schreibwaren Schröter, Adalbert-Stifter-Straße 39 (#59, shop) — Size: S — status: implemented (partial: 2026-10-26, front = edge 4; the small lines under the logo, the side board and banner, goods outside not built)
 ```
 Goal: Schröter's corner becomes the 3-storey cream block with the red shop wing, blue/white awning and "Schröter" sign.
 Reference: docs/places/schreibwaren-schroeter.md; reference/schreibwaren-schroeter/01–02 (SV), 10–11.
@@ -2687,7 +2704,18 @@ Acceptance criteria:
 Size: S
 ```
 
-### B6d-9 · Occasione Mode & Lifestyle, Adalbert-Stifter-Straße 39 (#217, shop) — Size: S — status: ref-done
+**B6d-8 as built** (`src/world/places/schreibwaren-schroeter.ts`; `?at=schreibwaren-schroeter`):
+- **Front = edge 4** (the wing's 12.65 m street front, faces 231°): SV 01 shows the red shop front between the block's
+  corner and the garden wall; edge 3 is the block's street end, which carries the big "OCCASIONE / Schröter" panel (02).
+- Masses from LoD2 tile 684_5304: block `4603829` eaves 10.6 m, hip 7° (ridge 11.25), wing `4604182` eaves 7.3 m, hip 10°;
+  OSM's outline cut along the party wall (E corner → the wing's NW corner; OSM's inner corner lies on that line). Roof
+  #c6b9a8 on both, facade `render` × warm cream (230, 222, 206).
+- Wing front: `schroeter-front` (drawn from metres off 01: red #6e1a1b to 3.4 m, white-framed window, door, window,
+  window, door), two awnings (canopies with the drawn `schroeter-awning`: navy, pale stripe, white edge) u 0.1–4.0 and
+  4.2–8.8 at 3.2 m, `schroeter-sign` (Codex) u 5.2–7.5, z 3.6–4.45. Block end: `schroeter-gable` (Codex) u 1.3–4.4,
+  z 2.4–5.6. Guessed: the awnings' 0.8 m depth, openings to ±0.4 m, the panel's size.
+
+### B6d-9 · Occasione Mode & Lifestyle, Adalbert-Stifter-Straße 39 (#217, shop) — Size: S — status: implemented (2026-10-26: annex + sign; POI name fixed in the importer)
 ```
 Goal: The small clothes shop in front of Schröter's block becomes single-storey with its canopy sign; its name is fixed.
 Reference: docs/places/occasione.md; reference/occasione/01 (SV July 2022), 02 (gable sign), 10–11.
@@ -2698,10 +2726,24 @@ Spec (via #0b): way 668663478 (77 m²): levels 1 (LoD2 flat 3.9; engine 2), roof
 - Name fix: POI "Occasione Mode & Livestyle" → "Occasione Mode & Lifestyle" (both signs + web). Same small typed override by
   OSM id as the B6b-5 Bellini fix (POI from way 668663478); check no code looks it up by the old name.
 Acceptance criteria:
-- [ ] Annex is one storey, flat; sign readable; HUD shows "Occasione Mode & Lifestyle"; no other POI name changed.
-- [ ] pnpm test + typecheck green; places.test passes.
+- [x] Annex is one storey, flat; sign readable; HUD shows "Occasione Mode & Lifestyle"; no other POI name changed.
+- [x] pnpm test + typecheck green; places.test passes.
 Size: S
 ```
+
+**B6d-9 as built** (`src/world/places/occasione.ts`; `?at=occasione`): Occasione is its **own OSM way** (668663478), not
+a unit of Schröter's way, so it is its own place (no UNITS split). Levels 1.1 (3.3 m + parapet = LoD2 3.9 m), flat #7f7f6a.
+Wall 1: `occasione-front` (drawn: white, two wide two-pane windows, glass door with transom at the SW end) from u 2.0 (the
+first 2 m are behind a tree in 01: engine facade there), `occasione-sign` (Codex) u 7.95–9.95, z 2.65–3.4 over the door,
+and the roof's overhang as a canopy at 3.9 m, 1.0 m deep (depth guessed), fascia 0.3 m #54555d. From the play camera the
+canopy hides most of the board, as the overhang does in 01. The dressing is named "Occasione Mode & Lifestyle" and anchors on
+the footprint's middle (the misspelt POI sits 0.3 m from it). **Name fix (2026-10-26, with V-1):** `NAME_FIXES` in
+`src/map/build.ts` renames by OSM id (`placeName`: way 668663478 → "Occasione Mode & Lifestyle", ahead of brand and
+name). After `pnpm map`, the only change in map.json is POI #217's name. Its slot stays, ground.png and trees.bin are
+byte-identical, and no POI contains "Livestyle". The dressing now anchors on its POI. The HUD at `?at=occasione` shows
+"Occasione Mode & Lifestyle". Tests: `build.test.ts` (fix by id only), `places.test.ts` (#217 is "Lifestyle").
+`docs/poi-id-map.csv` is left as written: it records the I-2 mapping under the old names. B6b-5's Bellini rename can go
+in the same `NAME_FIXES` map.
 
 ### B6d-10 · Christuskirche, Jeschkenstraße 125 (#233, church) — Size: S — status: ref-done (partial: turret needs reference)
 ```
@@ -2733,7 +2775,7 @@ Signs: Centrale (no name sign in 30–32) and DUO (no SV) need reference.
 See docs/places/centrale-geretsried.md, cafe-bar-duo.md.
 ```
 
-### B6d-13 · Playgrounds Breslauer Weg + J.-S.-Bach-Straße — Size: S — status: todo (I-2 done 2026-10-26: both are playground areas, Breslauer Weg #424e35, J.-S.-Bach #9e8d70 (photo #a39274, darkened to the palette); only the optional sprites/fence are left; Breslauer Weg ref-done 2026-10-26; J.-S.-Bach equipment needs reference)
+### B6d-13 · Playgrounds Breslauer Weg + J.-S.-Bach-Straße — Size: S — status: Breslauer Weg implemented 2026-10-26 (equipment + fences, see "B6d-13 as built" below the item); J.-S.-Bach-Straße todo (needs reference: equipment unknown; I-2 gives it the playground area #9e8d70, photo #a39274 darkened to the palette)
 ```
 Depends on: I-2 step 1 (playground AreaKind, DOP centroid tint).
 After I-2, check the two tints: Breslauer Weg (way 1271723892) lies under canopy → dark green (#44512e range, fine);
@@ -2747,9 +2789,31 @@ ground = earth under brown beech leaves (no sand pit), many beech trunks. Exact 
 J.-S.-Bach equipment unknown. See docs/places/spielplatz-*.md.
 Acceptance criteria:
 - [x] Breslauer Weg patch stays the dark canopy tint (#44512e range), not sand: 40 shows leaf-covered earth. (I-2: #424e35)
-- [ ] If sprites are added: their order matches 40 (A-frame left, tower + slide and seesaw right) and none sits on the road.
-- [ ] pnpm test + typecheck green.
+- [x] If sprites are added: their order matches 40 (A-frame left, tower + slide and seesaw right) and none sits on the road.
+- [x] pnpm test + typecheck green.
 ```
+
+**B6d-13 as built** (Breslauer Weg; `src/world/places/spielplatz-breslauer-weg.ts`, mechanism in `src/world/places/dressing.ts`
+`GroundDressing`, drawn by `groundParts` in `src/render/scene/places.ts`; tests in `src/world/places/places.test.ts`,
+`src/world/teleport.test.ts`):
+- **Ground dressing:** a place dressing needs a building footprint; a playground is an area, and areas in map.json carry
+  no OSM id. So a `GroundDressing` names an area kind and a map point inside it (`at`): `resolveGrounds` picks the area of
+  that kind holding the point and hangs the street frame of `street` there, as `resolvePlaces` does at a POI. It has
+  free-standing parts only (`FreePart` = sprite | pylon), never solid. Registry: `GROUNDS` in `places/index.ts`;
+  `World.grounds`; the scene gives each one to the chunk of its box (`groundBox`). `?at=spielplatz-breslauer-weg` finds
+  it (dressed areas are teleport targets like places).
+- **Frame:** at (4303, 4561), u runs W along Breslauer Weg, n S into the playground (area 482, way 1271723892, u
+  −16.4..16.0, n 2.6..45.5). The road and its default sidewalk reach n 5.85: the area's N 3 m lie under the sidewalk.
+- **Parts** (left → right in photo 40 = E → W = rising u): A-frame hut (−7, 40), its bench (−3.5, 37.3), green spring
+  rider (0.5, 31), tower with the yellow slide off its E side (tower at u 4.5, n 24), seesaw (11, 25); front bench (3, 14),
+  green bin on a grey pole (7, 12.5). Fences as pylons: dark metal bars 1 m high on the sidewalk's back across the area
+  (green sign box by the gate at u −3), brown wooden boards 1.8 m high just inside the back edge. Six Codex sprites
+  (`spielplatz-*`, processed at the end of `scripts/process-sprites.py`; the hut's lower roof plane is darkened there).
+- **Guessed:** every position (no GPS; read off where each thing meets the ground in 40, camera at the gate looking SSW),
+  kept between the crown centres in `public/trees.bin`; sizes; the rider's shape. Not built: the gate (drawn as fence),
+  the dog-bag dispenser, the E/W side fences.
+- **Seen in game only near the player:** the whole playground is under tree crowns (true to the DOP), so from the play
+  camera the equipment shows in the see-through circle round the player (renderer `FOCUS_M`), not from the street.
 
 ### B6d-14 · Verkehrsübungsplatz Franz-Marc-Schule (ex "Laufbahnen") — Size: S — status: implemented (I-2, 2026-10-26: the 5 ways are 4 m grey asphalt lanes round the lawn islands; optional white markings and signs left)
 ```
@@ -2766,7 +2830,7 @@ bark/sand patch (DOP #e0c5a4): don't use that raw hex (lighter than the lightest
 existing ground tint. Equipment: Alex's photo. See docs/places/fitness-station-*.md.
 ```
 
-### B6d-16 · Champini Sport- & Bewegungskita, Jeschkenstraße 103 — Size: S — status: blocked by I-1 (ref-done)
+### B6d-16 · Champini Sport- & Bewegungskita, Jeschkenstraße 103 — Size: S — status: implemented (partial: 2026-10-26, N front built; the entrance banner not built: letter colours and subtitle illegible)
 ```
 Depends on: I-1 (kindergarten kind gives the POI; I-2 step 2 dedupes it with grounds way 1271723889).
 Goal: The Kita reads as the white building with lime-green bands from SV.
@@ -2776,6 +2840,15 @@ Jeschkenstraße). Banner over the recessed lime-green entrance (E end): white ba
 (subtitle illegible) → optional small wallSign "CHAMPINI"; letter colours are a guess, subtitle left out.
 Acceptance: only way 524105770 changes; pnpm test + typecheck green; places.test passes. See docs/places/champini-kita.md.
 ```
+
+**B6d-16 as built** (`src/world/places/champini-kita.ts`; `?at=champini`): on POI #337 (I-2's merged Champini). **Spec
+correction:** SV 01/02 show the lime green not as a band between the floors but as patches at window height (ground
+floor only between the three windows, upper floor from the first window to 3 m short of the W end), so no `bands`: the
+whole N wall (edge 1, u 0 at the E end) is one texture, `champini-front`, drawn in process-sprites.py from metres measured
+in 01 + 02 (the pano's position fitted to the two corners, which came out 31.95 m apart): white, dark plinth to 0.4 m,
+the lime recessed entrance 3.3–7.5 m from the E end, the tall stair window, three double windows per floor, the lime
+patches. Levels 5.9/3 (LoD2 6.5 m). Guessed: positions to about ±1 m (01 and 02 put the middle window 1.5 m apart). Not
+built: the banner, window decorations, lamps, railings; the other walls are not seen (engine facade).
 
 ### B6d-17 · Fahrzeugtechnik Seitz, Breslauer Weg 75 (hand-added POI) — Size: S — status: implemented (partial: building dressing on way 128503556 built 2026-10-26, `src/world/places/fahrzeugtechnik-seitz.ts`; POI #371 added by I-2 2026-10-26 at the footprint's centre, the dressing anchors on it; the Orchidee stretch ~5 m W of OSM's outline not drawn; positions read off photo 40)
 ```
@@ -2845,15 +2918,15 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 ### 6d (captured/researched 2026-10-25: B6d-1…B6d-16)
 | # | Name | Kind | m from start | Status |
 |---|---|---|---|---|
-| 218 | Carglass | car_repair | 552 | ref-done (B6d-1; Sudetenstraße 50; front edge to confirm) |
+| 218 | Carglass | car_repair | 552 | implemented (partial: B6d-1; front = edge 3) |
 | 79 | Piatsa | food | 659 | ref-done (partial: B6d-2; sign illegible, unit from SV 01) |
-| 98 | Arztpraxis Lewke | doctor | 664 | ref-done (B6d-3) |
+| 98 | Arztpraxis Lewke | doctor | 664 | implemented (B6d-3) |
 | 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 678 | todo (needs reference: no SV, hedge; massing in B6d-4) |
 | 128 | Fitness Forum & Squash | food | 690 | ref-done (partial: B6d-5, massing ok; kind → gym in I-1 step 3; entrance/sign need reference) |
 | 189 | Franz-Marc-Schule | school | 701 | ref-done (partial: B6d-6; no SV, 2 web photos; sign needs reference) |
 | 106 | Bäckerei Manfred Burger | bakery | 720 | ref-done (B6d-7; drive-in needs reference) |
-| 59 | Schreibwaren Schröter | shop | 726 | ref-done (B6d-8; front edge to confirm) |
-| 217 | Occasione Mode & Livestyle | shop | 750 | ref-done (B6d-9; rename to "Occasione Mode & Lifestyle") |
+| 59 | Schreibwaren Schröter | shop | 726 | implemented (partial: B6d-8; front = edge 4) |
+| 217 | Occasione Mode & Lifestyle | shop | 750 | implemented (B6d-9) |
 | 233 | Christuskirche | church | 767 | ref-done (partial: B6d-10; turret needs reference) |
 | 78 | BSZ Direktmarketing GmbH | shop | 783 | ref-done (partial: B6d-11 roof; facade/sign need reference, hedge) |
 
@@ -2861,7 +2934,7 @@ Exterior only, same rules as batches 1–5 (NEVER invent appearance).
 DOP20, B6d-12…16); the #id comes from docs/poi-id-map.csv once imported.
 | # | Name | Kind | lat, lon | map x, y | m from start | Status |
 |---|---|---|---|---|---|---|
-| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | ref-done (B6d-13; layout + surface from Alex's photo 2026-10-26) |
+| — | Spielplatz Breslauer Weg (way 1271723892, public) | playground area (I-2) | 47.85898, 11.487694 | 4303.2, 4561.2 | 318 | built (B6d-13, 2026-10-26: equipment + fences as a ground dressing, from Alex's photo) |
 | — | Centrale Geretsried (ex Coffeeholic), Neuer Platz 5 | food (hand-added, I-2) | 47.8577969, 11.4785523 | 3621.4, 4692.7 | 379 | ref-done (partial: B6d-12; terrace from web photos, the 01 pavilion is Feinkost Christos; sign/name needs reference) |
 | — | Fahrzeugtechnik Seitz, Breslauer Weg 75 (web; not in OSM; building prob. way 128503556) | car_repair (hand-added, I-2) | 47.859149, 11.490211 | 4491.0, 4542.4 | 505 | ref-done (B6d-17; front from Alex's photo 2026-10-26) |
 | — | Café Bar DUO, Sudetenstraße 47a | bar (hand-added, I-2) | 47.8561907, 11.4897066 | 4453.4, 4871.3 | 508 | todo (needs reference: no SV; B6d-12; same block as Takt Tanz, no. 47) |
@@ -2869,7 +2942,7 @@ DOP20, B6d-12…16); the #id comes from docs/poi-id-map.csv once imported.
 | — | Spielplatz J.-S.-Bach-Straße (way 122032725, public) | playground area (I-2) | 47.858685, 11.474506 | 3319.6, 4594.0 | 680 | todo (needs reference: SV sees only trees; B6d-13) |
 | — | Fitness-Station (way 574767212) near St 2369 | pitch area (I-2) | 47.862484, 11.475803 | 3416.3, 4171.5 | 751 | todo (needs reference: under canopy, no SV; B6d-15) |
 | — | Fitness-Station (way 497511384, lit) near St 2369 | pitch area (I-2) | 47.861853, 11.474556 | 3323.3, 4241.7 | 787 | todo (needs reference: DOP20 only; B6d-15) |
-| — | Champini Sport- & Bewegungskita, Jeschkenstraße 103 (way 524105770) | kindergarten (I-1) | 47.851222, 11.487208 | 4267.0, 5423.8 | 821 | ref-done (B6d-16, after I-1) |
+| — | Champini Sport- & Bewegungskita, Jeschkenstraße 103 (way 524105770) | kindergarten (I-1) | 47.851222, 11.487208 | 4267.0, 5423.8 | 821 | implemented (partial: B6d-16; banner not built) |
 Not added: Indian Palace, Sudetenstraße 47 (no sign of being open: only old directory entries); see I-2 step 3.
 
 ### Already done in the start area (no capture needed)
@@ -3343,7 +3416,7 @@ hue family, shapes, positions), never brighten or desaturate the overall look. N
 existing dark palette (no colour lighter than today's lightest ground/roof tone); the average frame lightness at the six
 spots must not rise by more than ~3 %. V-4 and V-5 are won't do for that reason.
 
-### V-1 · Roof tone: brown and grey-beige tiles stop turning terracotta — Size: S — status: todo
+### V-1 · Roof tone: brown and grey-beige tiles stop turning terracotta — Size: S — status: implemented (2026-10-26; partial: some real orange roofs at Start and Gartenberg measure brown in DOP40 and stay brown; no DOP20 re-sample; see "V-1 as built")
 ```
 Goal: The town's pitched roofs show their real mix (brick red, brown, anthracite) instead of ~all orange.
 Evidence: src/render/scene/roof-tone.ts isWarm() = hue < 0.12 || > 0.95 with s >= 0.1, then hue -> <= 0.055 and
@@ -3355,15 +3428,43 @@ low-saturation warm hues (0.07..0.12, or s < 0.18) grade to dark brown / dark gr
 lightness as today's terracotta output (dark GTA palette, no lighter roofs), never saturation > 0.3; greys stay anthracite. Keep it monotonic in lightness (lit/shaded planes). Optional: re-sample roof colours from DOP20
 (by_dop20c, less haze) instead of DOP40 in scripts/photo-*.ts if the grade alone can't split them.
 Done when:
-- [ ] roof-tone unit test: #746d5c, #7f705f, #686454 -> brown/anthracite (s <= 0.3); a clear clay red (e.g. #b0583c)
+- [x] roof-tone unit test: #746d5c, #7f705f, #686454 -> brown/anthracite (s <= 0.3); a clear clay red (e.g. #b0583c)
       still terracotta; flat roofs unchanged.
-- [ ] Count script (or test over map.json): pitched roofs graded terracotta drop from 3215 to <= ~1700.
-- [ ] compare pairs at Neuer Platz + Gartenberg: the long Stein blocks read brown, Gartenberg reads mixed red/grey/brown.
-- [ ] Dark style kept: mean roof lightness at the six spots <= before (+3 % max); no roof lighter than today's lightest.
-- [ ] Places with their own roof colour unchanged (pnpm test green, typecheck green).
+- [x] Count script (or test over map.json): pitched roofs graded terracotta drop from 3215 to <= ~1700.
+- [x] compare pairs at Neuer Platz + Gartenberg: the long Stein blocks read brown, Gartenberg reads mixed red/grey/brown.
+- [x] Dark style kept: mean roof lightness at the six spots <= before (+3 % max); no roof lighter than today's lightest.
+- [x] Places with their own roof colour unchanged (pnpm test green, typecheck green).
 ```
 
-### V-2 · Building heights from Bavarian LoD2 for the whole town — Size: M — status: todo
+**V-1 as built** (`src/render/scene/roof-tone.ts`, `roofColors` in `src/render/scene/scene.ts`; tests
+`roof-tone.test.ts`, incl. two over `public/geretsried.map.json`):
+- **One roof, one material.** `roofGrade(planes, pitched)` classes the whole roof from the mean of its planes' measured
+  colours: `clay` (hue < 0.072 = 26°, s >= 0.25), `brown` (warm hue < 0.12, s >= 0.1), `grey`, or `flat`. Each plane
+  then keeps its own lightness, but takes the roof's hue and saturation (`roofTone(rgb, grade)`). Per plane, 1018 roofs
+  would have come out half terracotta, half brown (a shaded plane measures darker and greyer); this also ends the old
+  half-orange, half-anthracite roofs. Flat roofs are unchanged (their own colour, as before; checked over the whole RGB
+  grid).
+- **Thresholds tuned on DOP20**, not guessed: 148 pitched roofs lying wholly inside the five town frames, their DOP20
+  footprint median against the DOP40 plane colours. Roofs that are orange in DOP20 (hue < 27°, s >= 0.26): 29. The
+  backlog's starting rule (hue < 0.07, s >= 0.18, on one plane) finds 20 of them plus 23 that are not orange. The
+  per-roof rule finds 26 plus 8. Raising the hue limit to 27–28° adds no hits.
+- **Grade:** clay is as before (hue <= 0.055, s x2.2 into 0.35–0.58, L 0.06 + 0.6 l). Brown: hue clamped to
+  0.07–0.1, s x1.4 into 0.14–0.3, L 0.03 + 0.49 l into 0.15–0.36. That is darker than clay from the same measurement,
+  also as mean RGB (a test sweeps it), because brown's green channel is higher. Grey: unchanged formula.
+- **Numbers** (current map, 3874 photo-coloured pitched roofs): terracotta **3217 → 988**. Lightest pitched plane:
+  mean RGB 108.0 → 105.3. Mean roof lightness at the spots (plane mean RGB, area-weighted): Start 95.7 → 85.4
+  (−10.8 %), Neuer Platz 101.4 → 88.3 (−13.0 %), Rathaus 125.1 → 119.9 (−4.2 %), Am Stern 134.2 → 132.2 (−1.5 %),
+  Gartenberg 97.2 → 88.6 (−8.8 %), Isar has no roofs. Whole `?compare` frame mean lightness: −2.2, −3.3, −1.5, −0.6,
+  −2.3, 0 %. Terracotta pixel share per frame (HSV hue <= 28°, s >= 0.4), before → after (DOP20 with the same rule,
+  which undercounts the hazy photo): Start 23.6 → 14.8 (3.4), Neuer Platz 18.4 → 1.9 (1.4), Rathaus 12.6 → 5.9 (0.7),
+  Am Stern 8.8 → 7.4 (2.1), Gartenberg 17.8 → 8.7 (1.9).
+- **Looks:** Neuer Platz's long Stein blocks are brown, with the one orange roof at the corner still terracotta, as
+  in DOP20. Gartenberg is mixed terracotta, brown and anthracite.
+- **Partial:** DOP40 measures some roofs that are orange in DOP20 as brown (row houses at Start, a few houses in north
+  Gartenberg), so those stay brown. Re-sampling roof colours from DOP20 (`by_dop20c`) is not done. FALLBACK_ROOFS (no
+  photo colour) are unchanged.
+
+### V-2 · Building heights from Bavarian LoD2 for the whole town — Size: M — status: implemented (2026-10-26; partial: puls G is way 751779728 and stays at OSM's 5 storeys (LoD2 says 6 at 3 m each); 20 flat-roofed 7.5–9 m buildings get 3 storeys; the compare camera looks straight down, so the height shows in-game, not in `?compare`; see "V-2 as built")
 ```
 Goal: The 4-8 storey Wohnblocks and the new centre stand tall; houses stay low. Today 4538 of 5749 buildings sit on the
 2-storey default (OSM has building:levels on 159 of 5523).
@@ -3378,15 +3479,70 @@ levels = round(eaveHeight / 3) (eave = lowest roof-surface z minus ground; fall 
 build.ts buildingLevels(): an OSM building:levels tag wins, then lod2-levels, then TYPICAL_LEVELS. Places untouched.
 Credit line for LoD2 next to the DOP credit in the HUD/README.
 Done when:
-- [ ] Of the 120 >= 12 m buildings above, <= 10 remain at 2 levels; houses (LoD2 < 9 m) stay 1-2 levels.
+- [x] Of the 120 >= 12 m buildings above, <= 10 remain at 2 levels; houses (LoD2 < 9 m) stay 1-2 levels.
 - [ ] puls G 7 levels; Neuer Platz blocks 3-4 levels; compare pairs at Rathaus + Neuer Platz show the height.
-- [ ] Königsberger Weg high-rise way 127872287 (LoD2 26.05 m, hip) gets 9 levels; its 3-storey neighbour blocks (LoD2
+- [x] Königsberger Weg high-rise way 127872287 (LoD2 26.05 m, hip) gets 9 levels; its 3-storey neighbour blocks (LoD2
       ~11.2 m, gable) 3 levels. Photo check: reference/wohnblock-koenigsberger-weg/42 + 43 (Alex 2026-10-26).
       Done early 2026-10-26 as a place (`src/world/places/hochhaus-koenigsberger-weg.ts`): 9 storeys, eaves 25 m, hip 10°,
       beige with a dark grey base (storeys 1–2) and light-grey bands on storeys 6–8 (all walls; the photo has them on
       the corner bays only). V-2 must keep this override.
-- [ ] Re-import is deterministic (same json twice); README credits LoD2; pnpm test + typecheck green.
+- [x] Re-import is deterministic (same json twice); README credits LoD2; pnpm test + typecheck green.
 ```
+
+**V-2 as built** (`scripts/lod2-heights.ts`, `src/map/{lod2,utm,build}.ts`, `scripts/import-osm.ts`, `scripts/bbox.ts`
+(the bbox, now shared), `data/lod2-levels.json`, HUD credit in `src/ui/Game.tsx`, README; tests `src/map/lod2.test.ts`,
+`build.test.ts`):
+- **Run:** `node scripts/lod2-heights.ts`, then `pnpm map`. The bbox needs **20 tiles** (E 680–686 × N 5300–5308),
+  not 16: the box's south and north edges reach 70 m and 220 m into the 5300 and 5308 rows. 23317 LoD2 buildings,
+  ~600 MB, cached in `data/lod2/` (gitignored, with `matches.json`: every match with its eave, height, roof type,
+  overlap). `data/lod2-levels.json` is **kept in git** (100 KB, one way per line, `{ ways: {id: storeys}, relations:
+  {id: storeys} }`, the 5 multipolygon buildings included), so `pnpm map` works without the tiles; when it is missing,
+  `pnpm map` says so and uses OSM only. EPSG:25832 ↔ lat/lon is in `src/map/utm.ts` (no dependency); OSM and LoD2
+  outlines line up within ~0.8 m.
+- **Matching** (`matchLod2`): IoU ≥ 0.5 (sampled every 0.5 m), else the OSM centroid inside, **else (new) the LoD2
+  building with the most roof inside the outline** when LoD2 roofs cover half of it (one OSM outline over several LoD2
+  houses, e.g. way 127604892 at Neuer Platz, 2444 m²). Of 5528 OSM buildings: 3208 by overlap, 1885 by centroid, 61 by
+  roofs, 374 none (sheds, garages, huts, and 15 `construction` outlines of the new builds LoD2 does not have yet).
+- **The eave is not "lowest roof point" and not measuredHeight** (both tested, both wrong too often): it is the
+  **main eave**, the median of the roof surfaces' lowest points weighted by their area seen from above (`mainEave`),
+  taken over the roof surfaces whose middle lies **inside the OSM outline** (any LoD2 building's) when they cover half
+  of it, else the matched building's. Why: the lowest point is a low annex's (way 127604869, the 7-storey hip-roofed
+  tower at Neuer Platz, has a 4.6 m annex: lowest → 2 storeys, main → 7); measuredHeight is a stair tower's (way
+  669533892: 36.1 m vs the main roof's 34.2 m); and where OSM splits one LoD2 block into several ways (1885 centroid
+  matches), each part now gets its own roof's height instead of the block's. Storeys = round(eave / 3), a flat roof's
+  0.6 m parapet (render/scene `PARAPET_M`) taken off first, at least 1 (`lod2Levels`).
+- **OSM tag vs LoD2:** the tag wins, **except when it is 2 or more storeys under LoD2's** (`TAG_UNDER_LOD2`): of the
+  149 tagged buildings LoD2 matches, 110 agree, 23 are one under, 10 one over, 3 two over, and 3 far under: the
+  Sparkassengebäude (way 980958027, tag 5, flat roof 27.5 m → **9**), way 188048816 (tag 1, eave 7.8 m → 3) and
+  Kaufland (a place, so its tag stays). The
+  23 "one under" are mostly 2-storey houses with a high knee wall (eave ~8 m); their tags stay.
+- **Places untouched:** the importer drops every dressing's `osmBuildingId` from the LoD2 levels, so a place keeps
+  OSM's or the typical storeys, or its dressing's (dressMap still runs after). Königsberger Weg 127872287 stays 25/3
+  (its LoD2 main eave is 25.27 m, round → 8, so the place's 9 storeys are the better number).
+- **puls G:** the backlog's way 980958027 is OSM's "Sparkassengebäude"; OSM's **"PulsG" is way 751779728** (Karl-
+  Lederer-Platz, 2185 m², tag 5). Its LoD2 main roof is 19.2 m (25.2 m with the top part): 19.2 / 3 → 6 storeys, one
+  over the tag, so the tag's 5 stays. Kraemmel's 7 storeys are 2.75 m each; at the game's 3 m per storey 7 would draw
+  it 2 m taller than it is. Not forced.
+- **Numbers** (before → after; map before = HEAD): storeys over all 5754 buildings 1: 1011 → 2315, 2: 4529 → 2622,
+  3: 24 → 598, 4: 177 → 149, 5: 3 → 27, 6: 0 → 19, 7: 0 → 7, 8: 0 → 3, 9: 0 → 1 (+ places' own). Box check (tiles
+  684_5302 + 684_5304, non-place, ≥ 150 m², ridge ≥ 12 m): **overlap matches only (the backlog's set): 119, at 2
+  storeys 5** (all gabled with a 6.2–7.4 m eave, so 2 is their eave); all matches: 222, at 2 storeys 143 → 9; ≥ 6 m
+  under the ridge 171 → 29. Whole town (≥ 150 m², ridge ≥ 12 m): 351, at 2 storeys 252 → 21. Houses (LoD2 < 9 m,
+  2959): 1 storey 1841, 2: 1097, **3: 20** (all flat roofs 8.1–8.9 m, commercial/industrial/"yes": 3 storeys draw
+  9.6 m, 2 draw 6.6 m) and 1 at 4 (way 127718045, OSM tag 4). Way 833483720: 2 → 8 (main roof 24.9 m). Neuer Platz
+  (90 m): 127604869 2 → 7 (hip, eave 20.5 m), 127604877 2 → 3, 128271919 2 → 4, 128271967 4, 127604892 2 → 4.
+  Königsberger Weg neighbours 127872211 / 127872221 / 127872235 (gable, eave 8.3 m, ridge 11.2–11.3 m): 2 → 3. Rathaus
+  (120 m): BGZ 187819151 4 → 6, 187005907 2 → 4; the apartments tagged by type (4) round the Rathaus drop to their
+  LoD2 3 or 2 (eaves 8.6–9.9 m and 6 m).
+- **Side effects:** trees 148241 → 147910 (taller buildings cast longer shadows, and the photo's tree reading skips
+  shadowed pixels, `buildingHeight` in photo.ts); facades follow the storeys (`facadeFor`: from 3 storeys "block",
+  big halls up to 2 "industrial"), so many 2 → 1 houses and 2 → 3 blocks change texture; the fallback roof (no photo
+  colour) is pitched under 3 storeys, flat from 3.
+- **Checks:** `pnpm check` (329 tests) and `pnpm build` pass; `node scripts/lod2-heights.ts` twice and `pnpm map` twice
+  give byte-identical files. In game (before = HEAD, after = this): Neuer Platz tower (`?at=3624.8,4654.8`) goes from a
+  2-storey house to a 7-storey block; next to the Sparkassengebäude a tall beige wall rises out of the frame; at
+  Königsberger Weg the gabled neighbour's roof sits a storey higher. `?compare` at Rathaus and Neuer Platz looks the
+  same before and after (straight down, no walls): there the change is only the trees.
 
 ### V-3 · Isar as a wild river: gravel bars + jade water — Size: M — status: todo
 ```
@@ -3515,7 +3671,7 @@ Done when:
 - [ ] pnpm test + typecheck green.
 ```
 
-### V-11 · Street furniture: benches, bins, recycling islands, bike racks — Size: M — status: todo
+### V-11 · Street furniture: benches, bins, recycling islands, bike racks — Size: M — status: implemented (2026-10-26; partial: OSM maps no furniture within 300 m of Neuer Platz, so that pair shows no change; the Wertstoffhof node and one covered rack lie inside buildings and are left out; the 8 unlabelled container ways in the Wertstoffhof yard draw as glass/paper/cans rows; see "V-11 as built")
 ```
 Goal: Streets and plazas get the small stuff players notice: benches, bins, the Wertstoffinseln, bike racks.
 Evidence: props today = 92 bus_stop + 7 glass (only recycling:glass_bottles=yes). OSM: bench 166, waste_basket 80,
@@ -3526,9 +3682,44 @@ Change: EXTRA_QUERY adds these nodes (ways: centroid); props kinds bench, bin, r
 Reference (Alex 2026-10-26): reference/wohnblock-koenigsberger-weg/41 — a grey perforated-metal bin/bike shed with 3–4
 green 1100 L bins and a red-white bollard on a block footpath (docs/places/wohnblock-koenigsberger-weg.md).
 Done when:
-- [ ] props counts ~ bench 166, bin 80, recycling 62, bike_rack 26; none inside a building or on a carriageway.
-- [ ] Pairs at Rathaus + Neuer Platz show them; pnpm test + typecheck green.
+- [x] props counts ~ bench 166, bin 80, recycling 62, bike_rack 26; none inside a building or on a carriageway.
+- [ ] Pairs at Rathaus + Neuer Platz show them; pnpm test + typecheck green. (Rathaus yes; Neuer Platz has none in OSM.)
 ```
+
+**V-11 as built** (`scripts/import-osm.ts`, `src/map/{types,build}.ts`, new `src/world/furniture.ts`, rendering in
+`src/render/scene/{street,scene,mesh}.ts`, sprites via `scripts/process-sprites.py`; tests `src/world/furniture.test.ts`):
+- **Fetch:** its own query and gitignored cache, `FURNITURE_QUERY` → `data/furniture.json`
+  (`nwr[amenity~bench|waste_basket|recycling|bicycle_parking]`, `out center`; main server, OSM base 2026-10-26).
+  EXTRA_QUERY and `data/extra.json` are unchanged; its 7 glass banks are dropped from the new cache by type/id. The new
+  props come after every older one. POIs, areas, buildings, roads, `ground.png` and `trees.bin` are byte-identical,
+  and so are the bus stops. Two `pnpm map` runs give the same json.
+- **Props** (`Prop.kind` bench | bin | recycling | bike_rack; the old `glass` kind became `recycling`). On the map:
+  **bench 166, bin 80, recycling 61, bike_rack 28** (26 nodes and 2 ways; bus_stop 92 unchanged). The 62nd recycling
+  point, Ehgartner GmbH (way 128266486), is a firm's building (`recycling_type=centre` with `building=yes`). The
+  importer prints it as skipped. A recycling point's `holds` comes from its recycling:* tags. Glass becomes three
+  bottle banks (white/green/brown), then paper, cans, clothes, and `green` (green_waste: the 35 Stadt Geretsried bins
+  on the Friedhof). With no material tagged, it is the backlog's glass/paper/cans row. Bike racks keep `covered` and
+  `capacity`: one rack per 6 bikes, at most 4.
+- **Placement** (`placeFurniture`, pure, at load, never solid like the bus shelters): each piece snaps to the nearest
+  path edge within `SNAP_M` = 10 m and faces the path. That edge is a footway's or track's side, beside a service
+  road, or a street's sidewalk back: outside it, or for small things just inside it. It slides ±4 m along the edge,
+  then tries the far side and the next 2 paths. Else it takes its OSM spot or the nearest free spot within 8 m. Every
+  spot has to be clear of buildings, water, carriageways (class width + 0.3 m kerb, plus the street profiles' lanes and
+  parking), footways, the shelters with their bins, signal poles, lamps, the places' own sprites and pylons, and the
+  furniture placed before it. Props inside a ground-dressed area (the Breslauer Weg playground) are left to it.
+  **Placed in game: bench 166, bin 80, recycling 60, bike_rack 27.** Left out: the Wertstoffhof node (6 containers,
+  inside its building) and covered rack node 4902742912 (inside an industrial building). Moved: median 0.8 m, max
+  14.1 m. A test samples 9 points of every footprint: none is in a building, in water or on a carriageway.
+- **Look:** bench = `spielplatz-bench`, bin = `spielplatz-bin` on a post, glass = `prop-glass` (three tones). Paper and
+  cans are `prop-glass` hue-turned (`Mode.hue`) to blue and orange-yellow. Bike racks are `bike-rack.webp`, the bikes
+  pointing away from the path. A covered rack gets a flat grey (#434648, the perforated sheds of reference 41) roof on
+  4 posts at 2.2 m. Two new Codex sprites, darkened for the palette: `bin-1100` (the green 1100 L bin of reference
+  41, for green_waste) and `clothes-container`.
+- **Pairs** (game before/after, furniture off vs on): Rathaus `?compare=47.8746,11.4655,120`, and at half 40 the bins on
+  posts and the bike rack by the Rathaus corner show. Frame lightness −0.03 % / −0.04 %. Neuer Platz is identical (no
+  OSM furniture within 300 m). The Wertstoffinsel at 3037.7, 2528.8 shows its green/blue/yellow row. Several rows
+  (the start-area glass bank, the Friedhof bins) stand under tree crowns and show only in-game when the crown fades.
+- **Checks:** `pnpm check` (347 tests) and `pnpm build` pass.
 
 ### V-12 · High-voltage lines — Size: S — status: todo
 ```
@@ -3557,6 +3748,105 @@ from the tile, then a B-item per landmark in the usual Place format.
 Done when:
 - [ ] Each landmark has reference photos or is marked "needs reference"; one B-item each; no look invented.
 ```
+
+## Feels like GTA 2 (F-items, added 2026-10-26)
+
+Source: PC Games Retro "GTA 2 | RETRO | Eine Stadt voller Schmutz" (https://www.youtube.com/watch?v=U3AJUDceBi4, 21 min,
+~15 min of gameplay), read frame by frame (one every 10 s) plus the transcript. Our game: `pnpm dev`, start spot, EDEKA and
+Rathaus, 1280×800, 2026-10-26. Side-by-side shots (GTA 2 left, ours right) in `reference/gta2-feel/` (gitignored, local only).
+Alex 2026-10-26: "our goal is that our game feels more like GTA 2 but in Geretsried".
+
+**What already matches GTA 2 (don't touch):** HUD layout (respect meters top left, money + hearts + multiplier + weapon top
+right, cop heads top centre), district names on entry, busted/wasted, wanted levels with police on foot from 2 heads, Jesus
+Saves, spray shops, payphone jobs, gang respect, chain-reaction explosions, camera scale (a car is ~1/9 of the screen
+height in both games).
+
+**What does not, ranked by payoff per hour.** The town is built; the gap is *life on screen* and *feedback*, not buildings.
+
+### F-1 · Camera: wider lens so walls lean like GTA 2 — Size: S (~30 min) — status: todo
+**Goal:** in GTA 2 every building shows tall walls towards the screen edge; that parallax *is* the GTA 2 look. Ours shows
+almost only roofs, so the town reads like a map.
+**Reference:** `reference/gta2-feel/1-camera-walls.jpg` (left: the high-rise wall fills ~1/5 of the screen width;
+right: our 3-storey blocks show a thin strip of wall).
+**Spec:** `src/render/camera.ts`: `FOV` 26° → 45°, keep `ON_FOOT_HALF` / `CAR_HALF` / `MAX_HALF` so the ground area stays
+the same (`heightFor` already derives height from FOCAL). A 9 m building at the edge then leans ~5 m instead of ~2 m.
+Raise `NEAR` if close roofs clip. Update the README camera paragraph ("about 2.5 m").
+**Acceptance criteria:**
+- [ ] Same spot, before/after at start + Neuer Platz: walls of 3+ storey blocks visible on all four screen edges
+- [ ] Ground coverage unchanged (a car is still ~1/9 of the screen height); no roof clipping at top speed
+- [ ] `src/render/camera.test.ts` updated; `pnpm check` green
+
+### F-2 · Density: always a crowd and traffic in view — Size: M (~half a day) — status: todo
+**Goal:** GTA 2 never shows an empty street: 8–15 pedestrians and 3–6 moving cars on every screen, people in groups on
+the pavement. That is what makes running people over, chases and gunfights happen by themselves.
+**Reference:** `reference/gta2-feel/2-density.jpg` (left: 14 people on one pavement; right: EDEKA, nobody),
+`reference/gta2-feel/3-palette.jpg`. Measured 2026-10-26 at EDEKA via `__gta.game`: 120 walkers and 105 traffic cars for the
+whole town, **2 walkers and 0 cars within 30 m** of the player.
+**Spec:** GTA 2 keeps people and cars only near the camera. Spawn walkers and traffic in a ring just outside the view
+(1.2–2× the view half) and despawn what falls behind (> 2.5×), keeping targets around the player: ~40 walkers, ~18 moving
+cars (scale with the view, so it rises when the car camera opens up). More walkers on shop streets (POIs within 50 m), fewer in
+Wohngebiete. Keep the town-wide totals as the cap for performance. Parked cars stay as they are.
+**Acceptance criteria:**
+- [ ] 10 random teleports (`__gta.teleport`) to shop streets: ≥ 8 walkers and ≥ 3 moving cars in view in at least 8 of 10
+- [ ] Frame time at the start spot not worse than +2 ms; traffic tests (`traffic.test.ts`, signals) still green
+- [ ] Busting/wasting/police still spawn correctly (existing tests)
+
+### F-3 · Score popups: big numbers where money is made — Size: S (~1 h) — status: todo
+**Goal:** GTA 2 rewards every hit with a huge outlined number at the spot ("300", "1000", "600 → 1200" for the multiplier).
+Ours adds money top right only, so near misses, drifts and kills feel like nothing happened.
+**Reference:** `reference/gta2-feel/6-feedback.jpg` (left: "300" over a blown-up police car; right: the only big text we have is
+BUSTED), `reference/gta2-feel/gta2-kill-frenzy.jpg` ("30" counting down across the screen).
+**Spec:** on every award from `src/sim/score.ts` (and kills, wrecks, job pay), a popup at the world point: chunky italic digits,
+~72 px, dark outline, rises ~1 m and fades over 1.2 s, colour by multiplier (×1 white, ×2 yellow, ×3 orange, ×4 red). Drawn in
+the 2D overlay (`src/render/overlay.ts`) with `project()`. Stack, don't overlap: offset later ones upward.
+**Acceptance criteria:**
+- [ ] Near miss, drift, kill and car wreck each show a number at the right spot, readable while driving at top speed
+- [ ] Multiplier visible in colour; popups never cover the player sprite for more than 0.3 s
+- [ ] Unit test for the popup list (spawn, age, removal); `pnpm check` green
+
+### F-4 · Street paint and overhead wires — Size: M (~half a day) — status: todo
+**Goal:** GTA 2 streets are busy to look at: a solid line along every kerb, painted words before each junction ("SLOW"), wide
+zebras, and power/phone wires crossing the screen high up that move with parallax. Ours: plain asphalt with a dashed centre
+and edge lines only on main roads.
+**Reference:** `reference/gta2-feel/5-street-dressing.jpg` (left: SLOW, zebras on all four arms, wires over the junction; right:
+Rathaus, plain asphalt), `reference/gta2-feel/gta2-junction.jpg`, `reference/gta2-feel/gta2-dusk-wires.jpg`.
+**Spec (stay German, real Geretsried):**
+- solid white edge line on every street, not only main roads (`src/render/scene/street.ts`)
+- painted words on approaches, white, ~5 m long, read from the driver's side: "STOP" before stop signs, "BUS" at bus stops,
+  "30" at Tempo-30 zones (OSM `maxspeed=30`), "LANGSAM" before school zones
+- overhead wires: 2–3 dark lines between street-lamp poles across junctions and along residential streets at 7–9 m, drawn
+  as thin 3D lines so they slide against the ground when the camera moves (link V-12 for the real high-voltage lines)
+**Acceptance criteria:**
+- [ ] Start spot, Neuer Platz, Rathaus: every street has edge lines; at least one painted word per signalled junction
+- [ ] Wires show visible parallax while driving; never cover HUD text
+- [ ] Street tests green; no z-fighting with stop lines and zebras
+
+### F-5 · Retro pixel look (grit without brightening) — Size: S (~1–2 h) — status: todo
+**Goal:** GTA 2 is chunky 640×480 pixels with dirty, noisy textures; ours is smooth and clean like a modern map, so it looks
+"too nice". Alex 2026-10-25 rule stays: **no brighter, no desaturated look**; this item only adds pixels and grime.
+**Reference:** `reference/gta2-feel/3-palette.jpg` (left: grimy pavement tiles, fence, stained asphalt; right: clean, smooth),
+`reference/gta2-feel/1-camera-walls.jpg`.
+**Spec:** render the 3D scene into a framebuffer at 1/2 the canvas size (CSS pixels, so ~640 px high on a laptop) and upscale with
+NEAREST; HUD stays sharp at full resolution. `?retro=0` turns it off. Add a grime decal layer: oil stains in lanes, cracks
+and dark patches at kerbs and junctions, tyre marks that stay where a car drifts or brakes hard (GTA 2 shows black skid marks
+in `gta2-junction.jpg`; we have none).
+**Acceptance criteria:**
+- [ ] Pixels visibly chunky; text in signs still readable at the play camera
+- [ ] Average frame lightness at the six V-spots within ±3 % of before (the V rule)
+- [ ] Skid marks appear on handbrake turns and fade after ~30 s; FPS not lower than before
+
+### Later (after F-1…F-5)
+- **F-6 · Dusk mode** (M): GTA 2 PC had a day/dusk switch; dusk looks "dirtier, neon-soaked, more dangerous" (video 05:45).
+  Darker ambient, lamp light pools (we already have lamps every 38 m), car headlights, shop signs glowing.
+  Reference: `reference/gta2-feel/4-dusk.jpg`, `gta2-dusk-wires.jpg`.
+- **F-7 · Mission talk** (S): the boss's face bottom left with typewriter text, keywords in colour; car names in the yellow
+  "tape" banner at the top (SHARK, FURORE GT). Ours is a plain yellow box. Reference: `reference/gta2-feel/7-mission-text.jpg`.
+- **F-8 · Kill frenzies** (M): hidden icon starts a timed challenge ("Töte 40 Leute in 120 Sekunden", "30 Leute auf der
+  Strecke! Multiplikator ×2"), big centre text, counter on screen. Needs F-2 first.
+- **F-9 · Minimap off by default** (S): GTA 2 has no minimap, only the arrow. Our aerial-photo minimap pulls the eye off the
+  street. Decide: hide (Tab shows it) or keep. **Needs Alex.**
+- **Decision for Alex:** GTA 2's palette is greyer and less saturated than ours (terracotta roofs, bright lawns). The
+  2026-10-25 rule forbids desaturating. Keep the rule, or allow a GTA 2 grade?
 
 ## Priority list (all 234 POIs)
 
@@ -3644,7 +3934,7 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 18 | Isar-Apotheke | pharmacy | 3683.2, 4864 | 47.856257, 11.479381 | 382 | ref-done | B6c-2. J.-S.-Bach-Str. 13a; block → levels 4 |
 | 121 | Dr. Schmucker | doctor | 3685.7, 4874.6 | 47.856162, 11.479414 | 386 | todo (needs reference) | B6c-2 (height only). Sign illegible; findHospital respawn point |
 | 5 | Bäckerei Backhupferl | bakery | 4408.8, 4798.6 | 47.856845, 11.489109 | 438 | todo | needs reference: counter inside EDEKA, no photo (B4-9) |
-| 98 | Arztpraxis Lewke | doctor | 3695.3, 4056.5 | 47.863519, 11.479543 | 664 | ref-done | B6d-3. "Arzt-Praxis" board |
+| 98 | Arztpraxis Lewke | doctor | 3695.3, 4056.5 | 47.863519, 11.479543 | 664 | implemented | B6d-3. "Arzt-Praxis" board |
 | 106 | Bäckerei Manfred Burger | bakery | 4384.4, 5254.9 | 47.852742, 11.488782 | 720 | ref-done | B6d-7. 2 storeys, pitched (LoD2 "flat" is wrong) |
 | 23 | Bäckerei Lidl | bakery | 3376, 5874.7 | 47.847168, 11.475262 | 1375 | todo |  |
 | 60 | Bäckerei Konditorei Lidl GmbH | bakery | 3152.3, 3303.7 | 47.870289, 11.472263 | 1588 | todo |  |
@@ -3734,10 +4024,10 @@ Order: P1 batch → gameplay places → landmarks/anchors → services → food 
 | 73 | BRK KleiderMarkt | shop | 3691.5, 4872.7 | 47.856179, 11.479492 | 380 | ref-done | B6c-2. J.-S.-Bach-Str. 13, SE end of the block |
 | 17 | Juchheim Cosmetics | shop | 3582.7, 4710.5 | 47.857637, 11.478033 | 420 | ref-done (partial) | B6c-3. Massing only; web shows "Isar Nails und Beauty" → sign check |
 | 97 | Zirngibl Bestattungen GmbH | shop | 3524.7, 4750.8 | 47.857275, 11.477256 | 484 | todo (needs facade reference) | B6c-4 (height only). OSM operator unverified |
-| 218 | Carglass | car_repair | 4444.2, 4972.1 | 47.855285, 11.489584 | 552 | ref-done | B6d-1. Address Sudetenstraße 50 (OSM has none); red kiosk, 1 level |
+| 218 | Carglass | car_repair | 4444.2, 4972.1 | 47.855285, 11.489584 | 552 | implemented (partial) | B6d-1. Address Sudetenstraße 50 (OSM has none); red kiosk, 1 level |
 | 26 | KFZ-Meisterbetrieb Gerd Matheis | car_repair | 4268.3, 5270 | 47.852606, 11.487225 | 678 | todo | B6d-4 massing only; needs reference (no SV); address Spreestraße 11 checked, no conflict |
-| 59 | Schreibwaren Schröter | shop | 3655.5, 4007.1 | 47.863963, 11.479009 | 727 | ref-done | B6d-8. 3-storey block + red shop wing, masses |
-| 217 | Occasione Mode & Livestyle | shop | 3644.3, 3986.2 | 47.864151, 11.478859 | 750 | ref-done | B6d-9. Name fix: "Occasione Mode & Lifestyle" (signs + web) |
+| 59 | Schreibwaren Schröter | shop | 3655.5, 4007.1 | 47.863963, 11.479009 | 727 | implemented (partial) | B6d-8. 3-storey block + red shop wing, masses |
+| 217 | Occasione Mode & Lifestyle | shop | 3644.3, 3986.2 | 47.864151, 11.478859 | 750 | implemented | B6d-9. Name fixed from OSM's "Livestyle" (signs + web) |
 | 78 | BSZ Direktmarketing GmbH | shop | 4744.3, 4883.4 | 47.856083, 11.493607 | 783 | ref-done (partial) | B6d-11. Roof → gable + PV; B2B firm (BSZ GmbH), not a shop |
 | 110 | Premio | car_repair | 4719.9, 5087.2 | 47.85425, 11.49328 | 845 | todo |  |
 | 27 | Action | shop | 4524.8, 5429.5 | 47.851171, 11.490664 | 943 | todo |  |

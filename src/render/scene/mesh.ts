@@ -241,6 +241,16 @@ export const MATERIAL_FILES = [
   "seitz-shop",
   "seitz-pkw",
   "seitz-door",
+  "carglass-sign",
+  "carglass-front",
+  "lewke-sign",
+  "schroeter-sign",
+  "schroeter-front",
+  "schroeter-awning",
+  "schroeter-gable",
+  "occasione-sign",
+  "occasione-front",
+  "champini-front",
 ] as const
 export type MaterialName = (typeof MATERIAL_FILES)[number]
 /** The material layer of a texture file. */
@@ -393,6 +403,14 @@ export const PROP_FILES = [
   "flash-amber",
   "seitz-tent",
   "seitz-bikes",
+  "spielplatz-hut",
+  "spielplatz-rider",
+  "spielplatz-tower",
+  "spielplatz-seesaw",
+  "spielplatz-bench",
+  "spielplatz-bin",
+  "bin-1100",
+  "clothes-container",
 ] as const
 export type PropName = (typeof PROP_FILES)[number]
 /** The sprite layer of a prop. */

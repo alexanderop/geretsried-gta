@@ -8,8 +8,11 @@ data/places-more.json
 data/buildings-rel.json
 data/places-next.json
 data/areas-more.json
+data/furniture.json
 compare
 data/dop40
+# LoD2 CityGML tiles and matches.json (node scripts/lod2-heights.ts); data/lod2-levels.json is kept
+data/lod2
 data/extra.json
 data/routes.json
 # Scouting photos (Street View screenshots etc.): reference/<slug>/ at the root or docs/reference/<slug>/, local only

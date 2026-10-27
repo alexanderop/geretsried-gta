@@ -2,12 +2,12 @@
  * The parts of a dressed place (world/places/dressing.ts) as 3D geometry:
  * signs, arcades, balconies, door canopies, cross gables, stairs and ramps on the footprint's walls, signs on its roof,
  * towers with a pyramid roof, a roof deck on posts, sign posts, prop sprites. Drawn with the building they belong to; its walls, storeys
- * and roof colours are scene.ts's.
+ * and roof colours are scene.ts's. A ground dressing's free-standing parts are drawn on their own (groundParts).
  */
 import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
 import { boxOf, type Box } from "#/world/geometry.ts"
-import { rectRing, square, toWorld, wallFrame } from "#/world/frame.ts"
-import { towerFrame, type Part, type Place, type TowerFace } from "#/world/places/dressing.ts"
+import { rectRing, square, toWorld, wallFrame, type Frame } from "#/world/frame.ts"
+import { towerFrame, type FreePart, type Ground, type Part, type Place, type TowerFace } from "#/world/places/dressing.ts"
 import { SHADOW, WHITE, Z_SHADOW, box, boxShadow, face, flat, light, shade, sprite, vertex, worldDir, type Builder } from "./frame-mesh.ts"
 import { Material, Mode, material, spriteQuad, type MaterialName, type MeshBuilder, type Rgba, type SpriteBoxes } from "./mesh.ts"
 
@@ -409,8 +409,7 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
       const f = towerFrame(place, pts, part)
       return f === null ? [] : [[rectRing(f, [part.rect[0] - EAVES, part.rect[1] + EAVES, part.rect[2] - EAVES, part.rect[3] + EAVES]), part.h + part.roofH + 1.4]]
     }
-    if (part.kind === "sprite") return [[rectRing(place.frame, square(part.u, part.n, part.len)), part.z]]
-    if (part.kind === "pylon") return [[rectRing(place.frame, square(part.u, part.n, Math.max(part.w, part.d))), part.h]]
+    if (part.kind === "sprite" || part.kind === "pylon") return [freeRing(place.frame, part)]
     const wall = wallFrame(pts, part.edge)
     if (wall === null) return []
     if (part.kind === "balcony") return [[rectRing(wall.frame, [part.u0, part.u1, -part.depth, 0]), Math.max(0, ...part.z) + BALCONY_RAIL]]
@@ -423,6 +422,27 @@ export const placeBox = (place: Place, pts: ReadonlyArray<number>): Box | null =
     const out = part.kind === "arcade" ? part.depth : (part.out ?? SIGN_OUT)
     return [[rectRing(wall.frame, [part.u0, part.u1, -out, 0]), part.kind === "arcade" ? part.h + ARCADE_BAND : part.z1]]
   })
+  return ringsBox(rings)
+}
+
+/** A ground dressing's parts, every one free-standing in its street frame. */
+export const groundParts = (m: MeshBuilder, boxes: SpriteBoxes, ground: Ground) => {
+  const b = { m, f: ground.frame, boxes }
+  for (const part of ground.dressing.parts) {
+    if (part.kind === "sprite") propSprite(b, part)
+    else pylon(b, part)
+  }
+}
+
+/** Where a ground dressing's parts and their shadows reach on the map; null without parts. */
+export const groundBox = (ground: Ground): Box | null => ringsBox(ground.dressing.parts.map((part) => freeRing(ground.frame, part)))
+
+/** The ground a free-standing part covers (generously: a square as wide as its longest side either way) and its height. */
+const freeRing = (f: Frame, part: FreePart): readonly [ReadonlyArray<number>, number] =>
+  part.kind === "sprite" ? [rectRing(f, square(part.u, part.n, part.len)), part.z] : [rectRing(f, square(part.u, part.n, Math.max(part.w, part.d))), part.h]
+
+/** The box round the rings and the shadows of what stands on them that high; null without rings. */
+const ringsBox = (rings: ReadonlyArray<readonly [ReadonlyArray<number>, number]>): Box | null => {
   if (rings.length === 0) return null
   const boxes = rings.map(([ring, h]) => boxOf(ring, h * SHADOW_PER_M + 0.5))
   return {

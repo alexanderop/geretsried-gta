@@ -16,7 +16,7 @@ Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · H help · F ne
 Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► public/geretsried.map.json
 ```
 
-- `pnpm map:fetch` downloads every road, building, river and land-use way in the bbox (`BBOX` in `scripts/import-osm.ts`).
+- `pnpm map:fetch` downloads every road, building, river and land-use way in the bbox (`BBOX` in `scripts/bbox.ts`).
 - `src/map/build.ts` projects lat/lon to meters (origin = north-west corner, y south) and keeps a compact JSON (~1.6 MB).
 - `pnpm map` rebuilds from the cached `data/raw.json` without hitting Overpass.
 - The bus lines come from OSM's `route=bus` relations through the bbox, with their ways and stops, cached in
@@ -30,6 +30,13 @@ Overpass API ──► data/raw.json ──► scripts/import-osm.ts ──► p
   `data/areas-more.json`; their ground colour is read from the aerial photo unless OSM says they are paved. Places OSM lacks are listed by hand in `src/map/extra-pois.ts`. Multipolygon
   buildings (a ring round a courtyard, `holes` in the map JSON) come from `data/buildings-rel.json`. Delete one cache
   and run `pnpm map` to refresh only it; docs/poi-id-map.csv maps POI ids across an import that renumbers them.
+- Storeys: OSM's `building:levels` (on 159 buildings), else the Bavarian LoD2 building model's, else the building
+  type's usual count (`buildingLevels` in `src/map/build.ts`; a tag two or more storeys under LoD2's loses to it, and a
+  place's footprint keeps its own). `node scripts/lod2-heights.ts` downloads the 20 CityGML tiles over the map once
+  (`data/lod2/`, gitignored, ~600 MB), matches each OSM building to an LoD2 one (`src/map/lod2.ts`: overlap ≥ 0.5,
+  else its centroid, else the LoD2 roofs inside it), takes the main eave from the roof surfaces inside the outline
+  (a flat roof's height less the 0.6 m parapet) and writes `data/lod2-levels.json` (round(eave / 3 m), kept in git);
+  `pnpm map` reads it.
 
 ### The picture: WebGL2, GTA 2 style
 
@@ -363,3 +370,7 @@ The ground tiles in `public/photo/` are the DOP40 orthophoto, © [Bayerische Ver
 (www.geodaten.bayern.de), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), **modified**: cut into tiles,
 sharpened, contrast and saturation raised, re-encoded as WebP. Roof colours, tree crowns (`public/trees.bin`)
 and the paved-ground mask (`public/ground.png`) are derived from the same photo.
+
+The storeys in `data/lod2-levels.json` and the map are derived from the 3D building model LoD2 Bayern,
+© [Bayerische Vermessungsverwaltung](https://geodaten.bayern.de/opengeodata/) (www.geodaten.bayern.de),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), **modified**: eave heights turned into storeys.

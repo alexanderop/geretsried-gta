@@ -1298,3 +1298,130 @@ for name in ["seitz-tent", "seitz-bikes"]:
         k = 256 / max(im.size)
         im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
         print(f"{name}.webp", im.size)
+
+# Spielplatz Breslauer Weg: the playground's equipment seen from above (keyed, cropped): the A-frame hut (ridge across
+# the image; Codex lit both roof planes alike, so the lower one is darkened to read as a roof under the top-left light),
+# the green spring rider, the tower with the yellow slide off its left side, the seesaw, the log bench (backrest at the
+# top) and the green bin.
+for name in ["spielplatz-hut", "spielplatz-rider", "spielplatz-tower", "spielplatz-seesaw", "spielplatz-bench", "spielplatz-bin"]:
+    src = find(name)
+    if src is not None:
+        im = key_magenta_fast(Image.open(src))
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        if name == "spielplatz-hut":
+            lower = im.crop((0, im.height // 2, im.width, im.height))
+            im.paste(ImageEnhance.Brightness(lower).enhance(0.72), (0, im.height // 2))
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp", im.size)
+
+# Street furniture (V-11), seen from above (keyed, cropped, front at the image's bottom): the green 1100 L bin of
+# reference/wohnblock-koenigsberger-weg/41 (two-part lid, hinges at the top) and the grey used-clothing container
+# (chute hood at the bottom). Both a little darker than Codex painted them: the dark palette, no prop lighter than the
+# glass bank's highlights.
+for name, bright in [("bin-1100", 0.86), ("clothes-container", 0.74)]:
+    src = find(name)
+    if src is not None:
+        im = keep_main_shape(key_magenta_fast(Image.open(src)))
+        im = im.crop(im.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox())
+        alpha = im.getchannel("A")
+        im = ImageEnhance.Brightness(im.convert("RGB")).enhance(bright).convert("RGBA")
+        im.putalpha(alpha)
+        k = 256 / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=90)
+        print(f"{name}.webp", im.size)
+
+# Five places at the start (B6d-1, -3, -8, -9, -16). The signs are Codex redraws of the Street View boards (opaque,
+# a few px of edge trimmed, stored square; the wallSign's rectangle gives them back their aspect): Carglass's grey
+# fascia cut to its lettering band, Dr. Lewke's aubergine board, Schröter's logo panel, Occasione's board, and the
+# OCCASIONE + Schröter panel on the block's street gable.
+for name in ["carglass-sign", "lewke-sign", "schroeter-sign", "occasione-sign", "schroeter-gable"]:
+    src = find(name)
+    if src is not None:
+        im = Image.open(src).convert("RGB")
+        im = im.crop((6, 6, im.width - 6, im.height - 6))
+        if name == "carglass-sign":
+            # The fascia is a strip about 8.7:1: keep the band round the arrow blocks and letters (rows of ink), a little grey above and below.
+            a = np.asarray(im, np.int32)
+            ink = np.nonzero((np.abs(a[:, :, 0] - a[:, :, 2]) > 60).any(axis=1))[0]
+            pad = round((ink[-1] - ink[0]) * 0.3)
+            im = im.crop((0, max(0, int(ink[0]) - pad), im.width, min(im.height, int(ink[-1]) + pad)))
+        im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+        print(f"{name}.webp", im.size)
+
+
+def wall_texture(name: str, size_m: tuple[float, float], base: tuple[int, int, int], rects: list[tuple[float, float, float, float, tuple[int, int, int]]]) -> None:
+    """A wall drawn from metres measured off Street View: `size_m` (width along the wall, height), rectangles
+    (u0, u1, z0, z1, colour) with u from the wall's left end and z up, later ones on top; stored square."""
+    from PIL import ImageDraw
+    k = 64
+    w, h = round(size_m[0] * k), round(size_m[1] * k)
+    im = Image.new("RGB", (w, h), base)
+    draw = ImageDraw.Draw(im)
+    for u0, u1, z0, z1, colour in rects:
+        draw.rectangle((round(u0 * k), round(h - z1 * k), round(u1 * k) - 1, round(h - z0 * k) - 1), fill=colour)
+    im.resize((512, 512), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=92)
+    print(f"{name}.webp", size_m)
+
+
+def window(u0: float, u1: float, z0: float, z1: float, frame: tuple[int, int, int], glass: tuple[int, int, int], panes: int = 2, f: float = 0.07) -> list:
+    """A window or glass door: the frame, the glass inside it, `panes` panes split by mullions."""
+    out = [(u0, u1, z0, z1, frame), (u0 + f, u1 - f, z0 + f, z1 - f, glass)]
+    for i in range(1, panes):
+        m = u0 + (u1 - u0) * i / panes
+        out.append((m - f / 2, m + f / 2, z0, z1, frame))
+    return out
+
+
+# Carglass (reference/carglass/01, 03): the kiosk's 6.55 m front below its fascia (2.85 m): red walls, the double
+# glass door on a step plate at the left under a dark visor, a white notice in its left leaf, two dark-framed windows.
+CG_RED, CG_FRAME, CG_GLASS = (129, 59, 60), (38, 44, 44), (74, 86, 96)
+wall_texture("carglass-front", (6.55, 2.85), CG_RED, [
+    (0.6, 3.7, 0.3, 0.45, (118, 120, 120)),
+    *window(0.77, 3.5, 0.45, 2.4, CG_FRAME, CG_GLASS, 2, 0.09),
+    (1.0, 2.0, 0.7, 1.3, (214, 212, 206)),
+    (1.05, 1.95, 1.05, 1.13, (170, 50, 52)),
+    (0.7, 3.6, 2.45, 2.75, (64, 52, 54)),
+    *window(3.95, 5.1, 1.3, 2.5, CG_FRAME, CG_GLASS, 1, 0.1),
+    *window(5.4, 6.33, 1.3, 2.5, CG_FRAME, CG_GLASS, 1, 0.1),
+])
+
+# Champini (reference/champini-kita/01, 02): the 32 m N wall, u from its E end, 6.5 m (LoD2): white render, a dark
+# plinth, the recessed lime entrance near the E end, the tall stair window, three double windows on both floors, lime
+# patches at window height between them (lower row: only between the windows; upper row: on to 3 m short of the W end).
+KITA_WHITE, KITA_LIME, KITA_FRAME, KITA_GLASS = (224, 224, 220), (139, 149, 75), (36, 39, 43), (56, 63, 73)
+WINDOWS = [(14.4, 16.3), (20.0, 22.0), (24.8, 26.8)]
+wall_texture("champini-front", (32.0, 6.5), KITA_WHITE, [
+    (0, 32.0, 0, 0.4, (42, 47, 51)),
+    (3.3, 7.5, 0.4, 2.4, KITA_LIME),
+    (3.3, 7.5, 2.25, 2.4, (104, 112, 56)),
+    (16.3, 20.0, 1.3, 2.6, KITA_LIME),
+    (22.0, 24.8, 1.3, 2.6, KITA_LIME),
+    (16.3, 28.95, 4.0, 5.4, KITA_LIME),
+    *window(11.0, 12.0, 1.6, 5.5, KITA_FRAME, KITA_GLASS, 1),
+    *[r for u0, u1 in WINDOWS for z0, z1 in [(1.4, 2.55), (4.1, 5.35)] for r in window(u0, u1, z0, z1, KITA_FRAME, KITA_GLASS)],
+])
+
+# Schröter's shop wing (reference/schreibwaren-schroeter/01): the 12.65 m street front's red ground floor to 3.4 m,
+# white-framed shop windows and glass doors (left to right: window, door, window, window, door).
+SCH_RED, SCH_FRAME, SCH_GLASS = (112, 26, 27), (206, 204, 198), (58, 66, 76)
+wall_texture("schroeter-front", (12.65, 3.4), SCH_RED, [
+    *window(0.5, 2.85, 0.75, 2.8, SCH_FRAME, SCH_GLASS, 1, 0.1),
+    *window(3.15, 4.3, 0.0, 2.8, SCH_FRAME, SCH_GLASS, 1, 0.1),
+    *window(4.65, 7.55, 0.75, 2.8, SCH_FRAME, SCH_GLASS, 1, 0.1),
+    *window(7.95, 10.65, 0.75, 2.8, SCH_FRAME, SCH_GLASS, 1, 0.1),
+    *window(11.0, 12.2, 0.0, 2.8, SCH_FRAME, SCH_GLASS, 1, 0.1),
+    (0, 12.65, 0, 0.35, (78, 80, 82)),
+])
+# Its awning seen from above, the wall at the image's top: navy fabric, a pale blue-white stripe, the white edge.
+wall_texture("schroeter-awning", (1.0, 1.0), (30, 38, 97), [(0, 1.0, 0.0, 0.45, (150, 160, 186)), (0, 1.0, 0.0, 0.1, (210, 212, 214))])
+
+# Occasione (reference/occasione/01): the annex's front (wall 1) from 2 m in from its NE end (the first 2 m are behind a
+# tree) to the SW end, up to the sign: white render, two wide windows of two panes, the glass door with its transom.
+OCC_WHITE, OCC_FRAME, OCC_GLASS = (220, 220, 214), (200, 200, 196), (60, 68, 78)
+wall_texture("occasione-front", (8.18, 2.7), OCC_WHITE, [
+    *window(0.0, 2.18, 0.8, 2.6, OCC_FRAME, OCC_GLASS, 2, 0.08),
+    *window(2.64, 5.2, 0.8, 2.6, OCC_FRAME, OCC_GLASS, 2, 0.08),
+    *window(5.96, 7.78, 0.15, 2.6, OCC_FRAME, OCC_GLASS, 2, 0.08),
+    (5.96, 7.78, 2.12, 2.2, OCC_FRAME),
+])

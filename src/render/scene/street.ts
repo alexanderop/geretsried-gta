@@ -10,8 +10,9 @@
  * placed here (`signalHead`).
  */
 import { SHADOW_DIR, SHADOW_PER_M } from "#/map/photo.ts"
-import type { Road } from "#/map/types.ts"
+import type { Container, Road } from "#/map/types.ts"
 import type { World } from "#/world/world.ts"
+import { CONTAINER_GAP, CONTAINER_M, RACK_M, RACK_ROOF_M, type Furniture } from "#/world/furniture.ts"
 import type { StopLine, Zebra } from "#/sim/signals.ts"
 import type { StreetSign } from "#/world/street-profile.ts"
 import { POLE_ONLY_STOPS } from "#/world/places/streets.ts"
@@ -207,14 +208,14 @@ export const streetLamps = (world: World, avoid: ReadonlyArray<Placed>): Array<S
 }
 
 /**
- * A bus shelter at an OSM bus stop (with the stop's green H pole at the kerb, `pole`), or a bottle bank. `angle`
- * runs along the street; the shelter's open front faces the street on its right (+90°).
+ * A bus shelter at an OSM bus stop (with the stop's green H pole at the kerb, `pole`). `angle` runs along the
+ * street; the shelter's open front faces the street on its right (+90°). Benches, bins, recycling points and bike
+ * racks are world/furniture.ts's (streetFurniture draws them).
  */
 export type StreetProp =
   | { readonly kind: "shelter"; readonly x: number; readonly y: number; readonly angle: number; readonly pole: Placed }
   /** A stop without a shelter (OSM shelter=no, checked: POLE_ONLY_STOPS): only its H pole at the kerb. */
   | { readonly kind: "pole"; readonly x: number; readonly y: number; readonly angle: number }
-  | { readonly kind: "glass"; readonly x: number; readonly y: number; readonly angle: number }
 
 /** The Geretsried shelter (Sudetenstraße, in front of St. Ursula): 6 m by 1.7 m under a flat roof at 2.55 m. */
 export const SHELTER = { length: 6, depth: 1.7, z: 2.55, slab: 0.16 } as const
@@ -319,29 +320,107 @@ const stopPole = (m: MeshBuilder, x: number, y: number, angle: number) => {
   box(m, x + Math.cos(angle) * 0.06, y + Math.sin(angle) * 0.06, across, 0.2, 0.025, 1.15, 1.75, TIMETABLE, TIMETABLE)
 }
 
-export const streetProp = (m: MeshBuilder, boxes: SpriteBoxes, p: StreetProp) => {
+export const streetProp = (m: MeshBuilder, p: StreetProp) => {
   if (p.kind === "shelter") return shelter(m, p)
-  if (p.kind === "pole") return stopPole(m, p.x, p.y, p.angle)
-  const layer = prop("prop-glass")
-  const b = boxes[layer] ?? [1, 0.6]
-  const length = 1.9
-  flat(m, boxes, layer, { x: p.x, y: p.y, z: 1.6, angle: p.angle, length, width: (length * b[1]) / b[0] }, WHITE, true)
+  return stopPole(m, p.x, p.y, p.angle)
+}
+
+/**
+ * Each container of a recycling point: its sprite, how high its top is, and how it is coloured. Paper and cans are
+ * the bottle bank turned blue and yellow (Mode.hue: the colour's red is the turn, 0..255 a full turn); the three
+ * bottle banks of a glass point a little apart in tone, so the row does not read as one sprite three times.
+ */
+const CONTAINER_LOOK: Readonly<Record<Container, readonly [PropName, number, Rgba, number]>> = {
+  glass: ["prop-glass", 1.6, WHITE, Mode.sprite],
+  paper: ["prop-glass", 1.6, [210, 0, 0, 255], Mode.hue],
+  cans: ["prop-glass", 1.6, [66, 0, 0, 255], Mode.hue],
+  clothes: ["clothes-container", 1.9, WHITE, Mode.sprite],
+  green: ["bin-1100", 1.3, WHITE, Mode.sprite],
+}
+const GLASS_TONES: ReadonlyArray<Rgba> = [WHITE, [226, 232, 226, 255], [236, 226, 214, 255]]
+/** A covered bike rack's roof (the grey of the perforated-metal bike and bin sheds, reference 41) and its height. */
+const RACK_ROOF: Rgba = [67, 70, 72, 255]
+const RACK_ROOF_Z = 2.2
+
+/** A sprite lying flat at height z (any mode), and its shadow. */
+const flatMode = (m: MeshBuilder, boxes: SpriteBoxes, layer: number, q: { x: number; y: number; z: number; angle: number; length: number; width: number }, color: Rgba, mode: number) => {
+  spriteQuad(m, q, layer, boxes[layer] ?? [1, 1], color, mode)
+  m.target = "shadow"
+  spriteQuad(m, { ...q, x: q.x + SHADOW_DIR[0] * q.z * SHADOW_PER_M, y: q.y + SHADOW_DIR[1] * q.z * SHADOW_PER_M, z: Z_SHADOW }, layer, boxes[layer] ?? [1, 1], SHADOW, Mode.silhouette)
+  m.target = "opaque"
+}
+
+/**
+ * A bench, a litter bin on its post, a recycling point's row of containers or a row of bike racks (under a flat grey
+ * roof when covered), standing where world/furniture.ts put it, its front to the path. A sprite's front is its
+ * image's bottom edge (+v), so the image's +u runs at `facing − 90°`; the racks' bikes point away from the path.
+ */
+export const streetFurniture = (m: MeshBuilder, boxes: SpriteBoxes, f: Furniture) => {
+  const along = f.facing - Math.PI / 2
+  const ax = Math.cos(along)
+  const ay = Math.sin(along)
+  const sized = (name: PropName, length: number) => {
+    const layer = prop(name)
+    const b = boxes[layer] ?? [1, 1]
+    return { layer, length, width: (length * b[1]) / b[0] }
+  }
+  if (f.kind === "bench") {
+    const s = sized("spielplatz-bench", f.along)
+    flatMode(m, boxes, s.layer, { x: f.x, y: f.y, z: 0.8, angle: along, length: s.length, width: s.width }, WHITE, Mode.sprite)
+    return
+  }
+  if (f.kind === "bin") {
+    column(m, f.x, f.y, 0.03, 0.85)
+    const s = sized("spielplatz-bin", f.along)
+    flatMode(m, boxes, s.layer, { x: f.x, y: f.y, z: 0.9, angle: along, length: s.length, width: s.width }, WHITE, Mode.sprite)
+    return
+  }
+  if (f.kind === "recycling") {
+    let u = -f.along / 2
+    let glass = 0
+    for (const c of f.holds) {
+      const [name, z, colour, mode] = CONTAINER_LOOK[c]
+      const s = sized(name, CONTAINER_M[c][0])
+      const mid = u + s.length / 2
+      // Each container's back in line, its front to the path.
+      const back = (f.depth - CONTAINER_M[c][1]) / 2
+      const x = f.x + ax * mid - Math.cos(f.facing) * back
+      const y = f.y + ay * mid - Math.sin(f.facing) * back
+      const tone = c === "glass" ? (GLASS_TONES[glass++ % GLASS_TONES.length] ?? WHITE) : colour
+      flatMode(m, boxes, s.layer, { x, y, z, angle: along, length: s.length, width: Math.min(s.width, CONTAINER_M[c][1]) }, tone, mode)
+      u += s.length + CONTAINER_GAP
+    }
+    return
+  }
+  // Bike racks: side by side along the path, each sprite's +u (the bikes' fronts) away from it.
+  const roof = f.covered ? RACK_ROOF_M : 0
+  const away = f.facing + Math.PI
+  const s = sized("bike-rack", RACK_M[1])
+  for (let i = 0; i < f.racks; i++) {
+    const mid = -f.along / 2 + roof + RACK_M[0] * (i + 0.5)
+    flatMode(m, boxes, s.layer, { x: f.x + ax * mid, y: f.y + ay * mid, z: 0.5, angle: away, length: s.length, width: s.width }, WHITE, Mode.sprite)
+  }
+  if (!f.covered) return
+  const hl = f.along / 2
+  const hd = f.depth / 2
+  for (const [a, d] of [[-hl + 0.1, -hd + 0.1], [hl - 0.1, -hd + 0.1], [-hl + 0.1, hd - 0.1], [hl - 0.1, hd - 0.1]] as const) {
+    const fx = Math.cos(f.facing)
+    const fy = Math.sin(f.facing)
+    box(m, f.x + ax * a + fx * d, f.y + ay * a + fy * d, along, 0.04, 0.04, 0, RACK_ROOF_Z, ANTHRACITE_DARK, ANTHRACITE_DARK)
+  }
+  box(m, f.x, f.y, along, hl, hd, RACK_ROOF_Z, RACK_ROOF_Z + 0.08, RACK_ROOF, RACK_ROOF, true)
 }
 
 const SIDEWALK_M = 2.6
 
 /**
  * Bus shelters at OSM's bus stops, on the back of the sidewalk facing the
- * street (a few meters along, clear of the payphone that may stand there),
- * and bottle banks at the glass recycling points. Pure.
+ * street (a few meters along, clear of the payphone that may stand there). Pure.
  */
 export const streetProps = (world: World, avoid: ReadonlyArray<Placed>): Array<StreetProp> => {
   const out: Array<StreetProp> = []
   for (const p of world.map.props) {
-    if (p.kind === "glass") {
-      if (!world.isSolid(p.x, p.y)) out.push({ kind: "glass", x: p.x, y: p.y, angle: 0 })
-      continue
-    }
+    if (p.kind !== "bus_stop") continue
     // The nearest street (a sidewalk mapped as its own footway is often nearer).
     let best = { d: 25, x: p.x, y: p.y, angle: 0, width: 0 }
     for (const r of world.map.roads) {
