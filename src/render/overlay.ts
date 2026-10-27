@@ -36,7 +36,7 @@ export const drawPlayerMarker = (ctx: CanvasRenderingContext2D, view: Float32Arr
   ctx.globalAlpha = 1
 }
 
-const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
+export const POI_STYLE: Readonly<Record<PoiKind, readonly [string, string]>> = {
   supermarket: ["🛒", "#d62828"],
   drugstore: ["🧴", "#7b2cbf"],
   bakery: ["🥨", "#b5651d"],

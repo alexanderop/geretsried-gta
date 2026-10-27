@@ -79,7 +79,7 @@ const CopHead = ({ on }: { readonly on: boolean }) => (
 )
 
 const HELP =
-  "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen (auch Bus: an der Haltestelle) · G — Hupe · M — Ton an/aus · H — Hilfe"
+  "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen (auch Bus: an der Haltestelle) · G — Hupe · M — Ton an/aus · T — Orte (teleportieren) · H — Hilfe"
 
 const ICON: Readonly<Record<WeaponId, string>> = {
   fists: "fist",
@@ -143,7 +143,7 @@ const RespectMeter = ({ name, color, value }: { readonly name: string; readonly 
   )
 }
 
-export function Hud({ hud, help, muted, onMute }: { readonly hud: HudState; readonly help: boolean; readonly muted: boolean; readonly onMute: () => void }) {
+export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudState; readonly help: boolean; readonly muted: boolean; readonly onMute: () => void; readonly onPlaces: () => void }) {
   const clock = hud.timer === null ? "" : `${Math.floor(hud.timer / 60)}:${String(Math.max(0, Math.floor(hud.timer % 60))).padStart(2, "0")}`
   return (
     <div className="hud-font pointer-events-none absolute inset-0 text-white select-none">
@@ -262,6 +262,16 @@ export function Hud({ hud, help, muted, onMute }: { readonly hud: HudState; read
 
       <div className="absolute bottom-4 left-4 flex items-end gap-2 font-mono text-xs font-normal [-webkit-text-stroke:0] [text-shadow:none]">
         {help ? <div className="rounded bg-black/70 px-3 py-2 leading-5">{HELP}</div> : <div className="rounded bg-black/40 px-2 py-1 text-white/80">H — Hilfe</div>}
+        <button
+          type="button"
+          data-testid="places-button"
+          onClick={onPlaces}
+          onMouseDown={(e) => e.preventDefault()}
+          tabIndex={-1}
+          className="pointer-events-auto rounded bg-black/40 px-2 py-1 text-white/80 hover:bg-black/60"
+        >
+          T — Orte
+        </button>
         <button
           type="button"
           data-testid="mute"

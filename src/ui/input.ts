@@ -18,8 +18,11 @@ const KEYS: Readonly<Record<string, Held>> = {
   ControlRight: "attack",
 }
 
-/** UI keys outside the game step: G horn (held), H help (toggle), M sound (toggle), and any key (audio may start). */
-export type UiKeys = { readonly onHelp: () => void; readonly onMute: () => void; readonly onAnyKey: () => void }
+/** UI keys outside the game step: G horn (held), H help (toggle), M sound (toggle), T place list, and any key (audio may start). */
+export type UiKeys = { readonly onHelp: () => void; readonly onMute: () => void; readonly onPlaces: () => void; readonly onAnyKey: () => void }
+
+/** Keys typed into a text field (the place list's search) are not the game's. */
+const typing = (e: KeyboardEvent) => e.target instanceof HTMLInputElement
 
 /** Tracks held keys; `take()` returns this step's input and clears the one-shot presses (F, weapon cycling). */
 export const listenKeyboard = (target: Window, ui: UiKeys) => {
@@ -28,10 +31,15 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
   let swap: -1 | 0 | 1 = 0
   let horn = false
   const down = (e: KeyboardEvent) => {
+    if (typing(e)) return
     ui.onAnyKey()
     if (e.code === "KeyG") horn = true
     if (e.code === "KeyH" && !e.repeat) ui.onHelp()
     if (e.code === "KeyM" && !e.repeat) ui.onMute()
+    if (e.code === "KeyT" && !e.repeat) {
+      ui.onPlaces()
+      e.preventDefault()
+    }
     const key = KEYS[e.code]
     if (key !== undefined) {
       held.add(key)
@@ -43,6 +51,7 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
     if (!e.repeat && (e.code === "KeyE" || e.code === "BracketRight")) swap = 1
   }
   const up = (e: KeyboardEvent) => {
+    if (typing(e)) return
     if (e.code === "KeyG") horn = false
     const key = KEYS[e.code]
     if (key !== undefined) held.delete(key)
@@ -56,6 +65,8 @@ export const listenKeyboard = (target: Window, ui: UiKeys) => {
   target.addEventListener("blur", blur)
   return {
     horn: () => horn,
+    /** Lets go of every held key: the place list opens, and their key-ups go to its search field. */
+    release: blur,
     take: (): Input => {
       const input: Input = {
         up: held.has("up"),

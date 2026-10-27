@@ -1,5 +1,6 @@
 import { makeProjection } from "#/map/project.ts"
 import { toWorld } from "./frame.ts"
+import type { PoiKind } from "#/map/types.ts"
 import type { World } from "./world.ts"
 
 /** Where `?at=` puts the player, and what it matched. */
@@ -32,15 +33,41 @@ const free = (world: World, x: number, y: number): readonly [number, number] => 
   return [x, y]
 }
 
+/** A named target: `built` when it is a dressed place or area (places/), `kind` the POI's kind when there is one. */
+type Target = { readonly name: string; readonly x: number; readonly y: number; readonly built: boolean; readonly kind: PoiKind | null }
+
 /** The named targets: every dressed place and area (in front of it, on its street's sidewalk), then every POI. */
-const targets = (world: World): ReadonlyArray<{ readonly name: string; readonly x: number; readonly y: number }> => [
-  ...[...world.places.map((p) => ({ name: p.dressing.poi, frame: p.frame })), ...world.grounds.map((g) => ({ name: g.dressing.name, frame: g.frame }))].map(({ name, frame }) => {
-    const half = (world.roadAt(frame.ox, frame.oy, 30)?.road.width ?? 0) / 2
-    const [x, y] = toWorld(frame, 0, half + KERB_OUT)
-    return { name, x, y }
-  }),
-  ...world.map.pois.map((p) => ({ name: p.name, x: p.x, y: p.y })),
-]
+const targets = (world: World): ReadonlyArray<Target> => {
+  const kinds = new Map(world.map.pois.map((p) => [p.name, p.kind]))
+  return [
+    ...[...world.places.map((p) => ({ name: p.dressing.poi, frame: p.frame })), ...world.grounds.map((g) => ({ name: g.dressing.name, frame: g.frame }))].map(({ name, frame }) => {
+      const half = (world.roadAt(frame.ox, frame.oy, 30)?.road.width ?? 0) / 2
+      const [x, y] = toWorld(frame, 0, half + KERB_OUT)
+      return { name, x, y, built: true, kind: kinds.get(name) ?? null }
+    }),
+    ...world.map.pois.map((p) => ({ name: p.name, x: p.x, y: p.y, built: false, kind: p.kind })),
+  ]
+}
+
+/** One row of the in-game place list (T): a name you can teleport to by its `slug`. */
+export type SpotEntry = { readonly name: string; readonly slug: string; readonly built: boolean; readonly kind: PoiKind | null }
+
+/** Every target once per slug, the dressed places first (A to Z), then the POIs (A to Z). */
+export const spotList = (world: World): ReadonlyArray<SpotEntry> => {
+  const seen = new Map<string, SpotEntry>()
+  for (const t of targets(world)) {
+    const key = slug(t.name)
+    if (key !== "" && !seen.has(key)) seen.set(key, { name: t.name, slug: key, built: t.built, kind: t.kind })
+  }
+  return [...seen.values()].toSorted((a, b) => Number(b.built) - Number(a.built) || a.slug.localeCompare(b.slug))
+}
+
+/** The rows matching what was typed: names starting with it first, then names containing it; all of them for nothing typed. */
+export const filterSpots = (list: ReadonlyArray<SpotEntry>, query: string): ReadonlyArray<SpotEntry> => {
+  const want = slug(query)
+  if (want === "") return list
+  return [...list.filter((e) => e.slug.startsWith(want)), ...list.filter((e) => !e.slug.startsWith(want) && e.slug.includes(want))]
+}
 
 /** Every name `?at=` knows, as slugs, for the console when nothing matches. */
 export const spotNames = (world: World): ReadonlyArray<string> => [...new Set(targets(world).map((t) => slug(t.name)))].toSorted()

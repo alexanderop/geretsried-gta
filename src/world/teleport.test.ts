@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { Schema } from "effect"
 import { describe, expect, it } from "vitest"
 import { GameMap } from "#/map/types.ts"
-import { findSpot, slug, spotNames } from "./teleport.ts"
+import { filterSpots, findSpot, slug, spotList, spotNames } from "./teleport.ts"
 import { makeWorld } from "./world.ts"
 
 describe("slug", () => {
@@ -45,5 +45,28 @@ describe("?at= on the real map", () => {
   it("returns null for an unknown name and lists the known ones", () => {
     expect(findSpot(world, "gibtsnicht-xyz")).toBeNull()
     expect(spotNames(world)).toContain("cafe-waldmann")
+  })
+})
+
+describe("the place list (T)", () => {
+  const world = makeWorld(Schema.decodeUnknownSync(GameMap)(JSON.parse(readFileSync("public/geretsried.map.json", "utf8"))))
+  const list = spotList(world)
+
+  it("lists every name once, the dressed places first", () => {
+    expect(new Set(list.map((e) => e.slug)).size).toBe(list.length)
+    const firstPoi = list.findIndex((e) => !e.built)
+    expect(firstPoi).toBeGreaterThan(5)
+    expect(list.slice(firstPoi).every((e) => !e.built)).toBe(true)
+    expect(list.find((e) => e.slug === "fahrzeugtechnik-seitz")?.built).toBe(true)
+  })
+
+  it("filters by what is typed, umlauts spelled or not, prefix matches first", () => {
+    expect(filterSpots(list, "")).toHaveLength(list.length)
+    const hits = filterSpots(list, "Bäck")
+    expect(hits.length).toBeGreaterThan(1)
+    expect(hits[0]?.slug.startsWith("baeck")).toBe(true)
+    expect(hits.every((e) => e.slug.includes("baeck"))).toBe(true)
+    // Every row teleports somewhere.
+    for (const e of hits) expect(findSpot(world, e.slug)).not.toBeNull()
   })
 })

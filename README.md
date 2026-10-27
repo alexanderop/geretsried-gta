@@ -8,7 +8,7 @@ pnpm dev          # http://localhost:5190
 ```
 
 **Controls:** WASD / arrows walk and drive · Shift sprint · Space handbrake (on foot: fire) · F get in / out (works on moving traffic too) ·
-Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · H help · F next to a bus at its stop rides along.
+Ctrl fire · Q / E (or [ / ]) previous / next weapon · G horn · T place list (teleport) · H help · F next to a bus at its stop rides along.
 
 ## How the map is made
 
@@ -62,6 +62,9 @@ The town is drawn in 3D with a small in-repo WebGL2 layer (`src/render/gl/`, no 
   name, umlauts spelled out, a prefix is enough), `?at=47.859149,11.490211` (lat,lon) or `?at=4491,4542` (map meters)
   starts you there, on free ground in front of the building. In the console: `__gta.teleport("rathaus")`,
   `__gta.spots()` lists every name.
+  In the game, **T** (or the "T — Orte" button) opens the place list (`src/ui/Places.tsx`): the built places (★) first,
+  then every POI, with a search field (umlauts spelled or not); arrows and Enter or a click take you there. The game
+  stands still while it is open.
 - **Chunks** (`src/render/scene/scene.ts`): every 128 m chunk is built once into a static vertex buffer
   (about 1 ms, 60 KB) as it comes near the view: lawn and paving (the photo's paved mask, given a one
   pixel hard edge in the shader), land use and water, streets as polygons from the OSM centre lines

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { DT, busNear, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import { direction, nextStop } from "#/sim/transit.ts"
 import type { World } from "#/world/world.ts"
-import { findSpot, spotNames } from "#/world/teleport.ts"
+import { findSpot, spotList, spotNames } from "#/world/teleport.ts"
 import { makeProjection } from "#/map/project.ts"
 import { crownCover } from "#/map/crowns.ts"
 import { districtAt } from "#/map/districts.ts"
@@ -20,6 +20,7 @@ import { followCamera, groundReach, startCamera, towersOf, viewMatrix, type View
 import { Renderer, openGl } from "#/render/gl/renderer.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
+import { Places } from "./Places.tsx"
 
 declare global {
   interface Window {
@@ -119,6 +120,16 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const [hud, setHud] = useState<HudState>(emptyHud)
   const [help, setHelp] = useState(false)
+  // The place list (T): open stops the game; `go` is the game's teleport once it runs.
+  const [places, setPlaces] = useState(false)
+  const placesRef = useRef(false)
+  const goRef = useRef<((slug: string) => void) | null>(null)
+  const releaseRef = useRef<(() => void) | null>(null)
+  const spots = useMemo(() => spotList(world), [world])
+  useEffect(() => {
+    placesRef.current = places
+    if (places) releaseRef.current?.()
+  }, [places])
   const [muted, setMuted] = useState(readMuted)
   const mutedRef = useRef(muted)
   const audioRef = useRef<GameAudio | null>(null)
@@ -165,7 +176,12 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     const audio = new GameAudio()
     audio.setMuted(mutedRef.current)
     audioRef.current = audio
-    const keyboard = listenKeyboard(window, { onHelp: () => setHelp((h) => !h), onMute: () => setMuted((m) => !m), onAnyKey: () => audio.start() })
+    const keyboard = listenKeyboard(window, { onHelp: () => setHelp((h) => !h), onMute: () => setMuted((m) => !m), onPlaces: () => setPlaces((o) => !o), onAnyKey: () => audio.start() })
+    releaseRef.current = keyboard.release
+    goRef.current = (slug) => {
+      console.info(teleport(slug))
+      setPlaces(false)
+    }
 
     const resize = () => {
       overlay.width = Math.round(window.innerWidth * devicePixelRatio)
@@ -202,6 +218,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
         raf = requestAnimationFrame(frame)
         return
       }
+      if (placesRef.current) acc = 0
       while (acc >= DT) {
         step(world, game, keyboard.take())
         acc -= DT
@@ -301,7 +318,8 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     <div className="relative h-dvh w-dvw overflow-hidden bg-black text-white select-none">
       <canvas ref={glRef} className={`block h-full w-full ${retro(false) ? "[image-rendering:pixelated]" : ""}`} />
       <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-      <Hud hud={hud} help={help} muted={muted} onMute={() => setMuted((m) => !m)} />
+      <Hud hud={hud} help={help} muted={muted} onMute={() => setMuted((m) => !m)} onPlaces={() => setPlaces(true)} />
+      {places && <Places list={spots} onGo={(slug) => goRef.current?.(slug)} onClose={() => setPlaces(false)} />}
       <div className="absolute right-2 bottom-1 text-[10px] text-white/70">
         Karte ©{" "}
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
