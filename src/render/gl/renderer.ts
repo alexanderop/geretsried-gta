@@ -304,5 +304,6 @@ const focusOf = (matrix: Float32Array, game: Game, width: number, height: number
 }
 
 /** The world canvas's WebGL2 context, with the multisampling alpha-to-coverage needs and a stencil for shadows. */
-export const openGl = (canvas: HTMLCanvasElement): WebGL2RenderingContext | null =>
-  canvas.getContext("webgl2", { alpha: false, antialias: true, depth: true, stencil: true, powerPreference: "high-performance" })
+/** `antialias` off saves phones the multisampled buffer; the retro look scales the town up pixelated anyway. */
+export const openGl = (canvas: HTMLCanvasElement, antialias = true): WebGL2RenderingContext | null =>
+  canvas.getContext("webgl2", { alpha: false, antialias, depth: true, stencil: true, powerPreference: "high-performance" })

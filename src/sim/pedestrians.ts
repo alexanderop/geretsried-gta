@@ -7,6 +7,35 @@ import { PERSON_HP, burnPerson, hurt, isDead, vitals, type Vitals } from "./dama
 import { kerbOffset, parksAlong } from "./parking.ts"
 import { nearestSegment } from "#/world/geometry.ts"
 
+/**
+ * Who someone is, for how they move: seniors slow with short steps, joggers fast with long ones and never stopping,
+ * kids quick and weaving about their line, everyone else in between.
+ */
+export type PersonKind = "adult" | "senior" | "jogger" | "kid"
+
+/** Each kind's walking pace in m/s (a range to draw from), stride phase per meter (4 a step of 0.8 m), and share of the crowd. */
+export const KINDS: Readonly<Record<PersonKind, { readonly pace: readonly [number, number]; readonly stride: number; readonly share: number }>> = {
+  adult: { pace: [1.15, 1.6], stride: 4, share: 0.64 },
+  senior: { pace: [0.95, 1.2], stride: 5, share: 0.18 },
+  jogger: { pace: [2.6, 3.2], stride: 2.8, share: 0.08 },
+  kid: { pace: [1.3, 1.9], stride: 5.5, share: 0.1 },
+}
+
+const pickKind = (r: number): PersonKind => {
+  let acc = 0
+  for (const kind of ["adult", "senior", "jogger", "kid"] as const) {
+    acc += KINDS[kind].share
+    if (r < acc) return kind
+  }
+  return "adult"
+}
+
+/** Standing still for `left` seconds turned to `face` (radians): at a shop window, a bus stop, chatting. */
+export type Stop = { left: number; readonly face: number }
+
+/** Off the network for a moment: walking `in` to a shop's wall (gone when they reach it), or `out` from it to the sidewalk. */
+export type Errand = { readonly phase: "in" | "out"; readonly tx: number; readonly ty: number }
+
 /** Someone walking the footpath and sidewalk network. */
 export type Walker = {
   readonly id: number
@@ -18,7 +47,22 @@ export type Walker = {
   side: number
   /** -1 left, 1 right: which sidewalk this person keeps to on streets. */
   readonly curb: 1 | -1
+  readonly kind: PersonKind
   readonly pace: number
+  /** How fast they walk now, easing to the pace (or to 0 when they stop) instead of jumping. */
+  speed: number
+  /** Standing still, or null when walking (errands.ts starts the stops). */
+  stop: Stop | null
+  /** Seconds until they may stop again. */
+  calm: number
+  /** Walking into or out of a shop, off the network. */
+  errand?: Errand
+  /** Went into a shop: the game lets them go. */
+  gone?: true
+  /** The id of the group's first member, when they walk with others; the group stops and goes in together. */
+  group?: number
+  /** Which of a few shirt shades they wear (the renderer's tints). */
+  readonly shade: number
   x: number
   y: number
   angle: number
@@ -65,6 +109,7 @@ export const knockDown = (w: Walker, seconds: number): void => {
 /** A shot or a bang at (x, y): run, away from it. */
 export const scare = (w: Walker, x: number, y: number): void => {
   if (w.dead || w.down > 0) return
+  w.stop = null
   const heading = Math.atan2(Math.sin(w.angle), Math.cos(w.angle))
   const towards = Math.cos(Math.atan2(y - w.y, x - w.x) - heading) > 0
   // Walking towards the noise: turn round on the spot (the side flips with the direction, see nextLeg).
@@ -240,6 +285,17 @@ const place = (world: World, w: Walker) => {
   w.angle += Math.atan2(Math.sin(target - w.angle), Math.cos(target - w.angle)) * 0.2
 }
 
+/** Shirt shades the renderer can tint a walker in. */
+export const SHADES = 6
+
+/** A new person's kind, pace and manner: drawn once, the rest of their fields as they start out. */
+const person = (random: () => number) => {
+  const kind = pickKind(random())
+  const [lo, hi] = KINDS[kind].pace
+  const pace = lo + random() * (hi - lo)
+  return { kind, pace, speed: pace, stop: null, calm: 4 + random() * 20, shade: Math.floor(random() * SHADES) }
+}
+
 /** Someone on the way nearest a random point `minR` to `maxR` meters from (cx, cy), walking either way, or towards (cx, cy) when `inbound`. */
 export const spawnWalker = (world: World, id: number, cx: number, cy: number, minR: number, maxR: number, random: () => number, inbound = false): Walker | null => {
   for (let attempt = 0; attempt < 40; attempt++) {
@@ -260,9 +316,10 @@ export const spawnWalker = (world: World, id: number, cx: number, cy: number, mi
       from: dir === 1 ? from : from + 1,
       dir,
       s: (dir === 1 ? t : 1 - t) * len,
-      side: lineAt(world, hit.index, from, dir === 1 ? 0 : 1, 1, curb * dir),
+      // The walking line where they stand (not at the segment's end: on a street profile it bends round the parking bays).
+      side: lineAt(world, hit.index, from, t * len, len, curb * dir),
       curb,
-      pace: 1.1 + random() * 0.6,
+      ...person(random),
       x: 0,
       y: 0,
       angle: 0,
@@ -294,6 +351,11 @@ export const companion = (world: World, leader: Walker, id: number, k: number, r
     ...leader,
     id,
     s: leader.s >= k * 1.1 ? leader.s - k * 1.1 : leader.s + k * 1.1,
+    // Joggers run alone and kids walk with a grown-up; everyone keeps the leader's pace, so the group stays together.
+    kind: leader.kind === "jogger" || (leader.kind === "kid" && k === 1) ? "adult" : leader.kind,
+    stop: leader.stop === null ? null : { ...leader.stop },
+    group: leader.id,
+    shade: Math.floor(random() * SHADES),
     side: leader.side + (k % 2 === 0 ? 0.35 : -0.35) * (0.5 + random()),
     stride: random() * 10,
     tough: id % TOUGH === 0,
@@ -352,6 +414,28 @@ export const rejoin = (world: World, w: Walker): boolean => {
 /** A car that may run someone over: position, velocity. */
 export type Threat = { readonly x: number; readonly y: number; readonly vx: number; readonly vy: number }
 
+/**
+ * A fast car at (or coming at) this person: knocked down when it hits (true: nothing else this step), running when
+ * it comes close.
+ */
+export const dodge = (w: Walker, threat: Threat | null): boolean => {
+  if (threat === null) return false
+  const speed = Math.hypot(threat.vx, threat.vy)
+  const dx = w.x - threat.x
+  const dy = w.y - threat.y
+  const dist = Math.hypot(dx, dy)
+  if (speed > 3 && dist < 1.6) {
+    // Over 70 km/h or so is the end of them.
+    hurt(w.vitals, speed * 5, "car")
+    knockDown(w, 4)
+    w.panic = 0
+    return true
+  }
+  // Coming at me fast and close: run.
+  if (speed > 4 && dist < 12 && dx * threat.vx + dy * threat.vy > 0) w.panic = 2
+  return false
+}
+
 /** Walk on; step round parked cars; dodge sideways from a fast car coming at you; get knocked down if it hits. */
 export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: number, random: () => number, cars: ReadonlyArray<Obstacle> = []): void => {
   if (w.dead) {
@@ -375,25 +459,20 @@ export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: n
   }
   const road = world.map.roads[w.road]
   if (road === undefined) return
+  if (dodge(w, threat)) return
+  if (w.panic > 0) w.stop = null
+  if (w.stop !== null) {
+    // Standing: turned to what they look at, until the time is up.
+    w.stop.left -= dt
+    w.speed = 0
+    w.angle += Math.atan2(Math.sin(w.stop.face - w.angle), Math.cos(w.stop.face - w.angle)) * Math.min(1, dt * 4)
+    if (w.stop.left <= 0) w.stop = null
+    return
+  }
   const line = homeSide(world, w)
   const round = stepRound(world, w, line, cars)
-  const home = round ?? line
-
-  if (threat !== null) {
-    const speed = Math.hypot(threat.vx, threat.vy)
-    const dx = w.x - threat.x
-    const dy = w.y - threat.y
-    const dist = Math.hypot(dx, dy)
-    if (speed > 3 && dist < 1.6) {
-      // Over 70 km/h or so is the end of them.
-      hurt(w.vitals, speed * 5, "car")
-      knockDown(w, 4)
-      w.panic = 0
-      return
-    }
-    // Coming at me fast and close: run.
-    if (speed > 4 && dist < 12 && dx * threat.vx + dy * threat.vy > 0) w.panic = 2
-  }
+  // Kids weave about their line, a little.
+  const home = round ?? (w.kind === "kid" ? line + Math.sin(w.stride * 0.21 + w.id) * 0.35 : line)
 
   // Where they walked a step ago, which was clear: kept to fall back on if the sideways step runs into a bollard or a wall.
   let before = w.side
@@ -407,8 +486,11 @@ export const stepWalker = (world: World, w: Walker, threat: Threat | null, dt: n
     w.side += (home - w.side) * Math.min(1, dt * (round === null ? 1.5 : 4))
   }
 
-  const speed = w.panic > 0 ? 5 : w.pace
-  w.stride += speed * dt * 4
+  // A slow drift round their pace, so nobody walks like a metronome; starting off and slowing down are eased.
+  const want = w.panic > 0 ? 5 : w.pace * (1 + 0.08 * Math.sin(w.stride * 0.031 + w.id * 1.7))
+  w.speed += (want - w.speed) * Math.min(1, dt * (w.panic > 0 ? 6 : 2))
+  const speed = w.speed
+  w.stride += speed * dt * (w.panic > 0 ? KINDS.jogger.stride : KINDS[w.kind].stride)
   w.s += speed * dt
   const pts = road.pts
   let len = Math.hypot((pts[(w.from + w.dir) * 2] ?? 0) - (pts[w.from * 2] ?? 0), (pts[(w.from + w.dir) * 2 + 1] ?? 0) - (pts[w.from * 2 + 1] ?? 0))

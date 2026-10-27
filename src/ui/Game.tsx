@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { DT, busNear, newGame, playerPos, speedKmh, step, type Game as GameState } from "#/sim/game.ts"
 import { direction, nextStop } from "#/sim/transit.ts"
 import type { World } from "#/world/world.ts"
@@ -20,6 +20,8 @@ import { followCamera, groundReach, startCamera, towersOf, viewMatrix, type View
 import { Renderer, openGl } from "#/render/gl/renderer.ts"
 import type { Assets } from "#/render/assets.ts"
 import { listenKeyboard } from "./input.ts"
+import { isTouchDevice, mergeInput, newTouchPad } from "./touch.ts"
+import { TouchControls } from "./TouchControls.tsx"
 import { Places } from "./Places.tsx"
 
 declare global {
@@ -79,6 +81,33 @@ const BIG_TEXT = { busted: "BUSTED", wasted: "WASTED", gameOver: "GAME OVER", sa
  */
 const RETRO_SCALE = 0.5
 const retro = (comparing: boolean) => !comparing && new URLSearchParams(location.search).get("retro") !== "0"
+
+/** Sharper than this costs a phone's GPU four times the pixels for little you can see. */
+const MAX_DPR = 2
+
+/**
+ * When frames run slow, the town is drawn at fewer pixels: each step multiplies the render scale. A fast
+ * machine never leaves the first step, so the desktop looks as before.
+ */
+const QUALITY = [1, 0.8, 0.65] as const
+/** Seconds of frames averaged before the scale may change, and the frame rates that move it down or back up. */
+const QUALITY_WINDOW_S = 2
+const SLOW_FPS = 40
+const FAST_FPS = 57
+
+/** The safe area (notches, rounded corners) in CSS pixels, read from the same CSS the HUD uses. */
+const safeArea = (() => {
+  let probe: HTMLDivElement | null = null
+  return () => {
+    if (probe === null) {
+      probe = document.createElement("div")
+      probe.className = "safe-inset pointer-events-none invisible"
+      document.body.append(probe)
+    }
+    const r = probe.getBoundingClientRect()
+    return { left: r.left, top: r.top }
+  }
+})()
 
 /** localStorage can be missing, full or blocked (private windows): a save that cannot be read is no save. */
 const readSave = (): SaveData | null => {
@@ -140,11 +169,37 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     writeMuted(muted)
   }, [muted])
   const [failure, setFailure] = useState("")
+  // Stable, so the memoised touch controls skip the HUD's refreshes.
+  const startAudio = useCallback(() => audioRef.current?.start(), [])
+  const openPlaces = useCallback(() => setPlaces(true), [])
+  const toggleMute = useCallback(() => setMuted((m) => !m), [])
+  const toggleHelp = useCallback(() => setHelp((h) => !h), [])
+  // Touch controls: on phones and tablets from the start, and anywhere the moment a finger touches the screen.
+  const [touch, setTouch] = useState(isTouchDevice)
+  const touchRef = useRef(touch)
+  const [pad] = useState(newTouchPad)
+  useEffect(() => {
+    touchRef.current = touch
+    if (touch) return
+    const first = (e: PointerEvent) => e.pointerType === "touch" && setTouch(true)
+    window.addEventListener("pointerdown", first)
+    return () => window.removeEventListener("pointerdown", first)
+  }, [touch])
+  useEffect(() => {
+    // iOS Safari pinches and double-tap zooms despite the viewport meta; the game wants every gesture.
+    const stop = (e: Event) => e.preventDefault()
+    document.addEventListener("gesturestart", stop)
+    document.addEventListener("dblclick", stop)
+    return () => {
+      document.removeEventListener("gesturestart", stop)
+      document.removeEventListener("dblclick", stop)
+    }
+  }, [])
 
   useEffect(() => {
     const canvas = glRef.current
     const overlay = overlayRef.current
-    const gl = canvas === null ? null : openGl(canvas)
+    const gl = canvas === null ? null : openGl(canvas, !isTouchDevice())
     const ctx = overlay?.getContext("2d") ?? null
     if (canvas === null || overlay === null || gl === null || ctx === null) {
       setFailure("WebGL2 fehlt in diesem Browser.")
@@ -183,16 +238,29 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       setPlaces(false)
     }
 
+    let dpr = Math.min(MAX_DPR, devicePixelRatio)
+    let quality = 0
+    let safe = safeArea()
     const resize = () => {
-      overlay.width = Math.round(window.innerWidth * devicePixelRatio)
-      overlay.height = Math.round(window.innerHeight * devicePixelRatio)
+      dpr = Math.min(MAX_DPR, devicePixelRatio)
+      safe = safeArea()
+      // The canvas's own box, not the window's: on phones the two differ while the browser bars slide.
+      const w = canvas.clientWidth || window.innerWidth
+      const h = canvas.clientHeight || window.innerHeight
+      overlay.width = Math.round(w * dpr)
+      overlay.height = Math.round(h * dpr)
       // The town in GTA 2's chunky pixels: half the CSS size, scaled up without smoothing (the canvas's CSS).
-      const scale = retro(compare !== null) ? RETRO_SCALE : devicePixelRatio
-      canvas.width = Math.round(window.innerWidth * scale)
-      canvas.height = Math.round(window.innerHeight * scale)
+      const scale = (retro(compare !== null) ? RETRO_SCALE : dpr) * (compare === null ? QUALITY[quality] ?? 1 : 1)
+      canvas.width = Math.max(1, Math.round(w * scale))
+      canvas.height = Math.max(1, Math.round(h * scale))
     }
     resize()
+    // Rotating a phone fires resize late or not at all in some browsers; the visual viewport and orientation always tell.
+    const resizeSoon = () => requestAnimationFrame(resize)
     window.addEventListener("resize", resize)
+    window.addEventListener("orientationchange", resizeSoon)
+    window.visualViewport?.addEventListener("resize", resizeSoon)
+    screen.orientation?.addEventListener("change", resizeSoon)
 
     // What the HUD shows besides the game state: announcements and when they end.
     let keys = 0
@@ -206,8 +274,32 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     let last = performance.now()
     let acc = 0
     let hudTimer = 0
+    // Frames counted over QUALITY_WINDOW_S, and how many windows in a row ran fast (for stepping back up).
+    let windowFrames = 0
+    let windowStart = performance.now()
+    let fastWindows = 0
     const frame = (now: number) => {
-      const elapsed = Math.min(0.1, (now - last) / 1000)
+      const gap = (now - last) / 1000
+      const elapsed = Math.min(0.1, gap)
+      windowFrames += 1
+      // A hidden tab or a stall (gap) or the place list says nothing about how fast the town draws.
+      if (gap > 0.25 || placesRef.current) {
+        windowFrames = 0
+        windowStart = now
+      } else if (now - windowStart >= QUALITY_WINDOW_S * 1000) {
+        const fps = (windowFrames * 1000) / (now - windowStart)
+        fastWindows = fps >= FAST_FPS ? fastWindows + 1 : 0
+        if (fps < SLOW_FPS && quality < QUALITY.length - 1 && renderer.stats.chunks > 0) {
+          quality += 1
+          resize()
+        } else if (fastWindows >= 3 && quality > 0) {
+          quality -= 1
+          fastWindows = 0
+          resize()
+        }
+        windowFrames = 0
+        windowStart = now
+      }
       acc += elapsed
       last = now
       const aspect = canvas.width / canvas.height
@@ -220,7 +312,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       }
       if (placesRef.current) acc = 0
       while (acc >= DT) {
-        step(world, game, keyboard.take())
+        step(world, game, mergeInput(keyboard.take(), pad.take()))
         acc -= DT
       }
       followCamera(camera, game, towers)
@@ -231,18 +323,18 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       const matrix = viewMatrix(view)
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(0, 0, overlay.width, overlay.height)
-      drawPlayerMarker(ctx, matrix, game, devicePixelRatio)
-      drawPlaces(ctx, world.map, matrix, devicePixelRatio)
+      drawPlayerMarker(ctx, matrix, game, dpr)
+      drawPlaces(ctx, world.map, matrix, dpr)
       agePopups(popups, elapsed)
       const target = jobTarget(game.jobs, playerPos(game))
-      if (target !== null) drawTargetArrow(ctx, matrix, target, game.time, devicePixelRatio)
+      if (target !== null) drawTargetArrow(ctx, matrix, target, game.time, dpr)
       const p = playerPos(game)
       const here = districtAt(world.map.districts, p.x, p.y)?.name ?? ""
-      drawMinimap(ctx, minimap, world.map, game, target, here, game.player.car === null ? 0 : speedKmh(game), devicePixelRatio)
+      drawMinimap(ctx, minimap, world.map, game, target, here, game.player.car === null ? 0 : speedKmh(game), dpr, touchRef.current ? { corner: "top-left", ...safe } : undefined)
       const copDist = Math.min(Infinity, ...game.cops.map((c) => Math.hypot(c.car.x - p.x, c.car.y - p.y)))
       const level = wantedLevel(game.wanted)
       audio.effects(game.sounds.splice(0), p)
-      audio.update({ speed: game.player.car === null ? (game.player.ride?.bus.speed ?? 0) : speedKmh(game) / 3.6, inCar: game.player.car !== null || game.player.ride !== null, horn: keyboard.horn(), siren: level > 0 ? Math.max(0, 1 - copDist / 140) : 0 })
+      audio.update({ speed: game.player.car === null ? (game.player.ride?.bus.speed ?? 0) : speedKmh(game) / 3.6, inCar: game.player.car !== null || game.player.ride !== null, horn: keyboard.horn() || pad.horn(), siren: level > 0 ? Math.max(0, 1 - copDist / 140) : 0 })
 
       for (const m of game.messages.splice(0)) {
         if (m.kind === "car") shown = { ...shown, vehicle: { name: m.text, key: ++keys } }
@@ -260,7 +352,7 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
           bigUntil = game.time + BIG_S
         }
       }
-      drawPopups(ctx, matrix, game, popups, devicePixelRatio)
+      drawPopups(ctx, matrix, game, popups, dpr)
       if ((hudTimer += 1) % 6 === 0) {
         const name = world.roadAt(p.x, p.y, 15)?.road.name ?? ""
         // GTA 2 announces each street as you turn into it.
@@ -303,8 +395,11 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
       keyboard.dispose()
       audio.dispose()
       window.removeEventListener("resize", resize)
+      window.removeEventListener("orientationchange", resizeSoon)
+      window.visualViewport?.removeEventListener("resize", resizeSoon)
+      screen.orientation?.removeEventListener("change", resizeSoon)
     }
-  }, [world, assets])
+  }, [world, assets, pad])
 
   if (failure !== "") return <div className="grid h-dvh place-items-center bg-black font-mono text-yellow-300">{failure}</div>
   if (new URLSearchParams(location.search).has("compare"))
@@ -318,9 +413,10 @@ export function Game({ world, assets }: { readonly world: World; readonly assets
     <div className="relative h-dvh w-dvw overflow-hidden bg-black text-white select-none">
       <canvas ref={glRef} className={`block h-full w-full ${retro(false) ? "[image-rendering:pixelated]" : ""}`} />
       <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-      <Hud hud={hud} help={help} muted={muted} onMute={() => setMuted((m) => !m)} onPlaces={() => setPlaces(true)} />
+      {touch && <TouchControls pad={pad} muted={muted} onTouch={startAudio} onPlaces={openPlaces} onMute={toggleMute} onHelp={toggleHelp} />}
+      <Hud hud={hud} help={help} muted={muted} touch={touch} onMute={() => setMuted((m) => !m)} onPlaces={() => setPlaces(true)} onCycle={() => pad.cycle(1)} />
       {places && <Places list={spots} onGo={(slug) => goRef.current?.(slug)} onClose={() => setPlaces(false)} />}
-      <div className="absolute right-2 bottom-1 text-[10px] text-white/70">
+      <div className={`absolute text-white/70 ${touch ? "bottom-[max(2px,env(safe-area-inset-bottom))] text-center text-[7px] leading-tight landscape:left-1/2 landscape:w-[34%] landscape:-translate-x-1/2 portrait:inset-x-2" : "right-2 bottom-1 text-[10px]"}`}>
         Karte ©{" "}
         <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           OpenStreetMap

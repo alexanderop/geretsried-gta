@@ -1,5 +1,6 @@
 import { MAX_WANTED } from "#/sim/wanted.ts"
 import type { WeaponId } from "#/sim/weapons.ts"
+import { TOUCH_RADAR_PX } from "#/render/overlay.ts"
 
 /** Everything the GTA 2 style HUD shows, refreshed a few times a second. */
 export type HudState = {
@@ -81,6 +82,9 @@ const CopHead = ({ on }: { readonly on: boolean }) => (
 const HELP =
   "WASD / Pfeile — laufen, fahren · Shift — sprinten · Strg (zu Fuß auch Leertaste) — schießen · Q / E — Waffe wechseln · Leertaste — Handbremse · F — ein-/aussteigen (auch Bus: an der Haltestelle) · G — Hupe · M — Ton an/aus · T — Orte (teleportieren) · H — Hilfe"
 
+const TOUCH_HELP =
+  "Stick links — laufen (ganz raus: rennen), im Auto Gas, Bremse, lenken · FEUER — schießen · BREMSE — Handbremse (zu Fuß auch schießen) · F — ein-/aussteigen (auch Bus) · HUPE · Waffe antippen — nächste Waffe · 📍 — Orte · ? — Hilfe"
+
 const ICON: Readonly<Record<WeaponId, string>> = {
   fists: "fist",
   pistol: "pistol",
@@ -143,10 +147,11 @@ const RespectMeter = ({ name, color, value }: { readonly name: string; readonly 
   )
 }
 
-export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudState; readonly help: boolean; readonly muted: boolean; readonly onMute: () => void; readonly onPlaces: () => void }) {
+export function Hud({ hud, help, muted, touch, onMute, onPlaces, onCycle }: { readonly hud: HudState; readonly help: boolean; readonly muted: boolean; readonly touch: boolean; readonly onMute: () => void; readonly onPlaces: () => void; readonly onCycle: () => void }) {
   const clock = hud.timer === null ? "" : `${Math.floor(hud.timer / 60)}:${String(Math.max(0, Math.floor(hud.timer % 60))).padStart(2, "0")}`
   return (
-    <div className="hud-font pointer-events-none absolute inset-0 text-white select-none">
+    <div className="hud-font safe-inset pointer-events-none text-white select-none">
+      <div className="hud-scale absolute inset-0">
       <div className="absolute top-3 right-4 flex flex-col items-end gap-1">
         <div data-testid="money" className="text-5xl text-[#9fe3ff] italic">
           ${hud.money.toLocaleString("de-DE")}
@@ -163,7 +168,8 @@ export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudS
           <Hearts hp={hud.health} />
         </div>
         {hud.armour > 0 && <Shield armour={hud.armour} />}
-        <div data-testid="weapon" className="flex h-14 items-center gap-2 rounded bg-black/45 px-2 py-1" aria-label={hud.weapon.name}>
+        {/* On a touch screen, tapping the weapon swaps to the next one (Q / E on a keyboard). */}
+        <div data-testid="weapon" className={`flex h-14 items-center gap-2 rounded bg-black/45 px-2 py-1 ${touch ? "pointer-events-auto" : ""}`} aria-label={hud.weapon.name} onPointerDown={touch ? onCycle : undefined}>
           <img src={`/sprites/icon-${ICON[hud.weapon.id]}.webp`} alt="" className="h-12 w-16 object-contain" />
           {hud.weapon.ammo !== null && (
             <span data-testid="ammo" className="min-w-[2ch] text-3xl text-white">
@@ -237,7 +243,8 @@ export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudS
         </div>
       )}
 
-      <div className="absolute top-3 left-4 flex flex-col gap-1">
+      {/* On a touch screen the radar sits in this corner (overlay.ts), so the column starts under it. */}
+      <div className="absolute top-3 left-4 flex flex-col gap-1" style={touch ? { top: `calc(${TOUCH_RADAR_PX + 20}px / var(--hud-zoom, 1))` } : undefined}>
         {hud.respect.length > 0 && (
           <div data-testid="respect" className="mb-1 flex flex-col gap-1">
             {hud.respect.map((g) => (
@@ -260,7 +267,8 @@ export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudS
         )}
       </div>
 
-      <div className="absolute bottom-4 left-4 flex items-end gap-2 font-mono text-xs font-normal [-webkit-text-stroke:0] [text-shadow:none]">
+      {touch && help && <div className="absolute top-[40%] left-1/2 w-[min(46rem,80%)] -translate-x-1/2 rounded bg-black/75 px-4 py-3 font-mono text-base leading-6 font-normal [-webkit-text-stroke:0] [text-shadow:none]">{TOUCH_HELP}</div>}
+      <div className={`absolute bottom-4 left-4 items-end gap-2 font-mono ${touch ? "hidden" : "flex"} text-xs font-normal [-webkit-text-stroke:0] [text-shadow:none]`}>
         {help ? <div className="rounded bg-black/70 px-3 py-2 leading-5">{HELP}</div> : <div className="rounded bg-black/40 px-2 py-1 text-white/80">H — Hilfe</div>}
         <button
           type="button"
@@ -285,6 +293,7 @@ export function Hud({ hud, help, muted, onMute, onPlaces }: { readonly hud: HudS
         >
           {muted ? "🔇" : "🔊"} M — Ton {muted ? "aus" : "an"}
         </button>
+      </div>
       </div>
     </div>
   )

@@ -11,7 +11,7 @@
 import type { World } from "#/world/world.ts"
 import { CHAIRS, DOOR, DOORWAY, PARTITION_U, TABLE_Z, WC, toLocal, toWorld, type Chair, type Frame } from "#/world/cafe.ts"
 import { burnPerson, isDead, vitals, PERSON_HP } from "./damage.ts"
-import { kill, rejoin, type Walker } from "./pedestrians.ts"
+import { SHADES, kill, rejoin, type Walker } from "./pedestrians.ts"
 
 type Point = readonly [u: number, n: number]
 
@@ -100,7 +100,12 @@ export const arrive = (world: World, f: Frame, id: number, random: () => number)
     s: 0,
     side: 0,
     curb: 1,
+    kind: "adult",
     pace: 1.1 + random() * 0.4,
+    speed: 1.2,
+    stop: null,
+    calm: 60,
+    shade: id % SHADES,
     x,
     y,
     angle: 0,

@@ -120,21 +120,33 @@ describe("a new game", () => {
   })
 })
 
+/**
+ * How far from a way's centre line someone may be: on the network (standing in a group, up to half a meter beside its
+ * line), or on a shop errand (errands.ts) between it and a shop's wall.
+ */
+const walkReach = (w: Walker) => (w.errand !== undefined ? 15 : w.stop !== null ? 4.5 : 4)
+
 describe("pedestrians", () => {
   it("walk the sidewalks and footpaths, never inside buildings", () => {
     const game = newGame(world, 21)
     const start = new Map(game.walkers.map((w) => [w.id, { x: w.x, y: w.y }]))
-    run(game, idle, 15)
+    // Some stand a while (a window, a bus stop, a chat: errands.ts); the rest walk on.
+    const stood = new Set<number>()
+    for (let t = 0; t < 15 / DT; t++) {
+      step(world, game, idle)
+      for (const w of game.walkers) if (w.stop !== null || w.errand !== undefined) stood.add(w.id)
+    }
     expect(game.walkers.length).toBeGreaterThan(25)
-    const moved = game.walkers.filter((w) => {
+    const walking = game.walkers.filter((w) => start.has(w.id) && !stood.has(w.id))
+    const moved = walking.filter((w) => {
       const s = start.get(w.id)
       return s !== undefined && Math.hypot(w.x - s.x, w.y - s.y) > 8
     })
     // Of those still round the player: the ones that walked out of sight were let go (fillCrowd).
-    expect(moved.length).toBeGreaterThan(12)
+    expect(moved.length).toBeGreaterThan(walking.length * 0.7)
     const inside = game.walkers.filter((w) => world.isSolid(w.x, w.y))
     expect(inside.length).toBeLessThan(game.walkers.length * 0.05)
-    for (const w of game.walkers) expect(world.roadAt(w.x, w.y, 4)).not.toBeNull()
+    expect(game.walkers.filter((w) => world.roadAt(w.x, w.y, walkReach(w)) === null)).toEqual([])
   })
 
   it("walk past parked cars, at the kerb and on Sudetenstraße, not through them", () => {

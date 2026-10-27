@@ -128,11 +128,20 @@ const plate = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker) => {
   spriteQuad(m, { x: p.x, y: p.y, z: p.z, angle: w.angle, length: 0.34, width: 0.34 }, layer, box(boxes, layer), WHITE, Mode.sprite)
 }
 
+/** Shirt shades for the passers-by (sim SHADES of them): the same few sprites, tinted so the crowd is not all twins. */
+const SHADE_TINTS: ReadonlyArray<Rgba> = [WHITE, [236, 226, 214, 255], [214, 226, 242, 255], [242, 222, 222, 255], [222, 238, 218, 255], [228, 222, 242, 255]]
+/** Kids are drawn smaller than grown-ups. */
+const KID_SCALE = 0.78
+
 const walker = (m: MeshBuilder, boxes: SpriteBoxes, w: Walker, time: number) => {
   plate(m, boxes, w)
   if (w.gang !== undefined && w.down <= 0) gangRing(m, boxes, w.x, w.y, w.gang)
+  const tint = w.gang === undefined ? (SHADE_TINTS[w.shade] ?? WHITE) : gangTint(w.gang)
+  const scale = w.kind === "kid" ? KID_SCALE : 1
   if (w.down > 0) body(m, boxes, prop("pose-body-man"), w, bodyAlpha(w, CORPSE_FADE_S))
-  else running(m, boxes, pedSet(w.sprite), w, w.stride, PED_Z, 1, w.gang === undefined ? WHITE : gangTint(w.gang))
+  // Standing (at a window, a bus stop, chatting): the still sprite, not a frozen step.
+  else if (w.stop !== null || (w.speed < 0.15 && w.panic <= 0)) sprite(m, boxes, Sprite.ped + w.sprite, w, PED_Z, 1.25 * scale, 0.9, tint)
+  else running(m, boxes, pedSet(w.sprite), w, w.stride, PED_Z, scale, tint)
   if (w.vitals.fire > 0) flames(m, boxes, w.x, w.y, PED_Z + 0.1, 1.3, time, w.id)
 }
 

@@ -6,7 +6,8 @@ import { CAR_LENGTH, CAR_WIDTH, GRASS, PAINTS, ROAD, WATER, carOutline, forwardS
 import { roadAhead, spawnBus, spawnNpc, stepNpc, type Leader, type Npc } from "./traffic.ts"
 import { atTerminus, direction, nextStop, planTransit } from "./transit.ts"
 import { lightFor, makeSignals } from "./signals.ts"
-import { companion, inCar, spawnWalker, stepWalker } from "./pedestrians.ts"
+import { companion, inCar, spawnWalker, stepWalker, type Obstacle } from "./pedestrians.ts"
+import { CHAT, atCorner, endErrand, shopLeaver, stepErrand, stepErrands } from "./errands.ts"
 import { stepArrivals, stepGuest } from "./guests.ts"
 import { BUS_LENGTH, BUS_MODEL, carName, POLICE_MODEL, vehicleLength } from "./vehicles.ts"
 import { commit, coolDown, noHeat, tactics, wantedLevel } from "./wanted.ts"
@@ -51,15 +52,24 @@ const WALKER_COUNT = 120
  * player, a view being `game.view`, the screen's centre to its corner), those beyond `gone` views go. People are slow,
  * so theirs is a tighter ring than the cars'; at 16:10 the cars' is 1.25 to 2 half-widths out, gone past 2.5.
  */
-const CROWD = { walkers: 40, cars: 26 } as const
+const CROWD = { walkers: 40, cars: 14 } as const
 const RING = { walkers: { from: 1.05, to: 1.4, gone: 1.7 }, cars: { from: 1.05, to: 1.7, gone: 2.1 } } as const
 /** The walking view's reach on a 16:10 screen: 12.5 m to the top edge, 20 m to the side. */
 export const FOOT_VIEW = Math.hypot(12.5, 20)
 /** A shop street: a POI this close. Off them (the Wohngebiete) only RESIDENTIAL of the crowd walks. */
 const SHOP_M = 50
 const RESIDENTIAL = 0.6
+const kerbside = new WeakMap<World, ReadonlyArray<Obstacle>>()
+/** Every parked car people must walk round: the car parks' and the street profiles' kerbside ones. */
+const parkedCars = (world: World, game: Game): ReadonlyArray<Obstacle> => {
+  let street = kerbside.get(world)
+  if (street === undefined) kerbside.set(world, (street = world.streets.flatMap((st) => st.parked)))
+  return [...game.parked, ...street]
+}
 /** People walk in twos to fours this often, like GTA 2's groups on the pavement. */
 const GROUP_CHANCE = 0.45
+/** On a shop street, this share of the people coming in step out of a shop instead (errands.ts). */
+const SHOP_OUT = 0.2
 const ENTER_RANGE = 4
 export const LIVES = 5
 /** A police car within this many meters sees you. */
@@ -244,6 +254,11 @@ export const fillCrowd = (world: World, game: Game): void => {
   const want = crowdTarget(world, game)
   const [wMin, wMax] = band(RING.walkers)
   for (let attempt = 0; crowd() < want.walkers && attempt < 24 * tries; attempt++) {
+    const leaver = !fresh && onShopStreet(world, x, y) && game.random() < SHOP_OUT ? shopLeaver(world, game.nextId++, x, y, wMin, wMax, game.random, parkedCars(world, game)) : null
+    if (leaver !== null) {
+      game.walkers.push(leaver)
+      continue
+    }
     const walker = spawnWalker(world, game.nextId++, x, y, wMin, wMax, game.random, !fresh)
     if (walker === null) continue
     const d = Math.hypot(walker.x - x, walker.y - y)
@@ -256,6 +271,13 @@ export const fillCrowd = (world: World, game: Game): void => {
         const mate = companion(world, walker, game.nextId++, k, game.random)
         if (mate !== null) group.push(mate)
       }
+    }
+    // Some groups stand together chatting, turned to each other, before they walk on.
+    if (group.length > 1 && !atCorner(world, walker.x, walker.y) && game.random() < CHAT) {
+      const gx = group.reduce((a, w) => a + w.x, 0) / group.length
+      const gy = group.reduce((a, w) => a + w.y, 0) / group.length
+      const left = 15 + game.random() * 35
+      for (const w of group) w.stop = { left: left + game.random() * 3, face: Math.atan2(gy - w.y, gx - w.x) }
     }
     for (const w of group) {
       // Nobody starts inside a parked car: they walk round them.
@@ -444,8 +466,11 @@ export const step = (world: World, game: Game, input: Input): void => {
   for (const w of game.walkers) {
     const wasDown = w.down > 0
     const wasDead = w.dead
+    // On a shop errand until something knocks them down, scares them or sets them alight: then back on the sidewalk.
+    if (w.errand !== undefined && (w.dead || w.down > 0 || w.panic > 0 || w.vitals.fire > 0)) endErrand(world, w)
     // Cafe guests follow their visit until something knocks them down.
     if (w.visit !== undefined && !w.dead && w.down <= 0) stepGuest(world, w, game.walkers, DT, game.random)
+    else if (w.errand !== undefined) stepErrand(world, w, threat, DT)
     else stepWalker(world, w, threat, DT, game.random, game.parked)
     // Knocked over by the car (no gore: they get up again, or just lie there), and the police care.
     if (!wasDown && w.down > 0 && threat !== null && w.vitals.lastHit === "car") commit(game.wanted, "pedestrian")
@@ -454,7 +479,9 @@ export const step = (world: World, game: Game, input: Input): void => {
     // Run over or burnt: either is the player's kill, paid on the spot.
     if (!wasDead && w.dead && (w.vitals.lastHit === "fire" || (threat !== null && w.vitals.lastHit === "car"))) awardAt(game.score, game.messages, KILL, w.x, w.y)
   }
-  game.walkers = game.walkers.filter((w) => !w.dead || w.down > 0)
+  stepErrands(world, game.walkers, game.random, DT, parkedCars(world, game), game.npcs.filter((n) => n.speed < 0.3))
+  // The dead fade, and those who went into a shop are gone.
+  game.walkers = game.walkers.filter((w) => (!w.dead || w.down > 0) && w.gone !== true)
   stepArrivals(world, game, playerPos(game), DT)
   // Everyone's road ahead as it is at the start of the step, so two cars can tell whether they see each other. A car
   // off its lane (into a slot, out of one) has none: it is only in others' way.

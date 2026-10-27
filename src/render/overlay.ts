@@ -142,6 +142,11 @@ const RADAR_M = 600
 const RADAR_MAX_M = 1000
 /** Screen size of the minimap in CSS pixels. */
 const RADAR_PX = 180
+/** On a phone it is smaller and moves to the top left corner: the thumb controls take the bottom. */
+export const TOUCH_RADAR_PX = 112
+
+/** Where the radar goes: the desktop's bottom right, or a phone's top left inside the safe area (CSS pixels). */
+export type RadarPlace = { readonly corner: "bottom-right" } | { readonly corner: "top-left"; readonly left: number; readonly top: number }
 
 /** GTA's pointer: an arrowhead of size `a` facing +x, yellow with a black edge. */
 const arrowHead = (ctx: CanvasRenderingContext2D, a: number, fill: string, edge: number) => {
@@ -172,13 +177,14 @@ export const drawMinimap = (
   district: string,
   kmh: number,
   dpr: number,
+  place: RadarPlace = { corner: "bottom-right" },
 ) => {
   const { width, height } = ctx.canvas
-  const size = RADAR_PX * dpr
-  const pad = 16 * dpr
-  // Bottom right, clear of the money and the attribution line.
-  const x0 = width - size - pad
-  const y0 = height - size - pad * 3
+  const size = (place.corner === "top-left" ? TOUCH_RADAR_PX : RADAR_PX) * dpr
+  const pad = (place.corner === "top-left" ? 10 : 16) * dpr
+  // Bottom right, clear of the money and the attribution line; or top left on a touch screen.
+  const x0 = place.corner === "top-left" ? place.left * dpr + pad : width - size - pad
+  const y0 = place.corner === "top-left" ? place.top * dpr + pad : height - size - pad * 3
   const cx = x0 + size / 2
   const cy = y0 + size / 2
   const p = playerPos(game)
